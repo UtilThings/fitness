@@ -1,0 +1,1 @@
+/home/jmlaya/projects/dev-config/features/spec-template.md
