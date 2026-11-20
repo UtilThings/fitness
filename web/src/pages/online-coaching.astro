@@ -1,0 +1,65 @@
+---
+import LeadForm from '@/components/LeadForm.vue';
+import PageHero from '@/components/PageHero.astro';
+import Section from '@/components/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const benefits = [
+  [
+    'Training plans',
+    'Custom programming you can follow at home or in any gym.',
+  ],
+  [
+    'Nutrition guidance',
+    'Practical habits and targets that fit your lifestyle.',
+  ],
+  ['8–16 week programs', 'Structured phases with a clear finish line.'],
+  ['Progress monitoring', 'Regular check-ins and adjustments.'],
+];
+---
+
+<BaseLayout
+  title="Online Coaching Programs | JQ Fitness"
+  description="Personalized 8–16 week online coaching with training plans, nutrition guidance and progress monitoring."
+>
+  <PageHero
+    eyebrow="Online Coaching"
+    title="Coaching anywhere."
+    sub="Get JQ Fitness programming and accountability wherever you are. Start with a free consultation."
+  />
+  <Section class="grid gap-10 lg:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-2">
+      {benefits.map(([title, sub]) => (
+        <div class="card-surface p-6">
+          <h3 class="text-2xl text-primary">{title}</h3>
+          <p class="mt-2 text-sm text-muted-foreground">{sub}</p>
+        </div>
+      ))}
+      <p class="text-sm text-muted-foreground sm:col-span-2">
+        Program pricing is shared after your consultation.
+      </p>
+    </div>
+    <LeadForm
+      client:load
+      title="Request a consultation"
+      fields={[
+        { kind: 'text', placeholder: 'Full name', required: true },
+        { kind: 'email', placeholder: 'Email', required: true },
+        { kind: 'text', placeholder: 'Phone' },
+        {
+          kind: 'select',
+          placeholder: 'Program length',
+          options: [
+            '8-week program',
+            '12-week program',
+            '16-week program',
+            'Not sure yet',
+          ],
+        },
+        { kind: 'textarea', placeholder: 'Tell us about your goals', rows: 4 },
+      ]}
+      submitLabel="Submit application"
+      successMessage="Thanks! We'll be in touch within 1–2 business days."
+    />
+  </Section>
+</BaseLayout>

@@ -1,7 +1,7 @@
 # 003 - [Web] Tailwind CSS v4 y estilos globales
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 1: Base del proyecto
 
@@ -22,9 +22,9 @@ Se usa la integración vigente de Tailwind v4 mediante `@tailwindcss/vite` (no `
 
 ## Criterios de aceptación
 
-- [ ] `bun run build` pasa en verde con el plugin registrado.
-- [ ] `global.css` contiene `@import "tailwindcss"` y `@theme`.
-- [ ] Una clase de Tailwind usada temporalmente en una página genera CSS en `dist/` (verificado y retirado).
+- [x] `bun run build` pasa en verde con el plugin registrado.
+- [x] `global.css` contiene `@import "tailwindcss"` y `@theme`.
+- [x] Una clase de Tailwind usada temporalmente en una página genera CSS en `dist/` (verificado y retirado).
 
 ## Referencias
 
@@ -38,4 +38,4 @@ Se usa la integración vigente de Tailwind v4 mediante `@tailwindcss/vite` (no `
 
 ## Notas de implementación
 
-<!-- Se completa al terminar la tarea. -->
+Confirmados Tailwind CSS 4.3.5 y su plugin Vite 4.3.5. El build emitió la regla bg-primary para una clase temporal en Astro. Se retiró el import temporal.

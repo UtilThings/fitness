@@ -1,7 +1,7 @@
 # 005 - [Web] Layout base, página de inicio e isla Vue de ejemplo
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003, 004
 - **Fase:** Fase 2: Interfaz base
 
@@ -23,10 +23,10 @@ Dependen de esta tarea: estructura y alias (002), `global.css` (003) y `env` (00
 
 ## Criterios de aceptación
 
-- [ ] `bun run build` genera `dist/index.html` y `dist/404.html`.
-- [ ] En `bun run dev`, el contador incrementa al hacer clic (hidratación funcionando).
-- [ ] Estilos de Tailwind visibles en la página.
-- [ ] `<html lang="es">` presente en el HTML generado.
+- [x] `bun run build` genera `dist/index.html` y `dist/404.html`.
+- [x] En `bun run dev`, el contador incrementa al hacer clic (hidratación funcionando).
+- [x] Estilos de Tailwind visibles en la página.
+- [x] `<html lang="es">` presente en el HTML generado.
 
 ## Referencias
 
@@ -41,4 +41,4 @@ Dependen de esta tarea: estructura y alias (002), `global.css` (003) y `env` (00
 
 ## Notas de implementación
 
-<!-- Se completa al terminar la tarea. -->
+El build generó index.html y 404.html con lang="es". Chromium comprobó la hidratación, el clic del contador y el color de Tailwind. También comprobó un import temporal con el alias @/ dentro de Vue, que se retiró.

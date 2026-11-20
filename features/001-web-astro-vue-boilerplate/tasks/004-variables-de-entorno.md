@@ -1,7 +1,7 @@
 # 004 - [Config] Variables de entorno tipadas
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 1: Base del proyecto
 
@@ -23,11 +23,11 @@ Astro expone al cliente solo variables con prefijo `PUBLIC_` mediante `import.me
 
 ## Criterios de aceptación
 
-- [ ] `.env.example` lista todas las variables usadas.
-- [ ] `parseEnv({})` lanza un error que menciona `PUBLIC_SITE_URL`.
-- [ ] `parseEnv` con una URL inválida lanza un error que nombra la variable.
-- [ ] `bun run build` pasa con un `.env` copiado desde `.env.example`.
-- [ ] Ningún valor sensible aparece en archivos versionados.
+- [x] `.env.example` lista todas las variables usadas.
+- [x] `parseEnv({})` lanza un error que menciona `PUBLIC_SITE_URL`.
+- [x] `parseEnv` con una URL inválida lanza un error que nombra la variable.
+- [x] `bun run build` pasa con un `.env` copiado desde `.env.example`.
+- [x] Ningún valor sensible aparece en archivos versionados.
 
 ## Referencias
 
@@ -40,4 +40,4 @@ Astro expone al cliente solo variables con prefijo `PUBLIC_` mediante `import.me
 
 ## Notas de implementación
 
-<!-- Se completa al terminar la tarea. -->
+Verificados el build con .env.example copiado, el error por ausencia de PUBLIC_SITE_URL y los errores de URL para ambas variables. El sitio cuenta con el valor local de desarrollo y el módulo exige una URL en producción.

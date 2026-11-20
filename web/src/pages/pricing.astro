@@ -1,0 +1,62 @@
+---
+import CtaBand from '@/components/CtaBand.astro';
+import PageHero from '@/components/PageHero.astro';
+import PricingCard from '@/components/PricingCard.astro';
+import Section from '@/components/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  groupPlans,
+  jumpPlans,
+  personalOneOnOne,
+  personalPartner,
+} from '@/lib/data';
+
+const sections = [
+  {
+    title: 'Personal Training — 1-on-1',
+    plans: personalOneOnOne,
+    cta: 'Inquire now',
+    to: '/contact',
+  },
+  {
+    title: 'Personal Training — Partner',
+    plans: personalPartner,
+    cta: 'Inquire now',
+    to: '/contact',
+  },
+  {
+    title: 'Group Strength',
+    plans: groupPlans,
+    cta: 'Book now',
+    to: '/schedule',
+  },
+  {
+    title: 'Tropical Jump',
+    plans: jumpPlans,
+    cta: 'Book now',
+    to: '/schedule',
+  },
+];
+---
+
+<BaseLayout
+  title="Pricing & Packages | JQ Fitness"
+  description="Personal training from $800, group strength from $200 per 4 weeks, Tropical Jump $15 per class."
+>
+  <PageHero
+    eyebrow="Pricing & Packages"
+    title="Invest in stronger."
+    sub="Transparent pricing. Packages billed in 4-week blocks unless noted. Online coaching pricing shared after consultation."
+  />
+  {sections.map(({ title, plans, cta, to }) => (
+    <Section class="!py-10">
+      <h2 class="text-4xl">{title}</h2>
+      <div class="mt-6 grid gap-6 md:grid-cols-3">
+        {plans.map((plan) => (
+          <PricingCard {plan} {cta} {to} />
+        ))}
+      </div>
+    </Section>
+  ))}
+  <CtaBand />
+</BaseLayout>

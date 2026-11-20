@@ -1,0 +1,19 @@
+{
+  "owner": "jq-fitness",
+  "registry": "ghcr.io",
+  "deployment_webhook": "https://server.juicyquisine.com/api/deploy",
+  "services": [
+    {
+      "key": "web",
+      "image_name": "jq-fitness-web",
+      "version": "latest",
+      "build_context": ".",
+      "dockerfile": "Dockerfile",
+      "default": true,
+      "args": {
+        "PUBLIC_SITE_URL": "https://fitness.juicyquisine.com"
+      },
+      "deployment_key": "zKiBRf0wH5y9c9zOTYLNq"
+    }
+  ]
+}

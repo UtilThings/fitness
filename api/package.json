@@ -1,0 +1,17 @@
+{
+  "name": "pb-hooks-bun",
+  "type": "module",
+  "scripts": {
+    "build:ts": "bun run src/build.ts",
+    "watch:ts": "bun run src/watch.ts",
+    "serve:pb": "./pb serve --dev",
+    "dev": "concurrently \"bun run watch:ts\" \"bun run serve:pb\""
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "concurrently": "^10.0.6"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  }
+}

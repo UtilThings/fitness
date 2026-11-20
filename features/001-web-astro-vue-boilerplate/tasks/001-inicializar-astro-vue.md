@@ -1,7 +1,7 @@
 # 001 - [Config] Inicializar proyecto Astro con integración Vue
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 1: Base del proyecto
 
@@ -22,10 +22,10 @@ Existe un proyecto Astro con TypeScript estricto y la integración de Vue en `we
 
 ## Criterios de aceptación
 
-- [ ] `cd web && bun run build` termina sin errores.
-- [ ] `bun run dev` sirve `http://localhost:4321` con respuesta 200.
-- [ ] `astro.config.mjs` incluye la integración `vue()` y `tsconfig.json` extiende `astro/tsconfigs/strict`.
-- [ ] `bun.lock` existe, no hay `package-lock.json` y `bun install --frozen-lockfile` funciona.
+- [x] `cd web && bun run build` termina sin errores.
+- [x] `bun run dev` sirve `http://localhost:4321` con respuesta 200.
+- [x] `astro.config.mjs` incluye la integración `vue()` y `tsconfig.json` extiende `astro/tsconfigs/strict`.
+- [x] `bun.lock` existe, no hay `package-lock.json` y `bun install --frozen-lockfile` funciona.
 
 ## Referencias
 
@@ -39,4 +39,4 @@ Existe un proyecto Astro con TypeScript estricto y la integración de Vue en `we
 
 ## Notas de implementación
 
-<!-- Se completa al terminar la tarea. -->
+Confirmados con npm Astro 7.4.13 y @astrojs/vue 7.1.6, ambos con Node >=22.23.4. El generador 5.3.2 documenta los flags usados y la plantilla minimal entrega TypeScript estricto. Verificados la instalación congelada, el build y HTTP 200 en desarrollo.

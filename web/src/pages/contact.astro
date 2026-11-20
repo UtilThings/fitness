@@ -1,0 +1,52 @@
+---
+import LeadForm from '@/components/LeadForm.vue';
+import PageHero from '@/components/PageHero.astro';
+import Section from '@/components/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Contact JQ Fitness | Miramar, FL"
+  description="Questions about training, classes or packages? Get in touch with JQ Fitness."
+>
+  <PageHero
+    eyebrow="Contact"
+    title="Let's get started."
+    sub="Tell us what you're interested in and we'll help you find the right program."
+  />
+  <Section class="grid gap-10 !pt-0 lg:grid-cols-2">
+    <div class="space-y-6">
+      <div class="card-surface p-7">
+        <p class="eyebrow mb-2">Location</p>
+        <p class="text-xl">Miramar, Florida</p>
+      </div>
+      <div class="card-surface p-7">
+        <p class="eyebrow mb-2">Programs</p>
+        <p class="text-muted-foreground">
+          Personal Training · Group Strength · Tropical Jump · Online Coaching
+        </p>
+      </div>
+    </div>
+    <LeadForm
+      client:load
+      fields={[
+        { kind: 'text', placeholder: 'Full name', required: true },
+        { kind: 'email', placeholder: 'Email', required: true },
+        {
+          kind: 'select',
+          placeholder: 'Program',
+          options: [
+            'Personal Training',
+            'Group Strength',
+            'Tropical Jump',
+            'Online Coaching',
+            'Other',
+          ],
+        },
+        { kind: 'textarea', placeholder: 'Message', rows: 5 },
+      ]}
+      submitLabel="Send message"
+      successMessage="Thanks! We'll get back to you shortly."
+    />
+  </Section>
+</BaseLayout>

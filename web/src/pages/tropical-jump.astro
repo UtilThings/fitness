@@ -1,0 +1,65 @@
+---
+import jump from '@/assets/jump.jpg';
+import CtaBand from '@/components/CtaBand.astro';
+import PageHero from '@/components/PageHero.astro';
+import PolicyCard from '@/components/PolicyCard.astro';
+import PricingCard from '@/components/PricingCard.astro';
+import Section from '@/components/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { classTemplates, jumpPlans } from '@/lib/data';
+
+const days = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
+const classes = classTemplates.filter(
+  ({ service }) => service === 'Tropical Jump',
+);
+const policies = [
+  'First class free — one per client account.',
+  "Full class? Join the waitlist and we'll notify you if a spot opens.",
+  'Cancel or reschedule at least 12 hours before class.',
+];
+---
+
+<BaseLayout
+  title="Tropical Jump Trampoline Classes | JQ Fitness"
+  description="High-energy trampoline fitness. $15 per class, first class free. Mon & Wed 7:30 PM, Sat 9:00 AM."
+>
+  <PageHero
+    eyebrow="Tropical Jump"
+    title="Jump. Sweat. Vibe."
+    img={jump}
+    sub="A high-energy, low-impact trampoline workout set to tropical beats. Burn calories, build endurance, and have a blast."
+  />
+  <Section>
+    <div class="grid gap-6 md:grid-cols-3">
+      {jumpPlans.map((plan, index) => (
+        <PricingCard
+          {plan}
+          featured={index === 1}
+          cta="Book now"
+          to="/schedule"
+        />
+      ))}
+      <div class="card-surface p-7">
+        <p class="eyebrow mb-4">Weekly classes</p>
+        {classes.map(({ day, time }) => (
+          <div class="flex justify-between border-b border-border py-3 last:border-0">
+            <span class="font-display text-xl uppercase">{days[day]}</span>
+            <span class="font-bold text-accent">{time}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div class="mt-6">
+      <PolicyCard items={policies} />
+    </div>
+  </Section>
+  <CtaBand />
+</BaseLayout>

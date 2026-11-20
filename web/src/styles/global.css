@@ -1,0 +1,145 @@
+@import 'tailwindcss';
+@import '@fontsource/anton/400.css';
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow/700.css';
+
+:root {
+  --radius: 0.75rem;
+  --background: oklch(18% 0.01 240);
+  --foreground: oklch(98% 0 0);
+  --surface: oklch(22% 0.012 240);
+  --card: oklch(23% 0.012 240);
+  --primary: oklch(81% 0.15 178);
+  --primary-foreground: var(--background);
+  --accent: oklch(83% 0.17 88);
+  --accent-foreground: var(--background);
+  --muted: oklch(28% 0.012 240);
+  --secondary: var(--muted);
+  --muted-foreground: oklch(72% 0.01 240);
+  --destructive: oklch(65% 0.22 27);
+  --border: oklch(100% 0 0 / 0.1);
+  --input: oklch(100% 0 0 / 0.15);
+  --ring: var(--primary);
+  --gradient-fade: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in oklab, var(--background) 70%, transparent) 55%,
+    var(--background) 100%
+  );
+  --shadow-glow: 0 20px 50px -20px
+    color-mix(in oklab, var(--primary) 55%, transparent);
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --font-display: 'Anton', 'Impact', sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-secondary: var(--secondary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --font-display: 'Anton', 'Impact', sans-serif;
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  body {
+    @apply bg-background font-sans text-foreground;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+}
+
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.9rem 1.6rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 0.25s;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.08);
+    transform: translateY(-2px);
+  }
+
+  .btn-outline {
+    border: 1.5px solid var(--foreground);
+    border-color: color-mix(in oklab, var(--foreground) 40%, transparent);
+    color: var(--foreground);
+  }
+
+  .btn-outline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  .btn-accent:hover {
+    transform: translateY(-2px);
+  }
+
+  .eyebrow {
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+  }
+
+  .card-surface {
+    @apply rounded-xl border border-border bg-card;
+    transition:
+      border-color 0.25s,
+      transform 0.25s;
+  }
+
+  .card-surface:hover {
+    border-color: var(--primary);
+  }
+
+  .hero-fade {
+    background: var(--gradient-fade);
+  }
+}

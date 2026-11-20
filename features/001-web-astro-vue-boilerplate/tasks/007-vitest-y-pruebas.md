@@ -1,7 +1,7 @@
 # 007 - [Pruebas] Vitest y Vue Test Utils
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 004, 005
 - **Fase:** Fase 3: Calidad
 
@@ -24,10 +24,10 @@ Se usa `getViteConfig` de `astro/config` para heredar plugins (Vue) y alias. Ver
 
 ## Criterios de aceptación
 
-- [ ] `bun run test` (no `bun test`) termina en verde con todas las pruebas anteriores.
-- [ ] Una prueba falla si se rompe el incremento del contador (comprobado y revertido).
-- [ ] Las pruebas usan el alias `@/`.
-- [ ] `bun run lint`, `bun run check` y `bun run build` siguen en verde (los archivos de prueba cumplen lint y tipos).
+- [x] `bun run test` (no `bun test`) termina en verde con todas las pruebas anteriores.
+- [x] Una prueba falla si se rompe el incremento del contador (comprobado y revertido).
+- [x] Las pruebas usan el alias `@/`.
+- [x] `bun run lint`, `bun run check` y `bun run build` siguen en verde (los archivos de prueba cumplen lint y tipos).
 
 ## Referencias
 
@@ -41,4 +41,4 @@ Se usa `getViteConfig` de `astro/config` para heredar plugins (Vue) y alias. Ver
 
 ## Notas de implementación
 
-<!-- Se completa al terminar la tarea. -->
+Confirmado el requisito de Node para Vitest 5.1.1 y el uso de getViteConfig según la guía de Astro. Pasaron las 7 pruebas y el resto de las verificaciones. Cambiar temporalmente el incremento de 1 a 2 hizo fallar la prueba correspondiente; tras revertirlo volvieron a pasar todas.

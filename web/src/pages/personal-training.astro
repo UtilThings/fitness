@@ -1,0 +1,55 @@
+---
+import personal from '@/assets/personal.jpg';
+import CtaBand from '@/components/CtaBand.astro';
+import PageHero from '@/components/PageHero.astro';
+import PolicyCard from '@/components/PolicyCard.astro';
+import PricingCard from '@/components/PricingCard.astro';
+import Section from '@/components/Section.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { personalOneOnOne, personalPartner } from '@/lib/data';
+
+const policies = [
+  'Each session is 60 minutes; packages run in 4-week blocks.',
+  'Sessions expire at the end of each 4-week block.',
+  'Purchase does not reserve a set time — request your preferred slots and we confirm based on trainer availability.',
+  'Reschedule or cancel at least 24 hours in advance to keep your session.',
+];
+
+const included = [
+  'Initial assessment & goal setting',
+  'Personalized program',
+  'Form coaching every session',
+  'Progress tracking',
+];
+---
+
+<BaseLayout
+  title="Personal Training | JQ Fitness Miramar"
+  description="One-on-one and partner personal training packages in 4-week blocks, from $800."
+>
+  <PageHero
+    eyebrow="Personal Training"
+    title="Coaching built for you."
+    img={personal}
+    sub="One-on-one and partner sessions with a plan designed around your body, schedule and goals. Billed in 4-week blocks."
+  />
+  <Section>
+    <h2 class="text-4xl md:text-5xl">One-on-one</h2>
+    <div class="mt-8 grid gap-6 md:grid-cols-3">
+      {personalOneOnOne.map((plan, index) => (
+        <PricingCard {plan} featured={index === 1} cta="Request a schedule" />
+      ))}
+    </div>
+    <h2 class="mt-16 text-4xl md:text-5xl">Partner training</h2>
+    <div class="mt-8 grid gap-6 md:grid-cols-3">
+      {personalPartner.map((plan) => (
+        <PricingCard {plan} cta="Request a schedule" />
+      ))}
+    </div>
+    <div class="mt-12 grid gap-6 md:grid-cols-2">
+      <PolicyCard items={policies} />
+      <PolicyCard title="What's included" items={included} />
+    </div>
+  </Section>
+  <CtaBand />
+</BaseLayout>

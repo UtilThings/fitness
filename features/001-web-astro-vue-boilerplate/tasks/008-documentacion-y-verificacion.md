@@ -1,7 +1,7 @@
 # 008 - [Docs] Documentación y script de verificación
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003, 004, 005, 006, 007
 - **Fase:** Fase final: Verificación y cierre
 
@@ -21,10 +21,10 @@ Con las tareas 001-007 completas existen todos los scripts de `bun`. Documentar 
 
 ## Criterios de aceptación
 
-- [ ] Seguir el README en un directorio limpio (sin `node_modules`, con `bun install --frozen-lockfile`) deja el sitio funcionando.
-- [ ] `scripts/verify-web.sh` termina con código 0.
-- [ ] El script falla con código distinto de 0 si se introduce un error de lint temporal (comprobado y revertido).
-- [ ] Los criterios de aceptación del spec están verificados.
+- [x] Seguir el README en un directorio limpio (sin `node_modules`, con `bun install --frozen-lockfile`) deja el sitio funcionando.
+- [x] `scripts/verify-web.sh` termina con código 0.
+- [x] El script falla con código distinto de 0 si se introduce un error de lint temporal (comprobado y revertido).
+- [x] Los criterios de aceptación del spec están verificados.
 
 ## Referencias
 
@@ -36,4 +36,4 @@ Con las tareas 001-007 completas existen todos los scripts de `bun`. Documentar 
 
 ## Notas de implementación
 
-<!-- Se completa al terminar la tarea. -->
+Una instalación congelada en un directorio limpio permitió seguir el README y usar el contador en Chromium. El script pasó desde el workspace y desde la copia limpia. Un error temporal de lint detuvo el script antes de format:check; tras retirarlo, todos los pasos volvieron a pasar. La validación local incluyó preview, la página 404 y el fallo del build por ausencia de PUBLIC_SITE_URL.

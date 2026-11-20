@@ -1,6 +1,6 @@
 # Especificación: Boilerplate web con Astro + Vue
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -169,13 +169,13 @@ Contrato que deja a las siguientes features: estructura de carpetas, alias `@/`,
 
 ## Criterios de Aceptación
 
-- [ ] `cd web && bun install --frozen-lockfile && bun run dev` levanta el sitio en `http://localhost:4321` y la isla Vue responde a la interacción.
-- [ ] `bun run build` genera `web/dist/` sin errores ni advertencias de tipos; `bun run preview` lo sirve.
-- [ ] Alias `@/` funciona en código Astro, Vue y pruebas.
-- [ ] Falta de una variable obligatoria produce un error que la nombra (cubierto por prueba).
-- [ ] `bun run lint`, `bun run format:check`, `bun run check` y `bun run test` terminan en verde.
-- [ ] `web/.env` está ignorado por git y `web/.env.example` documenta todas las variables.
-- [ ] `web/README.md` y `scripts/verify-web.sh` existen y el script termina en verde.
+- [x] `cd web && bun install --frozen-lockfile && bun run dev` levanta el sitio en `http://localhost:4321` y la isla Vue responde a la interacción.
+- [x] `bun run build` genera `web/dist/` sin errores ni advertencias de tipos; `bun run preview` lo sirve.
+- [x] Alias `@/` funciona en código Astro, Vue y pruebas.
+- [x] Falta de una variable obligatoria produce un error que la nombra (cubierto por prueba).
+- [x] `bun run lint`, `bun run format:check`, `bun run check` y `bun run test` terminan en verde.
+- [x] `web/.env` está ignorado por git y `web/.env.example` documenta todas las variables.
+- [x] `web/README.md` y `scripts/verify-web.sh` existen y el script termina en verde.
 
 ---
 

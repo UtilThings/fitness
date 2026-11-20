@@ -1,7 +1,7 @@
 # 006 - [Config] ESLint y Prettier
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 005
 - **Fase:** Fase 3: Calidad
 
@@ -23,11 +23,11 @@ Existe código Astro, Vue y TS (tareas 001-005). ESLint usa flat config (`eslint
 
 ## Criterios de aceptación
 
-- [ ] `bun run lint` termina con código 0.
-- [ ] `bun run format:check` termina con código 0.
-- [ ] `bun run check` termina con 0 errores y 0 advertencias.
-- [ ] Introducir un error de lint temporal en un `.vue` y un `.astro` hace fallar `lint` (comprobado y revertido).
-- [ ] `bun run build` sigue en verde.
+- [x] `bun run lint` termina con código 0.
+- [x] `bun run format:check` termina con código 0.
+- [x] `bun run check` termina con 0 errores y 0 advertencias.
+- [x] Introducir un error de lint temporal en un `.vue` y un `.astro` hace fallar `lint` (comprobado y revertido).
+- [x] `bun run build` sigue en verde.
 
 ## Referencias
 
@@ -42,4 +42,4 @@ Existe código Astro, Vue y TS (tareas 001-005). ESLint usa flat config (`eslint
 
 ## Notas de implementación
 
-<!-- Se completa al terminar la tarea. -->
+Confirmados los rangos de compatibilidad y la instalación con bun pm ls. Se mantuvo TypeScript 5.9 para conservar baseUrl sin avisos. Lint, formato, astro check (0 errores, avisos y sugerencias) y build pasaron. ESLint detectó variables sin usar en Vue y Astro; las comprobaciones temporales se retiraron.

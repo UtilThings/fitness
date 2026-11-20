@@ -1,0 +1,22 @@
+---
+import PageHero from '@/components/PageHero.astro';
+import ScheduleBoard from '@/components/ScheduleBoard.vue';
+import Section from '@/components/Section.astro';
+import T from '@/components/T.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Class Schedule | JQ Fitness"
+  description="See upcoming Group Strength and Tropical Jump classes and remaining spots this week."
+>
+  <PageHero
+    title="Find your class."
+    sub="Pick a day, check the open spots, and reserve. Online booking with accounts is coming soon."
+  >
+    <T slot="eyebrow" k="schedule" />
+  </PageHero>
+  <Section class="min-h-[24rem] !pt-0">
+    <ScheduleBoard client:only="vue" />
+  </Section>
+</BaseLayout>

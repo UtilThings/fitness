@@ -1,0 +1,57 @@
+---
+import logo from '@/assets/jq-logo.png';
+import Footer from '@/components/Footer.astro';
+import Header from '@/components/Header.vue';
+import { env } from '@/lib/env';
+import '@/styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: URL;
+  bare?: boolean;
+}
+
+const {
+  title,
+  description,
+  bare = false,
+  canonical = new URL(Astro.url.pathname, env.PUBLIC_SITE_URL),
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <title>{title}</title>
+  </head>
+  <body>
+    {bare ? (
+      <slot />
+    ) : (
+      <>
+        <Header
+          client:load
+          currentPath={Astro.url.pathname}
+          logoSrc={logo.src}
+        />
+        <main class="min-h-screen">
+          <slot />
+        </main>
+        <Footer />
+      </>
+    )}
+    <script>
+      import '@/scripts/i18n-client';
+    </script>
+  </body>
+</html>

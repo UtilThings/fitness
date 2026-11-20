@@ -1,0 +1,43 @@
+---
+import logo from '@/assets/jq-logo.png';
+import T from '@/components/T.astro';
+import { navigation } from '@/lib/navigation';
+---
+
+<footer class="border-t border-border bg-surface">
+  <div class="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-3">
+    <div class="space-y-3">
+      <a
+        href="/"
+        aria-label="JQ Fitness — home"
+        class="flex items-center gap-2.5"
+      >
+        <img src={logo.src} alt="JQ Fitness logo" class="h-10 w-auto" />
+        <span class="font-display text-2xl uppercase tracking-wide">
+          JQ <span class="text-primary">Fitness</span>
+        </span>
+      </a>
+      <p class="text-sm text-muted-foreground">
+        Boutique personal training &amp; small-group fitness in Miramar,
+        Florida.
+      </p>
+    </div>
+    <nav aria-label="Footer menu" class="grid grid-cols-2 gap-2 text-sm">
+      {navigation.map(({ key, href }) => (
+        <a class="text-muted-foreground hover:text-primary" href={href}>
+          <T k={key} />
+        </a>
+      ))}
+    </nav>
+    <div class="text-sm text-muted-foreground">
+      <p class="eyebrow mb-2">Studio</p>
+      <p>Miramar, FL</p>
+      <a class="mt-4 inline-block text-primary" href="/contact">
+        <T k="contact" /> →
+      </a>
+    </div>
+  </div>
+  <p class="pb-8 text-center text-xs text-muted-foreground">
+    © {new Date().getFullYear()} JQ Fitness. All rights reserved.
+  </p>
+</footer>

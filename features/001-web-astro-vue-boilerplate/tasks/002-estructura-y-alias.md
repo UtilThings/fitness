@@ -1,7 +1,7 @@
 # 002 - [Config] Estructura de carpetas y alias de rutas
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 1: Base del proyecto
 
@@ -22,10 +22,10 @@ Tras la tarea 001 existe el proyecto generado por Astro. Verificar el contenido 
 
 ## Criterios de aceptación
 
-- [ ] Las cinco carpetas existen bajo `web/src/`.
-- [ ] Un import de prueba `import x from '@/lib/...'` resuelve en `bun run build` (validado temporalmente y luego retirado).
-- [ ] `git check-ignore web/.env` (en un repo git) o inspección de `.gitignore` confirma que `.env` se ignora y `.env.example` no.
-- [ ] `bun run build` pasa en verde.
+- [x] Las cinco carpetas existen bajo `web/src/`.
+- [x] Un import de prueba `import x from '@/lib/...'` resuelve en `bun run build` (validado temporalmente y luego retirado).
+- [x] `git check-ignore web/.env` (en un repo git) o inspección de `.gitignore` confirma que `.env` se ignora y `.env.example` no.
+- [x] `bun run build` pasa en verde.
 
 ## Referencias
 
@@ -38,4 +38,4 @@ Tras la tarea 001 existe el proyecto generado por Astro. Verificar el contenido 
 
 ## Notas de implementación
 
-<!-- Se completa al terminar la tarea. -->
+Verificados el alias mediante un import temporal, el build con y sin esa comprobación, y las exclusiones de entorno con git check-ignore. Se reutilizó el favicon SVG de la plantilla.

@@ -1,0 +1,11 @@
+---
+import { translate, type Key } from '@/lib/i18n';
+
+interface Props {
+  k: Key;
+}
+
+const { k } = Astro.props;
+---
+
+<span data-i18n={k}>{translate('en', k)}</span>
