@@ -1,0 +1,98 @@
+import {
+  createRouter,
+  createWebHistory,
+  type LocationQueryValue,
+  type Router,
+} from 'vue-router';
+import { useAuth } from '@/composables/useAuth';
+import AdminLayout from '@/layouts/AdminLayout.vue';
+import AuthLayout from '@/layouts/AuthLayout.vue';
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean;
+    title?: string;
+  }
+}
+
+/** Acepta solo rutas internas (evita redirecciones abiertas). */
+export function safeRedirect(
+  value: LocationQueryValue | LocationQueryValue[] | undefined,
+): string {
+  const target = Array.isArray(value) ? value[0] : value;
+  if (
+    typeof target === 'string' &&
+    target.startsWith('/') &&
+    !target.startsWith('//') &&
+    !target.includes('\\')
+  ) {
+    return target;
+  }
+  return '/';
+}
+
+const authRoutes = ['login', 'forgot-password'];
+
+export function installGuard(router: Router) {
+  router.beforeEach((to) => {
+    const { isAuthenticated } = useAuth();
+    if (to.matched.some((r) => r.meta.requiresAuth) && !isAuthenticated.value) {
+      return { name: 'login', query: { redirect: to.fullPath } };
+    }
+    if (
+      typeof to.name === 'string' &&
+      authRoutes.includes(to.name) &&
+      isAuthenticated.value
+    ) {
+      return { path: '/' };
+    }
+    return true;
+  });
+}
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/',
+      component: AdminLayout,
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          name: 'dashboard',
+          component: () => import('@/views/admin/DashboardView.vue'),
+          meta: { title: 'Dashboard' },
+        },
+      ],
+    },
+    {
+      path: '/',
+      component: AuthLayout,
+      children: [
+        {
+          path: 'login',
+          name: 'login',
+          component: () => import('@/views/auth/LoginView.vue'),
+          meta: { title: 'Iniciar sesión' },
+        },
+        {
+          path: 'forgot-password',
+          name: 'forgot-password',
+          component: () => import('@/views/auth/ForgotPasswordView.vue'),
+          meta: { title: 'Recuperar contraseña' },
+        },
+      ],
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/NotFoundView.vue'),
+      meta: { title: 'No encontrado' },
+    },
+  ],
+});
+
+installGuard(router);
+
+export default router;
