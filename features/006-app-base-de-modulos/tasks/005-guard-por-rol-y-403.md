@@ -1,7 +1,7 @@
 # 005 - [Rutas] Guard por rol y vista 403
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004
 - **Fase:** Fase 2
 
@@ -21,10 +21,10 @@ Las rutas pueden declarar `meta.roles` y quien no tenga el rol ve una pantalla 4
 
 ## Criterios de aceptación
 
-- [ ] Un coach que abre una ruta con `meta.roles = ["owner"]` termina en `/forbidden`.
-- [ ] Un owner entra a esa misma ruta.
-- [ ] Sin sesión se sigue redirigiendo a `/login?redirect=...`.
-- [ ] `bun run typecheck`, `lint`, `test`, `build` pasan.
+- [x] Un coach que abre una ruta con `meta.roles = ["owner"]` termina en `/forbidden`.
+- [x] Un owner entra a esa misma ruta.
+- [x] Sin sesión se sigue redirigiendo a `/login?redirect=...`.
+- [x] `bun run typecheck`, `lint`, `test`, `build` pasan.
 
 ## Referencias
 

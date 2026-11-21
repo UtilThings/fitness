@@ -7,11 +7,13 @@ import {
 import { useAuth } from '@/composables/useAuth';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import type { Role } from '@/types/pb';
 
 declare module 'vue-router' {
   interface RouteMeta {
     requiresAuth?: boolean;
     title?: string;
+    roles?: Role[];
   }
 }
 
@@ -35,9 +37,20 @@ const authRoutes = ['login', 'forgot-password'];
 
 export function installGuard(router: Router) {
   router.beforeEach((to) => {
-    const { isAuthenticated } = useAuth();
-    if (to.matched.some((r) => r.meta.requiresAuth) && !isAuthenticated.value) {
+    const { isAuthenticated, role } = useAuth();
+    const requiresAuth = to.matched.some(
+      ({ meta }) => meta.requiresAuth || meta.roles,
+    );
+    if (requiresAuth && !isAuthenticated.value) {
       return { name: 'login', query: { redirect: to.fullPath } };
+    }
+    if (
+      to.matched.some(
+        ({ meta }) =>
+          meta.roles && (!role.value || !meta.roles.includes(role.value)),
+      )
+    ) {
+      return { name: 'forbidden' };
     }
     if (
       typeof to.name === 'string' &&
@@ -63,6 +76,12 @@ const router = createRouter({
           name: 'dashboard',
           component: () => import('@/views/admin/DashboardView.vue'),
           meta: { title: 'Dashboard' },
+        },
+        {
+          path: 'forbidden',
+          name: 'forbidden',
+          component: () => import('@/views/ForbiddenView.vue'),
+          meta: { title: 'Sin permiso' },
         },
       ],
     },

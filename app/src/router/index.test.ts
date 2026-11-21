@@ -1,19 +1,39 @@
+import type { Role } from '@/types/pb';
+import AdminLayout from '@/layouts/AdminLayout.vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const state = vi.hoisted(() => ({ valid: false }));
+const state = vi.hoisted(() => ({ valid: false, role: null as Role | null }));
 
 vi.mock('@/composables/useAuth', async () => {
   const { computed } = await import('vue');
   return {
-    useAuth: () => ({ isAuthenticated: computed(() => state.valid) }),
+    useAuth: () => ({
+      isAuthenticated: computed(() => state.valid),
+      role: computed(() => state.role),
+    }),
   };
 });
 
 import router, { safeRedirect } from '@/router';
 
+router.addRoute({
+  path: '/owner-only',
+  component: { template: '<RouterView />' },
+  meta: { roles: ['owner'] },
+  children: [
+    {
+      path: 'details',
+      name: 'owner-details',
+      component: { template: '<div />' },
+      meta: { roles: ['owner', 'coach'] },
+    },
+  ],
+});
+
 describe('guard', () => {
   beforeEach(async () => {
     state.valid = false;
+    state.role = null;
     await router.push('/login');
     await router.isReady();
   });
@@ -30,6 +50,35 @@ describe('guard', () => {
     expect(router.currentRoute.value.name).toBe('dashboard');
     await router.push('/login');
     expect(router.currentRoute.value.name).toBe('dashboard');
+  });
+
+  it.each(['coach', null] as const)(
+    'redirige el rol %s a la vista 403 dentro del layout',
+    async (role) => {
+      state.valid = true;
+      state.role = role;
+      await router.push('/owner-only/details');
+      expect(router.currentRoute.value.fullPath).toBe('/forbidden');
+      expect(router.currentRoute.value.meta.title).toBe('Sin permiso');
+      expect(router.currentRoute.value.matched[0].components?.default).toBe(
+        AdminLayout,
+      );
+    },
+  );
+
+  it('permite al owner entrar a la ruta restringida', async () => {
+    state.valid = true;
+    state.role = 'owner';
+    await router.push('/owner-only/details');
+    expect(router.currentRoute.value.name).toBe('owner-details');
+  });
+
+  it('solicita iniciar sesión antes de comprobar los roles', async () => {
+    await router.push('/owner-only/details?tab=1');
+    expect(router.currentRoute.value.name).toBe('login');
+    expect(router.currentRoute.value.query.redirect).toBe(
+      '/owner-only/details?tab=1',
+    );
   });
 
   it('ruta desconocida muestra not-found', async () => {
