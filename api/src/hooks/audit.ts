@@ -1,6 +1,11 @@
 /// <reference path="../../pb_data/types.d.ts" />
 
 function captureAuditActor(e: core.RecordRequestEvent) {
+  // Superusers bypass collection rules. Keep audit writes restricted to server code.
+  if (e.record?.collection().name === "audit_logs") {
+    throw new ForbiddenError("Audit logs can only be written by the server.");
+  }
+
   // Model hooks have no auth. Keep the actor on the record across a delayed transaction callback.
   const actorId = e.auth?.collection().name === "admins" ? e.auth.id : "";
   e.record?.set("@pbInternalAuditActor", actorId);
