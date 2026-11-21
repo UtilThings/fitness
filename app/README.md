@@ -123,6 +123,19 @@ Usa `StatusTag` para asociar cada estado a `{ label, severity }`. En el botón d
 
 Para mostrar fechas de PocketBase, usa `formatDateTime(iso)` de `datetime.ts`. Convierte la fecha y hora local de un formulario con `localToUtcIso(date, time)` antes de guardar. La zona del negocio es `America/New_York`. Guarda importes en centavos, muéstralos con `formatUsd(cents)` y valida la entrada con `parseUsdToCents(text)`, que devuelve `null` si es inválida.
 
+## Equipo y perfil
+
+- **Equipo** (`/team`) permite buscar por nombre o correo y filtrar por rol y estado. El owner puede crear integrantes, activar o desactivar cuentas y pedir su baja. Si el API devuelve `409`, puede conservar el historial desactivando la cuenta.
+- **Ficha del equipo** (`/team/:id`) muestra los datos de contacto, el estado y la matriz de permisos. El owner puede editar la ficha de otro integrante.
+- **Mi perfil** (`/settings/profile`) permite actualizar nombre, teléfono, biografía y foto. Al guardar una nueva contraseña, la app renueva la sesión con la nueva clave.
+
+Para un selector que use `useTeam().coaches`, llama a `loadCoaches` al montar el formulario. La consulta incluye owners y coaches activos ordenados por nombre, independientemente de los filtros o la paginación del listado. `coachesError` expone los errores de la consulta.
+
+```ts
+const { coaches, loadCoaches, coachesError } = useTeam();
+onMounted(loadCoaches);
+```
+
 ## Despliegue
 
 El servidor estático debe devolver `index.html` para cualquier ruta desconocida (fallback de SPA). El despliegue no forma parte del boilerplate.

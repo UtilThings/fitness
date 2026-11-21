@@ -31,11 +31,17 @@ Las migraciones guardan las reglas como literales. Genera las expresiones con lo
 
 En una base nueva, un superusuario de PocketBase puede crear el primer admin desde `/_/`. Asígnale explícitamente `role = owner` y `active = true`. La colección `_superusers` administra la instancia y sus privilegios son independientes de los roles de la aplicación.
 
+## Equipo: reglas y `ADMIN_REFERENCES`
+
+El API permite crear integrantes a los owners activos. Cada integrante puede editar su propio perfil y cambiar su contraseña con la actual. Una actualización o baja debe conservar al menos un owner activo. Cada integrante conserva su estado activo al editar su propia cuenta. Si el registro es actor de una entrada de auditoría u otra relación declarada, el borrado responde `409` y la app ofrece desactivarlo. Un admin inactivo queda excluido del inicio de sesión.
+
+Cuando una feature agregue una relación a `admins`, añade en el mismo cambio su colección y campo a `ADMIN_REFERENCES` en `src/lib/team-guards.ts`. Por ejemplo, al crear `services.default_coach`, agrega `{ collection: "services", field: "default_coach" }`. El hook comprueba las colecciones que ya existen y conserva los registros que tengan referencias.
+
 ## Auditoría
 
 Añade el nombre de una colección a `AUDITED_COLLECTIONS` en `src/lib/audit-config.ts` y recompila. El hook registra altas, cambios y bajas confirmados. Para las operaciones CRUD de la API, toma el actor de la sesión de `admins`. Las escrituras del sistema tienen actor vacío. Las reglas dan acceso de lectura a los owners activos. Los superusuarios también pueden consultar la auditoría en el panel de PocketBase. Las escrituras están reservadas al código del servidor, incluso cuando la petición HTTP proviene de un superusuario.
 
-Mantén los nuevos campos sensibles en `SENSITIVE_FIELDS`. Los diffs también excluyen variantes de campos de contraseña, campos sensibles anidados y las marcas de tiempo automáticas del registro. Una edición sin cambios auditables no crea una fila.
+Mantén los nuevos campos sensibles en `SENSITIVE_FIELDS`. Los diffs también excluyen variantes de campos de contraseña, campos sensibles anidados y las marcas de tiempo automáticas del registro. Los cambios de contraseña se registran con la marca `credentials_changed`. Una edición sin cambios auditables no crea una fila.
 
 ## Goja y fechas
 

@@ -1,7 +1,7 @@
 # 009 - [Verificación] Documentación, verify-api/verify-app y cierre
 
 - **Prioridad:** 9
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003, 004, 005, 006, 007, 008
 - **Fase:** Fase final
 
@@ -22,9 +22,9 @@ El equipo está documentado, ambos scripts de verificación pasan en verde y la 
 
 ## Criterios de aceptación
 
-- [ ] Ambos scripts de verificación terminan en verde.
-- [ ] Los README describen cómo añadir una referencia a `admins` y cómo reutilizar `useTeam().coaches`.
-- [ ] Todas las tareas 001-008 figuran como `Completado`.
+- [x] Ambos scripts de verificación terminan en verde.
+- [x] Los README describen cómo añadir una referencia a `admins` y cómo reutilizar `useTeam().coaches`.
+- [x] Todas las tareas 001-008 figuran como `Completado`.
 
 ## Referencias
 
@@ -37,3 +37,4 @@ El equipo está documentado, ambos scripts de verificación pasan en verde y la 
 
 ## Notas de implementación
 
+Verificado con Edge, Vite y PocketBase 0.40.5 sobre bases temporales. El recorrido probó alta, permisos por rol, búsqueda y filtros, cambio de rol, foto y datos de perfil, contraseña incorrecta y reautenticación, baja con historial y auditoría. Las pruebas HTTP confirmaron los rechazos 403, la protección del último owner, una baja sin referencias y la conservación de un owner ante cambios simultáneos. verify-api.sh pasó con 26 pruebas y verificación HTTP. verify-app.sh pasó con 105 pruebas y compilación de producción.
