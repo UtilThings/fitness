@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {
   const store = {
-    record: null as { email: string; avatar?: string } | null,
+    record: null as {
+      email: string;
+      avatar?: string;
+      role?: string;
+      active?: boolean;
+    } | null,
     isValid: false,
     listeners: [] as Array<() => void>,
     onChange(cb: () => void) {
@@ -88,5 +93,54 @@ describe('useAuth', () => {
     mocks.store.record = { email: 'a@b.co' };
     mocks.store.listeners.forEach((cb) => cb());
     expect(avatarUrl.value).toBeUndefined();
+  });
+});
+
+describe('session permissions', () => {
+  beforeEach(() => mocks.store.clear());
+
+  function syncRecord(role?: string, active?: boolean, valid = true) {
+    mocks.store.record = { email: 'a@b.co', role, active };
+    mocks.store.isValid = valid;
+    mocks.store.listeners.forEach((cb) => cb());
+  }
+
+  it.each([
+    ['owner', true],
+    ['coach', false],
+    ['reception', false],
+  ])('exposes %s and its team permissions', (value, owner) => {
+    const { role, isActive, isOwner, can } = useAuth();
+    syncRecord(value, true);
+    expect(role.value).toBe(value);
+    expect(isActive.value).toBe(true);
+    expect(isOwner.value).toBe(owner);
+    expect(can('team.read')).toBe(true);
+    expect(can('team.manage')).toBe(owner);
+  });
+
+  it('denies permissions with no session, an expired token, or an invalid role', () => {
+    const { role, can } = useAuth();
+    expect(role.value).toBeNull();
+    expect(can('team.read')).toBe(false);
+    syncRecord('owner', true, false);
+    expect(can('team.manage')).toBe(false);
+    for (const value of [undefined, 'unknown']) {
+      syncRecord(value);
+      expect(role.value).toBeNull();
+      expect(can('team.read')).toBe(false);
+    }
+  });
+
+  it('logs out when a refreshed record becomes inactive', () => {
+    const { can, isActive, isAuthenticated, user } = useAuth();
+    syncRecord('owner', true);
+    expect(can('team.manage')).toBe(true);
+    syncRecord('owner', false);
+    expect(mocks.store.record).toBeNull();
+    expect(user.value).toBeNull();
+    expect(isActive.value).toBe(false);
+    expect(isAuthenticated.value).toBe(false);
+    expect(can('team.manage')).toBe(false);
   });
 });
