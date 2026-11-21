@@ -78,6 +78,24 @@ const router = createRouter({
           meta: { title: 'Dashboard' },
         },
         {
+          path: 'team',
+          name: 'team',
+          component: () => import('@/views/admin/TeamView.vue'),
+          meta: { title: 'Equipo' },
+        },
+        {
+          path: 'team/:id',
+          name: 'team-member',
+          component: () => import('@/views/admin/TeamMemberView.vue'),
+          meta: { title: 'Ficha del equipo' },
+        },
+        {
+          path: 'settings/profile',
+          name: 'profile',
+          component: () => import('@/views/admin/ProfileView.vue'),
+          meta: { title: 'Mi perfil' },
+        },
+        {
           path: 'forbidden',
           name: 'forbidden',
           component: () => import('@/views/ForbiddenView.vue'),

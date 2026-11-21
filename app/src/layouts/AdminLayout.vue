@@ -59,7 +59,11 @@ const menu = ref<InstanceType<typeof Menu> | null>(null);
 const userMenu = computed(() => [
   { label: user.value?.email ?? '', disabled: true },
   { separator: true },
-  { label: 'Ajustes', icon: 'pi pi-cog' },
+  {
+    label: 'Ajustes',
+    icon: 'pi pi-cog',
+    command: () => router.push({ name: 'profile' }),
+  },
   { separator: true },
   {
     label: 'Cerrar sesión',

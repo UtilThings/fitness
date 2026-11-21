@@ -1,7 +1,7 @@
 # 008 - [Rutas] Rutas de equipo y perfil y entradas de menú
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003, 006, 007
 - **Fase:** Fase 3
 
@@ -22,10 +22,10 @@ Las vistas de equipo y perfil son accesibles desde rutas y menú reales, sin los
 
 ## Criterios de aceptación
 
-- [ ] Sin sesión, `/team` y `/settings/profile` redirigen a `/login?redirect=...`.
-- [ ] El menú muestra «Equipo» y «Mi perfil»; el menú de usuario lleva a `/settings/profile`.
-- [ ] `admin-nav.test.ts` confirma que los items sin `placeholder` tienen ruta.
-- [ ] `bun run typecheck`, `lint`, `test`, `build` pasan.
+- [x] Sin sesión, `/team` y `/settings/profile` redirigen a `/login?redirect=...`.
+- [x] El menú muestra «Equipo» y «Mi perfil»; el menú de usuario lleva a `/settings/profile`.
+- [x] `admin-nav.test.ts` confirma que los items sin `placeholder` tienen ruta.
+- [x] `bun run typecheck`, `lint`, `test`, `build` pasan.
 
 ## Referencias
 
@@ -38,3 +38,4 @@ Las vistas de equipo y perfil son accesibles desde rutas y menú reales, sin los
 
 ## Notas de implementación
 
+Verificado en Edge con una sesión de PocketBase: redirección al login, enlaces Equipo y Mi perfil, y navegación desde Ajustes del menú de usuario.
