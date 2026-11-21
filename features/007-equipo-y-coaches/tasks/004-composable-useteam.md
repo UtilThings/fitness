@@ -1,7 +1,7 @@
 # 004 - [Composable] useTeam y generador de contraseñas
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 006 (contrato), 003
 - **Fase:** Fase 2
 
@@ -21,10 +21,10 @@ La feature 006 aporta `useCollection<T>`, `parsePbError`, `useNotify` y los tipo
 
 ## Criterios de aceptación
 
-- [ ] `generatePassword()` devuelve 12 caracteres sin ambiguos y pasa `validatePassword`.
-- [ ] `deleteOrDeactivate` ante un `409` devuelve `needsDeactivate` y no lanza.
-- [ ] `createMember` envía `passwordConfirm` igual a `password`.
-- [ ] `bun run typecheck`, `lint`, `test` pasan.
+- [x] `generatePassword()` devuelve 12 caracteres sin ambiguos y pasa `validatePassword`.
+- [x] `deleteOrDeactivate` ante un `409` devuelve `needsDeactivate` y no lanza.
+- [x] `createMember` envía `passwordConfirm` igual a `password`.
+- [x] `bun run typecheck`, `lint`, `test` pasan.
 
 ## Referencias
 
