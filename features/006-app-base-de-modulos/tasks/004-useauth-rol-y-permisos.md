@@ -1,7 +1,7 @@
 # 004 - [Composable] useAuth con rol y can()
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 2
 
@@ -22,10 +22,10 @@
 
 ## Criterios de aceptación
 
-- [ ] `can("team.manage")` es verdadero solo para owner activo.
-- [ ] Sin sesión, con rol desconocido o con `active = false`, `can()` devuelve `false`.
-- [ ] Las pruebas existentes de `useAuth` siguen en verde.
-- [ ] `bun run typecheck`, `lint`, `test` pasan.
+- [x] `can("team.manage")` es verdadero solo para owner activo.
+- [x] Sin sesión, con rol desconocido o con `active = false`, `can()` devuelve `false`.
+- [x] Las pruebas existentes de `useAuth` siguen en verde.
+- [x] `bun run typecheck`, `lint`, `test` pasan.
 
 ## Referencias
 

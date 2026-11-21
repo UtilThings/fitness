@@ -1,6 +1,6 @@
 # Especificación: Base de módulos en `app/`
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -70,7 +70,7 @@ Contrato que deja a las siguientes features: `useCollection<T>`, los componentes
 
 **006 - `useCollection`**
 - `src/lib/pb-errors.ts`: `parsePbError(error)` → `{ message, fields: Record<string, string>, status }` desde `ClientResponseError` (400 con `data`, 403, 404, 409, red caída → `status 0`).
-- `src/composables/useCollection.ts`: `useCollection<T>(name, options)` con `items`, `total`, `page`, `perPage`, `sort`, `filters` (reactivo), `loading`, `error`, `load()`, `setPage`, `setSort`, `search`, `create(data)`, `update(id, data)`, `remove(id)`. Los filtros se construyen con `pb.filter(expr, params)` (nunca concatenando); se cancelan peticiones obsoletas con `requestKey`; `create/update/remove` devuelven el registro o lanzan el error ya traducido y recargan la lista.
+- `src/composables/useCollection.ts`: `useCollection<T>(name, options)` con `items`, `total`, `page`, `perPage`, `sort`, `filters` (reactivo), `loading`, `error`, `load()`, `setPage`, `setSort`, `search`, `create(data)`, `update(id, data)`, `remove(id)`. Los filtros se construyen con `pb.filter(expr, params)` (nunca concatenando); se cancelan peticiones obsoletas con `requestKey`; `create/update` devuelven el registro y `remove` devuelve el resultado booleano del SDK. Las tres operaciones recargan la lista al completarse y lanzan el error traducido si falla la escritura.
 - Pruebas con el SDK mockeado: paginación, orden, filtro parametrizado, error 400 con campos, `remove`.
 
 **007 - Componentes compartidos**
@@ -140,7 +140,7 @@ Contrato que deja a las siguientes features: `useCollection<T>`, los componentes
 - **`useCollection` genérico y delgado** (sin caché global ni librería de estado): suficiente para listas administrativas; evita introducir Pinia o TanStack Query.
 - **Filtros siempre con `pb.filter`**: evita inyección de filtros por texto libre.
 - **`datetime.ts` con `Intl` en la app y `tz.ts` sin `Intl` en el servidor**: los navegadores tienen `Intl` fiable, goja no; ambos deben coincidir en los casos límite y se prueban con las mismas fechas.
-- **Marcadores de nav conservados con `placeholder`** para los módulos que sí existirán, de modo que cada feature solo retire el marcador; se eliminan los que no tendrán módulo (Rutinas, Suscripciones, Notificaciones).
+- **Marcadores de nav conservados con `placeholder`** para los módulos que sí existirán. Se muestran deshabilitados hasta que la feature registre la ruta y retire el marcador; se eliminan los que no tendrán módulo (Rutinas, Suscripciones, Notificaciones).
 - **403 por redirección** y no por componente inline: una sola vista y un solo punto de decisión (guard).
 
 ### Convención de código
@@ -168,13 +168,13 @@ Contrato que deja a las siguientes features: `useCollection<T>`, los componentes
 
 ## Criterios de Aceptación
 
-- [ ] `useAuth().role`, `isOwner` y `can()` reflejan el rol del admin; sin sesión o con `active = false` no hay permisos.
-- [ ] Una ruta con `meta.roles` redirige a `/forbidden` a un rol no permitido y la vista 403 se muestra dentro del layout.
-- [ ] `useCollection` lista con paginación, orden y filtro parametrizado, y traduce errores de PocketBase a mensajes y errores por campo.
-- [ ] Los componentes compartidos existen con pruebas; `Toast` y `ConfirmDialog` funcionan desde cualquier vista.
-- [ ] `formatDateTime`, `localToUtcIso` y `formatUsd`/`parseUsdToCents` pasan los casos límite (cambios de horario, centavos).
-- [ ] El menú no tiene badges ni entradas sin módulo y se filtra por rol.
-- [ ] `scripts/verify-app.sh` termina en verde y `app/README.md` documenta la base de módulos.
+- [x] `useAuth().role`, `isOwner` y `can()` reflejan el rol del admin; sin sesión o con `active = false` no hay permisos.
+- [x] Una ruta con `meta.roles` redirige a `/forbidden` a un rol no permitido y la vista 403 se muestra dentro del layout.
+- [x] `useCollection` lista con paginación, orden y filtro parametrizado, y traduce errores de PocketBase a mensajes y errores por campo.
+- [x] Los componentes compartidos existen con pruebas; `Toast` y `ConfirmDialog` funcionan desde cualquier vista.
+- [x] `formatDateTime`, `localToUtcIso` y `formatUsd`/`parseUsdToCents` pasan los casos límite (cambios de horario, centavos).
+- [x] El menú no tiene badges ni entradas sin módulo y se filtra por rol.
+- [x] `scripts/verify-app.sh` termina en verde y `app/README.md` documenta la base de módulos.
 
 ---
 

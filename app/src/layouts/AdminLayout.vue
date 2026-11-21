@@ -13,7 +13,6 @@ import SidebarHeader from 'primevue/sidebarheader';
 import SidebarLayout from 'primevue/sidebarlayout';
 import SidebarMain from 'primevue/sidebarmain';
 import SidebarMenu from 'primevue/sidebarmenu';
-import SidebarMenuBadge from 'primevue/sidebarmenubadge';
 import SidebarMenuButton from 'primevue/sidebarmenubutton';
 import SidebarMenuItem from 'primevue/sidebarmenuitem';
 import SidebarPanel from 'primevue/sidebarpanel';
@@ -24,11 +23,12 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import logo from '@/assets/jq-logo.png';
 import { useAuth } from '@/composables/useAuth';
 import { useMediaQuery } from '@/composables/useMediaQuery';
-import { adminNav } from '@/layouts/admin-nav';
+import { visibleNav } from '@/layouts/admin-nav';
 
 const route = useRoute();
 const router = useRouter();
-const { user, avatarUrl, logout } = useAuth();
+const { user, role, avatarUrl, logout } = useAuth();
+const nav = computed(() => visibleNav(role.value));
 const avatarFailed = ref(false);
 watch(avatarUrl, () => (avatarFailed.value = false));
 
@@ -60,7 +60,6 @@ const userMenu = computed(() => [
   { label: user.value?.email ?? '', disabled: true },
   { separator: true },
   { label: 'Ajustes', icon: 'pi pi-cog' },
-  { label: 'Notificaciones', icon: 'pi pi-bell' },
   { separator: true },
   {
     label: 'Cerrar sesión',
@@ -92,22 +91,26 @@ const userMenu = computed(() => [
             </div>
           </SidebarHeader>
           <SidebarContent>
-            <SidebarGroup v-for="group in adminNav" :key="group.label">
+            <SidebarGroup v-for="group in nav" :key="group.label">
               <SidebarGroupLabel>{{ group.label }}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem v-for="item in group.items" :key="item.to">
                     <SidebarMenuButton
-                      :as="RouterLink"
-                      :to="item.to"
-                      :is-active="isActive(item.to)"
+                      :as="item.placeholder ? 'button' : RouterLink"
+                      :to="item.placeholder ? undefined : item.to"
+                      :disabled="item.placeholder || undefined"
+                      :title="item.placeholder ? 'Próximamente' : undefined"
+                      :pt="
+                        item.placeholder
+                          ? { root: { class: 'cursor-not-allowed opacity-50' } }
+                          : undefined
+                      "
+                      :is-active="!item.placeholder && isActive(item.to)"
                     >
                       <i :class="item.icon" aria-hidden="true" />
                       <span>{{ item.label }}</span>
                     </SidebarMenuButton>
-                    <SidebarMenuBadge v-if="item.badge">
-                      {{ item.badge }}
-                    </SidebarMenuBadge>
                   </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>

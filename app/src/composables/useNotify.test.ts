@@ -1,0 +1,26 @@
+import { expect, it, vi } from 'vitest';
+import { useNotify } from './useNotify';
+
+const { add } = vi.hoisted(() => ({ add: vi.fn() }));
+vi.mock('primevue/usetoast', () => ({ useToast: () => ({ add }) }));
+
+it('configures each severity, with Spanish titles and an optional override', () => {
+  const notify = useNotify();
+  notify.success('Guardado');
+  notify.error('Falló');
+  notify.info('Pendiente');
+  notify.info('En espera', 'Reserva');
+  expect(add.mock.calls).toEqual([
+    [{ severity: 'success', summary: 'Éxito', detail: 'Guardado', life: 3000 }],
+    [{ severity: 'error', summary: 'Error', detail: 'Falló', life: 6000 }],
+    [
+      {
+        severity: 'info',
+        summary: 'Información',
+        detail: 'Pendiente',
+        life: 3000,
+      },
+    ],
+    [{ severity: 'info', summary: 'Reserva', detail: 'En espera', life: 3000 }],
+  ]);
+});

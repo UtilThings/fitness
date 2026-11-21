@@ -1,7 +1,7 @@
 # 001 - [Lib] Tipos TypeScript de colecciones
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 005 (contrato)
 - **Fase:** Fase 1
 
@@ -21,8 +21,8 @@ Existe `src/types/pb.ts` con los tipos base de PocketBase y de `admins` y `audit
 
 ## Criterios de aceptación
 
-- [ ] `bun run typecheck` y `bun run test` pasan.
-- [ ] Los tipos se importan con `@/types/pb` sin errores.
+- [x] `bun run typecheck` y `bun run test` pasan.
+- [x] Los tipos se importan con `@/types/pb` sin errores.
 
 ## Referencias
 

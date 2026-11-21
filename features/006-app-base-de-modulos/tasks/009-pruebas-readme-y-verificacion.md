@@ -1,7 +1,7 @@
 # 009 - [Verificación] Pruebas, README y verify-app.sh
 
 - **Prioridad:** 9
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003, 004, 005, 006, 007, 008
 - **Fase:** Fase 4
 
@@ -22,9 +22,9 @@ La base de módulos está documentada, probada de punta a punta y la feature que
 
 ## Criterios de aceptación
 
-- [ ] `scripts/verify-app.sh` termina en verde.
-- [ ] El README explica cómo añadir un módulo nuevo en menos de una página.
-- [ ] Todas las tareas 001-008 figuran como `Completado`.
+- [x] `scripts/verify-app.sh` termina en verde.
+- [x] El README explica cómo añadir un módulo nuevo en menos de una página.
+- [x] Todas las tareas 001-008 figuran como `Completado`.
 
 ## Referencias
 
