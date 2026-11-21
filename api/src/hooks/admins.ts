@@ -9,22 +9,23 @@ onRecordCreateRequest((e) => {
 }, "admins");
 
 onRecordCreate((e) => {
-  if (!e.record.getString("role")) {
+  if (e.record && !e.record.getString("role")) {
     e.record.set("role", "coach");
   }
   return e.next();
 }, "admins");
 
 routerUse((request) => {
-  const collection = request.request.pathValue("collection").toLowerCase();
-  if (request.auth || request.request.method !== "POST" || !collection
-    || !request.request.url?.path.endsWith("/records")) {
+  const http = request.request;
+  const collection = http?.pathValue("collection");
+  if (request.auth || http?.method !== "POST" || !collection
+    || http.url?.path !== `/api/collections/${collection}/records`) {
     return request.next();
   }
 
   // PocketBase otherwise returns 400 for a failed nonempty create rule.
   const admins = request.app.findCachedCollectionByNameOrId("admins");
-  if (String(admins.createRule) && (collection === admins.name || collection === admins.id)) {
+  if (String(admins.createRule) && [admins.name, admins.id].includes(collection.toLowerCase())) {
     throw new ForbiddenError("Only owners can create admins.");
   }
   return request.next();

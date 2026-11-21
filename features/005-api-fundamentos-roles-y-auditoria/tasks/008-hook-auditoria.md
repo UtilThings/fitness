@@ -1,7 +1,7 @@
 # 008 - [Hook] Hook genérico de auditoría
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 007
 - **Fase:** Fase 2
 
@@ -23,11 +23,11 @@ En goja no hay scope compartido: dentro de cada callback hay que hacer `require(
 
 ## Criterios de aceptación
 
-- [ ] Crear, editar y borrar un admin genera tres filas con `action` correcto, `actor` del owner que operó y `diff` sin campos sensibles.
-- [ ] Una edición que no cambia nada no genera fila.
-- [ ] Operar sobre `audit_logs` no genera filas (sin recursión).
-- [ ] Si `audit_logs` fallara al guardar, la operación original igualmente termina bien y queda un error en los logs.
-- [ ] `bun run build:ts` y `bun test` pasan.
+- [x] Crear, editar y borrar un admin genera tres filas con `action` correcto, `actor` del owner que operó y `diff` sin campos sensibles.
+- [x] Una edición que no cambia nada no genera fila.
+- [x] Operar sobre `audit_logs` no genera filas (sin recursión).
+- [x] Si `audit_logs` fallara al guardar, la operación original igualmente termina bien y queda un error en los logs.
+- [x] `bun run build:ts` y `bun test` pasan.
 
 ## Referencias
 
@@ -42,3 +42,5 @@ En goja no hay scope compartido: dentro de cada callback hay que hacer `require(
 
 ## Notas de implementación
 
+
+Verificado mediante la API de PocketBase 0.40.5: alta, edición y baja generaron tres filas con el ID del owner y los diffs esperados. Una edición idéntica no generó fila. El CRUD directo de audit_logs no generó recursión. Un hook temporal forzó un error de escritura y se comprobó tanto la persistencia del admin como el mensaje en el log. Los eventos de modelo solo tienen record y app, por lo que los hooks de petición copian el ID del actor a un campo interno del registro.
