@@ -1,8 +1,11 @@
+import type { Role } from '@/types/pb';
+
 export interface NavItem {
   label: string;
   icon: string;
   to: string;
-  badge?: string;
+  roles?: Role[];
+  placeholder?: boolean;
 }
 
 export interface NavGroup {
@@ -10,35 +13,93 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-/** Navegación del panel de administración (marcadores de posición). */
+/** Cada módulo retira su marcador al registrar la ruta. */
 export const adminNav: NavGroup[] = [
   {
     label: 'Análisis',
     items: [
       { label: 'Dashboard', icon: 'pi pi-chart-bar', to: '/' },
-      { label: 'Reportes', icon: 'pi pi-file', to: '/reports' },
+      {
+        label: 'Reportes',
+        icon: 'pi pi-file',
+        to: '/reports',
+        placeholder: true,
+      },
     ],
   },
   {
     label: 'Operaciones',
     items: [
-      { label: 'Clientes', icon: 'pi pi-users', to: '/clients', badge: '12' },
-      { label: 'Clases', icon: 'pi pi-calendar', to: '/classes', badge: '70' },
-      { label: 'Rutinas', icon: 'pi pi-bolt', to: '/routines' },
+      {
+        label: 'Clientes',
+        icon: 'pi pi-users',
+        to: '/clients',
+        placeholder: true,
+      },
+      {
+        label: 'Clases',
+        icon: 'pi pi-calendar',
+        to: '/classes',
+        placeholder: true,
+      },
+      {
+        label: 'Reservas',
+        icon: 'pi pi-bookmark',
+        to: '/bookings',
+        placeholder: true,
+      },
+    ],
+  },
+  {
+    label: 'Catálogo',
+    items: [
+      {
+        label: 'Servicios',
+        icon: 'pi pi-list',
+        to: '/services',
+        placeholder: true,
+      },
+      { label: 'Planes', icon: 'pi pi-tags', to: '/plans', placeholder: true },
     ],
   },
   {
     label: 'Ajustes',
     items: [
-      { label: 'Equipo', icon: 'pi pi-id-card', to: '/team' },
-      { label: 'Planes', icon: 'pi pi-tags', to: '/plans' },
+      {
+        label: 'Equipo',
+        icon: 'pi pi-id-card',
+        to: '/team',
+        placeholder: true,
+      },
     ],
   },
   {
     label: 'Facturación',
     items: [
-      { label: 'Pagos', icon: 'pi pi-credit-card', to: '/payments' },
-      { label: 'Suscripciones', icon: 'pi pi-star', to: '/subscriptions' },
+      {
+        label: 'Membresías',
+        icon: 'pi pi-ticket',
+        to: '/memberships',
+        placeholder: true,
+      },
+      {
+        label: 'Pagos',
+        icon: 'pi pi-credit-card',
+        to: '/payments',
+        roles: ['owner', 'reception'],
+        placeholder: true,
+      },
     ],
   },
 ];
+
+export function visibleNav(role: Role | null): NavGroup[] {
+  return adminNav
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) => !item.roles || (role !== null && item.roles.includes(role)),
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
+}
