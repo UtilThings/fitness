@@ -34,6 +34,8 @@ function writeAuditLog(e: core.RecordEvent) {
         collection,
         recordId: record.id,
         actorId: record.getString("@pbInternalAuditActor"),
+        credentialsChanged: collection === "admins" && action === "update"
+          && record.getString("password:hash") !== before.getString("password:hash"),
         before: action === "create" ? undefined : before.publicExport(),
         after: action === "delete" ? undefined : record.publicExport(),
       });

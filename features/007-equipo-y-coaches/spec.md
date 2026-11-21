@@ -1,6 +1,6 @@
 # Especificación: Equipo y coaches
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -205,14 +205,14 @@ Contrato que deja a las siguientes features: `useTeam().coaches` (admins activos
 
 ## Criterios de Aceptación
 
-- [ ] Un owner da de alta un admin con rol y contraseña inicial desde `/team`; coach y recepción no ven el botón y la API rechaza el intento (`403`).
-- [ ] El último owner activo no puede ser desactivado, degradado ni borrado; nadie puede desactivarse a sí mismo.
-- [ ] Borrar un admin con registros asociados devuelve `409` y la UI ofrece desactivarlo; un admin desactivado no inicia sesión.
-- [ ] La ficha `/team/:id` muestra datos, avatar, rol, estado, biografía y los permisos del rol; incluye el espacio reservado para el horario.
-- [ ] `/settings/profile` permite cambiar nombre, avatar, teléfono y contraseña (con contraseña actual) y la sesión continúa.
-- [ ] El menú muestra «Equipo» y «Mi perfil» reales y «Ajustes» del menú de usuario lleva al perfil.
-- [ ] Las altas, cambios y bajas de admins quedan en `audit_logs` sin contraseñas.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Un owner da de alta un admin con rol y contraseña inicial desde `/team`; coach y recepción no ven el botón y la API rechaza el intento (`403`).
+- [x] El último owner activo no puede ser desactivado, degradado ni borrado; nadie puede desactivarse a sí mismo.
+- [x] Borrar un admin con registros asociados devuelve `409` y la UI ofrece desactivarlo; un admin desactivado no inicia sesión.
+- [x] La ficha `/team/:id` muestra datos, avatar, rol, estado, biografía y los permisos del rol; incluye el espacio reservado para el horario.
+- [x] `/settings/profile` permite cambiar nombre, avatar, teléfono y contraseña (con contraseña actual) y la sesión continúa.
+- [x] El menú muestra «Equipo» y «Mi perfil» reales y «Ajustes» del menú de usuario lleva al perfil.
+- [x] Las altas, cambios y bajas de admins quedan en `audit_logs` sin contraseñas.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
 
 ---
 

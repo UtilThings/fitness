@@ -1,7 +1,7 @@
 # 002 - [Lib] Lógica pura de reglas de equipo
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 005 (contrato)
 - **Fase:** Fase 1
 
@@ -20,9 +20,9 @@ La feature 005 deja `api/src/lib/` con lógica pura y pruebas `bun test`. Las re
 
 ## Criterios de aceptación
 
-- [ ] `bun test` pasa con todos los casos.
-- [ ] Las funciones no usan globals de PocketBase.
-- [ ] `bun run build:ts` genera `pb_hooks/lib/team-guards.js`.
+- [x] `bun test` pasa con todos los casos.
+- [x] Las funciones no usan globals de PocketBase.
+- [x] `bun run build:ts` genera `pb_hooks/lib/team-guards.js`.
 
 ## Referencias
 

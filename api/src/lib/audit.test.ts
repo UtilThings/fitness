@@ -44,6 +44,17 @@ test("redacts credentials recursively and keeps them out of entries and summarie
   expect(buildEntry({ ...target, action: "update", before, after: { password: "new" } })).toBeNull();
 });
 
+test("registra cambios de credenciales con una marca sin incluir valores sensibles", () => {
+  const entry = buildEntry({
+    ...target,
+    action: "update",
+    credentialsChanged: true,
+    before: { password: "previous", tokenKey: "old" },
+    after: { password: "new", tokenKey: "current" },
+  });
+  expect(entry?.diff).toEqual({ credentials_changed: { to: true } });
+});
+
 test("uses only to for create and only from for delete", () => {
   const record = { name: "Ana" };
   const create = buildEntry({ ...target, action: "create", actorId: "owner-1", before: record, after: record });

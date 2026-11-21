@@ -44,6 +44,35 @@ describe('guard', () => {
     expect(router.currentRoute.value.query.redirect).toBe('/');
   });
 
+  it.each(['/team', '/team/coach', '/settings/profile'])(
+    'protege %s y conserva la ruta al iniciar sesión',
+    async (path) => {
+      await router.push(path);
+      expect(router.currentRoute.value.name).toBe('login');
+      expect(router.currentRoute.value.query.redirect).toBe(path);
+    },
+  );
+
+  it.each(['owner', 'coach', 'reception'] as const)(
+    'permite consultar equipo, ficha y perfil con el rol %s',
+    async (role) => {
+      state.valid = true;
+      state.role = role;
+      for (const [path, name, title] of [
+        ['/team', 'team', 'Equipo'],
+        ['/team/coach', 'team-member', 'Ficha del equipo'],
+        ['/settings/profile', 'profile', 'Mi perfil'],
+      ] as const) {
+        await router.push(path);
+        expect(router.currentRoute.value.name).toBe(name);
+        expect(router.currentRoute.value.meta.title).toBe(title);
+        expect(router.currentRoute.value.matched[0].components?.default).toBe(
+          AdminLayout,
+        );
+      }
+    },
+  );
+
   it('con sesión permite / y expulsa de /login', async () => {
     state.valid = true;
     await router.push('/');

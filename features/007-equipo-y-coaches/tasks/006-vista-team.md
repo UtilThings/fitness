@@ -1,7 +1,7 @@
 # 006 - [Vista] Listado de equipo (TeamView)
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, 005
 - **Fase:** Fase 3
 
@@ -23,11 +23,11 @@ Se usan `PageHeader`, `DataToolbar`, `StatusTag`, `EmptyState` y `useConfirmDele
 
 ## Criterios de aceptación
 
-- [ ] Un owner ve «Nuevo integrante» y las acciones; un coach no.
-- [ ] Buscar por nombre o correo y filtrar por rol y estado actualiza la lista.
-- [ ] Eliminar un admin con registros ofrece desactivar y, al aceptar, queda inactivo.
-- [ ] Los errores de la API (por ejemplo último owner) se muestran como aviso legible.
-- [ ] `bun run typecheck`, `lint`, `test`, `build` pasan.
+- [x] Un owner ve «Nuevo integrante» y las acciones; un coach no.
+- [x] Buscar por nombre o correo y filtrar por rol y estado actualiza la lista.
+- [x] Eliminar un admin con registros ofrece desactivar y, al aceptar, queda inactivo.
+- [x] Los errores de la API (por ejemplo último owner) se muestran como aviso legible.
+- [x] `bun run typecheck`, `lint`, `test`, `build` pasan.
 
 ## Referencias
 

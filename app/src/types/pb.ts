@@ -21,6 +21,8 @@ export interface Admin extends BaseRecord {
   email: string;
   role: Role;
   active: boolean;
+  phone: string;
+  bio: string;
 }
 
 export interface AuditLog extends BaseRecord {
