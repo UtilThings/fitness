@@ -17,7 +17,7 @@ La SPA dispone de una única instancia del SDK de PocketBase y de un composable 
 
 - Instalar `pocketbase`.
 - Crear `app/src/lib/pocketbase.ts`: `export const pb = new PocketBase(env.pocketbaseUrl)`.
-- Crear `app/src/composables/useAuth.ts`: estado de módulo `user` (`shallowRef` del registro o `null`) inicializado desde `pb.authStore.record` y sincronizado con `pb.authStore.onChange`; `isAuthenticated` (`computed` sobre `pb.authStore.isValid`); `login(email, password)` con `pb.collection('users').authWithPassword`; `logout()` con `pb.authStore.clear()`.
+- Crear `app/src/composables/useAuth.ts`: estado de módulo `user` (`shallowRef` del registro o `null`) inicializado desde `pb.authStore.record` y sincronizado con `pb.authStore.onChange`; `isAuthenticated` (`computed` sobre `pb.authStore.isValid`); `login(email, password)` con `pb.collection('admins').authWithPassword`; `logout()` con `pb.authStore.clear()`.
 - Los errores de `login` se propagan al llamador (la vista decide el mensaje).
 
 ## Criterios de aceptación

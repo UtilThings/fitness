@@ -11,7 +11,7 @@ El usuario puede iniciar sesión y solicitar un enlace de recuperación desde pa
 
 ## Contexto
 
-`LoginView` ya funciona (feature 003) pero lleva su propia estructura de página. PocketBase expone `pb.collection('users').requestPasswordReset(email)` (204 exista o no el correo). `useAuth` vive en `src/composables/useAuth.ts`.
+`LoginView` ya funciona (feature 003) pero lleva su propia estructura de página. PocketBase expone `pb.collection('admins').requestPasswordReset(email)` (204 exista o no el correo). `useAuth` vive en `src/composables/useAuth.ts`.
 
 ## Alcance
 

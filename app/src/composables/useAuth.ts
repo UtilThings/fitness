@@ -14,11 +14,11 @@ export function useAuth() {
   const isAuthenticated = computed(() => valid.value);
 
   async function login(email: string, password: string) {
-    await pb.collection('users').authWithPassword(email, password);
+    await pb.collection('admins').authWithPassword(email, password);
   }
 
   async function requestPasswordReset(email: string) {
-    await pb.collection('users').requestPasswordReset(email);
+    await pb.collection('admins').requestPasswordReset(email);
   }
 
   function logout() {

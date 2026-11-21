@@ -56,7 +56,7 @@ Contrato que deja a las siguientes features: rutas de auth como hijas de `AuthLa
 **004 - Vistas de auth**
 - `LoginView` adaptada al layout (etiqueta «Correo», enlace «¿Olvidaste tu contraseña?»).
 - `ForgotPasswordView`: campo de correo, botón «Enviar enlace» (`:loading`), enlace «Volver a iniciar sesión». Tras enviar muestra siempre el mismo mensaje de éxito, exista o no el correo.
-- `useAuth.requestPasswordReset(email)` → `pb.collection('users').requestPasswordReset(email)`.
+- `useAuth.requestPasswordReset(email)` → `pb.collection('admins').requestPasswordReset(email)`.
 
 ### Fase 3: Administración (Tareas 005-006)
 

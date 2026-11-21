@@ -121,7 +121,7 @@ Contrato que deja a las siguientes features: estructura de carpetas, alias `@/`,
 
 ### Flujo 2: Inicio y cierre de sesión
 ```
-1. Usuario abre `/login`, introduce correo y contraseña → `pb.collection('users').authWithPassword`
+1. Usuario abre `/login`, introduce correo y contraseña → `pb.collection('admins').authWithPassword`
 2. `pb.authStore` guarda el token (localStorage) y `useAuth` actualiza `isAuthenticated`
 3. El router redirige a la ruta indicada en `?redirect` o a `/`
 4. "Cerrar sesión" ejecuta `pb.authStore.clear()` → el guard devuelve a `/login`
