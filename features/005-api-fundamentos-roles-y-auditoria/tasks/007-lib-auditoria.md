@@ -1,7 +1,7 @@
 # 007 - [Lib] Lógica pura de auditoría y configuración
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003
 - **Fase:** Fase 2
 
@@ -21,9 +21,9 @@ Contrato: cada feature de módulo añade su colección a `api/src/lib/audit-conf
 
 ## Criterios de aceptación
 
-- [ ] `bun test` pasa.
-- [ ] `buildEntry` nunca incluye `password`, `passwordHash` ni `tokenKey` en `diff` ni `summary`.
-- [ ] Las funciones no usan globals de PocketBase.
+- [x] `bun test` pasa.
+- [x] `buildEntry` nunca incluye `password`, `passwordHash` ni `tokenKey` en `diff` ni `summary`.
+- [x] Las funciones no usan globals de PocketBase.
 
 ## Referencias
 
@@ -37,3 +37,5 @@ Contrato: cada feature de módulo añade su colección a `api/src/lib/audit-conf
 
 ## Notas de implementación
 
+
+Pasaron las 18 pruebas acumuladas. La redacción cubre campos sensibles anidados y variantes de nombres de contraseña. La comparación omite timestamps automáticos y cambios exclusivos en el orden de las claves.

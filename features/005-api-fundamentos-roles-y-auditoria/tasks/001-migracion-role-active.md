@@ -1,7 +1,7 @@
 # 001 - [Migración] Campos role y active en admins con valores por defecto
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 004 (contrato)
 - **Fase:** Fase 1
 
@@ -22,10 +22,10 @@ La colección `admins` tiene `role` y `active`, los admins existentes son `owner
 
 ## Criterios de aceptación
 
-- [ ] Con una base que ya tiene un admin, `./pb serve` aplica la migración y el admin queda con `role = owner` y `active = true`.
-- [ ] Crear un admin sin `role` desde `/_/` guarda `coach`; con `active: false` explícito se respeta `false`.
-- [ ] `down` deja la colección como estaba.
-- [ ] `bun run build:ts` genera `pb_hooks/admins.pb.js` sin errores.
+- [x] Con una base que ya tiene un admin, `./pb serve` aplica la migración y el admin queda con `role = owner` y `active = true`.
+- [x] Crear un admin sin `role` desde `/_/` guarda `coach`; con `active: false` explícito se respeta `false`.
+- [x] `down` deja la colección como estaba.
+- [x] `bun run build:ts` genera `pb_hooks/admins.pb.js` sin errores.
 
 ## Referencias
 
@@ -41,3 +41,5 @@ La colección `admins` tiene `role` y `active`, los admins existentes son `owner
 
 ## Notas de implementación
 
+
+Verificado con PocketBase 0.40.5 en una base temporal: `serve` migró una cuenta existente, las altas por la API del panel aplicaron los valores por defecto y conservaron `active: false`, y `migrate down 1` retiró los dos campos. La presencia de `active` se comprueba en el hook de petición porque el evento de modelo carece de cuerpo HTTP.

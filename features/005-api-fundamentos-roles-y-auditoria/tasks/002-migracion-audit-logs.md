@@ -1,7 +1,7 @@
 # 002 - [Migración] Colección audit_logs
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 004 (contrato)
 - **Fase:** Fase 1
 
@@ -22,9 +22,9 @@ No existe ninguna colección de auditoría. `admins` ya existe, por lo que la re
 
 ## Criterios de aceptación
 
-- [ ] La colección aparece en `/_/` con los campos e índices indicados.
-- [ ] Un owner lista `audit_logs` por API; un coach recibe lista vacía o `403`; nadie crea registros por API (`403`).
-- [ ] `down` elimina la colección sin error.
+- [x] La colección aparece en `/_/` con los campos e índices indicados.
+- [x] Un owner lista `audit_logs` por API; un coach recibe lista vacía o `403`; nadie crea registros por API (`403`).
+- [x] `down` elimina la colección sin error.
 
 ## Referencias
 
@@ -38,3 +38,5 @@ No existe ninguna colección de auditoría. `admins` ya existe, por lo que la re
 
 ## Notas de implementación
 
+
+Verificado con PocketBase 0.40.5 en una base temporal: esquema del panel, índices en SQLite, lectura de una fila por owner, denegación al coach, escrituras rechazadas a usuarios de la aplicación y reversión de la colección.

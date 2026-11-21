@@ -1,6 +1,6 @@
 # Especificación: Fundamentos de API: roles, reglas y auditoría
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -204,14 +204,14 @@ Contrato que deja a las siguientes features: reglas `RULE_STAFF`/`RULE_OWNER`, r
 
 ## Criterios de Aceptación
 
-- [ ] Los admins existentes quedan con `role = owner` y `active = true`; uno nuevo sin `role` recibe `coach`.
-- [ ] El alta anónima en `admins` devuelve `403`; un coach no puede crear admins, cambiar su `role`/`active` ni borrar a otros; nadie puede borrarse a sí mismo.
-- [ ] Un admin con `active = false` no puede iniciar sesión.
-- [ ] `audit_logs` solo la leen owners; no se puede escribir desde la API.
-- [ ] Crear, editar y borrar un admin genera entradas en `audit_logs` con `actor` y `diff` sin campos sensibles.
-- [ ] `tz.ts` convierte correctamente en los dos cambios de horario de 2026 y 2027.
-- [ ] `users.pb.js` y `utils` ya no existen; `bun run build:ts` y `bun test` pasan.
-- [ ] `scripts/verify-api.sh` y `api/README.md` existen y el script termina en verde.
+- [x] Los admins existentes quedan con `role = owner` y `active = true`; uno nuevo sin `role` recibe `coach`.
+- [x] El alta anónima en `admins` devuelve `403`; un coach no puede crear admins, cambiar su `role`/`active` ni borrar a otros; nadie puede borrarse a sí mismo.
+- [x] Un admin con `active = false` no puede iniciar sesión.
+- [x] `audit_logs` solo la leen owners; no se puede escribir desde la API.
+- [x] Crear, editar y borrar un admin genera entradas en `audit_logs` con `actor` y `diff` sin campos sensibles.
+- [x] `tz.ts` convierte correctamente en los dos cambios de horario de 2026 y 2027.
+- [x] `users.pb.js` y `utils` ya no existen; `bun run build:ts` y `bun test` pasan.
+- [x] `scripts/verify-api.sh` y `api/README.md` existen y el script termina en verde.
 
 ---
 
