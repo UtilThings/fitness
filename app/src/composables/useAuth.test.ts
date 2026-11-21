@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {
   const store = {
-    record: null as { email: string } | null,
+    record: null as { email: string; avatar?: string } | null,
     isValid: false,
     listeners: [] as Array<() => void>,
     onChange(cb: () => void) {
@@ -22,6 +22,10 @@ const mocks = vi.hoisted(() => {
 vi.mock('@/lib/pocketbase', () => ({
   pb: {
     authStore: mocks.store,
+    files: {
+      getURL: (_r: unknown, f: string, o: { thumb: string }) =>
+        `http://pb/files/${f}?thumb=${o.thumb}`,
+    },
     collection: () => ({
       authWithPassword: mocks.authWithPassword,
       requestPasswordReset: mocks.requestPasswordReset,
@@ -73,5 +77,16 @@ describe('useAuth', () => {
     expect(mocks.requestPasswordReset).toHaveBeenCalledWith('a@b.co');
     mocks.requestPasswordReset.mockRejectedValue(new Error('red'));
     await expect(requestPasswordReset('a@b.co')).rejects.toThrow('red');
+  });
+
+  it('avatarUrl usa el campo avatar del usuario', () => {
+    mocks.store.record = { email: 'a@b.co', avatar: 'foto.png' };
+    mocks.store.isValid = true;
+    mocks.store.listeners.forEach((cb) => cb());
+    const { avatarUrl } = useAuth();
+    expect(avatarUrl.value).toBe('http://pb/files/foto.png?thumb=100x100');
+    mocks.store.record = { email: 'a@b.co' };
+    mocks.store.listeners.forEach((cb) => cb());
+    expect(avatarUrl.value).toBeUndefined();
   });
 });

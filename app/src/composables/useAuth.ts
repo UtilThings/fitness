@@ -13,6 +13,15 @@ pb.authStore.onChange(() => {
 export function useAuth() {
   const isAuthenticated = computed(() => valid.value);
 
+  /** URL del avatar del usuario (campo `avatar` de `users`) o `undefined` si no tiene. */
+  const avatarUrl = computed(() => {
+    const record = user.value;
+    const file = record?.avatar;
+    return record && typeof file === 'string' && file
+      ? pb.files.getURL(record, file, { thumb: '100x100' })
+      : undefined;
+  });
+
   async function login(email: string, password: string) {
     await pb.collection('admins').authWithPassword(email, password);
   }
@@ -25,5 +34,12 @@ export function useAuth() {
     pb.authStore.clear();
   }
 
-  return { user, isAuthenticated, login, logout, requestPasswordReset };
+  return {
+    user,
+    isAuthenticated,
+    avatarUrl,
+    login,
+    logout,
+    requestPasswordReset,
+  };
 }

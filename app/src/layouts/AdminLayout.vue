@@ -28,7 +28,9 @@ import { adminNav } from '@/layouts/admin-nav';
 
 const route = useRoute();
 const router = useRouter();
-const { user, logout } = useAuth();
+const { user, avatarUrl, logout } = useAuth();
+const avatarFailed = ref(false);
+watch(avatarUrl, () => (avatarFailed.value = false));
 
 const isMobile = useMediaQuery('(max-width: 767px)');
 const open = ref(!isMobile.value);
@@ -119,7 +121,19 @@ const userMenu = computed(() => [
               aria-controls="user-menu"
               @click="menu?.toggle($event)"
             >
-              <Avatar :label="initials" shape="circle" class="shrink-0" />
+              <Avatar
+                v-if="avatarUrl && !avatarFailed"
+                :image="avatarUrl"
+                shape="circle"
+                class="shrink-0"
+                @error="avatarFailed = true"
+              />
+              <Avatar
+                v-else
+                :label="initials"
+                shape="circle"
+                class="shrink-0"
+              />
               <span
                 class="min-w-0 flex-1 truncate text-sm in-data-[collapsible=icon]:hidden"
               >
