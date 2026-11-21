@@ -1,7 +1,7 @@
 # 003 - [Hook] Protección de admins en actualización y borrado
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002
 - **Fase:** Fase 1
 
@@ -22,11 +22,11 @@ La API rechaza dejar al equipo sin owner, la auto-desactivación y el borrado de
 
 ## Criterios de aceptación
 
-- [ ] Desactivar o degradar al único owner devuelve `400` con el mensaje esperado.
-- [ ] Un owner no puede desactivarse a sí mismo (`400`); desactivar a otro owner cuando hay otro activo funciona.
-- [ ] Borrar un admin con filas en `audit_logs` devuelve `409`; uno sin referencias se borra.
-- [ ] Un PATCH que solo cambia `name` no se ve afectado.
-- [ ] `bun run build:ts` y `bun test` pasan.
+- [x] Desactivar o degradar al único owner devuelve `400` con el mensaje esperado.
+- [x] Un owner no puede desactivarse a sí mismo (`400`); desactivar a otro owner cuando hay otro activo funciona.
+- [x] Borrar un admin con filas en `audit_logs` devuelve `409`; uno sin referencias se borra.
+- [x] Un PATCH que solo cambia `name` no se ve afectado.
+- [x] `bun run build:ts` y `bun test` pasan.
 
 ## Referencias
 
@@ -41,3 +41,4 @@ La API rechaza dejar al equipo sin owner, la auto-desactivación y el borrado de
 
 ## Notas de implementación
 
+Verificado por HTTP con PocketBase 0.40.5: el JSVM expone los constructores y las consultas requeridas. Rechaza desactivar, degradar o borrar al último owner y la auto-desactivación, permite editar el nombre y desactivar a otro owner, y distingue 409 con auditoría de 204 sin referencias. Dos desactivaciones simultáneas de owners conservan uno activo. El cambio de contraseña exige la actual, invalida el token anterior y permite reautenticar con la nueva.
