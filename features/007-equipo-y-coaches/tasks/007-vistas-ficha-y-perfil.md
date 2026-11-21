@@ -1,7 +1,7 @@
 # 007 - [Vista] Ficha del miembro y perfil propio
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, 005
 - **Fase:** Fase 3
 
@@ -21,10 +21,10 @@ Existe la ficha de cada integrante con sus permisos y el perfil propio donde cad
 
 ## Criterios de aceptación
 
-- [ ] La ficha muestra datos y permisos del rol y el bloque reservado para 009.
-- [ ] Solo el owner ve «Editar» en la ficha ajena; el perfil propio se edita sin enviar `role` ni `active`.
-- [ ] Cambiar la contraseña con la actual correcta mantiene la sesión; con la actual incorrecta muestra el error en el campo.
-- [ ] `bun run typecheck`, `lint`, `test`, `build` pasan.
+- [x] La ficha muestra datos y permisos del rol y el bloque reservado para 009.
+- [x] Solo el owner ve «Editar» en la ficha ajena; el perfil propio se edita sin enviar `role` ni `active`.
+- [x] Cambiar la contraseña con la actual correcta mantiene la sesión; con la actual incorrecta muestra el error en el campo.
+- [x] `bun run typecheck`, `lint`, `test`, `build` pasan.
 
 ## Referencias
 

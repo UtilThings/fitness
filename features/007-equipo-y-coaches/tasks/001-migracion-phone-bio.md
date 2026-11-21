@@ -1,7 +1,7 @@
 # 001 - [Migración] Campos phone y bio en admins
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 005 (contrato)
 - **Fase:** Fase 1
 
@@ -21,9 +21,9 @@ Tras la feature 005 la colección `admins` tiene `role` y `active` y reglas cerr
 
 ## Criterios de aceptación
 
-- [ ] `./pb serve` aplica la migración sin errores y `/_/` muestra ambos campos en `admins`.
-- [ ] Un PATCH propio con `phone` y `bio` válidos responde `200`; un teléfono con letras responde `400`.
-- [ ] `down` elimina los campos sin afectar al resto.
+- [x] `./pb serve` aplica la migración sin errores y `/_/` muestra ambos campos en `admins`.
+- [x] Un PATCH propio con `phone` y `bio` válidos responde `200`; un teléfono con letras responde `400`.
+- [x] `down` elimina los campos sin afectar al resto.
 
 ## Referencias
 
@@ -36,3 +36,4 @@ Tras la feature 005 la colección `admins` tiene `role` y `active` y reglas cerr
 
 ## Notas de implementación
 
+Verificado en PocketBase 0.40.5 con una base temporal: arranque, esquema del panel administrativo, PATCH válido e inválido y reversión con conservación del registro.

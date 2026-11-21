@@ -69,8 +69,8 @@ export const adminNav: NavGroup[] = [
         label: 'Equipo',
         icon: 'pi pi-id-card',
         to: '/team',
-        placeholder: true,
       },
+      { label: 'Mi perfil', icon: 'pi pi-user', to: '/settings/profile' },
     ],
   },
   {

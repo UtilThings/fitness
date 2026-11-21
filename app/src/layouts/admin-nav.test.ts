@@ -12,7 +12,7 @@ describe('adminNav', () => {
       ['Análisis', ['/', '/reports']],
       ['Operaciones', ['/clients', '/classes', '/bookings']],
       ['Catálogo', ['/services', '/plans']],
-      ['Ajustes', ['/team']],
+      ['Ajustes', ['/team', '/settings/profile']],
       ['Facturación', ['/memberships', '/payments']],
     ]);
     expect(items.every((item) => !('badge' in item))).toBe(true);
@@ -27,7 +27,9 @@ describe('adminNav', () => {
   it('solo habilita entradas que corresponden a rutas registradas', () => {
     const paths = router.getRoutes().map(({ path }) => path);
     const enabled = items.filter(({ placeholder }) => !placeholder);
-    expect(enabled.some(({ to }) => to === '/')).toBe(true);
+    expect(enabled.map(({ to }) => to)).toEqual(
+      expect.arrayContaining(['/', '/team', '/settings/profile']),
+    );
     enabled.forEach(({ to }) => expect(paths).toContain(to));
   });
 

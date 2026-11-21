@@ -1,7 +1,7 @@
 # 005 - [Componente] RolePermissions, MemberForm y MemberAvatar
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004
 - **Fase:** Fase 2
 
@@ -22,10 +22,10 @@ Existen los componentes de equipo reutilizables por las tres vistas: tabla de pe
 
 ## Criterios de aceptación
 
-- [ ] `RolePermissions` refleja exactamente `PERMISSIONS` (una prueba lo compara).
-- [ ] `MemberForm` muestra errores por campo y bloquea el envío con datos inválidos.
-- [ ] `MemberAvatar` rechaza archivos que no sean imagen o superen 2 MB.
-- [ ] `bun run typecheck`, `lint`, `format:check`, `test` pasan.
+- [x] `RolePermissions` refleja exactamente `PERMISSIONS` (una prueba lo compara).
+- [x] `MemberForm` muestra errores por campo y bloquea el envío con datos inválidos.
+- [x] `MemberAvatar` rechaza archivos que no sean imagen o superen 2 MB.
+- [x] `bun run typecheck`, `lint`, `format:check`, `test` pasan.
 
 ## Referencias
 
@@ -39,3 +39,4 @@ Existen los componentes de equipo reutilizables por las tres vistas: tabla de pe
 
 ## Notas de implementación
 
+El correo se muestra en edición como campo de solo lectura. PocketBase valida los cambios de correo como una operación de autenticación independiente.

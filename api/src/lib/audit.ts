@@ -9,6 +9,7 @@ type EntryInput = {
   collection: string;
   recordId: string;
   actorId?: string;
+  credentialsChanged?: boolean;
   before?: AuditRecord;
   after?: AuditRecord;
 };
@@ -78,10 +79,13 @@ export function buildSummary(action: Action, collection: string, record: AuditRe
   return `${action} ${collection}`;
 }
 
-export function buildEntry({ action, collection, recordId, actorId, before, after }: EntryInput) {
+export function buildEntry({
+  action, collection, recordId, actorId, credentialsChanged, before, after,
+}: EntryInput) {
   const diff = computeDiff(action === "create" ? undefined : before, action === "delete" ? undefined : after);
-  if (action === "update" && Object.keys(diff).length === 0) {
-    return null;
+  if (action === "update") {
+    if (credentialsChanged) diff.credentials_changed = { to: true };
+    if (Object.keys(diff).length === 0) return null;
   }
 
   return {
