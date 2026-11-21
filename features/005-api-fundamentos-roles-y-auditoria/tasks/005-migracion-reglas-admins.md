@@ -1,7 +1,7 @@
 # 005 - [Migración] Cierre de reglas de admins
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 004
 - **Fase:** Fase 1
 
@@ -21,11 +21,11 @@ Hoy: `createRule: ""`, `deleteRule: "id = @request.auth.id"`, `authRule: ""`. Co
 
 ## Criterios de aceptación
 
-- [ ] POST anónimo a `/api/collections/admins/records` → `403`.
-- [ ] Un coach recibe `403`/`404` al intentar PATCH de otro admin, al enviar `role` o `active` en su propio PATCH, y al hacer DELETE.
-- [ ] Un owner no puede borrarse a sí mismo (`403`/`404`) pero sí a otro admin.
-- [ ] Un admin con `active = false` no obtiene token en `auth-with-password`.
-- [ ] `bun test` pasa, incluida la prueba de coherencia.
+- [x] POST anónimo a `/api/collections/admins/records` → `403`.
+- [x] Un coach recibe `403`/`404` al intentar PATCH de otro admin, al enviar `role` o `active` en su propio PATCH, y al hacer DELETE.
+- [x] Un owner no puede borrarse a sí mismo (`403`/`404`) pero sí a otro admin.
+- [x] Un admin con `active = false` no obtiene token en `auth-with-password`.
+- [x] `bun test` pasa, incluida la prueba de coherencia.
 
 ## Referencias
 
@@ -38,3 +38,5 @@ Hoy: `createRule: ""`, `deleteRule: "id = @request.auth.id"`, `authRule: ""`. Co
 
 ## Notas de implementación
 
+
+Verificado con PocketBase 0.40.5: alta anónima 403 por nombre o ID de colección, alta del owner, rechazo de altas y cambios protegidos al coach, edición propia permitida, borrado de terceros por owner, rechazo de borrado propio, bloqueo de sesión y token vigente al desactivar, y reversión de las reglas. El middleware devuelve 403 para altas anónimas porque PocketBase devuelve 400 si solo se aplica createRule.
