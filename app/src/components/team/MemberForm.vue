@@ -9,12 +9,12 @@ import type { NewMember } from '@/composables/useTeam';
 import { generatePassword, validatePassword } from '@/lib/password';
 import { ROLES } from '@/types/pb';
 import { ROLE_STATUS } from './team-labels';
+import { validateBio, validatePhone } from './team-validation';
 
 const props = defineProps<{
   mode: 'create' | 'edit';
   errors?: Record<string, string>;
   busy?: boolean;
-  lockRole?: boolean;
 }>();
 
 const model = defineModel<NewMember>({ required: true });
@@ -45,9 +45,10 @@ function submit() {
   const invalid: Record<string, string> = {};
   if (!values.name) invalid.name = 'Ingresa un nombre';
   if (!ROLES.includes(values.role)) invalid.role = 'Selecciona un rol';
-  if (!/^[0-9+()\-\s.]{0,30}$/.test(values.phone))
-    invalid.phone = 'Ingresa un teléfono válido de hasta 30 caracteres';
-  if ([...values.bio].length > 600) invalid.bio = 'Usa hasta 600 caracteres';
+  const phoneError = validatePhone(values.phone);
+  const bioError = validateBio(values.bio);
+  if (phoneError) invalid.phone = phoneError;
+  if (bioError) invalid.bio = bioError;
   if (props.mode === 'create') {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
       invalid.email = 'Ingresa un correo válido';
@@ -110,7 +111,6 @@ function submit() {
         :options="roleOptions"
         option-label="label"
         option-value="value"
-        :disabled="lockRole"
         :invalid="!!fieldError('role')"
         :aria-describedby="fieldError('role') && `${id}-role-error`"
         @update:model-value="setField('role', $event)"
