@@ -1,7 +1,7 @@
 # 002 - [Lib] Utilidades de fecha (America/New_York) y dinero (USD)
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 1
 
@@ -21,9 +21,9 @@ El negocio opera en `America/New_York`; la API guarda fechas en UTC y dinero en 
 
 ## Criterios de aceptación
 
-- [ ] `bun run test` pasa con los casos de límite indicados.
-- [ ] Las pruebas no dependen de la zona del equipo (se ejecutan igual con `TZ=UTC` y `TZ=Asia/Tokyo`).
-- [ ] `bun run typecheck`, `lint` y `format:check` pasan.
+- [x] `bun run test` pasa con los casos de límite indicados.
+- [x] Las pruebas no dependen de la zona del equipo (se ejecutan igual con `TZ=UTC` y `TZ=Asia/Tokyo`).
+- [x] `bun run typecheck`, `lint` y `format:check` pasan.
 
 ## Referencias
 
