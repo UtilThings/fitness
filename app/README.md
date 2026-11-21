@@ -44,13 +44,14 @@ Solo `src/lib/env.ts` lee `import.meta.env`. Las variables `VITE_*` llegan al na
 ```
 src/
   assets/       recursos importados desde código
-  components/   componentes reutilizables (AuthHeading)
-  composables/  lógica reactiva (useAuth, useMediaQuery)
+  components/   componentes reutilizables de autenticación y administración
+  composables/  sesión, colecciones, avisos y confirmaciones
   layouts/      AuthLayout, AdminLayout y admin-nav.ts (menú lateral)
-  lib/          env.ts (entorno) y pocketbase.ts (instancia única `pb`)
+  lib/          entorno, PocketBase, permisos, fechas y dinero
   router/       rutas, guard y safeRedirect
   styles/       main.css (Tailwind + tailwindcss-primeui)
-  views/        vistas por área: auth/, admin/ (y NotFoundView); sufijo View
+  types/        tipos TypeScript de las colecciones
+  views/        vistas por área: auth/, admin/ y errores de navegación
 ```
 
 ## Convenciones
@@ -74,11 +75,53 @@ Los layouts son rutas padre con `<RouterView />`; las vistas solo aportan su con
 1. Crea `src/views/auth/MiVista.vue` (empieza con `<AuthHeading title="..." />`).
 2. Añádela como hija del padre `AuthLayout` en `src/router/index.ts`, con `name` y `meta.title`. Si no debe verse con sesión iniciada, agrega su `name` a `authRoutes`.
 
-### Agregar una vista de admin
+## Módulos de administración
 
-1. Crea `src/views/admin/PerfilView.vue`.
-2. Añade la ruta como hija del padre `AdminLayout` (`{ path: 'perfil', name: 'perfil', component: () => import('@/views/admin/PerfilView.vue'), meta: { title: 'Perfil' } }`).
-3. Agrega la entrada en `src/layouts/admin-nav.ts`. Las entradas actuales (excepto Dashboard) son marcadores sin ruta y llevan a la vista 404.
+1. Define el tipo de la colección en `src/types/pb.ts`. Usa `BaseRecord` como base, campos en `snake_case`, relaciones como IDs de tipo `string`, `expand?` para relaciones expandidas y fechas ISO UTC.
+2. Crea una vista en `src/views/admin/` y regístrala como hija de `AdminLayout` con `name` y `meta.title`. Activa su entrada en `admin-nav.ts` quitando `placeholder` cuando la ruta esté disponible.
+3. Declara `meta.roles` si la vista está restringida y usa los mismos roles en el menú. El router envía al usuario a `/forbidden` si su rol queda fuera. Para acciones dentro de la vista, añade el permiso a `permissions.ts` y consúltalo con `useAuth().can(permiso)`. Las reglas de PocketBase autorizan las operaciones.
+
+Por ejemplo, para listar el equipo, importa los componentes compartidos y usa este patrón en la vista:
+
+```vue
+<script setup lang="ts">
+import { onMounted } from 'vue';
+import DataToolbar from '@/components/DataToolbar.vue';
+import EmptyState from '@/components/EmptyState.vue';
+import PageHeader from '@/components/PageHeader.vue';
+import { useCollection } from '@/composables/useCollection';
+import type { Admin } from '@/types/pb';
+
+const { items, error, loading, load, search } = useCollection<Admin>('admins', {
+  sort: 'name',
+});
+onMounted(load);
+</script>
+
+<template>
+  <PageHeader title="Equipo" />
+  <DataToolbar
+    placeholder="Buscar por nombre o correo"
+    @search="search($event, ['name', 'email'])"
+  />
+  <p v-if="error" role="alert">{{ error.message }}</p>
+  <p v-else-if="loading" role="status">Cargando equipo…</p>
+  <EmptyState
+    v-else-if="!items.length"
+    icon="pi pi-users"
+    title="Sin integrantes"
+  />
+  <ul v-else>
+    <li v-for="item in items" :key="item.id">{{ item.name }}</li>
+  </ul>
+</template>
+```
+
+Usa `total`, `page` y `perPage` para paginar con `setPage`. `setSort` y `search` vuelven a la primera página. Para aplicar filtros desde el slot `filters`, asigna cláusulas `{ expression: 'active = {:active}', params: { active: true } }` a `filters.value` y ejecuta `setPage(1)`. Reserva las expresiones y los nombres de campo para código del módulo y pasa las entradas del usuario en `params`.
+
+Usa `StatusTag` para asociar cada estado a `{ label, severity }`. En el botón de borrado, llama a `useConfirmDelete().confirmDelete({ message, onConfirm })` y ejecuta `remove(id)` dentro de `onConfirm`. `create` y `update` devuelven el registro y `remove` devuelve la confirmación booleana del SDK. Las tres operaciones recargan la lista tras una escritura exitosa. En caso de rechazo, muestra `error.fields` junto a los campos y usa `useNotify()` para el aviso de éxito o error.
+
+Para mostrar fechas de PocketBase, usa `formatDateTime(iso)` de `datetime.ts`. Convierte la fecha y hora local de un formulario con `localToUtcIso(date, time)` antes de guardar. La zona del negocio es `America/New_York`. Guarda importes en centavos, muéstralos con `formatUsd(cents)` y valida la entrada con `parseUsdToCents(text)`, que devuelve `null` si es inválida.
 
 ## Despliegue
 
