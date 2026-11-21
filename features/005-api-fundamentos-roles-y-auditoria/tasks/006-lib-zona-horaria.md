@@ -1,7 +1,7 @@
 # 006 - [Lib] Helper puro de zona horaria America/New_York
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003
 - **Fase:** Fase 2
 
@@ -22,10 +22,10 @@ Zona del negocio: `America/New_York` (Miramar, FL); las fechas se guardan en UTC
 
 ## Criterios de aceptación
 
-- [ ] `bun test` pasa con los casos límite indicados.
-- [ ] Los resultados de verificación de goja están en las notas de la tarea.
-- [ ] `tz.ts` no referencia `Intl`, `toLocaleString` ni `getTimezoneOffset`.
-- [ ] `bun run build:ts` genera `pb_hooks/lib/tz.js` y se puede `require` dentro de un callback.
+- [x] `bun test` pasa con los casos límite indicados.
+- [x] Los resultados de verificación de goja están en las notas de la tarea.
+- [x] `tz.ts` no referencia `Intl`, `toLocaleString` ni `getTimezoneOffset`.
+- [x] `bun run build:ts` genera `pb_hooks/lib/tz.js` y se puede `require` dentro de un callback.
 
 ## Referencias
 
@@ -40,3 +40,5 @@ Zona del negocio: `America/New_York` (Miramar, FL); las fechas se guardan en UTC
 
 ## Notas de implementación
 
+
+Sonda previa en api/pb 0.40.5 con el entorno America/Bogota: typeof Intl = undefined, getTimezoneOffset() = 300, Date.UTC(2026, 2, 8, 7) = 1772953200000, toISOString() = 2026-03-08T07:00:00.000Z y getUTCDay() = 0. Se verificó require desde otro callback temporal y pasaron las pruebas de los cambios de horario de 2026 y 2027. localWeekday acepta una fecha civil y un instante ISO UTC para cubrir los dos contratos descritos.

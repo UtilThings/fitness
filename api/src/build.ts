@@ -1,7 +1,6 @@
 import { Glob } from "bun";
 import { resolve, relative, dirname, join } from "node:path";
 import { mkdir, rm } from "node:fs/promises";
-import { watch } from "node:fs";
 
 const root = process.cwd();
 const srcDir = resolve(root, "src");
@@ -22,7 +21,7 @@ const getFiles = (dir: string): string[] =>
       absolute: true,
       onlyFiles: true,
     })
-  ).filter((file) => !file.endsWith(".d.ts"));
+  ).filter((file) => !file.endsWith(".d.ts") && !file.endsWith(".test.ts"));
 
 // 1. Compilar librerías CommonJS
 const libs = getFiles(libDir);

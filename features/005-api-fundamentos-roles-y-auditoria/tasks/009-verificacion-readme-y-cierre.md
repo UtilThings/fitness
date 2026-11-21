@@ -1,7 +1,7 @@
 # 009 - [Verificación] verify-api.sh, README de api y cierre
 
 - **Prioridad:** 9
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003, 004, 005, 006, 007, 008
 - **Fase:** Fase final
 
@@ -21,10 +21,10 @@ Existe un único comando que valida `api/` (compilación, pruebas y humo de regl
 
 ## Criterios de aceptación
 
-- [ ] `scripts/verify-api.sh` termina en verde.
-- [ ] `api/README.md` documenta cada punto listado.
-- [ ] El script no deja procesos ni directorios temporales tras terminar, incluso si falla un paso.
-- [ ] Todas las tareas 001-008 figuran como `Completado`.
+- [x] `scripts/verify-api.sh` termina en verde.
+- [x] `api/README.md` documenta cada punto listado.
+- [x] El script no deja procesos ni directorios temporales tras terminar, incluso si falla un paso.
+- [x] Todas las tareas 001-008 figuran como `Completado`.
 
 ## Referencias
 
@@ -37,3 +37,5 @@ Existe un único comando que valida `api/` (compilación, pruebas y humo de regl
 
 ## Notas de implementación
 
+
+Pasó verify-api.sh con PocketBase 0.40.5 y 18 pruebas Bun. Se comprobó que la instancia y su directorio se limpian tras una ejecución correcta y tras forzar una respuesta HTTP 500. La integración verificó la actualización de una base anterior, los permisos, el actor, el diff y el comportamiento ante un fallo de auditoría. Se añadió una comprobación en los hooks de petición para impedir escrituras HTTP de auditoría incluso a superusuarios, que de otro modo omiten las reglas de colección.

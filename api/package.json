@@ -2,6 +2,7 @@
   "name": "pb-hooks-bun",
   "type": "module",
   "scripts": {
+    "test": "bun test",
     "build:ts": "bun run src/build.ts",
     "watch:ts": "bun run src/watch.ts",
     "serve:pb": "./pb serve --dev",

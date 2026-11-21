@@ -1,7 +1,7 @@
 # 004 - [Lib] Librería de reglas y roles
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003
 - **Fase:** Fase 1
 
@@ -21,9 +21,9 @@ Contrato: regla "staff" = `@request.auth.collectionName = "admins" && @request.a
 
 ## Criterios de aceptación
 
-- [ ] `bun test` pasa con los casos de strings y de error.
-- [ ] Ninguna función usa `$app`, `__hooks` ni globals de PocketBase.
-- [ ] `bun run build:ts` genera `pb_hooks/lib/rules.js` y no genera `rules.test.js`.
+- [x] `bun test` pasa con los casos de strings y de error.
+- [x] Ninguna función usa `$app`, `__hooks` ni globals de PocketBase.
+- [x] `bun run build:ts` genera `pb_hooks/lib/rules.js` y no genera `rules.test.js`.
 
 ## Referencias
 
@@ -37,3 +37,5 @@ Contrato: regla "staff" = `@request.auth.collectionName = "admins" && @request.a
 
 ## Notas de implementación
 
+
+Pasaron cuatro pruebas de reglas puras. El build generó rules.js y excluyó rules.test.ts. ruleRoles rechaza una lista vacía para evitar conceder acceso por omisión.
