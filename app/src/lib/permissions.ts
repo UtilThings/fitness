@@ -14,3 +14,10 @@ export const PERMISSIONS: Record<Permission, readonly Role[]> = {
 export function roleCan(role: Role | null, permission: Permission): boolean {
   return role !== null && PERMISSIONS[permission].includes(role);
 }
+
+export const PERMISSION_LABELS: Record<Permission, string> = {
+  'team.read': 'Consultar el equipo',
+  'team.manage': 'Gestionar el equipo',
+  'profile.edit': 'Editar el perfil propio',
+  'audit.read': 'Consultar la auditoría',
+};
