@@ -1,7 +1,7 @@
 # 003 - [Config] Toast y ConfirmationService globales
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 2
 
@@ -22,9 +22,9 @@ Cualquier vista puede mostrar avisos y diálogos de confirmación sin montar com
 
 ## Criterios de aceptación
 
-- [ ] Un `useNotify().success("Guardado")` muestra un toast verde en la esquina superior derecha.
-- [ ] `useConfirm().require(...)` muestra el diálogo sin errores en consola.
-- [ ] `bun run typecheck`, `test`, `lint`, `build` pasan.
+- [x] Un `useNotify().success("Guardado")` muestra un toast verde en la esquina superior derecha.
+- [x] `useConfirm().require(...)` muestra el diálogo sin errores en consola.
+- [x] `bun run typecheck`, `test`, `lint`, `build` pasan.
 
 ## Referencias
 

@@ -1,7 +1,7 @@
 # 006 - [Composable] useCollection y traducción de errores de PocketBase
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 003
 - **Fase:** Fase 3
 
@@ -21,11 +21,11 @@ Cualquier módulo puede listar con paginación, orden y filtros, y crear, editar
 
 ## Criterios de aceptación
 
-- [ ] Una instancia lista registros con `page`, `perPage` y `total` correctos y cambia de página y orden.
-- [ ] Buscar un texto con comillas no rompe el filtro (parametrizado).
-- [ ] Un 400 con errores de campos llega como `fields` por campo; un 403 como mensaje de permiso.
-- [ ] Las cancelaciones de peticiones no producen `error` visible.
-- [ ] `bun run typecheck`, `lint`, `test` pasan.
+- [x] Una instancia lista registros con `page`, `perPage` y `total` correctos y cambia de página y orden.
+- [x] Buscar un texto con comillas no rompe el filtro (parametrizado).
+- [x] Un 400 con errores de campos llega como `fields` por campo; un 403 como mensaje de permiso.
+- [x] Las cancelaciones de peticiones no producen `error` visible.
+- [x] `bun run typecheck`, `lint`, `test` pasan.
 
 ## Referencias
 

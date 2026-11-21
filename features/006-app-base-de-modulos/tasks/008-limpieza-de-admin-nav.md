@@ -1,7 +1,7 @@
 # 008 - [Rutas] Limpieza de admin-nav y menú por rol
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, 005
 - **Fase:** Fase 4
 
@@ -22,10 +22,10 @@ El menú de administración no tiene badges falsos ni entradas sin módulo, est�
 
 ## Criterios de aceptación
 
-- [ ] El menú muestra los cinco grupos sin números ni entradas de Rutinas o Suscripciones.
-- [ ] `visibleNav("coach")` omite lo marcado solo para owner y los grupos que queden vacíos.
-- [ ] Todo item sin `placeholder` apunta a una ruta registrada.
-- [ ] `bun run typecheck`, `lint`, `test`, `build` pasan.
+- [x] El menú muestra los cinco grupos sin números ni entradas de Rutinas o Suscripciones.
+- [x] `visibleNav("coach")` omite lo marcado solo para owner y los grupos que queden vacíos.
+- [x] Todo item sin `placeholder` apunta a una ruta registrada.
+- [x] `bun run typecheck`, `lint`, `test`, `build` pasan.
 
 ## Referencias
 

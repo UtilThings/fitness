@@ -1,7 +1,7 @@
 # 007 - [Componente] PageHeader, StatusTag, EmptyState, DataToolbar y useConfirmDelete
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003, 006
 - **Fase:** Fase 3
 
@@ -24,10 +24,10 @@ Las vistas de módulo comparten cabecera, etiquetas de estado, estado vacío, ba
 
 ## Criterios de aceptación
 
-- [ ] Cada componente se renderiza con sus slots y props y tiene prueba.
-- [ ] `DataToolbar` emite `search` una sola vez tras 300 ms de inactividad.
-- [ ] `confirmDelete` no ejecuta `onConfirm` hasta aceptar el diálogo.
-- [ ] `bun run typecheck`, `lint`, `format:check`, `test`, `build` pasan.
+- [x] Cada componente se renderiza con sus slots y props y tiene prueba.
+- [x] `DataToolbar` emite `search` una sola vez tras 300 ms de inactividad.
+- [x] `confirmDelete` no ejecuta `onConfirm` hasta aceptar el diálogo.
+- [x] `bun run typecheck`, `lint`, `format:check`, `test`, `build` pasan.
 
 ## Referencias
 

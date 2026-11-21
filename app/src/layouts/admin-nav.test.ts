@@ -1,20 +1,68 @@
 import { describe, expect, it } from 'vitest';
-import { adminNav } from '@/layouts/admin-nav';
+import { adminNav, visibleNav } from '@/layouts/admin-nav';
+import router from '@/router';
 
 describe('adminNav', () => {
-  const items = adminNav.flatMap((g) => g.items);
+  const items = adminNav.flatMap((group) => group.items);
 
-  it('todo grupo tiene entradas', () => {
-    adminNav.forEach((g) => expect(g.items.length).toBeGreaterThan(0));
+  it('mantiene los cinco grupos acordados, sin badges, Rutinas ni Suscripciones', () => {
+    expect(
+      adminNav.map(({ label, items }) => [label, items.map(({ to }) => to)]),
+    ).toEqual([
+      ['Análisis', ['/', '/reports']],
+      ['Operaciones', ['/clients', '/classes', '/bookings']],
+      ['Catálogo', ['/services', '/plans']],
+      ['Ajustes', ['/team']],
+      ['Facturación', ['/memberships', '/payments']],
+    ]);
+    expect(items.every((item) => !('badge' in item))).toBe(true);
   });
 
-  it('las rutas son internas y únicas', () => {
-    const tos = items.map((i) => i.to);
-    tos.forEach((to) => expect(to).toMatch(/^\/(?!\/)/));
-    expect(new Set(tos).size).toBe(tos.length);
+  it('usa rutas internas y únicas', () => {
+    const routes = items.map((item) => item.to);
+    routes.forEach((to) => expect(to).toMatch(/^\/(?!\/)/));
+    expect(new Set(routes).size).toBe(routes.length);
   });
 
-  it('incluye el dashboard en /', () => {
-    expect(items.some((i) => i.to === '/')).toBe(true);
+  it('solo habilita entradas que corresponden a rutas registradas', () => {
+    const paths = router.getRoutes().map(({ path }) => path);
+    const enabled = items.filter(({ placeholder }) => !placeholder);
+    expect(enabled.some(({ to }) => to === '/')).toBe(true);
+    enabled.forEach(({ to }) => expect(paths).toContain(to));
+  });
+
+  it('filtra pagos para coach y permite verlos a owner y reception', () => {
+    const paths = (groups: ReturnType<typeof visibleNav>) =>
+      groups.flatMap(({ items }) => items.map(({ to }) => to));
+    expect(paths(visibleNav('coach'))).not.toContain('/payments');
+    expect(paths(visibleNav('owner'))).toContain('/payments');
+    expect(paths(visibleNav('reception'))).toContain('/payments');
+  });
+
+  it('descarta un grupo cuando todas sus entradas requieren owner', () => {
+    adminNav.push({
+      label: 'Solo owner',
+      items: [
+        {
+          label: 'Prueba',
+          to: '/prueba',
+          icon: 'pi pi-lock',
+          roles: ['owner'],
+        },
+      ],
+    });
+    try {
+      expect(
+        visibleNav('owner').some(({ label }) => label === 'Solo owner'),
+      ).toBe(true);
+      expect(
+        visibleNav('coach').some(({ label }) => label === 'Solo owner'),
+      ).toBe(false);
+      expect(visibleNav(null).some(({ label }) => label === 'Solo owner')).toBe(
+        false,
+      );
+    } finally {
+      adminNav.pop();
+    }
   });
 });
