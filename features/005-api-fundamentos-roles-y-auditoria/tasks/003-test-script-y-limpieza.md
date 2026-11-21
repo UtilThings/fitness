@@ -1,7 +1,7 @@
 # 003 - [Config] Script bun test y limpieza del hook de ejemplo
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 1
 
@@ -22,10 +22,10 @@
 
 ## Criterios de aceptación
 
-- [ ] `cd api && bun test` termina en verde.
-- [ ] `bun run build:ts` termina sin errores y `api/pb_hooks/` no contiene `users.pb.js` ni `lib/utils.js`.
-- [ ] Ningún archivo `*.test.js` aparece en `pb_hooks/`.
-- [ ] `./pb serve` arranca sin errores de hooks.
+- [x] `cd api && bun test` termina en verde.
+- [x] `bun run build:ts` termina sin errores y `api/pb_hooks/` no contiene `users.pb.js` ni `lib/utils.js`.
+- [x] Ningún archivo `*.test.js` aparece en `pb_hooks/`.
+- [x] `./pb serve` arranca sin errores de hooks.
 
 ## Referencias
 
@@ -39,3 +39,5 @@
 
 ## Notas de implementación
 
+
+Pasaron la prueba temporal, el build con una librería que solo contiene pruebas y el arranque de PocketBase. Se verificó que la salida carece del hook de ejemplo, su librería y archivos .test.js.
