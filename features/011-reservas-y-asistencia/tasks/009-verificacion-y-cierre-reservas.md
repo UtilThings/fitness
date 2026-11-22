@@ -1,7 +1,7 @@
 # 009 - [Verificación] Verificación y cierre de reservas y asistencia
 
 - **Prioridad:** 9
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 008
 - **Fase:** Fase 4: Verificación y cierre
 
@@ -21,9 +21,9 @@ La feature 011 queda verificada de punta a punta y lista para marcarse como comp
 
 ## Criterios de aceptación
 
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
-- [ ] El recorrido de "Validación Post-Deploy" del spec se cumple.
-- [ ] Todos los criterios del spec están marcados y el estado es Completado.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] El recorrido de "Validación Post-Deploy" del spec se cumple.
+- [x] Todos los criterios del spec están marcados y el estado es Completado.
 
 ## Referencias
 
@@ -35,3 +35,5 @@ La feature 011 queda verificada de punta a punta y lista para marcarse como comp
 
 ## Notas de implementación
 
+
+Verificadores en verde: 49 pruebas de API, pruebas de humo en PocketBase 0.40.5 y 177 pruebas de app con lint, formato, typecheck y build. El verificador de API reproduce el último cupo concurrente, la espera y promoción, la clase gratis, asistencia, cancelación por bloqueo, disponibilidad y auditoría. En Chromium se completó el recorrido de sesión y perfil con datos temporales, incluida la cancelación manual de una clase y la visualización de ambos resultados de asistencia. Se revisaron y marcaron los 10 criterios del spec.

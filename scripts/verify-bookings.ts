@@ -1,0 +1,151 @@
+import assert from "node:assert/strict";
+import { addLocalDays, utcToLocal } from "../api/src/lib/tz";
+
+const base = process.argv[2];
+const password = process.env.JQ_VERIFY_PASSWORD;
+assert(base && password, "Ejecuta scripts/verify-api.sh");
+
+type Body = Record<string, unknown>;
+type Row = { id: string };
+type Session = Row & { service: string; starts_at: string };
+type Booking = Row & { status: string; waitlist_position: number; free_class: boolean; override_note: string };
+type Availability = { session: string; booked: number; waitlisted: number; spots_left: number; availability: string };
+
+async function call<T>(path: string, token = "", method = "GET", body?: Body, status = 200): Promise<T> {
+  const response = await fetch(`${base}/api/${path}`, {
+    method,
+    headers: {
+      ...(token && { Authorization: token }),
+      ...(body && { "Content-Type": "application/json" }),
+    },
+    body: body && JSON.stringify(body),
+    signal: AbortSignal.timeout(5000),
+  });
+  const data = await response.json();
+  assert.equal(response.status, status, `${method} ${path}: ${JSON.stringify(data)}`);
+  return data;
+}
+
+const records = (collection: string) => `collections/${collection}/records`;
+const filter = (expression: string) => "?filter=" + encodeURIComponent(expression);
+async function auth(collection: string, email: string) {
+  const result = await call<{ token: string }>(
+    `collections/${collection}/auth-with-password`, "", "POST", { identity: email, password },
+  );
+  return result.token;
+}
+
+const root = await auth("_superusers", "catalog-verify@example.test");
+async function createAdmin(role: "owner" | "coach") {
+  const email = `bookings-${role}@example.test`;
+  await call(records("admins"), root, "POST", { email, name: role, role, active: true, password, passwordConfirm: password });
+  return auth("admins", email);
+}
+const owner = await createAdmin("owner");
+const coach = await createAdmin("coach");
+const { items: plans } = await call<{ items: { service: string }[] }>(
+  records("plans") + filter("is_first_class = true && active = true"), coach,
+);
+assert(plans.length > 0, "El catálogo debe incluir un plan de primera clase");
+
+const now = Date.now();
+function createSession(hours: number, capacity: number) {
+  return call<Session>(records("class_sessions"), owner, "POST", {
+    service: plans[0].service, starts_at: new Date(now + hours * 3_600_000).toISOString(), duration_min: 60, capacity,
+  });
+}
+
+let clientNumber = 0;
+function createClient() {
+  return call<Row>(records("clients"), coach, "POST", {
+    first_name: "Reserva", last_name: "Prueba " + ++clientNumber, status: "active",
+  });
+}
+
+const bookings = records("bookings");
+const bookingPath = ({ id }: Row) => `${bookings}/${id}`;
+const availabilityPath = ({ id }: Row) => `admin/sessions/${id}/availability`;
+function reserve(session: Row, client: Row, free = false) {
+  return call<Booking>(bookings, coach, "POST", { session: session.id, client: client.id, use_free_class: free });
+}
+function read(booking: Row) {
+  return call<Booking>(bookingPath(booking), coach);
+}
+function cancel(booking: Row, override_note?: string) {
+  return call<Booking>(bookingPath(booking), coach, "PATCH", { status: "cancelled", override_note });
+}
+async function confirmFreeClass(client: Row, expected: boolean) {
+  const result = await call<{ free_class_used: boolean }>(`${records("clients")}/${client.id}`, coach);
+  assert.equal(result.free_class_used, expected);
+}
+
+const future = await createSession(240, 2);
+const [firstClient, secondClient, thirdClient, fourthClient] = await Promise.all(
+  Array.from({ length: 4 }, createClient),
+);
+const first = await reserve(future, firstClient, true);
+assert.equal(first.status, "booked");
+assert.equal(first.free_class, true);
+await confirmFreeClass(firstClient, true);
+
+const pair = await Promise.all([reserve(future, secondClient), reserve(future, thirdClient)]);
+assert.deepEqual(pair.map(({ status }) => status).sort(), ["booked", "waitlisted"]);
+const waiting = pair.find((booking) => booking.status === "waitlisted")!;
+assert.equal(waiting.waitlist_position, 1);
+const next = await reserve(future, fourthClient);
+assert.equal(next.waitlist_position, 2);
+assert.equal((await cancel(first)).status, "cancelled");
+await confirmFreeClass(firstClient, false);
+assert.equal((await read(waiting)).status, "booked");
+assert.equal((await read(next)).waitlist_position, 1);
+assert.equal((await reserve(future, firstClient)).id, first.id);
+
+const soon = await createSession(1, 1);
+const late = await reserve(soon, firstClient, true);
+const exception = await reserve(soon, secondClient);
+assert.equal((await cancel(late)).status, "late_cancelled");
+await confirmFreeClass(firstClient, true);
+assert.equal((await read(exception)).status, "booked");
+const rejected = await call<{ data: Body }>(
+  bookingPath(exception), coach, "PATCH", { status: "cancelled", override: true }, 400,
+);
+assert(rejected.data.override_note);
+assert.equal((await cancel(exception, "Emergencia")).status, "cancelled");
+
+const present = await reserve(soon, thirdClient);
+await call(bookingPath(present), coach, "PATCH", { status: "attended" }, 400);
+await call(`${records("class_sessions")}/${soon.id}`, owner, "PATCH", { starts_at: new Date(now - 1_000).toISOString() });
+assert.equal((await call<Booking>(bookingPath(present), coach, "PATCH", { status: "attended" })).status, "attended");
+
+const full = await call<Availability>(availabilityPath(future), coach);
+assert.equal(full.booked, 2);
+assert.equal(full.waitlisted, 2);
+assert.equal(full.spots_left, 0);
+assert.equal(full.availability, "full");
+await call(availabilityPath(future), "", "GET", undefined, 401);
+const date = utcToLocal(future.starts_at.replace(" ", "T")).date;
+const range = `admin/sessions/availability?from=${date}&to=${addLocalDays(date, 1)}`;
+assert.deepEqual((await call<Availability[]>(range, coach)).find((row) => row.session === future.id), full);
+
+const blocked = await createSession(480, 1);
+const free = await reserve(blocked, fourthClient, true);
+const queue = await reserve(blocked, secondClient);
+const blockDate = utcToLocal(blocked.starts_at.replace(" ", "T")).date;
+await call(records("schedule_blocks"), owner, "POST", {
+  title: "Cierre de prueba de reservas", date_from: blockDate, date_to: blockDate,
+});
+for (const entry of [free, queue]) {
+  const cancelled = await read(entry);
+  assert.equal(cancelled.status, "cancelled");
+  assert.equal(cancelled.override_note, "session_cancelled");
+  assert.equal(cancelled.waitlist_position, 0);
+}
+await confirmFreeClass(fourthClient, false);
+
+const logs = records("audit_logs") + filter('collection = "bookings"') + "&perPage=100";
+const { items } = await call<{ items: { actor: string; summary: string }[] }>(logs, owner);
+for (const event of ["created", "waitlisted", "promoted", "cancelled", "late_cancelled", "attended", "cancelled_by_session"]) {
+  assert(items.some((item) => item.actor && item.summary.startsWith(`booking.${event}: `)), event);
+}
+
+console.log("Reservas, concurrencia, cancelación, asistencia, disponibilidad y auditoría verificadas.");

@@ -44,5 +44,3 @@ La colección `bookings` existe con sus campos, índices y reglas de staff, qued
 
 
 PocketBase 0.40.5 incluye goja 43234fa61381. En una base temporal se verificaron runInTransaction, la ejecución del hook de éxito tras un guardado interno y el acceso a un campo adicional del cuerpo desde requestInfo(). Date admite ISO con offset y normaliza a UTC. Intl no está disponible. Se aplicó, revirtió y reaplicó la migración, se rechazó un duplicado por el índice único y se comprobó el 404 anónimo.
-
-
