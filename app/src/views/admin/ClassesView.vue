@@ -7,15 +7,26 @@ import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PageHeader from '@/components/PageHeader.vue';
+import AvailabilityTag from '@/components/bookings/AvailabilityTag.vue';
+import BookingDialog from '@/components/bookings/BookingDialog.vue';
+import SessionRoster from '@/components/bookings/SessionRoster.vue';
 import CatalogField from '@/components/catalog/CatalogField.vue';
 import { useAuth } from '@/composables/useAuth';
+import { useBookingClock } from '@/composables/useBookingClock';
 import { useNotify } from '@/composables/useNotify';
 import { useSchedule } from '@/composables/useSchedule';
+import { useSessionAvailability } from '@/composables/useSessionAvailability';
 import { useServices } from '@/composables/useServices';
 import {
+  canReserveSession,
+  type Booking,
+  type SessionAvailability,
+} from '@/lib/bookings';
+import {
+  addLocalDays,
   formatDate,
   formatDayLabel,
   formatTime,
@@ -38,6 +49,8 @@ const { isOwner, role, user } = useAuth();
 const notify = useNotify();
 const schedule = useSchedule();
 const catalog = useServices();
+const availabilityApi = useSessionAvailability();
+const now = useBookingClock();
 const canEdit = computed(() => isOwner.value || role.value === 'reception');
 const offset = ref(0);
 const today = ref(todayLocal());
@@ -93,6 +106,11 @@ const grouped = computed(() =>
   ),
 );
 const selected = ref<ClassSession | null>(null);
+const bookingOpen = ref(false);
+const rosterRefresh = ref(0);
+const availability = shallowRef(new Map<string, SessionAvailability>());
+const availabilityError = shallowRef<PbError>();
+let availabilityVersion = 0;
 const mode = ref<'move' | 'cancel' | 'new' | null>(null);
 const busy = ref(false);
 const fields = ref<Record<string, string>>({});
@@ -107,7 +125,46 @@ const draft = ref({
   notes: '',
 });
 
-watch(week, () => void schedule.loadWeek(offset.value), { immediate: true });
+watch(
+  week,
+  () => {
+    availability.value = new Map();
+    void reloadWeek();
+  },
+  { immediate: true },
+);
+
+async function loadAvailability() {
+  const version = ++availabilityVersion;
+  availabilityError.value = undefined;
+  try {
+    const rows = await availabilityApi.list({
+      from: week.value,
+      to: addLocalDays(week.value, 7),
+    });
+    if (version === availabilityVersion)
+      availability.value = new Map(rows.map((row) => [row.session, row]));
+  } catch (cause) {
+    if (version !== availabilityVersion) return;
+    availability.value = new Map();
+    availabilityError.value = cause as PbError;
+  }
+}
+
+function reloadWeek() {
+  return Promise.all([schedule.loadWeek(offset.value), loadAvailability()]);
+}
+
+function reserved(booking: Booking) {
+  rosterRefresh.value++;
+  void loadAvailability();
+  notify.success(
+    booking.status === 'waitlisted'
+      ? 'Cliente añadido a la lista de espera'
+      : 'Reserva confirmada',
+  );
+}
+
 onMounted(() => {
   void catalog.load();
   void catalog.loadCoaches();
@@ -181,7 +238,7 @@ async function run(operation: () => Promise<string>, close = true) {
       mode.value = null;
       selected.value = null;
     }
-    await schedule.loadWeek(offset.value);
+    await reloadWeek();
     notify.success(message);
   } catch (cause) {
     const error = cause as PbError;
@@ -324,7 +381,8 @@ function generate() {
       v-if="
         schedule.error.value ||
         catalog.error.value ||
-        catalog.coachesError.value
+        catalog.coachesError.value ||
+        availabilityError
       "
       severity="error"
       :closable="false"
@@ -333,7 +391,8 @@ function generate() {
         (
           schedule.error.value ??
           catalog.error.value ??
-          catalog.coachesError.value
+          catalog.coachesError.value ??
+          availabilityError
         )?.message
       }}
     </Message>
@@ -381,9 +440,13 @@ function generate() {
             "
             >{{ coachName(session) }}</span
           >
-          <span class="text-sm text-muted-color"
-            >Cupo {{ session.capacity }}</span
-          >
+          <AvailabilityTag
+            v-if="
+              session.status === 'scheduled' && availability.has(session.id)
+            "
+            :availability="availability.get(session.id)!.availability"
+            :spots-left="availability.get(session.id)!.spots_left"
+          />
           <span
             v-if="session.status === 'cancelled'"
             class="text-sm text-red-700 dark:text-red-300"
@@ -405,7 +468,10 @@ function generate() {
       header="Detalle de sesión"
       @update:visible="
         (visible) => {
-          if (!visible) selected = null;
+          if (!visible) {
+            bookingOpen = false;
+            selected = null;
+          }
         }
       "
     >
@@ -472,8 +538,26 @@ function generate() {
             @click="openDialog('cancel')"
           />
         </div>
+        <Button
+          v-if="canReserveSession(selected, now)"
+          label="Reservar"
+          icon="pi pi-plus"
+          @click="bookingOpen = true"
+        />
+        <SessionRoster
+          :session="selected"
+          :refresh-key="rosterRefresh"
+          @changed="loadAvailability"
+        />
       </div>
     </Drawer>
+
+    <BookingDialog
+      v-if="selected"
+      v-model="bookingOpen"
+      :session="selected"
+      @booked="reserved"
+    />
 
     <Dialog
       :visible="!!mode"

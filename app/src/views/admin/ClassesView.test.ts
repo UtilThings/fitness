@@ -12,6 +12,8 @@ const api = vi.hoisted(() => ({
   loadWeek: vi.fn(),
   cancelSession: vi.fn(),
   moveSession: vi.fn(),
+  listAvailability: vi.fn(),
+  listBySession: vi.fn(),
 }));
 const role = ref<Role>('owner');
 const sessions = ref<ClassSession[]>([]);
@@ -22,6 +24,12 @@ vi.mock('@/composables/useSchedule', () => ({
     loading: ref(false),
     error: ref(null),
   }),
+}));
+vi.mock('@/composables/useSessionAvailability', () => ({
+  useSessionAvailability: () => ({ list: api.listAvailability }),
+}));
+vi.mock('@/composables/useBookings', () => ({
+  useBookings: () => ({ listBySession: api.listBySession }),
 }));
 vi.mock('@/composables/useAuth', async () => {
   const { computed } = await import('vue');
@@ -69,6 +77,12 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date('2026-11-04T14:00:00Z'));
   role.value = 'owner';
+  api.listAvailability.mockResolvedValue([
+    { session: '0', availability: 'full', spots_left: 0 },
+    { session: '1', availability: 'almost', spots_left: 1 },
+    { session: '2', availability: 'available', spots_left: 3 },
+  ]);
+  api.listBySession.mockResolvedValue([]);
   sessions.value = slots.map(([date, time], index) => ({
     id: String(index),
     collectionId: 'sessions',
@@ -227,4 +241,40 @@ it('hides session mutations from coaches', async () => {
   ]) {
     expect(button(label)).toBeUndefined();
   }
+});
+
+it('shows real availability and refreshes the roster and calendar after a booking', async () => {
+  const { wrapper, button } = await render();
+  await flushPromises();
+  expect(api.listAvailability).toHaveBeenCalledWith({
+    from: '2026-11-01',
+    to: '2026-11-08',
+  });
+  expect(wrapper.get('[data-session="0"]').text()).toContain('Llena · 0 cupos');
+  expect(wrapper.get('[data-session="1"]').text()).toContain(
+    'Casi llena · 1 cupo',
+  );
+  expect(wrapper.get('[data-session="2"]').text()).toContain(
+    'Disponible · 3 cupos',
+  );
+  await wrapper.get('[data-session="2"]').trigger('click');
+  expect(api.listBySession).toHaveBeenLastCalledWith('2');
+  expect(button('Reservar')).toBeDefined();
+  api.listBySession.mockResolvedValue([
+    {
+      id: 'booking',
+      client: 'Ana',
+      status: 'waitlisted',
+      waitlist_position: 1,
+    },
+  ]);
+  wrapper
+    .findComponent({ name: 'BookingDialog' })
+    .vm.$emit('booked', { status: 'waitlisted' });
+  await flushPromises();
+  expect(wrapper.get('table[aria-label="Lista de espera"]').text()).toContain(
+    'Ana',
+  );
+  expect(api.listAvailability).toHaveBeenCalledTimes(2);
+  wrapper.unmount();
 });

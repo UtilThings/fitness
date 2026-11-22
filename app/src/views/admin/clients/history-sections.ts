@@ -1,4 +1,5 @@
 import type { Component } from 'vue';
+import ClientBookings from '@/components/bookings/ClientBookings.vue';
 
 type HistorySection = { key: string; label: string } & (
   | { available: false; component: null; feature: string }
@@ -9,9 +10,8 @@ export const historySections: readonly HistorySection[] = [
   {
     key: 'bookings',
     label: 'Reservas',
-    available: false,
-    component: null,
-    feature: '011',
+    available: true,
+    component: ClientBookings,
   },
   {
     key: 'memberships',
