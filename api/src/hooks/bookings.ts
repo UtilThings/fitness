@@ -61,3 +61,46 @@ onRecordCreateRequest((e) => {
 
   return e.json(200, result);
 }, "bookings");
+
+onRecordUpdateRequest((e) => {
+  const { decideCancellation, nextAttendanceStatus } =
+    require(`${__hooks}/lib/booking-rules`) as typeof import("../lib/booking-rules");
+  const { bookingError, bookingData, requireBookingStaff, saveCancellation, serviceCancellationHours,
+    updateWaitlist, SESSION_CANCELLED_NOTE } =
+    require(`${__hooks}/lib/booking-store`) as typeof import("../lib/booking-store");
+  const { auditActor, inScheduleTransaction } =
+    require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
+  const actor = requireBookingStaff(e);
+  const body = e.requestInfo().body;
+  const status = body.status;
+  if (status !== "cancelled" && status !== "attended" && status !== "no_show") {
+    throw bookingError("status", "Selecciona una transición de reserva permitida.");
+  }
+  const note = typeof body.override_note === "string" ? body.override_note.trim() : "";
+  if (note === SESSION_CANCELLED_NOTE) throw bookingError("override_note", "Indica el motivo de la excepción.");
+
+  const result = inScheduleTransaction(e.app, (tx) => {
+    const booking = tx.findRecordById("bookings", e.record!.id);
+    const session = tx.findRecordById("class_sessions", booking.getString("session"));
+    const input = {
+      booking: bookingData(booking), startsAt: session.getString("starts_at"), now: Date.now(),
+      override: { requested: body.override === true, note },
+    };
+
+    if (status === "cancelled") {
+      const decision = decideCancellation({ ...input, cancellationHours: serviceCancellationHours(tx, session) });
+      if (!decision.ok) throw bookingError(decision.field, decision.message);
+      saveCancellation(tx, booking, decision.status, input.now, actor, note);
+      updateWaitlist(tx, session, actor, input.booking.status === "booked");
+    } else {
+      const decision = nextAttendanceStatus({ ...input, status });
+      if (!decision.ok) throw bookingError(decision.field, decision.message);
+      booking.load({ status, marked_by: actor, override_note: note });
+      auditActor(booking, actor);
+      tx.save(booking);
+    }
+    return booking;
+  });
+
+  return e.json(200, result);
+}, "bookings");

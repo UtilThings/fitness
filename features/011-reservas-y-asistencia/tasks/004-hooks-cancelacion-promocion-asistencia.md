@@ -1,7 +1,7 @@
 # 004 - [Hook] Cancelación, promoción, asistencia y sesión cancelada
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003
 - **Fase:** Fase 2: Hooks y endpoints
 
@@ -27,15 +27,15 @@ Cancelar o marcar asistencia respeta la ventana de cancelación, libera cupo y p
 
 ## Criterios de aceptación
 
-- [ ] Cancelar a tiempo una reserva `booked` con espera promueve al primero y renumera.
-- [ ] Cancelar dentro de la ventana sin nota da `late_cancelled` y también libera el cupo y promueve.
-- [ ] Con `override_note` fuera de ventana el estado es `cancelled`; sin nota en excepción devuelve `400`.
-- [ ] Cancelar una `waitlisted` nunca da `late_cancelled`.
-- [ ] Marcar `attended` antes del inicio sin nota devuelve `400`; después del inicio funciona.
-- [ ] Cancelar una sesión (también por `schedule_blocks`) deja todas sus reservas en `cancelled` y no promueve a nadie.
-- [ ] Cancelar a tiempo (o desde la espera) una reserva `free_class` deja `clients.free_class_used = false`; `late_cancelled` o `no_show` lo dejan en `true`.
-- [ ] Cancelar la sesión restituye la clase gratis de sus reservas `free_class`.
-- [ ] Una transición inválida (p. ej. `cancelled` → `attended`) devuelve `400`.
+- [x] Cancelar a tiempo una reserva `booked` con espera promueve al primero y renumera.
+- [x] Cancelar dentro de la ventana sin nota da `late_cancelled` y también libera el cupo y promueve.
+- [x] Con `override_note` fuera de ventana el estado es `cancelled`; sin nota en excepción devuelve `400`.
+- [x] Cancelar una `waitlisted` nunca da `late_cancelled`.
+- [x] Marcar `attended` antes del inicio sin nota devuelve `400`; después del inicio funciona.
+- [x] Cancelar una sesión (también por `schedule_blocks`) deja todas sus reservas en `cancelled` y no promueve a nadie.
+- [x] Cancelar a tiempo (o desde la espera) una reserva `free_class` deja `clients.free_class_used = false`; `late_cancelled` o `no_show` lo dejan en `true`.
+- [x] Cancelar la sesión restituye la clase gratis de sus reservas `free_class`.
+- [x] Una transición inválida (p. ej. `cancelled` → `attended`) devuelve `400`.
 
 ## Referencias
 
@@ -49,3 +49,5 @@ Cancelar o marcar asistencia respeta la ventana de cancelación, libera cupo y p
 
 ## Notas de implementación
 
+
+Se verificaron por HTTP la promoción y renumeración, la excepción con nota, la asistencia y su corrección, la restitución de clase gratis y los ocho eventos en audit_logs. La cascada se ejecuta en el hook de actualización del modelo, antes del commit, para que una sesión y sus reservas se cancelen juntas también cuando el origen sea un bloqueo. Los hooks de éxito observan la transacción completa. El PATCH admite override: true para pedir una excepción explícita y exigir su nota. También se rechaza una reducción de capacidad por debajo de los cupos ocupados.

@@ -1,3 +1,4 @@
+import { classifyTransition, type BookingLike } from "./booking-rules";
 import { IGNORED_FIELDS, SENSITIVE_FIELDS } from "./audit-config";
 
 type AuditRecord = Record<string, unknown>;
@@ -88,12 +89,15 @@ export function buildEntry({
     if (Object.keys(diff).length === 0) return null;
   }
 
+  const bookingEvent = collection === "bookings" && action !== "delete" && after &&
+    classifyTransition(action === "create" ? undefined : before as unknown as BookingLike, after as unknown as BookingLike);
+
   return {
     actor: actorId ?? "",
     action,
     collection,
     record_id: recordId,
-    summary: buildSummary(action, collection, { id: recordId, ...(action === "delete" ? before : after ?? before) }),
+    summary: bookingEvent ? bookingEvent + ": " + recordId : buildSummary(action, collection, { id: recordId, ...(action === "delete" ? before : after ?? before) }),
     diff,
   };
 }
