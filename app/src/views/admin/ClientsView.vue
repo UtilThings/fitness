@@ -160,7 +160,7 @@ async function create(values: ClientDetails) {
 </script>
 
 <template>
-  <section class="grid gap-5">
+  <section class="grid grid-cols-1 gap-5">
     <PageHeader title="Clientes">
       <template #actions>
         <Button icon="pi pi-plus" label="Nuevo cliente" @click="openCreate" />
@@ -169,7 +169,8 @@ async function create(values: ClientDetails) {
 
     <DataToolbar
       :model-value="q"
-      placeholder="Buscar por nombre, email o teléfono"
+      placeholder="Nombre, email o teléfono"
+      search-class="w-full min-w-0 self-start sm:w-64"
       @search="search"
     >
       <template #filters>
@@ -179,13 +180,13 @@ async function create(values: ClientDetails) {
           option-label="label"
           option-value="value"
           aria-label="Estado"
-          class="min-w-32"
+          class="min-w-32 self-start"
           @update:model-value="filterStatus"
         />
         <div
           v-for="label in ['Servicio', 'Plan activo']"
           :key="label"
-          class="grid gap-1"
+          class="grid gap-1 self-start"
         >
           <Select
             :aria-label="label"
