@@ -1,7 +1,7 @@
 # 003 - [Hook] Hooks de la colección clients
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, Feature 005 (contrato)
 - **Fase:** Fase 1: Modelo de datos y reglas
 
@@ -24,13 +24,13 @@ Los hooks se escriben en `api/src/hooks/clients.ts` y compilan a `api/pb_hooks/c
 
 ## Criterios de aceptación
 
-- [ ] Crear con `Ana@Example.com` y `(305) 555-0100` guarda `ana@example.com` y `+13055550100`.
-- [ ] Email duplicado (con distinta capitalización) devuelve `400`.
-- [ ] PATCH de `free_class_used` con un coach o recepcionista devuelve `400`; con el owner devuelve `200`.
-- [ ] Un `assessment` inválido devuelve `400` con `data.assessment`.
-- [ ] Borrar un cliente sin historial como owner funciona; con un registro dependiente devuelve `409`; un no-owner recibe `403`.
-- [ ] Cada operación crea una fila en `audit_logs` con el actor.
-- [ ] `bun run build:ts` genera `pb_hooks/clients.pb.js` y `bun test` pasa.
+- [x] Crear con `Ana@Example.com` y `(305) 555-0100` guarda `ana@example.com` y `+13055550100`.
+- [x] Email duplicado (con distinta capitalización) devuelve `400`.
+- [x] PATCH de `free_class_used` con un coach o recepcionista devuelve `400`; con el owner devuelve `200`.
+- [x] Un `assessment` inválido devuelve `400` con `data.assessment`.
+- [x] Borrar un cliente sin historial como owner funciona; con un registro dependiente devuelve `409`; un no-owner recibe `403`.
+- [x] Cada operación crea una fila en `audit_logs` con el actor.
+- [x] `bun run build:ts` genera `pb_hooks/clients.pb.js` y `bun test` pasa.
 
 ## Referencias
 
@@ -46,3 +46,5 @@ Los hooks se escriben en `api/src/hooks/clients.ts` y compilan a `api/pb_hooks/c
 
 ## Notas de implementación
 
+
+Verificado por HTTP en una base temporal con owner, coach y recepción: normalización, duplicado, errores por campo, transiciones, borrado con y sin relación y auditoría con su actor y diff de evaluación. PocketBase devuelve 404 por defecto si no se cumple deleteRule; el middleware de clientes devuelve el 403 acordado.
