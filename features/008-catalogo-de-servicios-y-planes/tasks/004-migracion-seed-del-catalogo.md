@@ -1,7 +1,7 @@
 # 004 - [Migración] Seed idempotente del catálogo
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003
 - **Fase:** Fase 1: Esquema y datos
 
@@ -23,10 +23,10 @@ Las migraciones de PocketBase JS se ejecutan una vez, pero el seed debe ser idem
 
 ## Criterios de aceptación
 
-- [ ] Tras arrancar con base limpia hay 5 servicios y 10 planes con precios $800/$1080/$1280, $1127/$1447/$1597, $260, $200 (compromiso 4), $15 y $0 (`is_first_class`).
-- [ ] Cambiar un precio en `/_/` y reaplicar el seed (`up`) no restaura el valor original ni duplica registros.
-- [ ] Solo existe un plan con `is_first_class = true`.
-- [ ] `down` elimina lo sembrado cuando no hay dependientes y no falla cuando los hay.
+- [x] Tras arrancar con base limpia hay 5 servicios y 10 planes con precios $800/$1080/$1280, $1127/$1447/$1597, $260, $200 (compromiso 4), $15 y $0 (`is_first_class`).
+- [x] Cambiar un precio en `/_/` y reaplicar el seed (`up`) no restaura el valor original ni duplica registros.
+- [x] Solo existe un plan con `is_first_class = true`.
+- [x] `down` elimina lo sembrado cuando no hay dependientes y no falla cuando los hay.
 
 ## Referencias
 
@@ -40,4 +40,4 @@ Las migraciones de PocketBase JS se ejecutan una vez, pero el seed debe ser idem
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+PocketBase 0.40.5 permite require desde migraciones. En una base temporal se confirmaron los 5 servicios y los 10 planes, la conservación de un precio editado al repetir up y el rollback con y sin dependientes. Los IDs reservados permiten identificar solo registros creados por este seed, incluso tras renombrarlos.
