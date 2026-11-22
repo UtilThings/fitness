@@ -1,6 +1,6 @@
 # Especificación: Clientes
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -235,16 +235,16 @@ inactive → active   (reactivación)
 
 ## Criterios de Aceptación
 
-- [ ] La colección `clients` existe con campos, índices y reglas indicados; la migración es reversible.
-- [ ] El email se normaliza y es único cuando existe; varios clientes sin email conviven.
-- [ ] El teléfono se guarda en E.164 y la búsqueda encuentra por nombre, email y teléfono (con o sin formato).
-- [ ] Solo el owner puede cambiar `free_class_used` por API; un coach o recepcionista recibe `400`.
-- [ ] `assessment` se valida contra el esquema versionado y se edita con un formulario estructurado.
-- [ ] La lista filtra por estado y muestra los placeholders de servicio y plan activo; el alta manual funciona.
-- [ ] El perfil tiene las pestañas Datos, Objetivos y notas, Evaluación inicial e Historial; cambia el estado y muestra la marca de clase gratis.
-- [ ] Un cliente con historial no se borra (`409`) y se inactiva; sin historial el owner puede borrarlo.
-- [ ] Los cambios quedan en `audit_logs`.
-- [ ] `bun test` (api), `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] La colección `clients` existe con campos, índices y reglas indicados; la migración es reversible.
+- [x] El email se normaliza y es único cuando existe; varios clientes sin email conviven.
+- [x] El teléfono se guarda en E.164 y la búsqueda encuentra por nombre, email y teléfono (con o sin formato).
+- [x] Solo el owner puede cambiar `free_class_used` por API; un coach o recepcionista recibe `400`.
+- [x] `assessment` se valida contra el esquema versionado y se edita con un formulario estructurado.
+- [x] La lista filtra por estado y muestra los placeholders de servicio y plan activo; el alta manual funciona.
+- [x] El perfil tiene las pestañas Datos, Objetivos y notas, Evaluación inicial e Historial; cambia el estado y muestra la marca de clase gratis.
+- [x] Un cliente con historial no se borra (`409`) y se inactiva; sin historial el owner puede borrarlo.
+- [x] Los cambios quedan en `audit_logs`.
+- [x] `bun test` (api), `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
 
 ---
 
@@ -272,6 +272,9 @@ Feature 008 (planes/servicios) → 005 (placeholders de filtro)
 3. Repetir con `ana@example.com`: `400` en `data.email`.
 4. PATCH de `free_class_used` con un coach: `400`; con el owner: `200`.
 5. En la UI: alta manual, búsqueda por teléfono parcial, cambio de estado y borrado bloqueado en un cliente con historial.
+
+
+La verificación local pasó en PocketBase 0.40.5 y Chromium con datos temporales. Se comprobó el ciclo de migración, el índice parcial, la normalización, los permisos por rol y el guardado interno de la marca de clase gratis. En el panel se verificaron el alta, el duplicado, la búsqueda con teléfono parcial, las transiciones, la evaluación, el borrado y la inactivación ante historial. Se comprobó también el actor y el diff de evaluación en `audit_logs`. Pasaron ambos scripts del repositorio, con 42 pruebas de API y 161 de la app.
 
 ---
 
