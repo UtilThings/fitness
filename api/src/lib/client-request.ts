@@ -38,7 +38,7 @@ export function validateClientRequest(e: core.RecordRequestEvent, before: core.R
   }
 
   const rawDate = body.joined_on;
-  if (rawDate && !record.getString("joined_on")) invalid("joined_on", "Ingresa una fecha válida.");
+  if (String(rawDate ?? "").trim() && !record.getString("joined_on")) invalid("joined_on", "Ingresa una fecha válida.");
 
   if (Object.keys(errors).length) throw new BadRequestError("Revisa los datos del cliente.", errors);
 
