@@ -1,5 +1,5 @@
 export const AUDITED_COLLECTIONS: readonly string[] = [
-  "admins", "services", "plans", "class_templates", "class_sessions", "schedule_blocks", "clients",
+  "admins", "services", "plans", "class_templates", "class_sessions", "schedule_blocks", "clients", "bookings",
 ];
 export const SENSITIVE_FIELDS = ["password", "passwordHash", "tokenKey"];
 export const IGNORED_FIELDS: readonly string[] = ["created", "updated"];
