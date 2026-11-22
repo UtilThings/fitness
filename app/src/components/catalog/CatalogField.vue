@@ -3,7 +3,7 @@ defineProps<{ id: string; label: string; error?: string; help?: string }>();
 </script>
 
 <template>
-  <div class="grid gap-1.5">
+  <div class="grid content-start gap-1.5">
     <label :for="id" class="text-sm font-medium">{{ label }}</label>
     <slot
       :described-by="error ? id + '-error' : help ? id + '-help' : undefined"

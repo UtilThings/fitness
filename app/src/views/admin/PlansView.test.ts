@@ -181,6 +181,17 @@ it('crea un plan para el servicio filtrado', async () => {
     .findAll('button')
     .find((button) => button.text() === 'Nuevo plan')!
     .trigger('click');
+  for (const [id, label] of [
+    ['plan-sessions', 'Sesiones'],
+    ['plan-frequency', 'Frecuencia'],
+    ['plan-commitment', 'Compromiso'],
+  ]) {
+    expect(wrapper.get(`label[for="${id}"]`).text()).toBe(label);
+    expect(wrapper.get(`#${id}`).classes()).toContain('min-w-0');
+  }
+  expect(wrapper.get('#plan-commitment').attributes('aria-describedby')).toBe(
+    'plan-commitment-help',
+  );
   await wrapper.get('#plan-name').setValue('Pase flexible');
   await wrapper.get('#plan-price').setValue('17.50');
   await wrapper.get('form').trigger('submit');

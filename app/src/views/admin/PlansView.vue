@@ -400,6 +400,8 @@ async function save() {
             <InputNumber
               v-model="form.sessions"
               input-id="plan-sessions"
+              fluid
+              input-class="min-w-0"
               :invalid="!!fields.sessions"
               :use-grouping="false"
               class="min-w-0"
@@ -407,12 +409,19 @@ async function save() {
           </CatalogField>
           <CatalogField
             id="plan-frequency"
-            label="Sesiones por semana"
+            v-slot="{ describedBy }"
+            label="Frecuencia"
+            help="Sesiones por semana"
             :error="fields.per_week"
           >
             <InputNumber
               v-model="form.per_week"
               input-id="plan-frequency"
+              fluid
+              input-class="min-w-0"
+              :pt="{
+                pcInputText: { root: { 'aria-describedby': describedBy } },
+              }"
               :invalid="!!fields.per_week"
               :use-grouping="false"
               class="min-w-0"
@@ -420,12 +429,19 @@ async function save() {
           </CatalogField>
           <CatalogField
             id="plan-commitment"
-            label="Periodos de 4 semanas"
+            v-slot="{ describedBy }"
+            label="Compromiso"
+            help="Periodos de 4 semanas"
             :error="fields.commitment_periods"
           >
             <InputNumber
               v-model="form.commitment_periods"
               input-id="plan-commitment"
+              fluid
+              input-class="min-w-0"
+              :pt="{
+                pcInputText: { root: { 'aria-describedby': describedBy } },
+              }"
               :invalid="!!fields.commitment_periods"
               :use-grouping="false"
               class="min-w-0"
