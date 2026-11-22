@@ -41,3 +41,17 @@ test("rejects invalid civil dates and times", () => {
   expect(() => startOfLocalDay("2027-02-29")).toThrow(RangeError);
   expect(() => localToUtc("2026-03-08", "24:00")).toThrow(RangeError);
 });
+
+test("round trips each day of 2026 and keeps the same wall time across DST", () => {
+  for (let date = "2026-01-01"; date < "2027-01-01"; date = addLocalDays(date, 1)) {
+    for (const time of ["09:00", "19:30"]) {
+      expect(utcToLocal(localToUtc(date, time))).toEqual({ date, time, weekday: localWeekday(date) });
+    }
+  }
+  for (const [standard, summer] of [["2026-03-07", "2026-03-09"], ["2026-11-02", "2026-10-31"]]) {
+    expect(localToUtc(standard, "09:00")).toBe(standard + "T14:00:00.000Z");
+    expect(localToUtc(summer, "09:00")).toBe(summer + "T13:00:00.000Z");
+    expect(localToUtc(standard, "19:30")).toBe(addLocalDays(standard, 1) + "T00:30:00.000Z");
+    expect(localToUtc(summer, "19:30")).toBe(summer + "T23:30:00.000Z");
+  }
+});

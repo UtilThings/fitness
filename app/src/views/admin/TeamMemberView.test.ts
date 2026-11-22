@@ -65,10 +65,17 @@ it('muestra los datos, el avatar, los permisos y la sección de horario', async 
     member.bio,
     'Activo',
     'Horario y clases',
-    'Disponible próximamente',
+    'Ver horario',
   ]) {
     expect(wrapper.text()).toContain(text);
   }
+  const link = wrapper
+    .findAllComponents(RouterLinkStub)
+    .find((item) => item.text() === 'Ver horario');
+  expect(link?.props('to')).toEqual({
+    name: 'classes',
+    query: { coach: member.id },
+  });
   expect(wrapper.get('img').attributes('src')).toContain('avatar.png');
   expect(wrapper.getComponent(RolePermissions).props('highlight')).toBe(
     'coach',

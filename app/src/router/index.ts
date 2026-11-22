@@ -90,6 +90,24 @@ const router = createRouter({
           meta: { title: 'Ficha del equipo' },
         },
         {
+          path: 'classes',
+          name: 'classes',
+          component: () => import('@/views/admin/ClassesView.vue'),
+          meta: { title: 'Clases', requiresAuth: true },
+        },
+        {
+          path: 'classes/templates',
+          name: 'classes-templates',
+          component: () => import('@/views/admin/ClassTemplatesView.vue'),
+          meta: { title: 'Plantillas de clases' },
+        },
+        {
+          path: 'classes/blocks',
+          name: 'classes-blocks',
+          component: () => import('@/views/admin/ScheduleBlocksView.vue'),
+          meta: { title: 'Bloqueos de horario' },
+        },
+        {
           path: 'services',
           name: 'services',
           component: () => import('@/views/admin/ServicesView.vue'),

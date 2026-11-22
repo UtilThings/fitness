@@ -3,9 +3,11 @@ import {
   formatDate,
   formatDateTime,
   formatTime,
+  localDateToUtcRange,
   localToUtcIso,
   todayLocal,
   utcToLocalParts,
+  weekRangeUtc,
 } from './datetime';
 
 afterEach(() => vi.useRealTimers());
@@ -40,4 +42,22 @@ it('formats the New York date and time for an instant across UTC midnight', () =
 it('rejects invalid local dates and times', () => {
   expect(() => localToUtcIso('2026-02-30', '10:30')).toThrow(RangeError);
   expect(() => localToUtcIso('2026-03-08', '24:00')).toThrow(RangeError);
+});
+
+it('keeps the Monday evening time across DST and derives exact local day boundaries', () => {
+  for (const iso of ['2026-10-26T23:30:00Z', '2026-11-03T00:30:00Z']) {
+    expect(formatTime(iso, 'en-US')).toBe('7:30 PM');
+    expect(utcToLocalParts(iso)).toMatchObject({ time: '19:30', weekday: 1 });
+  }
+  for (const [date, hours] of [
+    ['2026-03-08', 23],
+    ['2026-11-01', 25],
+  ] as const) {
+    const { from, to } = localDateToUtcRange(date);
+    expect((Date.parse(to) - Date.parse(from)) / 3600000).toBe(hours);
+  }
+  expect(weekRangeUtc('2026-11-01')).toEqual({
+    from: '2026-11-01T04:00:00.000Z',
+    to: '2026-11-08T05:00:00.000Z',
+  });
 });

@@ -144,6 +144,13 @@ onMounted(loadCoaches);
 
 Ejecuta `scripts/verify-app.sh` desde la raíz para correr las pruebas de las vistas, los composables y las validaciones del catálogo junto con las demás comprobaciones de la app.
 
+## Horarios y clases
+
+- **Clases** (`/classes`) muestra la semana en hora de Miramar. Se puede navegar a semanas anteriores y siguientes, filtrar por servicio o coach y usar **Mis clases**. Owner y reception pueden crear una sesión especial y cambiar el coach, las notas o el horario desde el detalle. Cancelar o mover exige un motivo. Owner también puede generar cuatro semanas desde el domingo de la semana visible.
+- **Plantillas** (`/classes/templates`) agrupa las franjas semanales por día. Owner puede editarlas, activarlas y asignar un coach, con la opción de actualizar las sesiones futuras. El parámetro `?coach=<id>` filtra por coach asignado.
+- **Bloqueos** (`/classes/blocks`) muestra los días sin clases. Antes de guardar, el formulario consulta cuántas sesiones programadas se cancelarán y pide confirmación.
+- **Ver horario** en una ficha del equipo abre `/classes?coach=<id>`. Coach y reception pueden consultar plantillas y bloqueos.
+
 ## Despliegue
 
 El servidor estático debe devolver `index.html` para cualquier ruta desconocida (fallback de SPA). El despliegue no forma parte del boilerplate.

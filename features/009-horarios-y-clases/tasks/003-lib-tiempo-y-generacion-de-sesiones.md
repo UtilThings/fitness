@@ -1,7 +1,7 @@
 # 003 - [Lib] Tiempo `America/New_York` y generación de sesiones
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 005 (contrato)
 - **Fase:** Fase 2: Lógica pura y reglas de servidor
 
@@ -28,11 +28,11 @@ Existe una librería pura y probada que convierte hora local de Miramar a UTC (i
 
 ## Criterios de aceptación
 
-- [ ] `bun test` en `api/` pasa con los casos DST de marzo y noviembre.
-- [ ] Generar dos veces con las claves resultantes crea 0 sesiones la segunda vez.
-- [ ] Ninguna sesión generada cae en una fecha local bloqueada (incluidos los extremos del rango).
-- [ ] `bun run build:ts` genera `schedule-gen.js` y `session-rules.js` sin errores.
-- [ ] Las notas registran qué ofrece goja (`Intl`) y por qué se usa el helper.
+- [x] `bun test` en `api/` pasa con los casos DST de marzo y noviembre.
+- [x] Generar dos veces con las claves resultantes crea 0 sesiones la segunda vez.
+- [x] Ninguna sesión generada cae en una fecha local bloqueada (incluidos los extremos del rango).
+- [x] `bun run build:ts` genera `schedule-gen.js` y `session-rules.js` sin errores.
+- [x] Las notas registran qué ofrece goja (`Intl`) y por qué se usa el helper.
 
 ## Referencias
 
@@ -47,4 +47,4 @@ Existe una librería pura y probada que convierte hora local de Miramar a UTC (i
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+En Goja de PocketBase 0.40.5, `typeof Intl` fue `undefined` y `typeof Date` fue `function`. `toLocaleString` devolvió la misma hora para Nueva York y Los Ángeles. Se reutiliza `tz.ts` y se conserva su contrato ISO. Verificados 36 tests y el build, incluidos ambos cambios de hora de 2026, bloqueos y generación repetida.
