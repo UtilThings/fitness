@@ -1,7 +1,7 @@
 # 001 - [Migración] Colecciones `class_templates`, `class_sessions` y `schedule_blocks`
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 008 (contrato), Feature 005 (contrato)
 - **Fase:** Fase 1: Esquema y datos
 
@@ -26,11 +26,11 @@ PocketBase tiene las tres colecciones de horarios con sus relaciones, reglas e �
 
 ## Criterios de aceptación
 
-- [ ] Las tres colecciones aparecen en `/_/` con campos, índices y reglas indicados.
-- [ ] Insertar dos sesiones con la misma plantilla y `starts_at` falla; dos sesiones `special` sin plantilla en el mismo instante no fallan por el índice.
-- [ ] Una plantilla con `weekday: 0` se guarda sin error.
-- [ ] Un `coach` solo lee; un `reception` puede crear sesiones pero no plantillas; nadie borra sesiones por API.
-- [ ] `down` revierte las tres sin error y `up` vuelve a aplicarse.
+- [x] Las tres colecciones aparecen en `/_/` con campos, índices y reglas indicados.
+- [x] Insertar dos sesiones con la misma plantilla y `starts_at` falla; dos sesiones `special` sin plantilla en el mismo instante no fallan por el índice.
+- [x] Una plantilla con `weekday: 0` se guarda sin error.
+- [x] Un `coach` solo lee; un `reception` puede crear sesiones pero no plantillas; nadie borra sesiones por API.
+- [x] `down` revierte las tres sin error y `up` vuelve a aplicarse.
 
 ## Referencias
 
@@ -45,4 +45,4 @@ PocketBase tiene las tres colecciones de horarios con sus relaciones, reglas e �
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Verificado con PocketBase 0.40.5. La API de colecciones confirmó campos, reglas e índices. Se comprobó un domingo, el índice parcial con sesiones regulares y especiales, los permisos de los tres roles y el ciclo `up → down 3 → up` en una base temporal.
