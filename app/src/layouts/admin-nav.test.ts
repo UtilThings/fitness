@@ -39,6 +39,7 @@ describe('adminNav', () => {
     expect(enabled.map(({ to }) => to)).toEqual(
       expect.arrayContaining([
         '/',
+        '/clients',
         '/team',
         '/settings/profile',
         '/services',

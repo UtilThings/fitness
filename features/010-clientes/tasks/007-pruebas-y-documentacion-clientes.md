@@ -1,7 +1,7 @@
 # 007 - [Pruebas] Pruebas de interfaz y documentación de clientes
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003, 004, 005, 006
 - **Fase:** Fase 3: Verificación y cierre
 
@@ -21,9 +21,9 @@ Las pruebas de lógica pura de la API ya existen (002). Falta cubrir los compone
 
 ## Criterios de aceptación
 
-- [ ] Las pruebas nuevas pasan y cubren un caso negativo por componente.
-- [ ] `api/README.md` y `app/README.md` describen los contratos mencionados y la decisión pendiente.
-- [ ] `bun test` (api) y `bun run test` (app) pasan en verde.
+- [x] Las pruebas nuevas pasan y cubren un caso negativo por componente.
+- [x] `api/README.md` y `app/README.md` describen los contratos mencionados y la decisión pendiente.
+- [x] `bun test` (api) y `bun run test` (app) pasan en verde.
 
 ## Referencias
 
@@ -36,3 +36,5 @@ Las pruebas de lógica pura de la API ya existen (002). Falta cubrir los compone
 
 ## Notas de implementación
 
+
+Verificadas 42 pruebas de API y 161 pruebas de app. Se cubren errores de formulario, umbral y respuestas tardías del selector, búsqueda y filtros, permisos de clase gratis, conflicto de borrado, evaluación inválida y claves del historial. Ambos README documentan los contratos y la decisión pendiente de importación.

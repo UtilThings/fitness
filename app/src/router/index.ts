@@ -78,6 +78,18 @@ const router = createRouter({
           meta: { title: 'Dashboard' },
         },
         {
+          path: 'clients',
+          name: 'clients',
+          component: () => import('@/views/admin/ClientsView.vue'),
+          meta: { title: 'Clientes' },
+        },
+        {
+          path: 'clients/:id',
+          name: 'client-detail',
+          component: () => import('@/views/admin/ClientDetailView.vue'),
+          meta: { title: 'Cliente' },
+        },
+        {
           path: 'team',
           name: 'team',
           component: () => import('@/views/admin/TeamView.vue'),

@@ -5,10 +5,15 @@ import InputText from 'primevue/inputtext';
 import { onBeforeUnmount, ref, watch } from 'vue';
 
 const props = withDefaults(
-  defineProps<{ modelValue?: string; placeholder?: string }>(),
+  defineProps<{
+    modelValue?: string;
+    placeholder?: string;
+    searchClass?: string;
+  }>(),
   {
     modelValue: '',
     placeholder: 'Buscar',
+    searchClass: 'w-full sm:w-auto',
   },
 );
 const emit = defineEmits<{
@@ -40,7 +45,7 @@ onBeforeUnmount(() => clearTimeout(pendingSearch));
 
 <template>
   <div class="flex flex-wrap items-center gap-3">
-    <IconField class="w-full sm:w-auto">
+    <IconField :class="searchClass">
       <InputIcon class="pi pi-search" aria-hidden="true" />
       <InputText
         :model-value="draft"
