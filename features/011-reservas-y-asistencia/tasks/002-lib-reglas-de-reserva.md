@@ -1,7 +1,7 @@
 # 002 - [Lib] Reglas de reserva, lista de espera y cancelación
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 005 (contrato)
 - **Fase:** Fase 1: Modelo y reglas puras
 
@@ -28,12 +28,12 @@ Las libs viven en `api/src/lib/*.ts` y compilan a CJS en `api/pb_hooks/lib/`. Fe
 
 ## Criterios de aceptación
 
-- [ ] Una cancelación exactamente en el límite de la ventana es a tiempo y un segundo después es tardía.
-- [ ] Con 6 de 6 cupos, `decideBookingStatus` devuelve `waitlisted` con la posición siguiente; al liberar un cupo `pickPromotion` devuelve la reserva en posición 1.
-- [ ] `shouldRestoreFreeClass` devuelve `true` al cancelar a tiempo una reserva `free_class` y `false` para `late_cancelled`, `no_show`, `attended` o si hay otra reserva `free_class` vigente.
-- [ ] `availabilityOf(0|1|2|3)` devuelve `full|almost|almost|available`.
-- [ ] La lib no importa nada de PocketBase ni usa `Intl`.
-- [ ] `bun test` pasa y `bun run build:ts` genera `pb_hooks/lib/booking-rules.js`.
+- [x] Una cancelación exactamente en el límite de la ventana es a tiempo y un segundo después es tardía.
+- [x] Con 6 de 6 cupos, `decideBookingStatus` devuelve `waitlisted` con la posición siguiente; al liberar un cupo `pickPromotion` devuelve la reserva en posición 1.
+- [x] `shouldRestoreFreeClass` devuelve `true` al cancelar a tiempo una reserva `free_class` y `false` para `late_cancelled`, `no_show`, `attended` o si hay otra reserva `free_class` vigente.
+- [x] `availabilityOf(0|1|2|3)` devuelve `full|almost|almost|available`.
+- [x] La lib no importa nada de PocketBase ni usa `Intl`.
+- [x] `bun test` pasa y `bun run build:ts` genera `pb_hooks/lib/booking-rules.js`.
 
 ## Referencias
 
@@ -47,3 +47,5 @@ Las libs viven en `api/src/lib/*.ts` y compilan a CJS en `api/pb_hooks/lib/`. Fe
 
 ## Notas de implementación
 
+
+Se verificaron los límites exactos, el orden de espera y todas las combinaciones de estados. Bun ejecutó 49 pruebas sin fallos y generó la librería CommonJS.
