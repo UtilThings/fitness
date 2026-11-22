@@ -33,7 +33,9 @@ migrate((app) => {
       "id = {:id} || (service = {:service} && weekday = {:weekday} && start_time = {:start_time})",
       "", 1, 0, { ...values, service });
     if (!existing.length) {
-      app.save(new Record(collection, { ...values, service, duration_min: 60, active: true }));
+      const template = new Record(collection, { ...values, service, duration_min: 60, active: true });
+      template.set("@pbInternalScheduleSkipGeneration", true);
+      app.save(template);
     }
   }
 }, (app) => {
