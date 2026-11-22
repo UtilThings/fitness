@@ -10,7 +10,16 @@ describe('adminNav', () => {
       adminNav.map(({ label, items }) => [label, items.map(({ to }) => to)]),
     ).toEqual([
       ['Análisis', ['/', '/reports']],
-      ['Operaciones', ['/clients', '/classes', '/bookings']],
+      [
+        'Operaciones',
+        [
+          '/clients',
+          '/classes',
+          '/classes/templates',
+          '/classes/blocks',
+          '/bookings',
+        ],
+      ],
       ['Catálogo', ['/plans']],
       ['Ajustes', ['/services', '/team', '/settings/profile']],
       ['Facturación', ['/memberships', '/payments']],

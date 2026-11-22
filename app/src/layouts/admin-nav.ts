@@ -41,6 +41,8 @@ export const adminNav: NavGroup[] = [
         icon: 'pi pi-calendar',
         to: '/classes',
       },
+      { label: 'Plantillas', icon: 'pi pi-list', to: '/classes/templates' },
+      { label: 'Bloqueos', icon: 'pi pi-ban', to: '/classes/blocks' },
       {
         label: 'Reservas',
         icon: 'pi pi-bookmark',

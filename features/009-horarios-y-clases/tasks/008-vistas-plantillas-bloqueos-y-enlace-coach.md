@@ -1,7 +1,7 @@
 # 008 - [Vista] Plantillas, bloqueos y enlace desde la ficha del coach
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 006, 007, Feature 007 (contrato)
 - **Fase:** Fase 3: Interfaz
 
@@ -23,13 +23,13 @@ La ficha del coach la crea la feature 007 (equipo y coaches); su archivo exacto 
 
 ## Criterios de aceptación
 
-- [ ] `/classes/templates` lista las 9 plantillas sembradas agrupadas por día; crear una plantilla activa genera sus sesiones.
-- [ ] Asignar coach con «aplicar a futuras» actualiza las sesiones futuras y se ve en `/classes`.
-- [ ] Crear un bloqueo muestra el número de sesiones a cancelar y, al confirmar, esas sesiones aparecen canceladas en `/classes`.
-- [ ] `date_to` anterior a `date_from` se rechaza en el formulario y en el servidor.
-- [ ] El botón de la ficha del coach abre `/classes?coach=<id>` con el filtro aplicado.
-- [ ] Un usuario `coach` ve ambas vistas en solo lectura.
-- [ ] `bun run test`, `typecheck`, `lint`, `format:check` y `build` pasan.
+- [x] `/classes/templates` lista las 9 plantillas sembradas agrupadas por día; crear una plantilla activa genera sus sesiones.
+- [x] Asignar coach con «aplicar a futuras» actualiza las sesiones futuras y se ve en `/classes`.
+- [x] Crear un bloqueo muestra el número de sesiones a cancelar y, al confirmar, esas sesiones aparecen canceladas en `/classes`.
+- [x] `date_to` anterior a `date_from` se rechaza en el formulario y en el servidor.
+- [x] El botón de la ficha del coach abre `/classes?coach=<id>` con el filtro aplicado.
+- [x] Un usuario `coach` ve ambas vistas en solo lectura.
+- [x] `bun run test`, `typecheck`, `lint`, `format:check` y `build` pasan.
 
 ## Referencias
 
@@ -43,4 +43,4 @@ La ficha del coach la crea la feature 007 (equipo y coaches); su archivo exacto 
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Verificados 142 tests, tipos, lint, formato y build. Las vistas agrupan las nueve plantillas, envían ambas variantes de reasignación, confirman el conteo antes de guardar un bloqueo, rechazan rangos inválidos y presentan solo lectura a coach. La ficha enlaza al calendario con el parámetro `coach`.
