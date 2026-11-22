@@ -223,6 +223,7 @@ function changeStatus(value: ClientStatus) {
 function changeClassUsed(value: boolean) {
   const clientId = client.value?.id;
   if (!clientId || !isOwner.value || saving.value) return;
+  classUsed.value = value;
   void persist(
     'actions',
     () => clients.update(clientId, { free_class_used: value }),
@@ -328,8 +329,8 @@ function requestDelete() {
             {{ client.free_class_used ? 'usada' : 'disponible' }}
           </label>
           <ToggleSwitch
-            v-model="classUsed"
             :input-id="id + '-free-class'"
+            :model-value="classUsed"
             :disabled="!isOwner || saving"
             @update:model-value="changeClassUsed"
           />

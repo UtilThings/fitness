@@ -80,3 +80,23 @@ it('muestra la etiqueta de pausa sin reutilizar la etiqueta de activo', () => {
   });
   expect(wrapper.text()).toBe('Pausado');
 });
+
+it('descarta resultados tardíos al borrar el texto del selector', async () => {
+  let resolve!: (value: { items: unknown[] }) => void;
+  const delayed = new Promise<{ items: unknown[] }>((done) => {
+    resolve = done;
+  });
+  mocks.list.mockReturnValueOnce(delayed);
+  const wrapper = mount(ClientPicker, { global });
+  const input = wrapper.getComponent(AutoComplete);
+  input.vm.$emit('complete', {
+    originalEvent: new Event('input'),
+    query: 'ana',
+  });
+  input.vm.$emit('update:modelValue', '');
+  resolve({ items: [{ id: 'ana', first_name: 'Ana' }] });
+  await flushPromises();
+  expect(input.props('suggestions')).toEqual([]);
+  expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+  wrapper.unmount();
+});
