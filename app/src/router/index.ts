@@ -90,6 +90,12 @@ const router = createRouter({
           meta: { title: 'Ficha del equipo' },
         },
         {
+          path: 'classes',
+          name: 'classes',
+          component: () => import('@/views/admin/ClassesView.vue'),
+          meta: { title: 'Clases', requiresAuth: true },
+        },
+        {
           path: 'services',
           name: 'services',
           component: () => import('@/views/admin/ServicesView.vue'),

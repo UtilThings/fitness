@@ -49,6 +49,7 @@ describe('guard', () => {
     '/team/coach',
     '/settings/profile',
     '/services',
+    '/classes?coach=jq',
     '/plans?service=jump',
   ])('protege %s y conserva la ruta al iniciar sesión', async (path) => {
     await router.push(path);
