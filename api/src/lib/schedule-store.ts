@@ -3,6 +3,7 @@
 import { blockRangeUtc, generateSessions, SESSION_WINDOW_WEEKS, sessionKey, type ScheduleBlockDates } from "./schedule-gen";
 import { addLocalDays, startOfLocalDay, utcToLocal } from "./tz";
 import { buildEntry } from "./audit";
+import { validateCancelReason } from "./session-rules";
 
 export function fieldError(field: string, message: string) {
   return new BadRequestError(message, { [field]: new ValidationError("validation_schedule", message) });
@@ -43,7 +44,7 @@ export function pocketBaseDate(iso: string) {
 
 export function scheduleAudit(app: core.App, collection: string, recordId: string, actorId: string,
   summary: string, counts: Record<string, number>) {
-  const data = buildEntry({ action: "custom", collection, recordId, actorId, after: counts });
+  const data = buildEntry({ action: "custom", collection, recordId: recordId || app.findCollectionByNameOrId(collection).id, actorId, after: counts });
   if (data) {
     app.save(new Record(app.findCollectionByNameOrId("audit_logs"), { ...data, summary }));
   }
@@ -108,8 +109,15 @@ export function persistGeneratedSessions(app: core.App, options: {
     for (const input of result.toCreate) {
       const record = new Record(collection, input);
       auditActor(record, options.actor ?? "");
-      tx.save(record);
-      created++;
+      try {
+        tx.save(record);
+        created++;
+      } catch (error) {
+        if (!String(error).includes("UNIQUE constraint failed: class_sessions.template, class_sessions.starts_at")) {
+          throw error;
+        }
+        skippedExisting++;
+      }
     }
   });
 
@@ -117,4 +125,41 @@ export function persistGeneratedSessions(app: core.App, options: {
     created, skipped_existing: skippedExisting, skipped_blocked: skippedBlocked,
     window: { from, to: addLocalDays(end, -1) },
   };
+}
+
+export function getReason(reason: unknown): string {
+  const error = validateCancelReason(reason);
+  if (error) throw fieldError("reason", error);
+  return (reason as string).trim();
+}
+
+export function requireScheduleRole(event: core.RequestEvent, roles: string[]): string {
+  const actor = event.auth;
+  if (!actor?.getBool("active") || !roles.includes(actor.getString("role"))) {
+    throw new ForbiddenError("Tu rol no permite esta operación.");
+  }
+  return actor.id;
+}
+
+export function hasCoachConflict(app: core.App, id: string, coach: string, startsAt: string, duration: number): boolean {
+  if (!coach) return false;
+  const start = Date.parse(startsAt);
+  const end = new Date(start + duration * 60_000).toISOString();
+  const earliest = new Date(start - 240 * 60_000).toISOString();
+  return app.findRecordsByFilter("class_sessions",
+    "coach = {:coach} && status = 'scheduled' && id != {:id} && starts_at > {:earliest} && starts_at < {:end}",
+    "", 0, 0, { id, coach, earliest: pocketBaseDate(earliest), end: pocketBaseDate(end) }
+  ).some((record) => {
+    if (!record) return false;
+    const otherStart = Date.parse(record.getString("starts_at").replace(" ", "T"));
+    return otherStart + record.getInt("duration_min") * 60_000 > start;
+  });
+}
+
+export function inScheduleTransaction<T>(app: core.App, operation: (tx: core.App) => T): T {
+  let result!: T;
+  app.runInTransaction((tx) => {
+    result = operation(tx);
+  });
+  return result;
 }

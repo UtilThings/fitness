@@ -1,7 +1,7 @@
 # 005 - [Endpoint] Generación (ruta y cron), cancelar, mover y asignar coach
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003, 004
 - **Fase:** Fase 2: Lógica pura y reglas de servidor
 
@@ -27,13 +27,13 @@ Las rutas propias usan `routerAdd` con `apis.requireAuth("admins")`; los roles s
 
 ## Criterios de aceptación
 
-- [ ] `generate` la primera vez crea 36 sesiones (9 plantillas × 4 semanas) y la segunda `created: 0`.
-- [ ] El cron queda registrado (visible en `/_/` → Ajustes → Crons) y ejecutarlo equivale a la ruta.
-- [ ] `cancel` sin motivo → 400; en sesión ya cancelada → 400; con rol `coach` → 403; correcto → sesión `cancelled` y la transición dispara el evento (comprobable con un hook de prueba).
-- [ ] `move` deja la original `cancelled` y crea una `special`; la siguiente generación no recrea la hora original.
-- [ ] `move` a un instante pasado o dentro de un bloqueo → 400.
-- [ ] `assign-coach` con `apply_to_future` actualiza solo sesiones futuras `scheduled` de esa plantilla y devuelve el conteo.
-- [ ] `bun run build:ts` genera los `.pb.js` sin errores.
+- [x] `generate` la primera vez crea 36 sesiones (9 plantillas × 4 semanas) y la segunda `created: 0`.
+- [x] El cron queda registrado (visible en `/_/` → Ajustes → Crons) y ejecutarlo equivale a la ruta.
+- [x] `cancel` sin motivo → 400; en sesión ya cancelada → 400; con rol `coach` → 403; correcto → sesión `cancelled` y la transición dispara el evento (comprobable con un hook de prueba).
+- [x] `move` deja la original `cancelled` y crea una `special`; la siguiente generación no recrea la hora original.
+- [x] `move` a un instante pasado o dentro de un bloqueo → 400.
+- [x] `assign-coach` con `apply_to_future` actualiza solo sesiones futuras `scheduled` de esa plantilla y devuelve el conteo.
+- [x] `bun run build:ts` genera los `.pb.js` sin errores.
 
 ## Referencias
 
@@ -48,4 +48,4 @@ Las rutas propias usan `routerAdd` con `apis.requireAuth("admins")`; los roles s
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Verificado en PocketBase con 36 sesiones en la primera ejecución y cero en la segunda. Se ejecutó el cron desde la API que usa el panel de ajustes y se comprobó su equivalencia con la ruta. Un hook temporal detectó la transición al cancelar y mover. Se comprobaron roles, fecha inválida, bloqueo, solapamiento de coach y reasignación de sesiones futuras.
