@@ -1,7 +1,7 @@
 # 004 - [Composable] useClients y componentes base
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003, Feature 006 (contrato)
 - **Fase:** Fase 2: Interfaz de clientes
 
@@ -22,10 +22,10 @@ La app dispone del composable de datos de clientes y de los componentes reutiliz
 
 ## Criterios de aceptación
 
-- [ ] `buildSearchFilter('ana 305')` genera un filtro con dos tokens, cada uno contra los cuatro campos.
-- [ ] `ClientForm` muestra los errores `400` del servidor junto a cada campo.
-- [ ] `ClientPicker` emite un cliente seleccionado y no consulta con menos de 2 caracteres.
-- [ ] `bun run typecheck`, `lint`, `format:check` y `test` pasan.
+- [x] `buildSearchFilter('ana 305')` genera un filtro con dos tokens, cada uno contra los cuatro campos.
+- [x] `ClientForm` muestra los errores `400` del servidor junto a cada campo.
+- [x] `ClientPicker` emite un cliente seleccionado y no consulta con menos de 2 caracteres.
+- [x] `bun run typecheck`, `lint`, `format:check` y `test` pasan.
 
 ## Referencias
 
@@ -39,3 +39,5 @@ La app dispone del composable de datos de clientes y de los componentes reutiliz
 
 ## Notas de implementación
 
+
+Verificados los filtros parametrizados, formatos, CRUD, errores asociados a campos, aviso de teléfono compartido y selección con umbral de dos caracteres. typecheck, lint, format:check y 151 pruebas de la app pasaron.
