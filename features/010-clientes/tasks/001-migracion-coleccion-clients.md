@@ -1,7 +1,7 @@
 # 001 - [Migración] Colección clients
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 005 (contrato)
 - **Fase:** Fase 1: Modelo de datos y reglas
 
@@ -24,11 +24,11 @@ No existe la colección `clients`. La última migración en disco es `api/pb_mig
 
 ## Criterios de aceptación
 
-- [ ] Al arrancar PocketBase la migración se aplica sin errores y la colección aparece en `/_/` con los campos y reglas indicados.
-- [ ] Dos clientes sin email se pueden crear; dos con el mismo email se rechazan por el índice.
-- [ ] Un usuario sin sesión recibe `403`/`404` en `GET /api/collections/clients/records`.
-- [ ] `down` revierte la migración y un segundo `up` vuelve a funcionar.
-- [ ] `clients` figura en `audit-config.ts`.
+- [x] Al arrancar PocketBase la migración se aplica sin errores y la colección aparece en `/_/` con los campos y reglas indicados.
+- [x] Dos clientes sin email se pueden crear; dos con el mismo email se rechazan por el índice.
+- [x] Un usuario sin sesión recibe `403`/`404` en `GET /api/collections/clients/records`.
+- [x] `down` revierte la migración y un segundo `up` vuelve a funcionar.
+- [x] `clients` figura en `audit-config.ts`.
 
 ## Referencias
 
@@ -44,3 +44,5 @@ No existe la colección `clients`. La última migración en disco es `api/pb_mig
 
 ## Notas de implementación
 
+
+Verificado con PocketBase 0.40.5 en una base temporal: índice parcial, unicidad, acceso anónimo 404, esquema y ciclo up/down/up. Una prueba aislada confirmó que app.save no dispara onRecordUpdateRequest. El estado activo por defecto se aplica en el hook de creación porque el campo select no admite un valor por defecto.
