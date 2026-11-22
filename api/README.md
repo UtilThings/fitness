@@ -60,3 +60,46 @@ PocketBase 0.40.5 ejecuta los hooks en Goja. El runtime tiene `Date.UTC`, `toISO
 ## Migraciones
 
 Usa `pb_migrations/<timestamp>_<verbo>_<objeto>.js` con un timestamp en segundos mayor que el de la última migración. Cada archivo declara `migrate(up, down)`. PocketBase aplica las migraciones pendientes al arrancar. Comprueba las reversiones con `./pb migrate down N` y prueba cualquier cambio de esquema con datos temporales.
+
+## Horarios y clases
+
+- `class_templates` contiene la agenda semanal. El seed carga nueve plantillas de Tropical Jump y Group Strength de 60 minutos. Una plantilla activa creada desde administración, o una que se reactive, genera sesiones para las cuatro semanas siguientes.
+- `class_sessions` contiene sesiones concretas. El índice parcial de `(template, starts_at)` conserva una sola sesión por franja, incluso si se cancela. Las sesiones `special` y `private` pueden quedar sin plantilla. El personal puede consultar sesiones y owner o reception pueden editarlas. Desde la API de staff, las sesiones se cancelan para conservar el historial.
+- `schedule_blocks` contiene rangos inclusivos para todos los servicios. Owner administra los bloqueos y las plantillas. Guardar un bloqueo cancela las sesiones programadas del rango con motivo `Bloqueo: <título>`. Quitar el bloqueo conserva las cancelaciones.
+
+`starts_at` representa un instante UTC. PocketBase devuelve fechas con espacio como separador y sufijo `Z`. Las rutas reciben ISO UTC con `T` y `Z` para movimientos. `start_time` es `HH:mm` de Miramar (`America/New_York`). `date_from`, `date_to` y el parámetro `from` son fechas locales `YYYY-MM-DD`.
+
+El servidor aplica las reglas de cambio de hora de EE. UU. vigentes desde 2007. En marzo adelanta una hora inexistente por el salto. En noviembre usa la primera ocurrencia de una hora repetida. El cron `jq_generate_sessions` corre diariamente a las 07:00 UTC y genera cuatro semanas desde hoy en Miramar. Puede ejecutarse desde Ajustes → Crons en PocketBase. [Cron de PocketBase](https://pocketbase.io/docs/js-jobs-scheduling/)
+
+### Rutas administrativas
+
+| POST | Rol | Cuerpo y resultado |
+| --- | --- | --- |
+| `/api/admin/sessions/generate` | owner | `weeks` entero entre 1 y 12, por defecto 4. `from` opcional, por defecto hoy en Miramar. Devuelve `created`, `skipped_existing`, `skipped_blocked` y `window: { from, to }` con fechas inclusivas. |
+| `/api/admin/sessions/{id}/cancel` | owner, reception | `reason` entre 3 y 200 caracteres. Devuelve la sesión cancelada. |
+| `/api/admin/sessions/{id}/move` | owner, reception | `starts_at` UTC futuro, `reason` entre 3 y 200 caracteres y `coach` opcional. Devuelve `{ cancelled, created }`. Ambas escrituras ocurren en la misma transacción. |
+| `/api/admin/class-templates/{id}/assign-coach` | owner | `coach` es el ID de un owner o coach activo, o `""` para quitar la asignación. `apply_to_future` opcional actualiza las sesiones futuras programadas. Devuelve `{ template, updated_sessions }`. |
+
+Las rutas devuelven `401` sin sesión, `403` si el rol es insuficiente y `404` si el registro indicado no existe. Los datos inválidos devuelven `400` con detalles por campo en `data`. Un movimiento dentro de un bloqueo o que se solapa con otra sesión del coach devuelve `400` en `starts_at`. Cancelar o mover una sesión ya cancelada o completada devuelve `400` con el mensaje «La sesión no se puede cancelar».
+
+### Evento de cancelación para reservas y comunicaciones
+
+La transición de `scheduled` a `cancelled` se observa después de guardar la sesión con éxito, incluso si el origen fue un movimiento, un bloqueo o una edición directa. Cada consumidor puede registrar su propio hook. El siguiente ejemplo puede guardarse en `pb_hooks/` como archivo `.pb.js` tras compilar las librerías. [Hooks de PocketBase](https://pocketbase.io/docs/js-event-hooks/)
+
+```js
+onRecordAfterUpdateSuccess((e) => {
+  const { isCancellationTransition } = require(`${__hooks}/lib/session-rules`);
+  const session = e.record;
+  if (isCancellationTransition(session.original().get("status"), session.get("status"))) {
+    e.app.logger().info("Sesión cancelada",
+      "id", session.id,
+      "service", session.getString("service"),
+      "starts_at", session.getString("starts_at"),
+      "cancel_reason", session.getString("cancel_reason"),
+      "template", session.getString("template"));
+  }
+  return e.next();
+}, "class_sessions");
+```
+
+La feature 011 consume el evento para cancelar reservas y gestionar la lista de espera. La feature 018 lo consume para enviar `class_cancelled`.

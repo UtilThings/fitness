@@ -43,6 +43,9 @@ describe('adminNav', () => {
         '/settings/profile',
         '/services',
         '/plans',
+        '/classes',
+        '/classes/templates',
+        '/classes/blocks',
       ]),
     );
     enabled.forEach(({ to }) => expect(paths).toContain(to));

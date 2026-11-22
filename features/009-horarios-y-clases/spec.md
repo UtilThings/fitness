@@ -1,6 +1,6 @@
 # Especificación: Horarios y clases
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -132,7 +132,7 @@ El evento es la **transición de `class_sessions.status` de `scheduled` a `cance
 | `title` | text | requerido, máx. 80 | Nombre («Thanksgiving») |
 | `date_from` | text | requerido, patrón `^\d{4}-\d{2}-\d{2}$` | Primer día local bloqueado |
 | `date_to` | text | requerido, mismo patrón, ≥ `date_from` (hook) | Último día local bloqueado (inclusive) |
-| `reason` | text | opcional, máx. 200 | Se usa como motivo de cancelación |
+| `reason` | text | opcional, máx. 200 | Nota opcional del bloqueo. Las sesiones guardan el motivo «Bloqueo: <título>» |
 
 - **Decisión de tipo:** `date_from`/`date_to` son texto `YYYY-MM-DD` (no `date` de PocketBase) para que sean fechas locales sin desfase por zona horaria; el contrato las llama «fechas locales».
 - **Índices:** sobre (`date_from`, `date_to`).
@@ -168,7 +168,7 @@ completed → (final)
 - Pruebas `bun test`: DST de primavera (domingo 2026-03-08) y otoño (domingo 2026-11-01): una clase de las 19:30 locales es `23:30Z` en horario de verano y `00:30Z` del día siguiente en invierno; 9:00 locales es `13:00Z` / `14:00Z`; semana del cambio sin saltos ni duplicados; hora inexistente (02:30 del 2026-03-08) y ambigua (01:30 del 2026-11-01); bloqueos de un día y de varios; idempotencia.
 
 **004 - Hooks: validaciones, bloqueos, generación al activar y auditoría**
-- `api/src/hooks/schedule.ts`: validación de plantillas (servicio activo, coach activo y no `reception`, capacidad ≥ 1), sesiones (transiciones, motivo obligatorio al cancelar, solo owner reabre) y bloqueos (`date_to ≥ date_from`); `onRecordAfterCreateSuccess` y `onRecordAfterUpdateSuccess` de `schedule_blocks` cancelan las sesiones `scheduled` del rango con motivo «Bloqueo: <título>»; al crear/activar una plantilla genera sus sesiones de la ventana; borrado protegido de plantillas con sesiones.
+- `api/src/hooks/schedule.ts`: validación de plantillas (servicio activo, coach activo y no `reception`, capacidad ≥ 1), sesiones (transiciones, motivo obligatorio al cancelar, solo owner reabre) y bloqueos (`date_to ≥ date_from`); guardar un bloqueo cancela las sesiones `scheduled` del rango en la misma transacción con motivo «Bloqueo: <título>», y los hooks de cada sesión reciben el evento después de guardar con éxito; al crear/activar una plantilla genera sus sesiones de la ventana; borrado protegido de plantillas con sesiones.
 - Registrar `class_templates`, `class_sessions` y `schedule_blocks` en `api/src/lib/audit-config.ts`.
 
 **005 - Endpoints y cron de generación y operaciones**
@@ -303,17 +303,17 @@ completed → (final)
 
 ## Criterios de Aceptación
 
-- [ ] Existen `class_templates`, `class_sessions` y `schedule_blocks` con campos, índices (incluido el único parcial) y reglas del modelo; `down` revierte.
-- [ ] Tras el seed hay 9 plantillas reales; generarlas 4 semanas produce 36 sesiones y repetir la generación crea 0.
-- [ ] Las pruebas de `tz` y `schedule-gen` cubren el cambio de horario de marzo y noviembre, hora inexistente y ambigua, y pasan con `bun test`.
-- [ ] Una sesión del cron/ruta nunca duplica (template, `starts_at`) ni aparece en una fecha bloqueada.
-- [ ] Cancelar exige motivo, deja `status = cancelled` y no se puede cancelar dos veces; mover crea una sesión `special` y cancela la original.
-- [ ] Crear un bloqueo cancela las sesiones `scheduled` del rango y la UI avisa del número antes de confirmar.
-- [ ] `coach` y `reception` pueden leer sesiones; solo owner genera, edita plantillas y bloqueos; `reception` puede cancelar y mover.
-- [ ] `/classes` muestra la semana en hora de Miramar con filtro por servicio y «Mis clases»; navega a semanas pasadas y futuras.
-- [ ] `/classes/templates` y `/classes/blocks` funcionan; la ficha del coach enlaza a `/classes?coach=<id>`.
-- [ ] El evento de cancelación (transición de estado) está documentado en `api/README.md` con el ejemplo de hook para 011 y 018.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Existen `class_templates`, `class_sessions` y `schedule_blocks` con campos, índices (incluido el único parcial) y reglas del modelo; `down` revierte.
+- [x] Tras el seed hay 9 plantillas reales; generarlas 4 semanas produce 36 sesiones y repetir la generación crea 0.
+- [x] Las pruebas de `tz` y `schedule-gen` cubren el cambio de horario de marzo y noviembre, hora inexistente y ambigua, y pasan con `bun test`.
+- [x] Una sesión del cron/ruta nunca duplica (template, `starts_at`) ni aparece en una fecha bloqueada.
+- [x] Cancelar exige motivo, deja `status = cancelled` y no se puede cancelar dos veces; mover crea una sesión `special` y cancela la original.
+- [x] Crear un bloqueo cancela las sesiones `scheduled` del rango y la UI avisa del número antes de confirmar.
+- [x] `coach` y `reception` pueden leer sesiones; solo owner genera, edita plantillas y bloqueos; `reception` puede cancelar y mover.
+- [x] `/classes` muestra la semana en hora de Miramar con filtro por servicio y «Mis clases»; navega a semanas pasadas y futuras.
+- [x] `/classes/templates` y `/classes/blocks` funcionan; la ficha del coach enlaza a `/classes?coach=<id>`.
+- [x] El evento de cancelación (transición de estado) está documentado en `api/README.md` con el ejemplo de hook para 011 y 018.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
 
 ---
 
