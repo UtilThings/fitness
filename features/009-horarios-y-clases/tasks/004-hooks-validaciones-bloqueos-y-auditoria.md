@@ -1,7 +1,7 @@
 # 004 - [Hook] Validaciones, bloqueos por feriado y auditoría
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 003, Feature 005 (contrato)
 - **Fase:** Fase 2: Lógica pura y reglas de servidor
 
@@ -25,13 +25,13 @@ Los hooks viven en `api/src/hooks/*.ts` (compilan a `api/pb_hooks/*.pb.js`) y ca
 
 ## Criterios de aceptación
 
-- [ ] Crear una plantilla activa crea sus sesiones en la ventana; activar una inactiva también; crearla inactiva no genera nada.
-- [ ] Cancelar sin `cancel_reason` por la API de colecciones devuelve 400; con motivo, se guarda.
-- [ ] Un `reception` no puede reabrir una sesión cancelada; un owner sí y el motivo se limpia.
-- [ ] Crear un bloqueo de un día cancela las sesiones `scheduled` de ese día local (verificado en un día con cambio de horario y en uno normal) y no toca `completed` ni ya `cancelled`.
-- [ ] `date_to` anterior a `date_from` devuelve 400.
-- [ ] Borrar una plantilla con sesiones devuelve 400; sin sesiones, borra y audita.
-- [ ] `bun test` y `bun run build:ts` pasan.
+- [x] Crear una plantilla activa crea sus sesiones en la ventana; activar una inactiva también; crearla inactiva no genera nada.
+- [x] Cancelar sin `cancel_reason` por la API de colecciones devuelve 400; con motivo, se guarda.
+- [x] Un `reception` no puede reabrir una sesión cancelada; un owner sí y el motivo se limpia.
+- [x] Crear un bloqueo de un día cancela las sesiones `scheduled` de ese día local (verificado en un día con cambio de horario y en uno normal) y no toca `completed` ni ya `cancelled`.
+- [x] `date_to` anterior a `date_from` devuelve 400.
+- [x] Borrar una plantilla con sesiones devuelve 400; sin sesiones, borra y audita.
+- [x] `bun test` y `bun run build:ts` pasan.
 
 ## Referencias
 
@@ -46,4 +46,4 @@ Los hooks viven en `api/src/hooks/*.ts` (compilan a `api/pb_hooks/*.pb.js`) y ca
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Verificado con PocketBase temporal. La creación y activación generan cuatro sesiones por plantilla, y el seed deja la generación al cron o a la ruta. Los bloqueos se guardan con sus cancelaciones en una transacción y los eventos por sesión se emiten tras el commit. Se probaron los límites en un día normal y el día del cambio de hora, reapertura por rol, motivos, borrado y auditoría.

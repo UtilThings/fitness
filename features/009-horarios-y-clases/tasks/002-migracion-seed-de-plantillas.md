@@ -1,7 +1,7 @@
 # 002 - [Migración] Seed de plantillas reales
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, Feature 008 (contrato)
 - **Fase:** Fase 1: Esquema y datos
 
@@ -22,10 +22,10 @@ Una base nueva arranca con las 9 plantillas semanales reales de JQ Fitness, sin 
 
 ## Criterios de aceptación
 
-- [ ] Tras arrancar con base limpia hay 9 plantillas con los días, horas y cupos de la tabla de `web`.
-- [ ] Editar una plantilla en `/_/` y volver a aplicar el seed no la restaura ni duplica.
-- [ ] Sin el catálogo previo, la migración falla con un mensaje legible y no inserta nada.
-- [ ] `down` elimina las sembradas sin sesiones y respeta las que tengan.
+- [x] Tras arrancar con base limpia hay 9 plantillas con los días, horas y cupos de la tabla de `web`.
+- [x] Editar una plantilla en `/_/` y volver a aplicar el seed no la restaura ni duplica.
+- [x] Sin el catálogo previo, la migración falla con un mensaje legible y no inserta nada.
+- [x] `down` elimina las sembradas sin sesiones y respeta las que tengan.
 
 ## Referencias
 
@@ -39,4 +39,4 @@ Una base nueva arranca con las 9 plantillas semanales reales de JQ Fitness, sin 
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Verificado contra PocketBase con base limpia, reaplicación tras cambiar hora y cupo, reversión con una sesión vinculada y ausencia del catálogo. Los IDs estables identifican las filas del seed y permiten conservar plantillas editadas y filas preexistentes.

@@ -1,7 +1,7 @@
 # 009 - [Verificación] Pruebas de integración, documentación y cierre
 
 - **Prioridad:** 9
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 005, 007, 008
 - **Fase:** Fase final: Verificación y cierre
 
@@ -23,10 +23,10 @@ La feature queda verificada contra una instancia real de PocketBase, documentada
 
 ## Criterios de aceptación
 
-- [ ] `scripts/verify-api.sh` termina en verde con las comprobaciones de horarios.
-- [ ] `scripts/verify-app.sh` termina en verde.
-- [ ] `api/README.md` documenta el evento de cancelación con ejemplo ejecutable y las rutas con sus errores.
-- [ ] Los criterios de aceptación de `features/009-horarios-y-clases/spec.md` están marcados o justificados.
+- [x] `scripts/verify-api.sh` termina en verde con las comprobaciones de horarios.
+- [x] `scripts/verify-app.sh` termina en verde.
+- [x] `api/README.md` documenta el evento de cancelación con ejemplo ejecutable y las rutas con sus errores.
+- [x] Los criterios de aceptación de `features/009-horarios-y-clases/spec.md` están marcados o justificados.
 
 ## Referencias
 
@@ -39,4 +39,4 @@ La feature queda verificada contra una instancia real de PocketBase, documentada
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Pasaron `scripts/verify-api.sh` (36 tests y comprobaciones con PocketBase 0.40.5) y `scripts/verify-app.sh` (142 tests, lint, formato, tipos y build). Se probó `up → down 4 → up`, la generación simultánea y el hook del README instalado en una base temporal. En Chromium se recorrieron las tres vistas con la API real, se reasignó un coach y se confirmó el conteo y la cancelación de un bloqueo. Revisados y marcados los 11 criterios del spec.

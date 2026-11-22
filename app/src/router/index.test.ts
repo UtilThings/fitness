@@ -49,6 +49,9 @@ describe('guard', () => {
     '/team/coach',
     '/settings/profile',
     '/services',
+    '/classes?coach=jq',
+    '/classes/templates',
+    '/classes/blocks',
     '/plans?service=jump',
   ])('protege %s y conserva la ruta al iniciar sesión', async (path) => {
     await router.push(path);
@@ -65,6 +68,8 @@ describe('guard', () => {
         ['/team', 'team', 'Equipo'],
         ['/services', 'services', 'Servicios'],
         ['/plans', 'plans', 'Planes'],
+        ['/classes/templates', 'classes-templates', 'Plantillas de clases'],
+        ['/classes/blocks', 'classes-blocks', 'Bloqueos de horario'],
         ['/team/coach', 'team-member', 'Ficha del equipo'],
         ['/settings/profile', 'profile', 'Mi perfil'],
       ] as const) {

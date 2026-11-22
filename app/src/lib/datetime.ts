@@ -13,6 +13,10 @@ function businessFormatter(options: Intl.DateTimeFormatOptions) {
 
 const dateFormatter = businessFormatter(displayDate);
 const timeFormatter = businessFormatter(displayTime);
+const englishTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  ...displayTime,
+  timeZone: BUSINESS_TZ,
+});
 const dateTimeFormatter = businessFormatter({ ...displayDate, ...displayTime });
 const partsFormatter = new Intl.DateTimeFormat('en-US', {
   timeZone: BUSINESS_TZ,
@@ -33,15 +37,20 @@ export function formatDate(iso: string): string {
   return dateFormatter.format(utcDate(iso));
 }
 
-export function formatTime(iso: string): string {
-  return timeFormatter.format(utcDate(iso));
+export function formatTime(
+  iso: string,
+  locale: 'es-US' | 'en-US' = 'es-US',
+): string {
+  return (locale === 'en-US' ? englishTimeFormatter : timeFormatter).format(
+    utcDate(iso),
+  );
 }
 
 export function formatDateTime(iso: string): string {
   return dateTimeFormatter.format(utcDate(iso));
 }
 
-function localParts(instant: Date | number) {
+function instantParts(instant: Date | number) {
   const parts = Object.fromEntries(
     partsFormatter
       .formatToParts(instant)
@@ -59,12 +68,12 @@ export function utcToLocalParts(iso: string): {
   time: string;
   weekday: number;
 } {
-  const { date, time } = localParts(utcDate(iso));
+  const { date, time } = instantParts(utcDate(iso));
   return { date, time, weekday: new Date(`${date}T00:00:00Z`).getUTCDay() };
 }
 
 function offsetAt(instant: number): number {
-  const { date, time, second } = localParts(instant);
+  const { date, time, second } = instantParts(instant);
   return Date.parse(`${date}T${time}:${second}Z`) - instant;
 }
 
@@ -88,8 +97,8 @@ export function localToUtcIso(date: string, time: string): string {
   const after = wallTime - offsetAt(wallTime + 24 * HOUR_MS);
   // En el solapamiento coincide la primera ocurrencia. En el salto, el offset
   // previo interpreta la hora como si aún fuera estándar y la desplaza hacia adelante.
-  const first = localParts(before);
-  const second = localParts(after);
+  const first = instantParts(before);
+  const second = instantParts(after);
   const instant =
     first.date === date && first.time === time
       ? before
@@ -100,5 +109,38 @@ export function localToUtcIso(date: string, time: string): string {
 }
 
 export function todayLocal(): string {
-  return localParts(new Date()).date;
+  return instantParts(new Date()).date;
+}
+
+export const localParts = utcToLocalParts;
+
+export function addLocalDays(date: string, days: number): string {
+  const civilDate = new Date(`${date}T00:00:00Z`);
+  civilDate.setUTCDate(civilDate.getUTCDate() + days);
+  return civilDate.toISOString().slice(0, 10);
+}
+
+const dayFormatter = businessFormatter({
+  weekday: 'long',
+  day: 'numeric',
+  month: 'short',
+});
+
+export function formatDayLabel(date: string): string {
+  return dayFormatter.format(utcDate(localToUtcIso(date, '12:00')));
+}
+
+export function localDateRangeToUtc(from: string, through: string) {
+  return {
+    from: localToUtcIso(from, '00:00'),
+    to: localToUtcIso(addLocalDays(through, 1), '00:00'),
+  };
+}
+
+export function localDateToUtcRange(date: string) {
+  return localDateRangeToUtc(date, date);
+}
+
+export function weekRangeUtc(weekStartDate: string) {
+  return localDateRangeToUtc(weekStartDate, addLocalDays(weekStartDate, 6));
 }

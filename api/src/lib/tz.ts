@@ -77,3 +77,7 @@ export function addLocalDays(date: string, days: number): string {
 export function startOfLocalDay(date: string): string {
   return localToUtc(date, "00:00");
 }
+
+export function localDateToUtcRange(date: string): { from: string; to: string } {
+  return { from: startOfLocalDay(date), to: startOfLocalDay(addLocalDays(date, 1)) };
+}
