@@ -1,7 +1,7 @@
 # 001 - [Migración] Colección `services`
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 005 (contrato)
 - **Fase:** Fase 1: Esquema y datos
 
@@ -24,11 +24,11 @@ PocketBase tiene la colección `services` con su esquema, índices y reglas de A
 
 ## Criterios de aceptación
 
-- [ ] Con una base limpia, PocketBase arranca y `services` aparece en `/_/` con los campos, índices y reglas indicados.
-- [ ] Un token de `coach` puede listar pero recibe rechazo al crear; un token de `owner` puede crear.
-- [ ] Un segundo `slug` igual falla por el índice único.
-- [ ] La migración `down` elimina la colección sin error y `up` puede volver a aplicarse.
-- [ ] No hay reglas con `""`.
+- [x] Con una base limpia, PocketBase arranca y `services` aparece en `/_/` con los campos, índices y reglas indicados.
+- [x] Un token de `coach` puede listar pero recibe rechazo al crear; un token de `owner` puede crear.
+- [x] Un segundo `slug` igual falla por el índice único.
+- [x] La migración `down` elimina la colección sin error y `up` puede volver a aplicarse.
+- [x] No hay reglas con `""`.
 
 ## Referencias
 
@@ -43,4 +43,4 @@ PocketBase tiene la colección `services` con su esquema, índices y reglas de A
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Verificada en PocketBase 0.40.5 con una base temporal. La API de colecciones confirmó campos, índices y reglas. Se probó lectura como coach, escritura como owner, slug duplicado y migración down/up. El valor inicial de active se aplica en el hook de creación de la tarea 005, ya que BoolField carece de un valor predeterminado configurable.

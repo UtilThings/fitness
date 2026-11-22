@@ -1,7 +1,7 @@
 # 005 - [Hook] Validaciones, desactivación en cascada y protección de borrado
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003, Feature 005 (contrato)
 - **Fase:** Fase 2: Reglas de servidor
 
@@ -27,13 +27,13 @@ Los hooks viven en `api/src/hooks/*.ts` y compilan a `api/pb_hooks/*.pb.js` (`bu
 
 ## Criterios de aceptación
 
-- [ ] Crear un segundo plan con `is_first_class` devuelve 400 con error en el campo; editar el existente sigue funcionando.
-- [ ] `price_cents = -5` y un plan pagado con precio 0 devuelven 400.
-- [ ] Activar un plan de un servicio inactivo devuelve 400.
-- [ ] Desactivar un servicio deja sus planes en `active = false` y genera una entrada en `audit_logs`.
-- [ ] `DELETE` de un servicio con planes y de un plan con membresías (cuando exista `memberships`) devuelve 400 con mensaje de desactivar; sin dependientes, borra y audita.
-- [ ] Las colecciones inexistentes no rompen el borrado.
-- [ ] `bun run build:ts` y `bun test` pasan.
+- [x] Crear un segundo plan con `is_first_class` devuelve 400 con error en el campo; editar el existente sigue funcionando.
+- [x] `price_cents = -5` y un plan pagado con precio 0 devuelven 400.
+- [x] Activar un plan de un servicio inactivo devuelve 400.
+- [x] Desactivar un servicio deja sus planes en `active = false` y genera una entrada en `audit_logs`.
+- [x] `DELETE` de un servicio con planes y de un plan con membresías (cuando exista `memberships`) devuelve 400 con mensaje de desactivar; sin dependientes, borra y audita.
+- [x] Las colecciones inexistentes no rompen el borrado.
+- [x] `bun run build:ts` y `bun test` pasan.
 
 ## Referencias
 
@@ -48,4 +48,4 @@ Los hooks viven en `api/src/hooks/*.ts` y compilan a `api/pb_hooks/*.pb.js` (`bu
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+En PocketBase se verificaron los errores por campo, dos altas de primera clase concurrentes, la cascada y su auditoría, los borrados y la protección con una colección temporal de membresías. La cascada se ejecuta en la transacción de guardado y el resumen se publica tras confirmar la transacción. Bun compiló los hooks y pasó 30 pruebas.

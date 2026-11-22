@@ -11,8 +11,8 @@ describe('adminNav', () => {
     ).toEqual([
       ['Análisis', ['/', '/reports']],
       ['Operaciones', ['/clients', '/classes', '/bookings']],
-      ['Catálogo', ['/services', '/plans']],
-      ['Ajustes', ['/team', '/settings/profile']],
+      ['Catálogo', ['/plans']],
+      ['Ajustes', ['/services', '/team', '/settings/profile']],
       ['Facturación', ['/memberships', '/payments']],
     ]);
     expect(items.every((item) => !('badge' in item))).toBe(true);
@@ -28,7 +28,13 @@ describe('adminNav', () => {
     const paths = router.getRoutes().map(({ path }) => path);
     const enabled = items.filter(({ placeholder }) => !placeholder);
     expect(enabled.map(({ to }) => to)).toEqual(
-      expect.arrayContaining(['/', '/team', '/settings/profile']),
+      expect.arrayContaining([
+        '/',
+        '/team',
+        '/settings/profile',
+        '/services',
+        '/plans',
+      ]),
     );
     enabled.forEach(({ to }) => expect(paths).toContain(to));
   });

@@ -1,4 +1,4 @@
-export const AUDITED_COLLECTIONS: readonly string[] = ["admins"];
+export const AUDITED_COLLECTIONS: readonly string[] = ["admins", "services", "plans"];
 export const SENSITIVE_FIELDS = ["password", "passwordHash", "tokenKey"];
 export const IGNORED_FIELDS: readonly string[] = ["created", "updated"];
 
