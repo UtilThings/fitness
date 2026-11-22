@@ -96,6 +96,12 @@ const router = createRouter({
           meta: { title: 'Servicios' },
         },
         {
+          path: 'plans',
+          name: 'plans',
+          component: () => import('@/views/admin/PlansView.vue'),
+          meta: { title: 'Planes' },
+        },
+        {
           path: 'settings/profile',
           name: 'profile',
           component: () => import('@/views/admin/ProfileView.vue'),

@@ -44,14 +44,17 @@ describe('guard', () => {
     expect(router.currentRoute.value.query.redirect).toBe('/');
   });
 
-  it.each(['/team', '/team/coach', '/settings/profile', '/services'])(
-    'protege %s y conserva la ruta al iniciar sesión',
-    async (path) => {
-      await router.push(path);
-      expect(router.currentRoute.value.name).toBe('login');
-      expect(router.currentRoute.value.query.redirect).toBe(path);
-    },
-  );
+  it.each([
+    '/team',
+    '/team/coach',
+    '/settings/profile',
+    '/services',
+    '/plans?service=jump',
+  ])('protege %s y conserva la ruta al iniciar sesión', async (path) => {
+    await router.push(path);
+    expect(router.currentRoute.value.name).toBe('login');
+    expect(router.currentRoute.value.query.redirect).toBe(path);
+  });
 
   it.each(['owner', 'coach', 'reception'] as const)(
     'permite consultar equipo, ficha y perfil con el rol %s',
@@ -61,6 +64,7 @@ describe('guard', () => {
       for (const [path, name, title] of [
         ['/team', 'team', 'Equipo'],
         ['/services', 'services', 'Servicios'],
+        ['/plans', 'plans', 'Planes'],
         ['/team/coach', 'team-member', 'Ficha del equipo'],
         ['/settings/profile', 'profile', 'Mi perfil'],
       ] as const) {

@@ -1,7 +1,7 @@
 # 008 - [Vista] Planes: tabla, formulario, activación y orden
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 006, 007
 - **Fase:** Fase 3: Interfaz
 
@@ -23,12 +23,12 @@ El owner gestiona los planes y precios desde `/plans`, filtrando por servicio, c
 
 ## Criterios de aceptación
 
-- [ ] `/plans` muestra los 10 planes con precios correctos (p. ej. `$1,447` para Partner 3x).
-- [ ] Editar un precio persiste en centavos; precio negativo se rechaza.
-- [ ] Marcar un segundo plan como primera clase muestra el error del servidor en el formulario.
-- [ ] No se puede activar un plan bajo un servicio inactivo.
-- [ ] El filtro por servicio y el orden funcionan y persisten tras recargar.
-- [ ] `bun run test`, `typecheck`, `lint`, `format:check` y `build` pasan.
+- [x] `/plans` muestra los 10 planes con precios correctos (p. ej. `$1,447` para Partner 3x).
+- [x] Editar un precio persiste en centavos; precio negativo se rechaza.
+- [x] Marcar un segundo plan como primera clase muestra el error del servidor en el formulario.
+- [x] No se puede activar un plan bajo un servicio inactivo.
+- [x] El filtro por servicio y el orden funcionan y persisten tras recargar.
+- [x] `bun run test`, `typecheck`, `lint`, `format:check` y `build` pasan.
 
 ## Referencias
 
@@ -41,4 +41,4 @@ El owner gestiona los planes y precios desde `/plans`, filtrando por servicio, c
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Vitest verificó los diez planes, la conversión exacta, el rechazo de precios negativos, los errores por campo, la activación bloqueada y la recuperación del filtro desde la URL. PocketBase confirmó el precio en centavos y el orden dentro del servicio desde una consulta posterior. Pasaron 125 pruebas y las comprobaciones de código y compilación.

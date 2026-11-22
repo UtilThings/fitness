@@ -28,7 +28,13 @@ describe('adminNav', () => {
     const paths = router.getRoutes().map(({ path }) => path);
     const enabled = items.filter(({ placeholder }) => !placeholder);
     expect(enabled.map(({ to }) => to)).toEqual(
-      expect.arrayContaining(['/', '/team', '/settings/profile', '/services']),
+      expect.arrayContaining([
+        '/',
+        '/team',
+        '/settings/profile',
+        '/services',
+        '/plans',
+      ]),
     );
     enabled.forEach(({ to }) => expect(paths).toContain(to));
   });

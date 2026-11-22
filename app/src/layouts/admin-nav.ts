@@ -52,9 +52,7 @@ export const adminNav: NavGroup[] = [
   },
   {
     label: 'Catálogo',
-    items: [
-      { label: 'Planes', icon: 'pi pi-tags', to: '/plans', placeholder: true },
-    ],
+    items: [{ label: 'Planes', icon: 'pi pi-tags', to: '/plans' }],
   },
   {
     label: 'Ajustes',
