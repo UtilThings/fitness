@@ -1,7 +1,7 @@
 # 006 - [Composable] Utilidades de fecha y composable `useSchedule`
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005, Feature 006 (contrato)
 - **Fase:** Fase 3: Interfaz
 
@@ -23,10 +23,10 @@ La UI dispone de utilidades de hora local del negocio y de un composable que enc
 
 ## Criterios de aceptación
 
-- [ ] `weekStartFor` devuelve siempre domingo; con offset -1 devuelve la semana anterior.
-- [ ] La hora 7:30 PM se muestra igual antes y después del cambio de horario para una sesión del lunes.
-- [ ] `useSchedule` convierte errores 400 en `{campo: mensaje}`.
-- [ ] `bun run test`, `typecheck`, `lint` y `format:check` pasan.
+- [x] `weekStartFor` devuelve siempre domingo; con offset -1 devuelve la semana anterior.
+- [x] La hora 7:30 PM se muestra igual antes y después del cambio de horario para una sesión del lunes.
+- [x] `useSchedule` convierte errores 400 en `{campo: mensaje}`.
+- [x] `bun run test`, `typecheck`, `lint` y `format:check` pasan.
 
 ## Referencias
 
@@ -40,4 +40,4 @@ La UI dispone de utilidades de hora local del negocio y de un composable que enc
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Verificados 130 tests, comprobación de tipos, lint y formato. El cliente conserva el formato de hora existente y presenta AM/PM en las tarjetas. La semana usa límites UTC derivados de medianoche en Nueva York y acepta desplazamientos negativos.
