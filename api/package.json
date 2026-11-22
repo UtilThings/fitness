@@ -6,7 +6,7 @@
     "build:ts": "bun run src/build.ts",
     "watch:ts": "bun run src/watch.ts",
     "serve:pb": "./pb serve --dev",
-    "dev": "concurrently \"bun run watch:ts\" \"bun run serve:pb\""
+    "dev": "bun run build:ts && concurrently -k \"bun run watch:ts --skip-initial\" \"bun run serve:pb\""
   },
   "devDependencies": {
     "@types/bun": "latest",

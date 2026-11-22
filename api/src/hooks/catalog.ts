@@ -48,6 +48,7 @@ function saveCatalogInTransaction(e: core.RecordEvent) {
     return app.runInTransaction((txApp) => {
       e.app = txApp;
       const record = e.record!;
+      record.set("@pbInternalCatalogDeactivatedPlans", null);
       const deactivate =
         record.collection().name === "services" &&
         !record.isNew() &&
@@ -157,8 +158,8 @@ onRecordValidate(
 
 onRecordAfterUpdateSuccess((e) => {
   const record = e.record!;
-  const count = record.getInt("@pbInternalCatalogDeactivatedPlans");
-  if (count) {
+  const count = record.get("@pbInternalCatalogDeactivatedPlans");
+  if (typeof count === "number") {
     const { buildEntry } = require(
       `${__hooks}/lib/audit`,
     ) as typeof import("../lib/audit");

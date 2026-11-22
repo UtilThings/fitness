@@ -136,6 +136,14 @@ const { coaches, loadCoaches, coachesError } = useTeam();
 onMounted(loadCoaches);
 ```
 
+## Catálogo
+
+- **Servicios** (`/services`) está en **Ajustes**. Desde allí se consultan los cupos, el coach por defecto y la política de cancelación. El owner puede crear, editar, mover y desactivar servicios. El cuadro de confirmación muestra cuántos planes activos se desactivarán también.
+- **Planes** (`/plans`) está en **Catálogo**. El filtro por servicio queda en la URL y las flechas cambian el orden dentro de ese servicio. El formulario recibe el precio en dólares, por ejemplo `1447.25`, y guarda `144725` centavos USD. Marcar **Primera clase** fija el precio en cero y la unidad en **Primera visita**.
+- **Coach** y **reception** tienen acceso de lectura. Cuando un registro tiene dependientes, el owner puede desactivarlo y conservar su historial.
+
+Ejecuta `scripts/verify-app.sh` desde la raíz para correr las pruebas de las vistas, los composables y las validaciones del catálogo junto con las demás comprobaciones de la app.
+
 ## Despliegue
 
 El servidor estático debe devolver `index.html` para cualquier ruta desconocida (fallback de SPA). El despliegue no forma parte del boilerplate.

@@ -9,8 +9,37 @@ run_step() {
   printf 'OK %s\n' "$*"
 }
 
+stop_pocketbase() {
+  if [[ -n "${pb_pid:-}" ]]; then
+    kill "$pb_pid" 2>/dev/null || true
+    wait "$pb_pid" 2>/dev/null || true
+    pb_pid=""
+  fi
+}
+
+start_pocketbase() {
+  local attempt
+  ./pb serve --dir "$work_dir/data" --http "127.0.0.1:$port" \
+    --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks" --hooksWatch=false --automigrate=false \
+    >"$work_dir/pocketbase.log" 2>&1 &
+  pb_pid=$!
+
+  for ((attempt = 0; attempt < 100; attempt++)); do
+    if ! kill -0 "$pb_pid" 2>/dev/null; then
+      break
+    fi
+    if curl --noproxy '*' --fail --silent --max-time 2 "$base_url/api/health" >/dev/null; then
+      return 0
+    fi
+    sleep 0.1
+  done
+  cat "$work_dir/pocketbase.log" >&2
+  printf 'PocketBase no respondió en %s.\n' "$base_url" >&2
+  return 1
+}
+
 smoke_test() {
-  local port base_url code ready attempt
+  local port base_url code
   port="$(bun -e '
     import { createServer } from "node:net";
     const server = createServer();
@@ -23,10 +52,7 @@ smoke_test() {
   pb_pid=""
 
   cleanup() {
-    if [[ -n "$pb_pid" ]]; then
-      kill "$pb_pid" 2>/dev/null || true
-      wait "$pb_pid" 2>/dev/null || true
-    fi
+    stop_pocketbase
     rm -rf -- "$work_dir"
   }
 
@@ -35,27 +61,7 @@ smoke_test() {
   trap 'exit 143' TERM
 
   base_url="http://127.0.0.1:$port"
-  ./pb serve --dir "$work_dir/data" --http "127.0.0.1:$port" \
-    --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks" --hooksWatch=false \
-    >"$work_dir/pocketbase.log" 2>&1 &
-  pb_pid=$!
-
-  ready=false
-  for ((attempt = 0; attempt < 100; attempt++)); do
-    if ! kill -0 "$pb_pid" 2>/dev/null; then
-      break
-    fi
-    if curl --noproxy '*' --fail --silent --max-time 2 "$base_url/api/health" >/dev/null; then
-      ready=true
-      break
-    fi
-    sleep 0.1
-  done
-  if [[ "$ready" != true ]]; then
-    cat "$work_dir/pocketbase.log" >&2
-    printf 'PocketBase no respondió en %s.\n' "$base_url" >&2
-    return 1
-  fi
+  start_pocketbase
 
   code="$(curl --noproxy '*' --silent --show-error --max-time 5 --output "$work_dir/response.json" \
     --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' \
@@ -82,6 +88,16 @@ smoke_test() {
       return 1
       ;;
   esac
+
+  local password
+  password="$(bun -e 'console.log(crypto.randomUUID())')"
+  ./pb superuser create catalog-verify@example.test "$password" --dir "$work_dir/data" \
+    --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks" --hooksWatch=false
+
+  JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-catalog.ts "$base_url" seed
+  stop_pocketbase
+  start_pocketbase
+  JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-catalog.ts "$base_url" restart
 }
 
 run_step bun install --frozen-lockfile

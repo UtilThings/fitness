@@ -51,7 +51,7 @@ async function build() {
 }
 
 // Compilación inicial
-await build();
+if (!Bun.argv.includes("--skip-initial")) await build();
 
 // Monitorear hooks y librerías
 for (const directory of directories) {
