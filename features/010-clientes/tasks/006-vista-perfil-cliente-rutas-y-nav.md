@@ -1,7 +1,7 @@
 # 006 - [Vista] Perfil del cliente con pestañas, rutas y navegación
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, 005
 - **Fase:** Fase 2: Interfaz de clientes
 
@@ -26,13 +26,13 @@ Las rutas protegidas son hijas de `AdminLayout` (`meta.requiresAuth`, `meta.titl
 
 ## Criterios de aceptación
 
-- [ ] `/clients` y `/clients/:id` requieren sesión y aparecen con el título correcto; `Clientes` está activa en la barra lateral.
-- [ ] Cambiar el estado activo → pausado → inactivo → activo se refleja en la lista.
-- [ ] El formulario de evaluación guarda y recarga los valores; un valor fuera de rango muestra el error del servidor.
-- [ ] Un coach ve la marca de clase gratis pero no puede cambiarla; el owner sí.
-- [ ] Eliminar un cliente con historial no lo borra y propone inactivar.
-- [ ] La pestaña Historial muestra los placeholders de 011, 013 y 014 sin errores.
-- [ ] `typecheck`, `lint`, `format:check`, `test` y `build` pasan.
+- [x] `/clients` y `/clients/:id` requieren sesión y aparecen con el título correcto; `Clientes` está activa en la barra lateral.
+- [x] Cambiar el estado activo → pausado → inactivo → activo se refleja en la lista.
+- [x] El formulario de evaluación guarda y recarga los valores; un valor fuera de rango muestra el error del servidor.
+- [x] Un coach ve la marca de clase gratis pero no puede cambiarla; el owner sí.
+- [x] Eliminar un cliente con historial no lo borra y propone inactivar.
+- [x] La pestaña Historial muestra los placeholders de 011, 013 y 014 sin errores.
+- [x] `typecheck`, `lint`, `format:check`, `test` y `build` pasan.
 
 ## Referencias
 
@@ -47,3 +47,5 @@ Las rutas protegidas son hijas de `AdminLayout` (`meta.requiresAuth`, `meta.titl
 
 ## Notas de implementación
 
+
+Verificado en Chromium con PocketBase local: rutas protegidas y barra lateral, transiciones, confirmación y cancelación de inactivación, evaluación guardada y recargada, permisos de clase gratis y respuesta 409 con opción de inactivar. El recorrido detectó y validó el ajuste de la fecha de alta vacía. Todas las comprobaciones y la compilación de la app pasaron.

@@ -103,3 +103,30 @@ onRecordAfterUpdateSuccess((e) => {
 ```
 
 La feature 011 consume el evento para cancelar reservas y gestionar la lista de espera. La feature 018 lo consume para enviar `class_cancelled`.
+
+## Clientes
+
+La colección `clients` se usa mediante la API estándar de PocketBase. Los admins activos pueden listar, consultar, crear y editar. Solo un `owner` activo puede eliminar o cambiar `free_class_used` por HTTP. Las futuras reservas pueden marcarla mediante `app.save`, que ejecuta los hooks de modelo y omite los hooks de petición.
+
+El email es opcional. Se guarda en minúsculas y el índice parcial exige unicidad cuando hay un valor. Se aceptan teléfonos compartidos y se guardan en E.164, con `+1` por defecto para números estadounidenses sin prefijo. El estado inicial es `active` y, si se omite `joined_on`, se usa el inicio del día en `America/New_York`. Desde `inactive` se puede volver a `active` antes de pasar a `paused`.
+
+### Evaluación inicial
+
+`assessment` acepta JSON con `version: 1`. Una evaluación puede omitirse. Los bloques y sus campos son opcionales. Cuando se incluyen, se aplican estas validaciones.
+
+| Campo o bloque | Contenido |
+| --- | --- |
+| `completed_on` y `assessed_by` | Fecha civil válida `YYYY-MM-DD` e ID del integrante que evaluó |
+| `medical` | `conditions`, `injuries`, `medications` como texto y `parq_cleared` booleano |
+| `lifestyle` | `activity_level` admite `sedentary`, `light`, `moderate` o `high`. `sleep_hours` admite 0–24, `stress_level` enteros de 1–5 y `nutrition_notes` texto |
+| `training` | `experience` admite `none`, `beginner`, `intermediate` o `advanced`. `days_per_week` admite enteros de 0–7. `preferred_times` y `equipment_access` son texto |
+| `measurements` | `weight_lb`, `height_in` y `waist_in` son positivos. `body_fat_pct` es positivo y como máximo 100 |
+| `goals_detail` y `notes` | Texto |
+
+El API responde `400` con `data.assessment` para claves desconocidas o valores inválidos. Las notas, la evaluación y sus diffs de auditoría se manejan en el panel administrativo. El hook general registra altas, ediciones y bajas confirmadas en `audit_logs` con el actor de la petición.
+
+### Relaciones futuras
+
+Para reservas, membresías, pagos y programas de coaching, crea `client` como relación a `clients` con `cascadeDelete: false`. Un cliente referenciado en `bookings`, `memberships`, `payments` o `coaching_programs` devuelve `409` al intentar borrarlo. Usa `status: "inactive"` para conservar el historial.
+
+Queda pendiente decidir si se necesita importar clientes por CSV o crear un endpoint de alta externa. La feature 010 habilita el alta manual desde el panel.

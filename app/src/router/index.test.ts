@@ -45,6 +45,8 @@ describe('guard', () => {
   });
 
   it.each([
+    '/clients?q=ana',
+    '/clients/ana',
     '/team',
     '/team/coach',
     '/settings/profile',
@@ -65,6 +67,8 @@ describe('guard', () => {
       state.valid = true;
       state.role = role;
       for (const [path, name, title] of [
+        ['/clients', 'clients', 'Clientes'],
+        ['/clients/ana', 'client-detail', 'Cliente'],
         ['/team', 'team', 'Equipo'],
         ['/services', 'services', 'Servicios'],
         ['/plans', 'plans', 'Planes'],

@@ -34,7 +34,6 @@ export const adminNav: NavGroup[] = [
         label: 'Clientes',
         icon: 'pi pi-users',
         to: '/clients',
-        placeholder: true,
       },
       {
         label: 'Clases',

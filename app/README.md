@@ -151,6 +151,38 @@ Ejecuta `scripts/verify-app.sh` desde la raíz para correr las pruebas de las vi
 - **Bloqueos** (`/classes/blocks`) muestra los días sin clases. Antes de guardar, el formulario consulta cuántas sesiones programadas se cancelarán y pide confirmación.
 - **Ver horario** en una ficha del equipo abre `/classes?coach=<id>`. Coach y reception pueden consultar plantillas y bloqueos.
 
+## Clientes
+
+`/clients` lista clientes con búsqueda paginada y guarda el texto y el estado en los parámetros `q` y `status` de la URL. Si se omite el estado, muestra clientes activos. Los filtros de servicio y plan activo quedan reservados para Membresías. El perfil `/clients/:id` edita datos, objetivos, notas y evaluación inicial. Los owners también pueden corregir la marca de primera clase gratis y eliminar clientes sin historial.
+
+### Seleccionar un cliente
+
+Importa `ClientPicker` desde `@/components/clients/ClientPicker.vue`. El `v-model` usa `Client | null`. Guarda `selectedClient.id` como relación de PocketBase cuando exista una selección. El componente consulta a partir de dos caracteres y admite un filtro opcional de estado.
+
+```vue
+<script setup lang="ts">
+import { shallowRef } from 'vue';
+import ClientPicker from '@/components/clients/ClientPicker.vue';
+import type { Client } from '@/lib/clients';
+
+const selectedClient = shallowRef<Client | null>(null);
+</script>
+
+<template>
+  <ClientPicker
+    v-model="selectedClient"
+    label="Cliente de la reserva"
+    status="active"
+  />
+</template>
+```
+
+### Registrar una sección de historial
+
+En `src/views/admin/clients/history-sections.ts`, conserva la clave de la sección (`bookings`, `memberships` o `payments`), asigna su componente a `component` y cambia `available` a `true`. `ClientHistoryTab` instancia el componente con la prop `clientId`. Usa el ID para filtrar la colección relacionada. Las secciones pendientes muestran el número de su feature.
+
+Queda pendiente decidir si se necesita importar clientes por CSV o exponer un endpoint de alta externa. El panel admite el alta manual.
+
 ## Despliegue
 
 El servidor estático debe devolver `index.html` para cualquier ruta desconocida (fallback de SPA). El despliegue no forma parte del boilerplate.

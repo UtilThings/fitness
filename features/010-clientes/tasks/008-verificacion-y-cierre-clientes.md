@@ -1,7 +1,7 @@
 # 008 - [Verificación] Verificación y cierre de clientes
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 007
 - **Fase:** Fase 3: Verificación y cierre
 
@@ -21,9 +21,9 @@ La feature 010 queda verificada de punta a punta y lista para marcarse como comp
 
 ## Criterios de aceptación
 
-- [ ] Ambos scripts de verificación terminan en verde.
-- [ ] El recorrido manual de "Validación Post-Deploy" del spec se cumple.
-- [ ] Todos los criterios del spec están marcados y el estado del spec es Completado.
+- [x] Ambos scripts de verificación terminan en verde.
+- [x] El recorrido manual de "Validación Post-Deploy" del spec se cumple.
+- [x] Todos los criterios del spec están marcados y el estado del spec es Completado.
 
 ## Referencias
 
@@ -36,3 +36,5 @@ La feature 010 queda verificada de punta a punta y lista para marcarse como comp
 
 ## Notas de implementación
 
+
+Pasaron scripts/verify-api.sh, scripts/verify-app.sh y el recorrido en Chromium con la compilación de producción. En PocketBase 0.40.5 se comprobaron los códigos 400, 403 y 409, el cambio de clase gratis con app.save interno, la inactivación con historial, el borrado sin historial y la auditoría. Se revisaron y marcaron los diez criterios de la especificación.

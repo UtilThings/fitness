@@ -1,7 +1,7 @@
 # 005 - [Vista] Lista de clientes con búsqueda, filtros y alta manual
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, Feature 008 (contrato)
 - **Fase:** Fase 2: Interfaz de clientes
 
@@ -23,11 +23,11 @@ El personal ve la lista de clientes, busca por nombre, email o teléfono, filtra
 
 ## Criterios de aceptación
 
-- [ ] Buscar «ana», un email parcial y un teléfono parcial devuelve los clientes esperados.
-- [ ] Cambiar el filtro de estado refresca la lista y conserva la búsqueda.
-- [ ] Los placeholders de servicio y plan están visibles pero deshabilitados.
-- [ ] El alta manual crea el cliente y muestra errores de email/teléfono inválidos o duplicados.
-- [ ] `typecheck`, `lint`, `format:check` y `test` pasan.
+- [x] Buscar «ana», un email parcial y un teléfono parcial devuelve los clientes esperados.
+- [x] Cambiar el filtro de estado refresca la lista y conserva la búsqueda.
+- [x] Los placeholders de servicio y plan están visibles pero deshabilitados.
+- [x] El alta manual crea el cliente y muestra errores de email/teléfono inválidos o duplicados.
+- [x] `typecheck`, `lint`, `format:check` y `test` pasan.
 
 ## Referencias
 
@@ -41,3 +41,5 @@ El personal ve la lista de clientes, busca por nombre, email o teléfono, filtra
 
 ## Notas de implementación
 
+
+Verificada la búsqueda real en PocketBase por nombre, correo y teléfono parcial con y sin formato. Vitest comprobó el estado conservado en la URL, los filtros deshabilitados, el estado vacío y los errores de alta; las pruebas se incorporan al repositorio en la tarea 007.

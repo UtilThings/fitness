@@ -1,7 +1,7 @@
 # 002 - [Lib] Validación y normalización de clientes
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 1: Modelo de datos y reglas
 
@@ -25,10 +25,10 @@ Las librerías puras viven en `api/src/lib/*.ts` y compilan con `bun run build:t
 
 ## Criterios de aceptación
 
-- [ ] `normalizePhone('(305) 555-0100')` devuelve `+13055550100` y `normalizePhone('123')` devuelve error.
-- [ ] `validateAssessment` rechaza claves desconocidas y valores fuera de rango con el campo en `errors`.
-- [ ] `canChangeFreeClass` permite solo al owner.
-- [ ] `bun test` en `api/` pasa en verde y `bun run build:ts` genera `pb_hooks/lib/clients.js`.
+- [x] `normalizePhone('(305) 555-0100')` devuelve `+13055550100` y `normalizePhone('123')` devuelve error.
+- [x] `validateAssessment` rechaza claves desconocidas y valores fuera de rango con el campo en `errors`.
+- [x] `canChangeFreeClass` permite solo al owner.
+- [x] `bun test` en `api/` pasa en verde y `bun run build:ts` genera `pb_hooks/lib/clients.js`.
 
 ## Referencias
 
@@ -42,3 +42,5 @@ Las librerías puras viven en `api/src/lib/*.ts` y compilan con `bun run build:t
 
 ## Notas de implementación
 
+
+Verificados 42 tests de API y la compilación de pb_hooks/lib/clients.js.
