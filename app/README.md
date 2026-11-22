@@ -179,9 +179,18 @@ const selectedClient = shallowRef<Client | null>(null);
 
 ### Registrar una sección de historial
 
-En `src/views/admin/clients/history-sections.ts`, conserva la clave de la sección (`bookings`, `memberships` o `payments`), asigna su componente a `component` y cambia `available` a `true`. `ClientHistoryTab` instancia el componente con la prop `clientId`. Usa el ID para filtrar la colección relacionada. Las secciones pendientes muestran el número de su feature.
+En `src/views/admin/clients/history-sections.ts`, conserva la clave de la sección (`bookings`, `memberships` o `payments`), asigna su componente a `component` y cambia `available` a `true`. `ClientHistoryTab` instancia el componente con `clientId` y, cuando está disponible, el registro `client`. Usa el ID para filtrar la colección relacionada. El componente puede emitir `changed` tras una mutación que actualice datos del perfil. Las secciones pendientes muestran el número de su feature.
 
 Queda pendiente decidir si se necesita importar clientes por CSV o exponer un endpoint de alta externa. El panel admite el alta manual.
+
+## Reservas y asistencia
+
+- En **Clases**, el calendario consulta la semana en una sola petición con `useSessionAvailability`. `AvailabilityTag` muestra los cupos reales como **Disponible**, **Casi llena** o **Llena**.
+- En el detalle de una sesión, **Reservar** abre `BookingDialog` con `ClientPicker`. El diálogo avisa si la sesión está llena y ofrece **Primera clase gratis** cuando el cliente y el servicio son elegibles. `SessionRoster` muestra inscritos y lista de espera. Permite marcar asistencia desde el inicio de la sesión y corregirla con un motivo.
+- En **Clientes → Historial → Reservas**, selecciona una fecha y una sesión próxima para abrir el mismo diálogo con el cliente ya seleccionado. El historial muestra fecha, servicio, estado y notas de excepción.
+- Desde la sesión o el historial, `CancelBookingDialog` muestra el límite en hora de Miramar. Una cancelación tardía permite aplicar una excepción con motivo obligatorio. Al guardar, las vistas vuelven a consultar los datos y muestran las promociones y los resultados registrados.
+
+`useBookings` consulta reservas por sesión o por cliente, envía altas y transiciones y convierte los errores de PocketBase en mensajes por campo. Los estados y sus etiquetas se definen en `src/lib/bookings.ts`.
 
 ## Despliegue
 

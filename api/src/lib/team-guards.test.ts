@@ -42,6 +42,7 @@ describe("canDeleteAdmin", () => {
 
   test("distingue una baja con historial de un registro sin referencias", () => {
     expect(ADMIN_REFERENCES).toContainEqual({ collection: "audit_logs", field: "actor" });
+    expect(ADMIN_REFERENCES).toContainEqual({ collection: "bookings", field: "marked_by" });
     expect(canDeleteAdmin({ referencesCount: 2, isLastOwner: false, isSelf: false })).toEqual({
       status: 409, message: "Tiene registros asociados; desactívalo en su lugar",
     });
