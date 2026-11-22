@@ -1,7 +1,7 @@
 # 009 - [Verificación] Pruebas de integración, documentación y cierre
 
 - **Prioridad:** 9
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, 005, 007, 008
 - **Fase:** Fase final: Verificación y cierre
 
@@ -23,10 +23,10 @@ La feature 005 deja `scripts/verify-api.sh` y `bun test` en `api/`; `scripts/ver
 
 ## Criterios de aceptación
 
-- [ ] `scripts/verify-api.sh` termina en verde con las comprobaciones del catálogo.
-- [ ] `scripts/verify-app.sh` termina en verde.
-- [ ] Las secciones de documentación existen y los comandos descritos funcionan.
-- [ ] Todos los criterios de aceptación de `features/008-catalogo-de-servicios-y-planes/spec.md` están marcados o justificados.
+- [x] `scripts/verify-api.sh` termina en verde con las comprobaciones del catálogo.
+- [x] `scripts/verify-app.sh` termina en verde.
+- [x] Las secciones de documentación existen y los comandos descritos funcionan.
+- [x] Todos los criterios de aceptación de `features/008-catalogo-de-servicios-y-planes/spec.md` están marcados o justificados.
 
 ## Referencias
 
@@ -39,4 +39,4 @@ La feature 005 deja `scripts/verify-api.sh` y `bun test` en `api/`; `scripts/ver
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Los dos scripts de verificación pasaron con PocketBase 0.40.5, 30 pruebas de API y 125 de app. Se verificaron además la reversión y reaplicación, el arranque limpio de desarrollo antes de cargar el seed y la protección de coaches asignados. Se actualizaron ambos README y se marcaron los nueve criterios del spec.

@@ -10,6 +10,7 @@ export interface CollectionFilter {
 
 interface CollectionOptions {
   perPage?: number;
+  fullList?: boolean;
   sort?: string;
   expand?: string;
   fields?: string;
@@ -54,13 +55,25 @@ export function useCollection<T = BaseRecord>(
     loading.value = true;
     error.value = null;
     try {
-      const result = await collection.getList<T>(page.value, perPage.value, {
+      const query = {
         sort: sort.value || undefined,
         filter: buildFilter(),
         expand: options.expand,
         fields: options.fields,
         requestKey,
-      });
+      };
+      if (options.fullList) {
+        const records = await collection.getFullList<T>(query);
+        if (version !== latestLoad) return;
+        items.value = records;
+        total.value = records.length;
+        return;
+      }
+      const result = await collection.getList<T>(
+        page.value,
+        perPage.value,
+        query,
+      );
       if (version !== latestLoad) return;
       items.value = result.items;
       total.value = result.totalItems;

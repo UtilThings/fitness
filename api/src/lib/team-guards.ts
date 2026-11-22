@@ -1,5 +1,6 @@
 export const ADMIN_REFERENCES: { collection: string; field: string }[] = [
   { collection: "audit_logs", field: "actor" },
+  { collection: "services", field: "default_coach" },
 ];
 
 interface AdminState {

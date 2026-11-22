@@ -52,19 +52,12 @@ export const adminNav: NavGroup[] = [
   },
   {
     label: 'Catálogo',
-    items: [
-      {
-        label: 'Servicios',
-        icon: 'pi pi-list',
-        to: '/services',
-        placeholder: true,
-      },
-      { label: 'Planes', icon: 'pi pi-tags', to: '/plans', placeholder: true },
-    ],
+    items: [{ label: 'Planes', icon: 'pi pi-tags', to: '/plans' }],
   },
   {
     label: 'Ajustes',
     items: [
+      { label: 'Servicios', icon: 'pi pi-briefcase', to: '/services' },
       {
         label: 'Equipo',
         icon: 'pi pi-id-card',

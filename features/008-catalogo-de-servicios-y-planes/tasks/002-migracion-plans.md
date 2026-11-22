@@ -1,7 +1,7 @@
 # 002 - [Migración] Colección `plans`
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 1: Esquema y datos
 
@@ -23,10 +23,10 @@ PocketBase tiene la colección `plans` relacionada con `services`, con índices 
 
 ## Criterios de aceptación
 
-- [ ] `plans` aparece en `/_/` con campos, índices y reglas; se puede crear un plan con `price_cents: 0`.
-- [ ] Dos planes con el mismo `service` y `name` fallan por el índice único.
-- [ ] Un `coach` solo puede leer; un `owner` puede escribir.
-- [ ] `down` elimina `plans` sin tocar `services`; `up` vuelve a aplicarse.
+- [x] `plans` aparece en `/_/` con campos, índices y reglas; se puede crear un plan con `price_cents: 0`.
+- [x] Dos planes con el mismo `service` y `name` fallan por el índice único.
+- [x] Un `coach` solo puede leer; un `owner` puede escribir.
+- [x] `down` elimina `plans` sin tocar `services`; `up` vuelve a aplicarse.
 
 ## Referencias
 
@@ -40,4 +40,4 @@ PocketBase tiene la colección `plans` relacionada con `services`, con índices 
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Verificada en PocketBase 0.40.5 con un plan de precio 0, unicidad por servicio y nombre, permisos de coach y owner y reversión sin afectar services. El hook de la tarea 005 exige el precio al crear y aplica active cuando se omite.

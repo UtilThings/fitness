@@ -1,7 +1,7 @@
 # 003 - [Lib] Reglas del catálogo y datos semilla
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002
 - **Fase:** Fase 1: Esquema y datos
 
@@ -27,10 +27,10 @@ La lógica de validación del catálogo y los datos semilla viven en una librer�
 
 ## Criterios de aceptación
 
-- [ ] `bun test` en `api/` ejecuta las pruebas nuevas en verde.
-- [ ] La prueba de paridad falla si se cambia un precio en `CATALOG_SEED` o en `data.ts`.
-- [ ] `validatePlan` rechaza `price_cents = -1`, un plan pagado con precio 0 y un `is_first_class` con precio > 0.
-- [ ] `bun run build:ts` genera `api/pb_hooks/lib/catalog.js` sin errores.
+- [x] `bun test` en `api/` ejecuta las pruebas nuevas en verde.
+- [x] La prueba de paridad falla si se cambia un precio en `CATALOG_SEED` o en `data.ts`.
+- [x] `validatePlan` rechaza `price_cents = -1`, un plan pagado con precio 0 y un `is_first_class` con precio > 0.
+- [x] `bun run build:ts` genera `api/pb_hooks/lib/catalog.js` sin errores.
 
 ## Referencias
 
@@ -44,4 +44,4 @@ La lógica de validación del catálogo y los datos semilla viven en una librer�
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Bun ejecutó 30 pruebas y generó pb_hooks/lib/catalog.js. Se verificó la prueba de paridad cambiando temporalmente un precio en cada fuente y observando el fallo antes de restaurar los valores.

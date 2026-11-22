@@ -1,6 +1,6 @@
 # Especificación: Catálogo de servicios y planes
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -242,15 +242,20 @@ Cupos: Group Strength 6, Tropical Jump 12 (`classTemplates`); Personal 1 a 1 →
 
 ## Criterios de Aceptación
 
-- [ ] Existen las colecciones `services` y `plans` con los campos, índices y reglas del modelo; `down` las elimina sin error.
-- [ ] Tras arrancar PocketBase hay 5 servicios y 10 planes con precios, sesiones, frecuencias, compromiso, cupos (6, 12, 1, 2) y políticas (24 h personal, 12 h grupal) iguales a `web/`; arrancar de nuevo no duplica ni modifica registros editados.
-- [ ] La prueba de paridad compara el seed con `web/src/lib/data.ts` y falla si divergen.
-- [ ] No se puede tener dos planes `is_first_class`, un precio negativo, un plan pagado con precio 0 ni un plan activo bajo un servicio inactivo (respuesta 400 con mensaje por campo).
-- [ ] Desactivar un servicio desactiva sus planes; borrar un servicio o plan con dependientes devuelve 400 y sugiere desactivar.
-- [ ] Un `coach` o `reception` puede listar el catálogo pero no modificarlo; sin sesión no se accede.
-- [ ] `/services` y `/plans` listan, crean, editan, activan/desactivan y reordenan; el servicio permite editar `cancellation_hours`; los errores del servidor se muestran en el formulario.
-- [ ] `admin-nav.ts` tiene entradas reales «Servicios» y «Planes» sin badges falsos añadidos por esta feature.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde y la documentación de ambos `README.md` está actualizada.
+- [x] Existen las colecciones `services` y `plans` con los campos, índices y reglas del modelo; `down` las elimina sin error.
+- [x] Tras arrancar PocketBase hay 5 servicios y 10 planes con precios, sesiones, frecuencias, compromiso, cupos (6, 12, 1, 2) y políticas (24 h personal, 12 h grupal) iguales a `web/`; arrancar de nuevo no duplica ni modifica registros editados.
+- [x] La prueba de paridad compara el seed con `web/src/lib/data.ts` y falla si divergen.
+- [x] No se puede tener dos planes `is_first_class`, un precio negativo, un plan pagado con precio 0 ni un plan activo bajo un servicio inactivo (respuesta 400 con mensaje por campo).
+- [x] Desactivar un servicio desactiva sus planes; borrar un servicio o plan con dependientes devuelve 400 y sugiere desactivar.
+- [x] Un `coach` o `reception` puede listar el catálogo pero no modificarlo; sin sesión no se accede.
+- [x] `/services` y `/plans` listan, crean, editan, activan/desactivan y reordenan; el servicio permite editar `cancellation_hours`; los errores del servidor se muestran en el formulario.
+- [x] `admin-nav.ts` tiene entradas reales «Servicios» y «Planes» sin badges falsos añadidos por esta feature.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde y la documentación de ambos `README.md` está actualizada.
+### Verificación de cierre
+
+- PocketBase 0.40.5 aplicó y revirtió las tres migraciones en bases temporales. Al reaplicar el seed, se conservaron un precio editado y los registros con dependientes.
+- La API confirmó los permisos por rol, los errores por campo, la exclusión de altas concurrentes de primera clase, la cascada y la auditoría.
+- Vitest verificó las vistas y rutas, la confirmación, el orden y el filtro. `scripts/verify-api.sh` y `scripts/verify-app.sh` terminaron en verde.
 
 ---
 
