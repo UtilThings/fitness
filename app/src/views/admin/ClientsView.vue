@@ -1,0 +1,305 @@
+<script setup lang="ts">
+import Button from 'primevue/button';
+import Column from 'primevue/column';
+import DataTable, {
+  type DataTablePageEvent,
+  type DataTableRowClickEvent,
+} from 'primevue/datatable';
+import Dialog from 'primevue/dialog';
+import Message from 'primevue/message';
+import Select from 'primevue/select';
+import { computed, ref, shallowRef, watch } from 'vue';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
+import DataToolbar from '@/components/DataToolbar.vue';
+import EmptyState from '@/components/EmptyState.vue';
+import PageHeader from '@/components/PageHeader.vue';
+import ClientForm from '@/components/clients/ClientForm.vue';
+import ClientStatusTag from '@/components/clients/ClientStatusTag.vue';
+import { useClients } from '@/composables/useClients';
+import {
+  CLIENT_STATUS,
+  CLIENT_STATUSES,
+  formatPhone,
+  fullName,
+  type Client,
+  type ClientDetails,
+  type ClientStatus,
+} from '@/lib/clients';
+import { formatDate, localToUtcIso } from '@/lib/datetime';
+import type { PbError } from '@/lib/pb-errors';
+
+const clients = useClients();
+const route = useRoute();
+const router = useRouter();
+const q = computed(() =>
+  typeof route.query.q === 'string' ? route.query.q : '',
+);
+const status = computed<ClientStatus | 'all'>(() => {
+  const value = route.query.status;
+  if (value === 'all') return value;
+  return CLIENT_STATUSES.find((item) => item === value) ?? 'active';
+});
+const statusOptions = [
+  { value: 'all', label: 'Todos' },
+  ...CLIENT_STATUSES.map((value) => ({
+    value,
+    label: CLIENT_STATUS[value].label,
+  })),
+];
+const page = ref(1);
+const perPage = ref(20);
+const rows = shallowRef<Client[]>([]);
+const total = ref(0);
+const loading = ref(false);
+const listError = shallowRef<PbError | null>(null);
+let latestLoad = 0;
+
+const visible = ref(false);
+const saving = ref(false);
+const creationError = shallowRef<PbError | null>(null);
+const draft = ref<ClientDetails>(blankClient());
+
+function blankClient(): ClientDetails {
+  return {
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    joined_on: '',
+    emergency_contact: '',
+  };
+}
+
+watch(
+  [q, status],
+  () => {
+    page.value = 1;
+    void load();
+  },
+  { immediate: true },
+);
+
+function search(value: string) {
+  return router.replace({ query: { ...route.query, q: value || undefined } });
+}
+
+function filterStatus(value: ClientStatus | 'all') {
+  return router.replace({
+    query: { ...route.query, status: value === 'active' ? undefined : value },
+  });
+}
+
+async function load() {
+  const version = ++latestLoad;
+  loading.value = true;
+  listError.value = null;
+  try {
+    const result = await clients.list({
+      q: q.value,
+      status: status.value === 'all' ? null : status.value,
+      page: page.value,
+      perPage: perPage.value,
+    });
+    if (version !== latestLoad) return;
+    rows.value = result.items;
+    total.value = result.totalItems;
+  } catch (cause) {
+    if (version !== latestLoad) return;
+    rows.value = [];
+    total.value = 0;
+    listError.value = cause as PbError;
+  } finally {
+    if (version === latestLoad) loading.value = false;
+  }
+}
+
+function changePage(event: DataTablePageEvent) {
+  page.value = event.page + 1;
+  perPage.value = event.rows;
+  return load();
+}
+
+function profile(id: string) {
+  return { name: 'client-detail', params: { id } };
+}
+
+function openRow({ data }: DataTableRowClickEvent) {
+  void router.push(profile(data.id));
+}
+
+function openCreate() {
+  draft.value = blankClient();
+  creationError.value = null;
+  visible.value = true;
+}
+
+async function create(values: ClientDetails) {
+  if (saving.value) return;
+  saving.value = true;
+  creationError.value = null;
+  try {
+    const joined_on = values.joined_on
+      ? localToUtcIso(values.joined_on, '00:00')
+      : '';
+    const client = await clients.create({ ...values, joined_on });
+    visible.value = false;
+    await router.push(profile(client.id));
+  } catch (cause) {
+    creationError.value =
+      cause instanceof RangeError
+        ? {
+            fields: { joined_on: 'Ingresa una fecha válida.' },
+            message: 'Revisa los datos del cliente.',
+            status: 400,
+          }
+        : (cause as PbError);
+  } finally {
+    saving.value = false;
+  }
+}
+</script>
+
+<template>
+  <section class="grid gap-5">
+    <PageHeader title="Clientes">
+      <template #actions>
+        <Button icon="pi pi-plus" label="Nuevo cliente" @click="openCreate" />
+      </template>
+    </PageHeader>
+
+    <DataToolbar
+      :model-value="q"
+      placeholder="Buscar por nombre, email o teléfono"
+      @search="search"
+    >
+      <template #filters>
+        <Select
+          :model-value="status"
+          :options="statusOptions"
+          option-label="label"
+          option-value="value"
+          aria-label="Estado"
+          class="min-w-32"
+          @update:model-value="filterStatus"
+        />
+        <div
+          v-for="label in ['Servicio', 'Plan activo']"
+          :key="label"
+          class="grid gap-1"
+        >
+          <Select
+            :aria-label="label"
+            :placeholder="label"
+            class="min-w-36"
+            disabled
+          />
+          <small class="text-muted-color">Disponible con Membresías</small>
+        </div>
+      </template>
+    </DataToolbar>
+
+    <Message v-if="listError" severity="error" :closable="false">
+      {{ listError.message }}
+      <Button
+        label="Reintentar"
+        size="small"
+        severity="secondary"
+        text
+        @click="load"
+      />
+    </Message>
+    <DataTable
+      v-else
+      :value="rows"
+      data-key="id"
+      lazy
+      paginator
+      :loading="loading"
+      :first="(page - 1) * perPage"
+      :rows="perPage"
+      :rows-per-page-options="[10, 20, 50]"
+      :total-records="total"
+      :always-show-paginator="false"
+      table-style="min-width: 58rem"
+      :pt="{ bodyRow: { class: 'cursor-pointer' } }"
+      @page="changePage"
+      @row-click="openRow"
+    >
+      <template #empty>
+        <EmptyState
+          v-if="!loading"
+          icon="pi pi-users"
+          title="No hay clientes para mostrar"
+          description="Prueba otra búsqueda o cambia el filtro de estado."
+        />
+      </template>
+      <Column header="Nombre">
+        <template #body="{ data }">
+          <RouterLink
+            :to="profile(data.id)"
+            class="font-semibold text-primary hover:underline"
+            @click.stop
+          >
+            {{ fullName(data) }}
+          </RouterLink>
+        </template>
+      </Column>
+      <Column header="Correo electrónico">
+        <template #body="{ data }">{{ data.email || '—' }}</template>
+      </Column>
+      <Column header="Teléfono">
+        <template #body="{ data }">{{
+          formatPhone(data.phone) || '—'
+        }}</template>
+      </Column>
+      <Column header="Estado">
+        <template #body="{ data }"
+          ><ClientStatusTag :status="data.status"
+        /></template>
+      </Column>
+      <Column header="Primera clase gratis">
+        <template #body="{ data }">{{
+          data.free_class_used ? 'Usada' : 'Disponible'
+        }}</template>
+      </Column>
+      <Column header="Fecha de alta">
+        <template #body="{ data }">{{
+          data.joined_on ? formatDate(data.joined_on) : '—'
+        }}</template>
+      </Column>
+      <Column
+        v-for="label in ['Servicio', 'Plan activo']"
+        :key="label"
+        :header="label"
+      >
+        <template #body><span class="text-muted-color">—</span></template>
+      </Column>
+    </DataTable>
+
+    <Dialog
+      v-model:visible="visible"
+      modal
+      header="Nuevo cliente"
+      class="w-[min(38rem,calc(100%-2rem))]"
+      :closable="!saving"
+      :close-on-escape="!saving"
+    >
+      <Message
+        v-if="creationError && !Object.keys(creationError.fields).length"
+        class="mb-4"
+        severity="error"
+        :closable="false"
+      >
+        {{ creationError.message }}
+      </Message>
+      <ClientForm
+        v-model="draft"
+        mode="create"
+        :errors="creationError?.fields"
+        :busy="saving"
+        @cancel="visible = false"
+        @submit="create"
+      />
+    </Dialog>
+  </section>
+</template>
