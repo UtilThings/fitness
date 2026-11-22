@@ -1,7 +1,7 @@
 # 001 - [Migración] Colección bookings
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 009 (contrato), Feature 010 (contrato), Feature 005 (contrato)
 - **Fase:** Fase 1: Modelo y reglas puras
 
@@ -24,11 +24,11 @@ La colección `bookings` existe con sus campos, índices y reglas de staff, qued
 
 ## Criterios de aceptación
 
-- [ ] La migración se aplica y revierte sin errores; la colección aparece con campos, índices y reglas.
-- [ ] Insertar dos reservas del mismo cliente en la misma sesión falla por el índice único.
-- [ ] Sin sesión de usuario, la API devuelve `403`/`404`.
-- [ ] Las notas de implementación contienen el resultado de la verificación previa.
-- [ ] `bookings` figura en `audit-config.ts`.
+- [x] La migración se aplica y revierte sin errores; la colección aparece con campos, índices y reglas.
+- [x] Insertar dos reservas del mismo cliente en la misma sesión falla por el índice único.
+- [x] Sin sesión de usuario, la API devuelve `403`/`404`.
+- [x] Las notas de implementación contienen el resultado de la verificación previa.
+- [x] `bookings` figura en `audit-config.ts`.
 
 ## Referencias
 
@@ -42,3 +42,5 @@ La colección `bookings` existe con sus campos, índices y reglas de staff, qued
 
 ## Notas de implementación
 
+
+PocketBase 0.40.5 incluye goja 43234fa61381. En una base temporal se verificaron runInTransaction, la ejecución del hook de éxito tras un guardado interno y el acceso a un campo adicional del cuerpo desde requestInfo(). Date admite ISO con offset y normaliza a UTC. Intl no está disponible. Se aplicó, revirtió y reaplicó la migración, se rechazó un duplicado por el índice único y se comprobó el 404 anónimo.

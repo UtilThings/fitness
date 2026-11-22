@@ -1,5 +1,10 @@
 import { computed, ref, shallowRef } from 'vue';
-import { localDateRangeToUtc, todayLocal, weekRangeUtc } from '@/lib/datetime';
+import {
+  localDateRangeToUtc,
+  localDateToUtcRange,
+  todayLocal,
+  weekRangeUtc,
+} from '@/lib/datetime';
 import { parsePbError, type PbError } from '@/lib/pb-errors';
 import { pb } from '@/lib/pocketbase';
 import {
@@ -95,6 +100,20 @@ export function useSchedule() {
         blockRecords.error.value,
     ),
     loadWeek,
+    listUpcoming: (date: string, now = new Date()) =>
+      mutate(() =>
+        sessionRecords.getFullList<ClassSession>({
+          filter: [
+            within(localDateToUtcRange(date)),
+            pb.filter("status = 'scheduled' && starts_at > {:now}", {
+              now: now.toISOString().replace('T', ' '),
+            }),
+          ].join(' && '),
+          sort: 'starts_at,id',
+          expand,
+          requestKey: null,
+        }),
+      ),
     loadTemplates: templateRecords.load,
     loadBlocks: blockRecords.load,
     generate: (body: { weeks?: number; from?: string } = {}) =>

@@ -220,6 +220,22 @@ function changeStatus(value: ClientStatus) {
   } else void apply();
 }
 
+async function refreshClassUsed() {
+  const id = client.value?.id;
+  if (!id) return;
+  try {
+    const updated = await clients.get(id);
+    if (client.value?.id !== id) return;
+    client.value = {
+      ...client.value,
+      free_class_used: updated.free_class_used,
+    };
+    classUsed.value = updated.free_class_used;
+  } catch (cause) {
+    if (client.value?.id === id) notify.error((cause as PbError).message);
+  }
+}
+
 function changeClassUsed(value: boolean) {
   const clientId = client.value?.id;
   if (!clientId || !isOwner.value || saving.value) return;
@@ -447,9 +463,14 @@ function requestDelete() {
               @submit="saveAssessment"
             />
           </TabPanel>
-          <TabPanel value="history"
-            ><ClientHistoryTab :client-id="client.id"
-          /></TabPanel>
+          <TabPanel value="history">
+            <ClientHistoryTab
+              v-if="tab === 'history'"
+              :client-id="client.id"
+              :client="client"
+              @changed="refreshClassUsed"
+            />
+          </TabPanel>
         </TabPanels>
       </Tabs>
     </template>

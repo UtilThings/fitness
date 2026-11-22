@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { Client } from '@/lib/clients';
 import { historySections } from '@/views/admin/clients/history-sections';
 
-defineProps<{ clientId: string }>();
+defineProps<{ clientId: string; client?: Client }>();
+const emit = defineEmits<{ changed: [] }>();
 </script>
 
 <template>
@@ -16,6 +18,8 @@ defineProps<{ clientId: string }>();
         :is="section.component"
         v-if="section.available"
         :client-id="clientId"
+        :client="client"
+        @changed="emit('changed')"
       />
       <p v-else class="text-sm text-muted-color">
         Disponible con la feature {{ section.feature }}

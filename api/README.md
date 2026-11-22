@@ -102,11 +102,11 @@ onRecordAfterUpdateSuccess((e) => {
 }, "class_sessions");
 ```
 
-La feature 011 consume el evento para cancelar reservas y gestionar la lista de espera. La feature 018 lo consume para enviar `class_cancelled`.
+La cascada de reservas se guarda en la misma transacción que la cancelación de la sesión. Los hooks de éxito observan la sesión y las reservas ya canceladas. La feature 018 puede observar la sesión para enviar `class_cancelled`.
 
 ## Clientes
 
-La colección `clients` se usa mediante la API estándar de PocketBase. Los admins activos pueden listar, consultar, crear y editar. Solo un `owner` activo puede eliminar o cambiar `free_class_used` por HTTP. Las futuras reservas pueden marcarla mediante `app.save`, que ejecuta los hooks de modelo y omite los hooks de petición.
+La colección `clients` se usa mediante la API estándar de PocketBase. Los admins activos pueden listar, consultar, crear y editar. Solo un `owner` activo puede eliminar o cambiar `free_class_used` por HTTP. Los hooks de reservas pueden marcarla mediante `app.save`, que ejecuta los hooks de modelo y omite los hooks de petición.
 
 El email es opcional. Se guarda en minúsculas y el índice parcial exige unicidad cuando hay un valor. Se aceptan teléfonos compartidos y se guardan en E.164, con `+1` por defecto para números estadounidenses sin prefijo. El estado inicial es `active` y, si se omite `joined_on`, se usa el inicio del día en `America/New_York`. Desde `inactive` se puede volver a `active` antes de pasar a `paused`.
 
@@ -125,8 +125,44 @@ El email es opcional. Se guarda en minúsculas y el índice parcial exige unicid
 
 El API responde `400` con `data.assessment` para claves desconocidas o valores inválidos. Las notas, la evaluación y sus diffs de auditoría se manejan en el panel administrativo. El hook general registra altas, ediciones y bajas confirmadas en `audit_logs` con el actor de la petición.
 
-### Relaciones futuras
+### Relaciones con clientes
 
-Para reservas, membresías, pagos y programas de coaching, crea `client` como relación a `clients` con `cascadeDelete: false`. Un cliente referenciado en `bookings`, `memberships`, `payments` o `coaching_programs` devuelve `409` al intentar borrarlo. Usa `status: "inactive"` para conservar el historial.
+`bookings.client` enlaza a `clients` sin borrado en cascada. Usa la misma relación para membresías, pagos y programas de coaching. Un cliente referenciado en `bookings`, `memberships`, `payments` o `coaching_programs` devuelve `409` al intentar borrarlo. Usa `status: "inactive"` para conservar el historial.
 
 Queda pendiente decidir si se necesita importar clientes por CSV o crear un endpoint de alta externa. La feature 010 habilita el alta manual desde el panel.
+
+## Reservas y asistencia
+
+`bookings` relaciona una sesión y un cliente con un índice único sobre `(session, client)`. Los admins activos pueden listar, consultar, crear y actualizar. El borrado queda reservado a owner. El flujo operativo usa cancelaciones para conservar el historial. `marked_by` identifica a quien cancela o marca asistencia y `source` es `admin`.
+
+En `POST /api/collections/bookings/records`, envía `session` y `client`. El servidor calcula el estado y la posición. Si el mismo cliente reserva de nuevo después de una cancelación, el POST reactiva el registro con el mismo ID. El cliente debe estar activo o en pausa y la sesión debe estar programada y ser futura.
+
+En `PATCH /api/collections/bookings/records/{id}`, envía `status` con `cancelled`, `attended` o `no_show`. En una cancelación tardía, `override_note` con un motivo evita la penalización. Si envías `override: true`, el motivo es obligatorio. Desde la hora de inicio se puede marcar asistencia. Para hacerlo antes, o para corregir un resultado anterior, se exige una nota.
+
+| Cambio | Evento de `classifyTransition` |
+| --- | --- |
+| Alta o reactivación con cupo → `booked` | `booking.created` |
+| Alta o reactivación sin cupo → `waitlisted` | `booking.waitlisted` |
+| `waitlisted` → `booked` al liberarse un cupo | `booking.promoted` |
+| `booked` o `waitlisted` → `cancelled` | `booking.cancelled` |
+| `booked` → `late_cancelled` después del límite, sin excepción | `booking.late_cancelled` |
+| `booked` o `no_show` → `attended` | `booking.attended` |
+| `booked` o `attended` → `no_show` | `booking.no_show` |
+| Cancelación por la sesión → `cancelled`, con `override_note = "session_cancelled"` | `booking.cancelled_by_session` |
+
+Cuenta como ocupado cada registro en `booked`, `attended` o `no_show`. La espera se ordena por posición. Al cancelar una reserva confirmada se promueve la primera de la lista cuando hay cupo. La cancelación de la sesión cancela a todos los inscritos y a quienes esperan, sin promociones. Los cambios quedan en `audit_logs` con el evento en el resumen y el actor de la operación cuando corresponde.
+
+La feature 013 puede observar `onRecordAfterCreateSuccess` y `onRecordAfterUpdateSuccess` de `bookings`. Dentro del callback, carga `lib/booking-rules` y `lib/booking-store` con `require`. En altas, llama a `classifyTransition(undefined, bookingData(e.record))`. En actualizaciones, compara `bookingData(e.record.original())` con `bookingData(e.record)`. Un cambio de posición sin transición de estado devuelve `undefined`. Las features 015 y 018 pueden usar el mismo contrato.
+
+### Primera clase gratis
+
+`use_free_class: true` en el POST exige que el cliente tenga `free_class_used = false` y que el servicio ofrezca un plan activo con `is_first_class`. La reserva registra `free_class = true` y el cliente queda marcado en la misma transacción. La opción también aplica a una reserva en espera. Si se cancela a tiempo, desde la espera, por excepción o por cancelación de la sesión, se restituye el beneficio siempre que el cliente carezca de otra reserva gratis en `booked`, `attended`, `no_show` o `late_cancelled`. La primera clase sigue consumida en `late_cancelled`, `no_show` y `attended`. El owner conserva el restablecimiento manual desde el perfil del cliente.
+
+### Disponibilidad
+
+| GET | Resultado |
+| --- | --- |
+| `/api/admin/sessions/{id}/availability` | Disponibilidad de una sesión. Devuelve `404` si no existe. |
+| `/api/admin/sessions/availability?from=&to=` | Disponibilidad de las sesiones programadas en un rango `[from, to)` de hasta 62 días. Acepta fechas locales `YYYY-MM-DD` de Miramar o instantes ISO UTC. Un rango inválido devuelve `400`. |
+
+Ambas rutas requieren un admin activo. Devuelven `401` sin autenticación. Cada entrada contiene `session`, `capacity`, `booked`, `waitlisted`, `spots_left`, `availability` y `cancellation_deadline` en UTC. El valor de `availability` es `full` con cero cupos, `almost` con uno o dos, y `available` con tres o más. El límite para cancelar sin penalización se calcula restando `services.cancellation_hours` a `starts_at`. El instante exacto del límite cuenta como cancelación a tiempo.

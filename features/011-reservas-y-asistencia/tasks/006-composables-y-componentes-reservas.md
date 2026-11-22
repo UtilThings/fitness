@@ -1,7 +1,7 @@
 # 006 - [Componente] Composables y componentes de reservas
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003, 004, 005, Feature 010 (contrato)
 - **Fase:** Fase 3: Interfaz
 
@@ -27,10 +27,10 @@ La app dispone de los composables y componentes reutilizables para reservar, can
 
 ## Criterios de aceptación
 
-- [ ] `BookingDialog` avisa de la lista de espera cuando `spots_left = 0`.
-- [ ] `CancelBookingDialog` exige nota solo cuando la excepción aplica y muestra el límite en hora local.
-- [ ] `SessionRoster` deshabilita la asistencia antes del inicio de la sesión.
-- [ ] `typecheck`, `lint`, `format:check` y `test` pasan.
+- [x] `BookingDialog` avisa de la lista de espera cuando `spots_left = 0`.
+- [x] `CancelBookingDialog` exige nota solo cuando la excepción aplica y muestra el límite en hora local.
+- [x] `SessionRoster` deshabilita la asistencia antes del inicio de la sesión.
+- [x] `typecheck`, `lint`, `format:check` y `test` pasan.
 
 ## Referencias
 
@@ -43,3 +43,5 @@ La app dispone de los composables y componentes reutilizables para reservar, can
 
 ## Notas de implementación
 
+
+Typecheck, lint, formato y 166 pruebas de la app en verde. Se comprobó en pruebas de montaje el aviso de espera, la hora local y la nota de excepción, y el paso de asistencia deshabilitada a habilitada al inicio de la clase.

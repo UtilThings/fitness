@@ -1,7 +1,7 @@
 # 003 - [Hook] Crear reserva (booked o waitlisted) y consumo de clase gratis
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002
 - **Fase:** Fase 2: Hooks y endpoints
 
@@ -24,14 +24,14 @@ Los hooks viven en `api/src/hooks/bookings.ts` y compilan a `api/pb_hooks/bookin
 
 ## Criterios de aceptación
 
-- [ ] Con capacidad 2: dos reservas quedan `booked`; la tercera `waitlisted` con `waitlist_position = 1`.
-- [ ] Dos peticiones simultáneas sobre el último cupo no dan dos `booked`.
-- [ ] Reservar una sesión cancelada, pasada o a un cliente `inactive` devuelve `400`.
-- [ ] Reservar de nuevo tras cancelar reactiva el registro existente sin romper el índice único.
-- [ ] `use_free_class` marca `free_class_used = true` una sola vez; el segundo intento devuelve `400`.
-- [ ] La reserva queda con `free_class = true` y un `free_class` enviado en el cuerpo sin `use_free_class` se ignora.
-- [ ] Un `status` o `source` enviado en el cuerpo se ignora.
-- [ ] `bun run build:ts` genera el hook y `bun test` pasa.
+- [x] Con capacidad 2: dos reservas quedan `booked`; la tercera `waitlisted` con `waitlist_position = 1`.
+- [x] Dos peticiones simultáneas sobre el último cupo no dan dos `booked`.
+- [x] Reservar una sesión cancelada, pasada o a un cliente `inactive` devuelve `400`.
+- [x] Reservar de nuevo tras cancelar reactiva el registro existente sin romper el índice único.
+- [x] `use_free_class` marca `free_class_used = true` una sola vez; el segundo intento devuelve `400`.
+- [x] La reserva queda con `free_class = true` y un `free_class` enviado en el cuerpo sin `use_free_class` se ignora.
+- [x] Un `status` o `source` enviado en el cuerpo se ignora.
+- [x] `bun run build:ts` genera el hook y `bun test` pasa.
 
 ## Referencias
 
@@ -45,3 +45,5 @@ Los hooks viven en `api/src/hooks/bookings.ts` y compilan a `api/pb_hooks/bookin
 
 ## Notas de implementación
 
+
+Prueba HTTP con PocketBase 0.40.5 y base temporal: dos solicitudes concurrentes para el último cupo dieron una reserva y una entrada en espera. Se verificaron los errores por campo, la reactivación con el mismo ID, la elegibilidad, los campos administrados por el servidor y el registro de auditoría.

@@ -99,6 +99,7 @@ smoke_test() {
   start_pocketbase
   JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-catalog.ts "$base_url" restart
   JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-schedule.ts "$base_url"
+  JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-bookings.ts "$base_url"
 }
 
 run_step bun install --frozen-lockfile

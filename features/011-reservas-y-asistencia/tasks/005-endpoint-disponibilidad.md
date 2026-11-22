@@ -1,7 +1,7 @@
 # 005 - [Endpoint] Disponibilidad por sesión y por rango
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002
 - **Fase:** Fase 2: Hooks y endpoints
 
@@ -24,11 +24,11 @@ Las rutas custom se registran con `routerAdd` en archivos de `api/src/hooks/`; e
 
 ## Criterios de aceptación
 
-- [ ] Con capacidad 6 y 4 reservas: `spots_left = 2` y `availability = "almost"`.
-- [ ] `late_cancelled` y `cancelled` no cuentan como ocupados; `waitlisted` se reporta aparte.
-- [ ] El endpoint por rango devuelve una entrada por sesión del rango con una sola consulta de reservas.
-- [ ] Rango de 90 días devuelve `400`; sin autenticación `401`; un coach activo recibe `200`.
-- [ ] `bun run build:ts` genera el hook y `bun test` pasa.
+- [x] Con capacidad 6 y 4 reservas: `spots_left = 2` y `availability = "almost"`.
+- [x] `late_cancelled` y `cancelled` no cuentan como ocupados; `waitlisted` se reporta aparte.
+- [x] El endpoint por rango devuelve una entrada por sesión del rango con una sola consulta de reservas.
+- [x] Rango de 90 días devuelve `400`; sin autenticación `401`; un coach activo recibe `200`.
+- [x] `bun run build:ts` genera el hook y `bun test` pasa.
 
 ## Referencias
 
@@ -41,3 +41,5 @@ Las rutas custom se registran con `routerAdd` en archivos de `api/src/hooks/`; e
 
 ## Notas de implementación
 
+
+Se verificaron ambos endpoints por HTTP con un coach activo, los estados con cupos y lista de espera, el límite de 62 días (incluido un rango local con cambio de hora) y los errores 400, 401 y 404. El rango usa una consulta de reservas y una expansión agrupada de servicios. El extremo to es exclusivo, como en el calendario.

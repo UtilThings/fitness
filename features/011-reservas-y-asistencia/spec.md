@@ -1,6 +1,6 @@
 # Especificación: Reservas y asistencia
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -43,7 +43,7 @@ Contrato que deja a las siguientes features: las transiciones de estado de `book
 | `POST` | `/api/collections/bookings/records` | staff | Crea una reserva; el servidor decide `booked` o `waitlisted` |
 | `PATCH` | `/api/collections/bookings/records/:id` | staff | Cancelar o marcar asistencia (transiciones válidas) |
 | `GET` | `/api/admin/sessions/{id}/availability` | staff | Disponibilidad de una sesión |
-| `GET` | `/api/admin/sessions/availability?from=&to=` | staff | Disponibilidad de las sesiones de un rango (calendario) |
+| `GET` | `/api/admin/sessions/availability?from=&to=` | staff | Disponibilidad de sesiones programadas en el rango `[from, to)` (calendario) |
 
 ### Cuerpo de creación y cancelación
 
@@ -52,7 +52,8 @@ Contrato que deja a las siguientes features: las transiciones de estado de `book
 | `session`, `client` | Sí (creación) | Relaciones |
 | `use_free_class` | No (creación) | `true` si se consume la clase gratis; solo válido con `free_class_used = false` y un plan `is_first_class` activo en el servicio de la sesión; el hook lo traduce al campo `free_class` de la reserva |
 | `status` | Sí (PATCH) | `cancelled`, `attended`, `no_show` (las demás las fija el servidor) |
-| `override_note` | Condicional | Obligatoria para cancelar sin penalización fuera de ventana, o para marcar `attended` antes de la hora |
+| `override_note` | Condicional | Obligatoria para eximir una cancelación tardía, marcar asistencia antes del inicio o corregirla |
+| `override` | No (cancelación) | `true` solicita explícitamente una excepción. Una solicitud de excepción sin motivo devuelve `400` |
 
 ### Respuesta de disponibilidad
 
@@ -123,7 +124,7 @@ Ocupan cupo `booked`, `attended` y `no_show`; liberan cupo `cancelled` y `late_c
 - `api/pb_migrations/<timestamp>_created_bookings.js` con campos, índices y reglas; añade `bookings` a `audit-config.ts`; documenta los resultados de la verificación previa en las notas.
 
 **002 - Lib de reglas de reserva**
-- `api/src/lib/booking-rules.ts` (puro, sin PocketBase): `occupiedSeats`, `spotsLeft`, `availabilityOf`, `decideBookingStatus`, `canBook`, `cancellationDeadline`, `decideCancellation`, `renumberWaitlist`, `pickPromotion`, `shouldRestoreFreeClass`, `shouldRestoreFreeClass`, `canMarkAttendance`, `classifyTransition`.
+- `api/src/lib/booking-rules.ts` (puro, sin PocketBase): `occupiedSeats`, `spotsLeft`, `availabilityOf`, `decideBookingStatus`, `canBook`, `cancellationDeadline`, `decideCancellation`, `renumberWaitlist`, `pickPromotion`, `shouldRestoreFreeClass`, `canMarkAttendance`, `classifyTransition`.
 - `api/src/lib/booking-rules.test.ts` con pruebas exhaustivas (`bun test`).
 
 ### Fase 2: Hooks y endpoints (Tareas 003-005)
@@ -133,7 +134,7 @@ Ocupan cupo `booked`, `attended` y `no_show`; liberan cupo `cancelled` y `late_c
 
 **004 - Hooks de cancelación, promoción, asistencia y sesión cancelada**
 - `onRecordUpdateRequest("bookings")`: valida la transición, calcula `cancelled` vs `late_cancelled` con `services.cancellation_hours`, exige `override_note` en las excepciones, registra `cancelled_at` y `marked_by`, al liberar un cupo promueve al primero de la lista (`pickPromotion`) y renumera, y restituye `clients.free_class_used = false` cuando la reserva `free_class` pasa a `cancelled` (`shouldRestoreFreeClass`).
-- `onRecordAfterUpdateSuccess("class_sessions")`: si `status` pasa a `cancelled`, cancela las reservas `booked`/`waitlisted` como `cancelled` (sin penalización, `override_note` = `session_cancelled`; restituye la clase gratis de las reservas `free_class`).
+- `onRecordUpdate("class_sessions")`: si `status` pasa a `cancelled`, guarda en la misma transacción la sesión, la cancelación sin penalización de las reservas `booked` y `waitlisted` con `override_note = "session_cancelled"`, y las restituciones de clase gratis que correspondan. Los hooks de éxito observan la transacción confirmada.
 
 **005 - Endpoint de disponibilidad**
 - `routerAdd` en `api/src/hooks/booking-availability.ts`: `GET /api/admin/sessions/{id}/availability` y `GET /api/admin/sessions/availability?from=&to=` (máximo 62 días), solo staff.
@@ -187,7 +188,7 @@ Ocupan cupo `booked`, `attended` y `no_show`; liberan cupo `cancelled` y `late_c
 ```
 1. Ana cancela con más de cancellation_hours de antelación → cancelled
 2. El hook libera el cupo y promueve a Marta a booked; la espera se renumera
-3. Resultado: 6 inscritos de nuevo; audit_logs registra ambos cambios; 018 podrá avisar a Marta
+3. Resultado: 6 inscritos de nuevo. audit_logs registra ambos cambios y 018 podrá avisar a Marta.
 ```
 
 ### Flujo 3: Cancelación tardía y excepción
@@ -252,16 +253,18 @@ Ocupan cupo `booked`, `attended` y `no_show`; liberan cupo `cancelled` y `late_c
 
 ## Criterios de Aceptación
 
-- [ ] `bookings` existe con el índice único (`session`, `client`) y reglas de staff; la migración es reversible.
-- [ ] `booking-rules` tiene pruebas exhaustivas (cupo, espera, promoción, ventana, tardía, disponibilidad) en verde.
-- [ ] Reservar con cupo da `booked`; sin cupo da `waitlisted` con posición; nunca hay más `booked` que `capacity`.
-- [ ] Cancelar a tiempo libera el cupo y promueve al primero de la lista; cancelar dentro de la ventana da `late_cancelled`, salvo excepción con `override_note`.
-- [ ] Cancelar una sesión (manual o por bloqueo) cancela sus reservas sin penalizar.
-- [ ] La clase gratis solo se consume una vez por cliente y solo en servicios con plan `is_first_class`, y se restituye automáticamente si la reserva se cancela a tiempo, desde la espera o por cancelación de la sesión (no en `late_cancelled`, `no_show` ni `attended`).
-- [ ] El endpoint de disponibilidad devuelve `available`/`almost`/`full` coherente con `web/src/lib/data.ts::availability`.
-- [ ] Se puede reservar desde la sesión y desde el cliente; la sesión lista inscritos y espera; se marca asistencia; el perfil de 010 muestra el historial; el calendario de 009 muestra la disponibilidad real.
-- [ ] Todos los cambios quedan en `audit_logs`.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] `bookings` existe con el índice único (`session`, `client`) y reglas de staff; la migración es reversible.
+- [x] `booking-rules` tiene pruebas exhaustivas (cupo, espera, promoción, ventana, tardía, disponibilidad) en verde.
+- [x] Reservar con cupo da `booked`; sin cupo da `waitlisted` con posición; nunca hay más `booked` que `capacity`.
+- [x] Cancelar a tiempo libera el cupo y promueve al primero de la lista; cancelar dentro de la ventana da `late_cancelled`, salvo excepción con `override_note`.
+- [x] Cancelar una sesión (manual o por bloqueo) cancela sus reservas sin penalizar.
+- [x] La clase gratis solo se consume una vez por cliente y solo en servicios con plan `is_first_class`, y se restituye automáticamente si la reserva se cancela a tiempo, desde la espera o por cancelación de la sesión (no en `late_cancelled`, `no_show` ni `attended`).
+- [x] El endpoint de disponibilidad devuelve `available`/`almost`/`full` coherente con `web/src/lib/data.ts::availability`.
+- [x] Se puede reservar desde la sesión y desde el cliente; la sesión lista inscritos y espera; se marca asistencia; el perfil de 010 muestra el historial; el calendario de 009 muestra la disponibilidad real.
+- [x] Todos los cambios quedan en `audit_logs`.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+
+La validación combinó la aplicación y reversión de la migración, las pruebas unitarias, el recorrido HTTP de `scripts/verify-api.sh` y un recorrido en Chromium con PocketBase 0.40.5 y datos temporales. Se comprobaron la concurrencia del último cupo, las cancelaciones manuales y por bloqueo, el historial, ambos resultados de asistencia y los eventos de auditoría.
 
 ---
 

@@ -1,7 +1,7 @@
 # 007 - [Vista] Reservas en la sesión, el calendario y el perfil del cliente
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 006, Feature 009 (contrato), Feature 010 (contrato)
 - **Fase:** Fase 3: Interfaz
 
@@ -22,12 +22,12 @@ Las vistas de clases (009: calendario y detalle de sesión) y de clientes (010: 
 
 ## Criterios de aceptación
 
-- [ ] Desde una sesión se reserva a un cliente; al llenarse queda en espera y se ve en el listado de espera.
-- [ ] Desde el perfil del cliente se reserva una clase próxima y aparece en el historial de reservas.
-- [ ] Cancelar muestra el aviso de ventana y aplica la excepción con nota; el cupo se libera y se promueve a la espera (visible tras refrescar).
-- [ ] Marcar «asistió» o «no se presentó» actualiza el estado en la sesión y en el historial del cliente.
-- [ ] El calendario muestra Disponible/Casi llena/Llena según los datos reales.
-- [ ] `typecheck`, `lint`, `format:check`, `test` y `build` pasan.
+- [x] Desde una sesión se reserva a un cliente; al llenarse queda en espera y se ve en el listado de espera.
+- [x] Desde el perfil del cliente se reserva una clase próxima y aparece en el historial de reservas.
+- [x] Cancelar muestra el aviso de ventana y aplica la excepción con nota; el cupo se libera y se promueve a la espera (visible tras refrescar).
+- [x] Marcar «asistió» o «no se presentó» actualiza el estado en la sesión y en el historial del cliente.
+- [x] El calendario muestra Disponible/Casi llena/Llena según los datos reales.
+- [x] `typecheck`, `lint`, `format:check`, `test` y `build` pasan.
 
 ## Referencias
 
@@ -40,3 +40,5 @@ Las vistas de clases (009: calendario y detalle de sesión) y de clientes (010: 
 
 ## Notas de implementación
 
+
+Verificados typecheck, lint, formato, pruebas y build con verify-app.sh. En Chromium con PocketBase se reservó desde el calendario y desde el perfil, se comprobó la lista de espera y su promoción, se canceló con y sin penalización y se marcaron ambos resultados de asistencia. El calendario y el historial mostraron los estados persistidos.

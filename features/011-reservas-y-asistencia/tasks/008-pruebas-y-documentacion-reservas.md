@@ -1,7 +1,7 @@
 # 008 - [Pruebas] Pruebas de interfaz y documentación de reservas
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003, 004, 005, 006, 007
 - **Fase:** Fase 4: Verificación y cierre
 
@@ -22,9 +22,9 @@ La lógica pura ya está cubierta en la tarea 002; aquí se cubren componentes y
 
 ## Criterios de aceptación
 
-- [ ] Las pruebas nuevas pasan y cubren al menos un caso negativo por componente.
-- [ ] Los READMEs documentan estados, eventos, endpoint y componentes.
-- [ ] `bun test` (api) y `bun run test` (app) pasan.
+- [x] Las pruebas nuevas pasan y cubren al menos un caso negativo por componente.
+- [x] Los READMEs documentan estados, eventos, endpoint y componentes.
+- [x] `bun test` (api) y `bun run test` (app) pasan.
 
 ## Referencias
 
@@ -36,3 +36,5 @@ La lógica pura ya está cubierta en la tarea 002; aquí se cubren componentes y
 
 ## Notas de implementación
 
+
+Bun ejecutó 49 pruebas de API y 177 de app sin fallos. Los casos de interfaz cubren tanto los flujos correctos como la ausencia de elegibilidad, excepciones sin nota y acciones no disponibles. Los README documentan cupos, transiciones y restitución. Al revisar las convenciones de relaciones se registró bookings.marked_by en ADMIN_REFERENCES para preservar el responsable al aplicar las reglas de baja de equipo.
