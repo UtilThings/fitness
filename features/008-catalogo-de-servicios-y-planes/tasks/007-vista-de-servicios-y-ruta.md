@@ -1,7 +1,7 @@
 # 007 - [Vista] Servicios: tabla, formulario, activación, orden y política
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 006, Feature 007 (contrato)
 - **Fase:** Fase 3: Interfaz
 
@@ -24,13 +24,13 @@ El owner gestiona los servicios desde `/services` (crear, editar, activar/desact
 
 ## Criterios de aceptación
 
-- [ ] `/services` lista los 5 servicios sembrados en orden `sort`.
-- [ ] Cambiar `cancellation_hours` de un servicio persiste y se refleja en la tabla.
-- [ ] Desactivar pide confirmación y deja el servicio y sus planes inactivos.
-- [ ] Subir/bajar cambia el orden y se mantiene al recargar.
-- [ ] Un usuario `coach` no ve acciones de escritura.
-- [ ] Sin sesión, `/services` redirige a `/login?redirect=...`.
-- [ ] `bun run test`, `typecheck`, `lint`, `format:check` y `build` pasan.
+- [x] `/services` lista los 5 servicios sembrados en orden `sort`.
+- [x] Cambiar `cancellation_hours` de un servicio persiste y se refleja en la tabla.
+- [x] Desactivar pide confirmación y deja el servicio y sus planes inactivos.
+- [x] Subir/bajar cambia el orden y se mantiene al recargar.
+- [x] Un usuario `coach` no ve acciones de escritura.
+- [x] Sin sesión, `/services` redirige a `/login?redirect=...`.
+- [x] `bun run test`, `typecheck`, `lint`, `format:check` y `build` pasan.
 
 ## Referencias
 
@@ -44,4 +44,4 @@ El owner gestiona los servicios desde `/services` (crear, editar, activar/desact
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+La vista renderiza los cinco servicios en orden y expone la edición al owner. Vitest comprobó el formulario, los errores por campo, la confirmación y la redirección sin sesión. PocketBase confirmó que la política y el orden se conservan al volver a consultar y que la desactivación alcanza los planes. Pasaron las comprobaciones y la compilación de la app.

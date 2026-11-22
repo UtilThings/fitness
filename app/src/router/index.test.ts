@@ -44,7 +44,7 @@ describe('guard', () => {
     expect(router.currentRoute.value.query.redirect).toBe('/');
   });
 
-  it.each(['/team', '/team/coach', '/settings/profile'])(
+  it.each(['/team', '/team/coach', '/settings/profile', '/services'])(
     'protege %s y conserva la ruta al iniciar sesión',
     async (path) => {
       await router.push(path);
@@ -60,6 +60,7 @@ describe('guard', () => {
       state.role = role;
       for (const [path, name, title] of [
         ['/team', 'team', 'Equipo'],
+        ['/services', 'services', 'Servicios'],
         ['/team/coach', 'team-member', 'Ficha del equipo'],
         ['/settings/profile', 'profile', 'Mi perfil'],
       ] as const) {
