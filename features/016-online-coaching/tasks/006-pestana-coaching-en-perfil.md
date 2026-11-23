@@ -1,7 +1,7 @@
 # 006 - [Vista] Pestaña Coaching en el perfil del cliente
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004
 - **Fase:** Fase 4: Interfaz
 
@@ -21,10 +21,10 @@ El perfil del cliente (010) usa pestañas y 013/014 añaden las suyas; verificar
 
 ## Criterios de aceptación
 
-- [ ] El perfil muestra el programa activo con su historial y permite registrar un check-in.
-- [ ] Sin programa ni membresía online no se muestra la pestaña; con membresía online sin programa aparece "Crear programa".
-- [ ] Reception ve la pestaña en solo lectura.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] El perfil muestra el programa activo con su historial y permite registrar un check-in.
+- [x] Sin programa ni membresía online no se muestra la pestaña; con membresía online sin programa aparece "Crear programa".
+- [x] Reception ve la pestaña en solo lectura.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -36,4 +36,4 @@ El perfil del cliente (010) usa pestañas y 013/014 añaden las suyas; verificar
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+La pestaña se actualiza al cambiar una membresía desde el perfil. Conserva el historial si solo quedan programas finalizados o una membresía online vencida. El alta desde el perfil exige una membresía activa y el rol owner o coach; reception consulta el historial.

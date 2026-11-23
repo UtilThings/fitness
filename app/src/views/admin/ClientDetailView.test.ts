@@ -3,8 +3,11 @@ import PrimeVue from 'primevue/config';
 import Select from 'primevue/select';
 import ToggleSwitch from 'primevue/toggleswitch';
 import { beforeEach, expect, it, vi } from 'vitest';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import AssessmentForm from '@/components/clients/AssessmentForm.vue';
+import CheckinDialog from '@/components/coaching/CheckinDialog.vue';
+import ProgramFormDialog from '@/components/coaching/ProgramFormDialog.vue';
+import { programFlags, type ProgramOverview } from '@/lib/coaching';
 import AssignPlanDialog from '@/components/memberships/AssignPlanDialog.vue';
 import type { CreditMovement, Membership } from '@/lib/memberships';
 import PaymentFormDialog from '@/components/payments/PaymentFormDialog.vue';
@@ -24,6 +27,10 @@ const mocks = vi.hoisted(() => ({
   ledger: vi.fn(),
   assign: vi.fn(),
   listPayments: vi.fn(),
+  listPrograms: vi.fn(),
+  listOnlineMemberships: vi.fn(),
+  listCheckins: vi.fn(),
+  listCoaches: vi.fn(),
 }));
 const isOwner = ref(false);
 const isReception = ref(false);
@@ -35,7 +42,10 @@ vi.mock('vue-router', async (importOriginal) => ({
 vi.mock('@/composables/useAuth', () => ({
   useAuth: () => ({
     isOwner,
-    user: ref({ id: 'staff-id' }),
+    user: computed(() => ({
+      id: 'staff-id',
+      role: isOwner.value ? 'owner' : isReception.value ? 'reception' : 'coach',
+    })),
     can: () => isOwner.value || isReception.value,
   }),
 }));
@@ -54,6 +64,7 @@ vi.mock('@/composables/usePlans', () => ({
     load: vi.fn(),
   }),
 }));
+vi.mock('@/composables/useCoaching', () => ({ useCoaching: () => mocks }));
 vi.mock('@/composables/useClients', () => ({ useClients: () => mocks }));
 vi.mock('@/composables/useNotify', () => ({
   useNotify: () => ({ success: mocks.success }),
@@ -84,6 +95,10 @@ beforeEach(() => {
   isOwner.value = false;
   isReception.value = false;
   mocks.get.mockResolvedValue(ana);
+  mocks.listPrograms.mockResolvedValue([]);
+  mocks.listOnlineMemberships.mockResolvedValue([]);
+  mocks.listCheckins.mockResolvedValue([]);
+  mocks.listCoaches.mockResolvedValue([]);
 });
 
 async function view() {
@@ -271,5 +286,152 @@ it('restringe la pestaña por rol y preselecciona al cliente al registrar', asyn
   const form = wrapper.getComponent(PaymentFormDialog);
   expect(form.props('client')).toEqual(ana);
   expect(form.props('modelValue')).toBe(true);
+  wrapper.unmount();
+});
+
+const program = {
+  id: 'coaching-ana',
+  client: 'ana',
+  coach: 'staff-id',
+  membership: 'online-m',
+  status: 'active',
+  starts_on: '2026-02-01',
+  renews_on: '2026-03-05',
+  duration_weeks: 12,
+  goal: 'Mejorar resistencia',
+  program_url: 'https://example.test/plan',
+  notes: '',
+} as const;
+const history = {
+  id: 'first',
+  program: program.id,
+  checked_at: '2026-02-18',
+  adherence: 4,
+  notes: 'Buena semana',
+  created_by: 'staff-id',
+};
+const activeProgram: ProgramOverview = {
+  ...program,
+  flags: programFlags(program, [history], null, '2026-03-01'),
+};
+const previousProgram: ProgramOverview = {
+  ...activeProgram,
+  id: 'old',
+  status: 'ended',
+};
+
+it('muestra el programa vigente e historial y los recarga tras registrar un check-in', async () => {
+  mocks.listPrograms.mockResolvedValue([activeProgram, previousProgram]);
+  mocks.listCheckins.mockResolvedValue([history]);
+  const wrapper = await view();
+  const tab = wrapper
+    .findAll('[role=tab]')
+    .find((item) => item.text() === 'Coaching')!;
+  await tab.trigger('click');
+  await flushPromises();
+  expect(wrapper.text()).toContain('Mejorar resistencia');
+  expect(wrapper.text()).toContain('Semana 5 de 12');
+  expect(wrapper.text()).toContain('Buena semana');
+  expect(wrapper.text()).toContain('Programas anteriores');
+  expect(wrapper.text()).toContain('Finalizado');
+  expect(wrapper.get('a[href="https://example.test/plan"]').text()).toContain(
+    'Abrir plan',
+  );
+  await wrapper
+    .findAll('button')
+    .find((item) => item.text() === 'Registrar check-in')!
+    .trigger('click');
+  const checkin = wrapper.getComponent(CheckinDialog);
+  expect(checkin.props('program').id).toBe(program.id);
+  mocks.listCheckins.mockResolvedValue([
+    { ...history, notes: 'Nuevo seguimiento' },
+  ]);
+  checkin.vm.$emit('update:visible', false);
+  checkin.vm.$emit('saved');
+  await flushPromises();
+  expect(wrapper.text()).toContain('Nuevo seguimiento');
+  expect(mocks.listPrograms).toHaveBeenCalledTimes(2);
+  wrapper.unmount();
+});
+
+it('oculta Coaching si el cliente no tiene programa ni membresía online', async () => {
+  const wrapper = await view();
+  expect(
+    wrapper.findAll('[role=tab]').map((item) => item.text()),
+  ).not.toContain('Coaching');
+  expect(mocks.listOnlineMemberships).toHaveBeenCalledWith({
+    client: 'ana',
+    activeOnly: false,
+  });
+  wrapper.unmount();
+});
+
+it('ofrece crear programa al owner con una membresía online activa y conserva la pestaña al vencer', async () => {
+  isOwner.value = true;
+  mocks.listOnlineMemberships.mockResolvedValue([
+    { id: 'online-m', status: 'active' },
+  ]);
+  const wrapper = await view();
+  await wrapper
+    .findAll('[role=tab]')
+    .find((item) => item.text() === 'Coaching')!
+    .trigger('click');
+  await wrapper
+    .findAll('button')
+    .find((item) => item.text() === 'Crear programa')!
+    .trigger('click');
+  expect(wrapper.getComponent(ProgramFormDialog).props('client')).toBe('ana');
+  wrapper.unmount();
+
+  mocks.listOnlineMemberships.mockResolvedValue([
+    { id: 'online-m', status: 'expired' },
+  ]);
+  const expired = await view();
+  await expired
+    .findAll('[role=tab]')
+    .find((item) => item.text() === 'Coaching')!
+    .trigger('click');
+  expect(expired.text()).not.toContain('Crear programa');
+  expired.unmount();
+});
+
+it('permite consultar el historial a reception con una membresía activa', async () => {
+  isReception.value = true;
+  mocks.listPrograms.mockResolvedValue([activeProgram]);
+  mocks.listCheckins.mockResolvedValue([history]);
+  mocks.listOnlineMemberships.mockResolvedValue([
+    { id: 'online-m', status: 'active' },
+  ]);
+  const wrapper = await view();
+  await wrapper
+    .findAll('[role=tab]')
+    .find((item) => item.text() === 'Coaching')!
+    .trigger('click');
+  await flushPromises();
+  expect(wrapper.text()).toContain('Buena semana');
+  expect(wrapper.text()).not.toContain('Registrar check-in');
+  wrapper.unmount();
+
+  mocks.listPrograms.mockResolvedValue([previousProgram]);
+  const old = await view();
+  await old
+    .findAll('[role=tab]')
+    .find((item) => item.text() === 'Coaching')!
+    .trigger('click');
+  expect(old.text()).toContain('Programas anteriores');
+  expect(old.text()).not.toContain('Registrar check-in');
+  expect(old.text()).not.toContain('Crear programa');
+  old.unmount();
+});
+
+it('mantiene visible Coaching si solo hay un programa finalizado', async () => {
+  mocks.listPrograms.mockResolvedValue([previousProgram]);
+  const wrapper = await view();
+  await wrapper
+    .findAll('[role=tab]')
+    .find((item) => item.text() === 'Coaching')!
+    .trigger('click');
+  expect(wrapper.text()).toContain('Programas anteriores');
+  expect(wrapper.text()).not.toContain('Registrar check-in');
   wrapper.unmount();
 });
