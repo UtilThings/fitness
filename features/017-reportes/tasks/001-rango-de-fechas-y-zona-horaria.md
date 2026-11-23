@@ -1,7 +1,7 @@
 # 001 - [Lib] Rango de fechas y zona horaria de reportes
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 009 (contrato)
 - **Fase:** Fase 1: Lógica pura de agregación
 
@@ -22,11 +22,11 @@ Las fechas se guardan en UTC y el negocio opera en `America/New_York`. goja no o
 
 ## Criterios de aceptación
 
-- [ ] `localDateToUtc('2026-03-08')` y `localDateToUtc('2026-03-09')` están separadas por 23 h; `2026-11-01` y `2026-11-02`, por 25 h.
-- [ ] `parseRange` rechaza rangos invertidos, de más de 366 días y fechas mal formadas o inexistentes con `ReportRangeError`.
-- [ ] `bucketKey` agrupa un pago de las 23:30 hora local en el día local correcto aunque en UTC sea el día siguiente.
-- [ ] `listBuckets` devuelve todos los periodos del rango, sin huecos ni duplicados.
-- [ ] `bun test` en `api/` pasa en verde.
+- [x] `localDateToUtc('2026-03-08')` y `localDateToUtc('2026-03-09')` están separadas por 23 h; `2026-11-01` y `2026-11-02`, por 25 h.
+- [x] `parseRange` rechaza rangos invertidos, de más de 366 días y fechas mal formadas o inexistentes con `ReportRangeError`.
+- [x] `bucketKey` agrupa un pago de las 23:30 hora local en el día local correcto aunque en UTC sea el día siguiente.
+- [x] `listBuckets` devuelve todos los periodos del rango, sin huecos ni duplicados.
+- [x] `bun test` en `api/` pasa en verde.
 
 ## Referencias
 
@@ -41,3 +41,4 @@ Las fechas se guardan en UTC y el negocio opera en `America/New_York`. goja no o
 
 ## Notas de implementación
 
+Se reutilizó tz.ts. La prueba temporal de PocketBase confirmó Date funcional e Intl ausente. La referencia de findRecordsByFilter confirma que un límite de 0 devuelve todos los registros que coinciden con el filtro. bun test: 81 pruebas.
