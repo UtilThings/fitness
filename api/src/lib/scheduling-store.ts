@@ -111,11 +111,13 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
     const endMin = toMinutes(end.time) + (endMs % minuteMs) / minuteMs;
     const slots = coachSlots(app, coach, start.weekday);
     // The fall DST transition repeats 01:00–02:00. Cover both sides within one slot.
-    const repeatsHour = nyOffsetMinutes(startMs) > nyOffsetMinutes(endMs - 1);
+    const startOffset = nyOffsetMinutes(startMs);
+    const reachesRepeatedHour = startOffset > nyOffsetMinutes(endMs);
+    const occupiesRepeatedHour = startOffset > nyOffsetMinutes(endMs - 1);
     error = validatePrivateSession({
       ...input, weekday: start.weekday, slots: end.date === start.date ? slots : [],
-      startMin: repeatsHour ? Math.min(startMin, 60) : startMin,
-      endMin: repeatsHour ? Math.max(endMin, 120) : endMin,
+      startMin: occupiesRepeatedHour ? Math.min(startMin, 60) : startMin,
+      endMin: reachesRepeatedHour ? Math.max(endMin, 120) : endMin,
     });
   }
   if (error) throw schedulingError(error.code, error.conflictId);

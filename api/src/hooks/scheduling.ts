@@ -36,3 +36,11 @@ routerAdd("POST", "/api/admin/sessions/private", (e) => {
     require(`${__hooks}/lib/private-sessions`) as typeof import("../lib/private-sessions");
   return e.json(200, createPrivateSession(e));
 }, $apis.requireAuth("admins"));
+
+onRecordCreateRequest((e) => {
+  if (e.record!.getString("kind") !== "private") return e.next();
+  const { validateSessionRecord } =
+    require(`${__hooks}/lib/scheduling-store`) as typeof import("../lib/scheduling-store");
+  validateSessionRecord(e.app, e.record!);
+  throw new BadRequestError("Usa la ruta de sesión privada para agendar junto con sus reservas.");
+}, "class_sessions");

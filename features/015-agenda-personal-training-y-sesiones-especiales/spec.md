@@ -1,6 +1,6 @@
 # Especificación: Agenda de Personal Training y sesiones especiales
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -22,10 +22,10 @@ Contrato que deja a las siguientes: 017 reporta ocupación y sesiones privadas; 
 
 | Elemento | Estado |
 |----------|--------|
-| `api/` | PocketBase; migraciones JS en `api/pb_migrations/` (última existente: `1795260843_created_admins.js`; usar timestamp mayor que el de la última presente); hooks y libs TypeScript compilados con `bun run build:ts` |
+| `api/` | PocketBase; migraciones JS en `api/pb_migrations/` (última antes de la feature: `1795264801_created_payments.js`; usar timestamp mayor que el de la última presente); hooks y libs TypeScript compilados con `bun run build:ts` |
 | `coach_availability` | No existe (esta feature la crea) |
-| `class_sessions`, `schedule_blocks`, calendario (009); `bookings` (011); `memberships` y `checkEligibility` (013); `plans.partner` (008); coaches (007) | No existen aún en disco; se usan por contrato |
-| Helper de hora local en servidor | Lo introduce 009/005; verificar su nombre y qué ofrece goja antes de usarlo |
+| `class_sessions`, `schedule_blocks`, calendario (009); `bookings` (011); `memberships` y `checkEligibility` (013); `plans.partner` (008); coaches (007) | Implementados en las features 007 a 013 |
+| Helper de hora local en servidor | `localToUtc` y `utcToLocal` de `api/src/lib/tz.ts` (009) |
 | Datos | `class_sessions` puede tener sesiones `regular`; sus coaches cuentan para los choques |
 
 > Verificación obligatoria previa: la tarea 001 debe confirmar cómo se almacenan `weekday` y `start_time` en 009 (0=domingo, `HH:mm` local) y el nombre del helper de conversión UTC↔local; 002 debe reutilizarlo en vez de duplicarlo.
@@ -38,7 +38,7 @@ Contrato que deja a las siguientes: 017 reporta ocupación y sesiones privadas; 
 |--------|------|-------|-------------|
 | `POST` | `/api/admin/sessions/private` | `owner`, `reception`, `coach` (solo para sí mismo) | Crea una sesión privada y las reservas de 1-2 clientes en una transacción |
 
-Cuerpo: `service`, `coach`, `starts_at` (UTC ISO), `duration_min`, `client_ids` (1 o 2), `notes`. Respuesta `200` con `{ session, bookings }`. Errores: `400` datos inválidos o `code: coach_conflict | outside_availability | invalid_capacity | partner_required`, `403` rol, `409` sesión duplicada, y los `no_credits`/`weekly_limit` de 013 (con `override_note` opcional por cliente).
+El cuerpo incluye `service`, `coach`, `starts_at` (UTC ISO), `duration_min`, `client_ids` (1 o 2), y admite `notes` y `capacity` opcionales. Responde `200` con `{ session, bookings }`, `403` por rol, `409` ante un duplicado o `400` por datos inválidos, `coach_conflict`, `block_conflict`, `outside_availability`, `invalid_capacity`, `partner_required` o fallos de elegibilidad de 013. Owner y reception pueden enviar `overrides[client_id].override_note` por cliente. PocketBase expone los códigos en `data.code.code`.
 
 La disponibilidad se gestiona con las reglas de la colección (sin ruta propia).
 
@@ -96,10 +96,10 @@ La disponibilidad se gestiona con las reglas de la colección (sin ruta propia).
 ### Fase 3: Servidor (Tareas 003-004)
 
 **003 - Hooks de validación**
-- `api/src/hooks/scheduling.ts`: validación de `coach_availability` y de `class_sessions` (`private`/`special`) en `onRecordCreateRequest`/`onRecordUpdateRequest`; registro en `audit-config.ts`.
+- `api/src/hooks/scheduling.ts`: validación de `coach_availability` y de `class_sessions` (`private`/`special`) en los hooks de escritura del modelo, con un hook de petición que dirige el alta de privadas a la ruta transaccional; registro en `audit-config.ts`.
 
 **004 - Ruta para agendar sesión privada**
-- `POST /api/admin/sessions/private` en transacción: crea sesión y reservas, usa `checkEligibility` de 013.
+- `POST /api/admin/sessions/private` en transacción: crea sesión y reservas con la autorización de reservas y la selección de membresía de 013. La consulta previa de elegibilidad usa `checkEligibility`.
 
 ### Fase 4: Interfaz (Tareas 005-007)
 
@@ -164,7 +164,7 @@ La disponibilidad se gestiona con las reglas de la colección (sin ruta propia).
 ### Decisiones
 - **Sin override de disponibilidad**: se corrige la disponibilidad, no la regla; evita sesiones fuera de horario sin rastro.
 - **Especiales sin créditos ni disponibilidad**: son eventos puntuales con cobro aparte (014, manual).
-- **`title` en `class_sessions`**: el contrato no incluye nombre de evento; campo opcional añadido. Revisar.
+- **`title` en `class_sessions`**: campo opcional en el esquema, obligatorio para las sesiones especiales.
 - **Ruta única para privadas**: crear sesión y reservas por separado dejaría sesiones huérfanas si falla un cupo o un crédito.
 - **Reutilizar `class_sessions`** (no una tabla aparte): cancelaciones, asistencia y calendario ya funcionan con ellas.
 
@@ -172,7 +172,7 @@ La disponibilidad se gestiona con las reglas de la colección (sin ruta propia).
 - `api/pb_migrations/` con `up`/`down`; timestamps mayores que el último presente; `down` de `title` solo elimina el campo.
 
 ### Convención de código
-- Lógica pura en `api/src/lib/scheduling.ts` (sin `$app`; recibe sesiones y tramos ya cargados); hooks con `require(`${__hooks}/lib/scheduling`)` en cada callback.
+- Lógica pura en `api/src/lib/scheduling.ts`. El acceso a datos vive en `scheduling-store.ts` y los hooks lo cargan con `require` dentro de cada callback.
 - Conversión UTC↔hora local con el helper de 009; en la UI con `app/src/lib/datetime.ts`.
 - Comparaciones en minutos desde medianoche local; sin `Intl` en servidor.
 
@@ -186,13 +186,13 @@ La disponibilidad se gestiona con las reglas de la colección (sin ruta propia).
 
 ## Criterios de Aceptación
 
-- [ ] Un coach (u owner) define tramos semanales sin solapes; un coach no edita los de otro.
-- [ ] Agendar una privada fuera de disponibilidad o con choque devuelve `400` con el código correspondiente y no crea nada.
-- [ ] Una privada para dos clientes exige capacidad 2 y membresías partner; con un cliente no partner la capacidad queda en 1.
-- [ ] Las reservas de la privada respetan créditos (013); si falla una, no queda ninguna.
-- [ ] La agenda por coach muestra día y semana con sesiones, clientes reservados y disponibilidad.
-- [ ] Se puede crear una clase especial desde el calendario, con título y sin consumir créditos.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Un coach (u owner) define tramos semanales sin solapes; un coach no edita los de otro.
+- [x] Agendar una privada fuera de disponibilidad o con choque devuelve `400` con el código correspondiente y no crea nada.
+- [x] Una privada para dos clientes exige capacidad 2 y membresías partner; con un cliente no partner la capacidad queda en 1.
+- [x] Las reservas de la privada respetan créditos (013); si falla una, no queda ninguna.
+- [x] La agenda por coach muestra día y semana con sesiones, clientes reservados y disponibilidad.
+- [x] Se puede crear una clase especial desde el calendario, con título y sin consumir créditos.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
 
 ---
 

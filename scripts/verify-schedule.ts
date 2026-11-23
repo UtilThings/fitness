@@ -66,8 +66,8 @@ const blocks = "collections/schedule_blocks/records";
 const generate = "admin/sessions/generate";
 
 const root = await auth("_superusers", "catalog-verify@example.test");
-async function staff(role: string) {
-  const email = `schedule-${role}@example.test`;
+async function staff(role: string, suffix = role) {
+  const email = `schedule-${suffix}@example.test`;
   const { id } = await call<{ id: string }>(
     "collections/admins/records",
     root,
@@ -309,6 +309,8 @@ await call(availability, coach.token, "POST", { ...slot, coach: ownerId }, 400);
 await call(`${availability}/${ownSlot.id}`, coach.token, "PATCH", { coach: ownerId }, 404);
 await call(availability, reception, "POST", slot, 400);
 assert.equal((await call<{ totalItems: number }>(availability, reception)).totalItems, 1);
+const ownerSlot = await call<{ id: string }>(availability, owner, "POST", { ...slot, coach: ownerId });
+await call(`${availability}/${ownerSlot.id}`, coach.token, "PATCH", { start_time: "07:00" }, 404);
 
 type DomainError = { data: { code: { code: string }; conflict_id?: { code: string } } };
 async function expectSchedulingCode(path: string, body: Json, code: string, conflictId?: string) {
@@ -340,7 +342,9 @@ const regular = await call<Session>(sessions, owner, "POST", {
 });
 assert.equal(regular.kind, "regular");
 await expectSchedulingCode(sessions, { ...privateInput, starts_at: time("09:30") }, "coach_conflict", regular.id);
-const adjacent = await call<Session>(sessions, owner, "POST", { ...privateInput, starts_at: time("10:00") });
+const adjacent = await call<Session>(sessions, owner, "POST", {
+  ...privateInput, kind: "special", title: "Clase adyacente", starts_at: time("10:00"),
+});
 await call(`${sessions}/${adjacent.id}`, owner, "PATCH", { notes: "Edición de la misma sesión" });
 
 const blocked = await call<{ id: string }>(blocks, owner, "POST", {
@@ -387,15 +391,28 @@ assert.equal(preview.partner, true);
 await call(privateRoute, coach.token, "POST", {
   ...schedule("08:00", [solo.id], soloPlan.service), coach: ownerId,
 }, 403);
-await expectSchedulingCode(privateRoute, schedule("07:00", [partnerOne.id]), "outside_availability");
+const count = (path: string, filter: string) => call<{ totalItems: number }>(filtered(path, filter), owner)
+  .then((result) => result.totalItems);
+const atStart = (start: string) => `coach = "${coach.id}" && starts_at = "${start.replace("T", " ")}"`;
+const outsideInput = schedule("07:00", [partnerOne.id]);
+await expectSchedulingCode(privateRoute, outsideInput, "outside_availability");
+assert.equal(await count(sessions, atStart(outsideInput.starts_at)), 0);
+assert.equal(await count(collection("bookings"), `client = "${partnerOne.id}"`), 0);
 
 const oneInput = schedule("08:00", [solo.id], soloPlan.service);
 const one = await call<Result>(privateRoute, coach.token, "POST", oneInput);
 assert.equal(one.session.capacity, 1);
 assert.equal(one.bookings.length, 1);
 assert.equal(one.bookings[0].status, "booked");
+await call(`${sessions}/${one.session.id}`, reception, "PATCH", { notes: "Edición privada válida" });
+await call(sessions, reception, "POST", {
+  ...privateInput, starts_at: localToUtc(date, "10:00"),
+}, 400);
 await call(privateRoute, owner, "POST", oneInput, 409);
-await expectSchedulingCode(privateRoute, schedule("08:15", [partnerOne.id]), "coach_conflict", one.session.id);
+const conflictInput = schedule("08:15", [partnerOne.id]);
+await expectSchedulingCode(privateRoute, conflictInput, "coach_conflict", one.session.id);
+assert.equal(await count(sessions, atStart(conflictInput.starts_at)), 0);
+assert.equal(await count(collection("bookings"), `client = "${partnerOne.id}"`), 0);
 await expectSchedulingCode(privateRoute, schedule("08:30", [partnerOne.id, solo.id]), "partner_required");
 await expectSchedulingCode(privateRoute, { ...schedule("08:30", [solo.id], soloPlan.service), capacity: 2 }, "partner_required");
 
@@ -417,15 +434,13 @@ await call("admin/memberships/" + secondMembership.id + "/adjust", owner, "POST"
   delta: -partnerPlan.sessions, note: "Agotar créditos en la prueba",
 });
 const rollbackInput = { ...pairInput, starts_at: localToUtc(addLocalDays(date, 7), "09:00") };
-const count = (path: string, filter: string) => call<{ totalItems: number }>(filtered(path, filter), owner)
-  .then((result) => result.totalItems);
 const firstBookingCount = await count(collection("bookings"), `client = "${partnerOne.id}"`);
 const failed = await call<{ data: { code: { code: string }; client: { code: string } } }>(
   privateRoute, reception, "POST", rollbackInput, 400,
 );
 assert.equal(failed.data.code.code, "no_credits");
 assert.equal(failed.data.client.code, partnerTwo.id);
-assert.equal(await count(sessions, `coach = "${coach.id}" && starts_at = "${rollbackInput.starts_at.replace("T", " ")}"`), 0);
+assert.equal(await count(sessions, atStart(rollbackInput.starts_at)), 0);
 assert.equal(await count(collection("bookings"), `client = "${partnerOne.id}"`), firstBookingCount);
 const overrides = { [partnerTwo.id]: { override_note: "Excepción autorizada" } };
 await call(privateRoute, coach.token, "POST", { ...rollbackInput, overrides }, 403);
@@ -443,3 +458,56 @@ assert.equal(weekGeneration.created + weekGeneration.skipped_existing + weekGene
 assert.equal((await postGenerate({ from: date, weeks: 1 })).created, 0);
 assert.deepEqual(await getSession(pair.session.id), beforeGeneration);
 assert.deepEqual(await getSession(event.id), event);
+
+
+const roster = await call<{ expand: { bookings_via_session: { expand: { client: { id: string } } }[] } }>(
+  `${sessions}/${pair.session.id}?` + new URLSearchParams({ expand: "bookings_via_session.client" }), coach.token,
+);
+assert.deepEqual(roster.expand.bookings_via_session.map((booking) => booking.expand.client.id).sort(),
+  [partnerOne.id, partnerTwo.id].sort());
+for (const booking of pair.bookings) {
+  const ledger = filtered(collection("credit_movements"), `booking = "${booking.id}"`);
+  const credits = await call<{ credits_balance: number }>(`${collection("memberships")}/${booking.membership}`, owner);
+  assert.equal((await call<{ totalItems: number }>(ledger, owner)).totalItems, 0);
+  await call(`${collection("bookings")}/${booking.id}`, coach.token, "PATCH", {
+    status: "attended", override_note: "Asistencia anticipada para la verificación",
+  });
+  const { items } = await call<{ items: { reason: string; delta: number }[] }>(ledger, owner);
+  assert.deepEqual(items.map(({ reason, delta }) => [reason, delta]), [["attend", -1]]);
+  const balance = await call<{ credits_balance: number }>(`${collection("memberships")}/${booking.membership}`, owner);
+  assert.equal(balance.credits_balance, credits.credits_balance - 1);
+}
+
+const guest = await createClient("Sin membresía");
+const guestBooking = await call<{ id: string; membership: string }>(collection("bookings"), reception, "POST", {
+  client: guest.id, session: event.id,
+});
+assert.equal(guestBooking.membership, "");
+await call(`${collection("bookings")}/${guestBooking.id}`, coach.token, "PATCH", {
+  status: "attended", override_note: "Asistencia anticipada para la verificación",
+});
+assert.equal(await count(collection("credit_movements"), `booking = "${guestBooking.id}"`), 0);
+
+const alternate = await staff("coach", "alternate");
+const alternateSlot = await call<{ id: string }>(availability, owner, "POST", { ...slot, coach: alternate.id });
+await call(`${collection("admins")}/${alternate.id}`, owner, "DELETE", undefined, 409);
+await call(`${collection("admins")}/${alternate.id}`, owner, "PATCH", { active: false });
+await call(`${availability}/${alternateSlot.id}`, reception);
+await call(availability, owner, "POST", { ...slot, coach: alternate.id, weekday: 1 }, 400);
+console.log("Agenda y créditos verificados: clientes expandidos, asistencia privada, especial sin membresía y baja de coach.");
+
+
+const november = "2099-11-01";
+const repeatedSunday = addLocalDays(november, (7 - utcToLocal(localToUtc(november, "12:00")).weekday) % 7);
+await call(availability, owner, "POST", { ...slot, coach: ownerId, start_time: "01:30", end_time: "02:00" });
+const repeatedHour = {
+  ...schedule("08:00", [guest.id], soloPlan.service),
+  coach: ownerId,
+  overrides: { [guest.id]: { override_note: "Excepción de verificación" } },
+};
+await expectSchedulingCode(privateRoute, {
+  ...repeatedHour, starts_at: localToUtc(repeatedSunday, "01:45"),
+}, "outside_availability");
+await call(privateRoute, owner, "POST", {
+  ...repeatedHour, starts_at: localToUtc(repeatedSunday, "01:30"),
+});

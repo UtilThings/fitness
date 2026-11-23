@@ -147,10 +147,19 @@ Ejecuta `scripts/verify-app.sh` desde la raíz para correr las pruebas de las vi
 
 ## Horarios y clases
 
-- **Clases** (`/classes`) muestra la semana en hora de Miramar. Se puede navegar a semanas anteriores y siguientes, filtrar por servicio o coach y usar **Mis clases**. Owner y reception pueden crear una sesión especial y cambiar el coach, las notas o el horario desde el detalle. Cancelar o mover exige un motivo. Owner también puede generar cuatro semanas desde el domingo de la semana visible.
+- **Clases** (`/classes`) muestra la semana en hora de Miramar. Se puede navegar a semanas anteriores y siguientes, filtrar por servicio, coach o tipo y usar **Mis clases**. Owner y reception pueden cambiar el coach y las notas desde el detalle, y mover las sesiones regulares o especiales. Cancelar o mover exige un motivo. Owner también puede generar cuatro semanas desde el domingo de la semana visible.
 - **Plantillas** (`/classes/templates`) agrupa las franjas semanales por día. Owner puede editarlas, activarlas y asignar un coach, con la opción de actualizar las sesiones futuras. El parámetro `?coach=<id>` filtra por coach asignado.
 - **Bloqueos** (`/classes/blocks`) muestra los días sin clases. Antes de guardar, el formulario consulta cuántas sesiones programadas se cancelarán y pide confirmación.
 - **Ver horario** en una ficha del equipo abre `/classes?coach=<id>`. Coach y reception pueden consultar plantillas y bloqueos.
+
+## Agenda de Personal Training y sesiones especiales
+
+- **Agenda** (`/agenda`) muestra el día o la semana del coach con sus tramos de disponibilidad, sesiones, cupos y clientes. El detalle enlaza con la gestión de reservas y asistencia de **Clases**.
+- **Disponibilidad semanal** (`/agenda/disponibilidad`) permite editar varios tramos por día. Owner puede editar los tramos de cualquier coach activo, cada coach puede editar los suyos y reception tiene acceso de lectura. El editor valida el orden de las horas y los solapes.
+- **Sesión privada** está disponible desde **Agenda**, **Clases** y los huecos del calendario. Se elige un servicio personal y uno o dos clientes. El formulario avisa sobre disponibilidad, créditos y membresías partner. Owner y reception pueden añadir una nota de excepción por cliente.
+- **Nueva clase especial** está disponible en **Clases** para owner y reception. Pide un título y permite dejar el coach sin asignar. El calendario muestra las insignias **Especial** y **Privada**. El detalle permite editar el título de una especial y el cupo, el coach y las notas de ambos tipos, además de cancelarlos con motivo.
+
+`useCoachAvailability` gestiona los tramos semanales y `useCoachAgenda` consulta sesiones con reservas y clientes o crea una sesión privada o especial. `AvailabilityEditor`, `CoachAgendaGrid`, `PrivateSessionDialog` y `SpecialSessionDialog` viven en `src/components/agenda/`. La interfaz muestra las fechas en hora de Miramar y la API recibe instantes UTC.
 
 ## Clientes
 
