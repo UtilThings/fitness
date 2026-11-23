@@ -144,6 +144,7 @@ async function submit() {
           <Select
             v-model="status"
             :input-id="id + '-status'"
+            aria-label="Estado"
             :options="statuses"
             option-label="label"
             option-value="value"
@@ -160,6 +161,7 @@ async function submit() {
         <Select
           v-model="method"
           :input-id="id + '-method'"
+          aria-label="Método"
           :options="methods"
           option-label="label"
           option-value="value"

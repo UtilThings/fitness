@@ -1,7 +1,7 @@
 # 007 - [Vista] `/payments` y recibo imprimible
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005, 006
 - **Fase:** Fase 4: Interfaz
 
@@ -22,12 +22,12 @@ Rutas protegidas son hijas de `AdminLayout`; el recibo imprimible va como ruta p
 
 ## Criterios de aceptación
 
-- [ ] Los filtros combinados devuelven los pagos esperados y "solo vencidos" muestra únicamente `pending` con `due_on` pasado.
-- [ ] Marcar pagado desde la fila muestra el número de recibo asignado.
-- [ ] El recibo no pagado (`pending`) no se puede abrir; el anulado muestra "ANULADO".
-- [ ] En la vista de impresión no aparecen menús ni botones.
-- [ ] Sin sesión, `/payments` y `/receipts/:id` redirigen a login.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] Los filtros combinados devuelven los pagos esperados y "solo vencidos" muestra únicamente `pending` con `due_on` pasado.
+- [x] Marcar pagado desde la fila muestra el número de recibo asignado.
+- [x] El recibo no pagado (`pending`) no se puede abrir; el anulado muestra "ANULADO".
+- [x] En la vista de impresión no aparecen menús ni botones.
+- [x] Sin sesión, `/payments` y `/receipts/:id` redirigen a login.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -40,4 +40,4 @@ Rutas protegidas son hijas de `AdminLayout`; el recibo imprimible va como ruta p
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Chromium verificó los filtros combinados contra PocketBase, la liquidación desde la fila y el acceso por rol. Se comprobó el resultado de impresión en tamaño carta sin botones ni navegación. El rango usa la fecha de pago cuando existe y la fecha de vencimiento en los demás cobros.

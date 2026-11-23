@@ -144,3 +144,8 @@ export function localDateToUtcRange(date: string) {
 export function weekRangeUtc(weekStartDate: string) {
   return localDateRangeToUtc(weekStartDate, addLocalDays(weekStartDate, 6));
 }
+
+/** PocketBase representa las fechas civiles de pagos como medianoche UTC. */
+export function formatCivilDate(value: string): string {
+  return formatDate(localToUtcIso(value.slice(0, 10), '12:00'));
+}

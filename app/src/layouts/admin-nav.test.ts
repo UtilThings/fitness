@@ -48,6 +48,7 @@ describe('adminNav', () => {
         '/classes/templates',
         '/classes/blocks',
         '/memberships',
+        '/payments',
       ]),
     );
     enabled.forEach(({ to }) => expect(paths).toContain(to));

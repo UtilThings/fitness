@@ -85,7 +85,6 @@ export const adminNav: NavGroup[] = [
         icon: 'pi pi-credit-card',
         to: '/payments',
         roles: ['owner', 'reception'],
-        placeholder: true,
       },
     ],
   },
