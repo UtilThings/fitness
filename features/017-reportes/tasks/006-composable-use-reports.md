@@ -1,7 +1,7 @@
 # 006 - [Composable] `useReports`
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, Feature 006 (contrato)
 - **Fase:** Fase 3: Exportación y cliente
 
@@ -23,10 +23,10 @@ Un composable único carga cualquiera de los cuatro reportes con rango, servicio
 
 ## Criterios de aceptación
 
-- [ ] `setPreset('last-month')` produce primer y último día del mes anterior en hora de Miramar, FL.
-- [ ] Dos llamadas seguidas a `load()` dejan en `data` solo el resultado de la segunda.
-- [ ] El error `403` produce el mensaje de permisos y `data` queda `null`.
-- [ ] `bun run test`, `lint`, `format:check` y `typecheck` en `app/` pasan.
+- [x] `setPreset('last-month')` produce primer y último día del mes anterior en hora de Miramar, FL.
+- [x] Dos llamadas seguidas a `load()` dejan en `data` solo el resultado de la segunda.
+- [x] El error `403` produce el mensaje de permisos y `data` queda `null`.
+- [x] `bun run test`, `lint`, `format:check` y `typecheck` en `app/` pasan.
 
 ## Referencias
 
@@ -40,3 +40,4 @@ Un composable único carga cualquiera de los cuatro reportes con rango, servicio
 
 ## Notas de implementación
 
+Los presets se calculan con todayLocal. El composable reutiliza la clave de cancelación de PocketBase y descarta respuestas por revisión. verify-app.sh pasó completo.
