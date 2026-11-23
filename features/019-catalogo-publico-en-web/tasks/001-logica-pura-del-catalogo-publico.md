@@ -1,7 +1,7 @@
 # 001 - [Lib] Lógica pura del catálogo y horario públicos
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 008 (contrato), Feature 009 (contrato), Feature 011 (contrato)
 - **Fase:** Fase 1: API pública
 
@@ -22,11 +22,11 @@ Las librerías puras viven en `api/src/lib/*.ts` y se prueban con `bun test` (sc
 
 ## Criterios de aceptación
 
-- [ ] `normalizeWeek('2026-11-19', today)` devuelve `2026-11-15` y una fecha pasada devuelve la semana actual.
-- [ ] Fechas inválidas o fuera del máximo de semanas lanzan `PublicQueryError`.
-- [ ] Ningún objeto de la salida contiene claves fuera del contrato, aunque la entrada traiga campos extra (`client`, `email`, `notes`).
-- [ ] `availabilityStatus` coincide con `availability` de `web/src/lib/data.ts` para -1, 0, 1, 2 y 3.
-- [ ] `bun test` en `api/` pasa en verde.
+- [x] `normalizeWeek('2026-11-19', today)` devuelve `2026-11-15` y una fecha pasada devuelve la semana actual.
+- [x] Fechas inválidas o fuera del máximo de semanas lanzan `PublicQueryError`.
+- [x] Ningún objeto de la salida contiene claves fuera del contrato, aunque la entrada traiga campos extra (`client`, `email`, `notes`).
+- [x] `availabilityStatus` coincide con `availability` de `web/src/lib/data.ts` para -1, 0, 1, 2 y 3.
+- [x] `bun test` en `api/` pasa en verde.
 
 ## Referencias
 
@@ -40,3 +40,4 @@ Las librerías puras viven en `api/src/lib/*.ts` y se prueban con `bun test` (sc
 
 ## Notas de implementación
 
+- Reutiliza la zona horaria del negocio y los umbrales de reservas. La suite de la API pasó con 99 pruebas.
