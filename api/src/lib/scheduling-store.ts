@@ -5,6 +5,8 @@ import {
   toMinutes, validateAvailabilitySlots, validatePrivateSession, validateSpecialSession,
 } from "./scheduling";
 import { nyOffsetMinutes, utcToLocal } from "./tz";
+import { covers, sessionDate } from "./memberships-service";
+import { sessionBookings } from "./booking-store";
 
 const messages: Record<string, string> = {
   coach_conflict: "El coach ya tiene una sesión en ese horario.",
@@ -117,4 +119,31 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
     });
   }
   if (error) throw schedulingError(error.code, error.conflictId);
+}
+
+
+export function hasPartnerMembership(app: core.App, client: string, session: core.Record) {
+  const date = sessionDate(session);
+  return app.findRecordsByFilter("memberships",
+    "client = {:client} && status = 'active' && plan.service = {:service} && plan.partner = true",
+    "", 0, 0, { client, service: session.getString("service") })
+    .some((membership) => !!membership && covers(membership, date));
+}
+
+export function validatePrivatePartners(app: core.App, record: core.Record) {
+  if (record.getString("kind") !== "private" || record.getString("status") === "cancelled") return;
+  const previous = record.original();
+  const changed = ["service", "starts_at"].some((field) => record.getString(field) !== previous.getString(field));
+  const expanding = record.getInt("capacity") === 2 && previous.getInt("capacity") !== 2;
+
+  if (!record.isNew() && !changed && !expanding) return;
+  const bookings = record.isNew() ? [] : sessionBookings(app, record.id)
+    .filter((booking) => !["cancelled", "late_cancelled"].includes(booking.getString("status")));
+  if (changed && bookings.length) {
+    throw fieldError("starts_at", "Cancela las reservas antes de cambiar la fecha o el servicio de la sesión.");
+  }
+  if (record.getInt("capacity") === 2 &&
+    (!bookings.length || bookings.some((booking) => !hasPartnerMembership(app, booking.getString("client"), record)))) {
+    throw schedulingError("partner_required");
+  }
 }

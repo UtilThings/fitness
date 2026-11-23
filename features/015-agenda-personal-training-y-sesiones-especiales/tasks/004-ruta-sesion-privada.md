@@ -1,7 +1,7 @@
 # 004 - [Endpoint] `POST /api/admin/sessions/private`
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003
 - **Fase:** Fase 3: Servidor
 
@@ -23,11 +23,11 @@ La creación de reservas vía `app.save` no pasa por los hooks de petición de 0
 
 ## Criterios de aceptación
 
-- [ ] Con un cliente crea sesión (capacidad 1) y una reserva `booked`.
-- [ ] Con dos clientes partner crea capacidad 2 y dos reservas; con uno no partner devuelve `partner_required`.
-- [ ] Si falla la elegibilidad del segundo cliente, no existe la sesión ni la primera reserva.
-- [ ] Un coach agendando para otro coach recibe `403`.
-- [ ] `bun run build:ts` y `scripts/verify-api.sh` pasan.
+- [x] Con un cliente crea sesión (capacidad 1) y una reserva `booked`.
+- [x] Con dos clientes partner crea capacidad 2 y dos reservas; con uno no partner devuelve `partner_required`.
+- [x] Si falla la elegibilidad del segundo cliente, no existe la sesión ni la primera reserva.
+- [x] Un coach agendando para otro coach recibe `403`.
+- [x] `bun run build:ts` y `scripts/verify-api.sh` pasan.
 
 ## Referencias
 
@@ -40,4 +40,4 @@ La creación de reservas vía `app.save` no pasa por los hooks de petición de 0
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+La ruta reutiliza la selección de membresía y la autorización de reservas de 013. Recepción y owner pueden proporcionar una nota por cliente. La capacidad opcional permite abrir un segundo cupo para un único cliente partner. El GET de elegibilidad de 013 también admite servicio y fecha para consultar una sesión aún no creada. Se verificaron el rollback, los roles, el conflicto y el duplicado en PocketBase.

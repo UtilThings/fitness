@@ -15,8 +15,11 @@ export function membershipToday() {
   return utcToLocal(new Date().toISOString()).date;
 }
 
-export function membershipError(status: number, code: string, message: string) {
-  return new ApiError(status, message, { code: new ValidationError(code, message) });
+export function membershipError(status: number, code: string, message: string, clientId?: string) {
+  return new ApiError(status, message, {
+    code: new ValidationError(code, message),
+    ...(clientId && { client: new ValidationError(clientId, "Identificador del cliente afectado.") }),
+  });
 }
 
 export function requireMembershipRole(event: core.RequestEvent, roles: readonly string[]) {

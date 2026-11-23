@@ -1,7 +1,7 @@
 /// <reference path="../../pb_data/types.d.ts" />
 
 function validateSchedulingWrite(e: core.RecordEvent) {
-  const { validateAvailabilityRecord, validateSessionRecord } =
+  const { validateAvailabilityRecord, validateSessionRecord, validatePrivatePartners } =
     require(`${__hooks}/lib/scheduling-store`) as typeof import("../lib/scheduling-store");
   const app = e.app;
   const record = e.record!;
@@ -15,7 +15,10 @@ function validateSchedulingWrite(e: core.RecordEvent) {
     return app.runInTransaction((tx) => {
       e.app = tx;
       if (availability) validateAvailabilityRecord(tx, record);
-      else validateSessionRecord(tx, record);
+      else {
+        validateSessionRecord(tx, record);
+        validatePrivatePartners(tx, record);
+      }
       return e.next();
     });
   } finally {
@@ -26,3 +29,10 @@ function validateSchedulingWrite(e: core.RecordEvent) {
 // Model hooks cover requests, schedule routes and internal writes with the same transaction.
 onRecordCreate(validateSchedulingWrite, "coach_availability", "class_sessions");
 onRecordUpdate(validateSchedulingWrite, "coach_availability", "class_sessions");
+
+
+routerAdd("POST", "/api/admin/sessions/private", (e) => {
+  const { createPrivateSession } =
+    require(`${__hooks}/lib/private-sessions`) as typeof import("../lib/private-sessions");
+  return e.json(200, createPrivateSession(e));
+}, $apis.requireAuth("admins"));
