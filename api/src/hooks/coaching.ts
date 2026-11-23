@@ -30,7 +30,8 @@ function validateCoachingProgram(e: core.RecordRequestEvent) {
       if (!coach?.getBool("active") || !["coach", "owner"].includes(coach.getString("role"))) {
         errors.coach = "Selecciona un coach activo.";
       }
-      if (previous && e.auth?.getString("role") === "coach" && previous.getString("coach") !== e.auth.id) {
+      if (e.auth?.getString("role") === "coach"
+        && (coachId !== e.auth.id || (previous && previous.getString("coach") !== e.auth.id))) {
         throw new ForbiddenError("Solo puedes modificar tus propios programas.");
       }
       const membership = getRecord(tx, "memberships", membershipId);
@@ -77,7 +78,8 @@ function validateCoachingCheckin(e: core.RecordRequestEvent) {
         .some((field) => previous.getString(field) !== original.getString(field)))) {
         throw new ApiError(409, "El registro cambió. Recarga los datos antes de guardar.");
       }
-      if (program && e.auth?.getString("role") === "coach" && program.getString("coach") !== e.auth.id) {
+      if (e.auth?.getString("role") === "coach" && (program?.getString("coach") !== e.auth.id
+        || (previous && previous.getString("program") !== program?.id))) {
         throw new ForbiddenError("Solo puedes registrar check-ins en tus propios programas.");
       }
       const today = utcToLocal(new Date().toISOString()).date;
@@ -103,34 +105,41 @@ function validateCoachingCheckin(e: core.RecordRequestEvent) {
 onRecordCreateRequest(validateCoachingCheckin, "coaching_checkins");
 onRecordUpdateRequest(validateCoachingCheckin, "coaching_checkins");
 
-onRecordAfterUpdateSuccess((e) => {
-  const changed = e.record!;
-  const before = changed.original();
-  const periodChanged = before.getString("current_period_end") !== changed.getString("current_period_end");
-  const statusChanged = before.getString("status") !== changed.getString("status");
+onRecordUpdate((e) => {
+  const membership = e.record!;
+  const before = membership.original();
+  const periodChanged = before.getString("current_period_end") !== membership.getString("current_period_end");
+  const statusChanged = before.getString("status") !== membership.getString("status");
   if (!periodChanged && !statusChanged) return e.next();
 
   const { addDays } = require(`${__hooks}/lib/membership-cycles`) as typeof import("../lib/membership-cycles");
-  e.app.runInTransaction((tx) => {
-    // A newer membership action may have committed before this callback obtained the writer.
-    const membership = tx.findRecordById("memberships", changed.id);
-    const status = membership.getString("status");
-    const end = membership.getString("current_period_end").slice(0, 10);
-    const programs = tx.findRecordsByFilter(
-      "coaching_programs", "membership = {:id} && status != 'ended'", "", 0, 0, { id: membership.id },
-    );
-    for (const program of programs) {
-      if (!program) continue;
-      const previousStatus = program.getString("status");
-      const previousRenewal = program.getString("renews_on").slice(0, 10);
-      if (end && periodChanged) program.set("renews_on", addDays(end, 1));
-      if (status === "cancelled") program.set("status", "ended");
-      if (statusChanged && (status === "active" || status === "paused")) program.set("status", status);
-      if (program.getString("status") !== previousStatus || program.getString("renews_on").slice(0, 10) !== previousRenewal) {
-        program.set("@pbInternalAuditActor", changed.getString("@pbInternalAuditActor"));
-        tx.save(program);
+  const app = e.app;
+  try {
+    return app.runInTransaction((tx) => {
+      e.app = tx;
+      // Keep both writes in one transaction so a failed sync also rolls back the membership.
+      e.next();
+      const status = membership.getString("status");
+      const end = membership.getString("current_period_end").slice(0, 10);
+      const programs = tx.findRecordsByFilter(
+        "coaching_programs", "membership = {:id} && status != 'ended'", "", 0, 0, { id: membership.id },
+      );
+      for (const program of programs) {
+        if (!program) continue;
+        const currentStatus = program.getString("status");
+        const currentRenewal = program.getString("renews_on").slice(0, 10);
+        if (end && periodChanged) program.set("renews_on", addDays(end, 1));
+        if (statusChanged) {
+          if (status === "cancelled") program.set("status", "ended");
+          if (status === "active" || status === "paused") program.set("status", status);
+        }
+        if (program.getString("status") !== currentStatus || program.getString("renews_on").slice(0, 10) !== currentRenewal) {
+          program.set("@pbInternalAuditActor", membership.getString("@pbInternalAuditActor"));
+          tx.save(program);
+        }
       }
-    }
-  });
-  return e.next();
+    });
+  } finally {
+    e.app = app;
+  }
 }, "memberships");

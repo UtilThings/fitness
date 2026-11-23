@@ -1,5 +1,6 @@
 import type { Client } from '@/lib/clients';
 import type { Membership } from '@/lib/memberships';
+import { roleCan } from '@/lib/permissions';
 import type { Admin } from '@/types/pb';
 import {
   programFlags,
@@ -90,9 +91,10 @@ export function canManageProgram(
   program?: CoachingProgram,
 ) {
   return (
-    user?.role === 'owner' ||
-    user?.role === 'reception' ||
-    (user?.role === 'coach' && (!program || user.id === program.coach))
+    user !== null &&
+    user.active !== false &&
+    roleCan(user.role, 'coaching.programs.manage') &&
+    (user.role !== 'coach' || !program || user.id === program.coach)
   );
 }
 
@@ -102,8 +104,10 @@ export function canRegisterCheckin(
 ) {
   return (
     program.status !== 'ended' &&
-    (user?.role === 'owner' ||
-      (user?.role === 'coach' && user.id === program.coach))
+    user !== null &&
+    user.active !== false &&
+    roleCan(user.role, 'coaching.checkins.manage') &&
+    (user.role !== 'coach' || user.id === program.coach)
   );
 }
 

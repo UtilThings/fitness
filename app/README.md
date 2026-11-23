@@ -211,6 +211,20 @@ Queda pendiente decidir si se necesita importar clientes por CSV o exponer un en
 
 `useMemberships` concentra las listas, el historial, las acciones y la preconsulta de elegibilidad. En `src/components/memberships/`, `MembershipStatusTag` deriva la renovación pendiente de la fecha local. `AssignPlanDialog`, `MembershipActions`, `CreditAdjustDialog`, `CreditLedger` y `CreditOverrideDialog` se comparten entre las vistas.
 
+## Online Coaching
+
+**Operaciones → Online Coaching** (`/coaching`) muestra programas activos, alertas de renovación, check-ins pendientes y clientes en riesgo. La tabla combina estado, coach, alerta y búsqueda por cliente. Muestra la semana del programa, la adherencia promedio y el último check-in. La vista comienza con los programas propios para el rol coach y con todos para owner y reception.
+
+Al abrir un programa se consultan sus datos, el enlace al plan y el historial de check-ins. Owner y reception pueden crear y editar programas. El rol coach gestiona los programas que tiene asignados. Owner y el coach del programa pueden registrar un check-in y ver cómo se actualizan el promedio, la tendencia y las alertas.
+
+**Clientes → Coaching** aparece si hay un programa actual o anterior o una membresía online. Muestra el programa vigente, el historial y los programas finalizados. Con una membresía activa y sin programa vigente, owner y coach pueden crear el programa para ese cliente. Reception tiene acceso de lectura en esta pestaña.
+
+`useCoaching` consulta los programas, las membresías y los check-ins, y reutiliza la lógica de alertas de la API. `ProgramFormDialog`, `CheckinDialog`, `ProgramSummary`, `ProgramStatusTag`, `AdherenceBadge` y `CheckinTimeline` viven en `src/components/coaching/`. La suite Vitest cubre validación, filtros, roles, refresco y navegación.
+
+### Después
+
+La entrega de planes, el portal del cliente, las fotos y las medidas de progreso quedan para una entrega posterior. El seguimiento actual admite un enlace al plan externo.
+
 ## Pagos y recibos
 
 - **Facturación → Pagos** (`/payments`) permite a owner y reception registrar un cobro, marcarlo como pagado, anularlo con motivo y abrir su recibo. La vista combina filtros de estado, método, cliente, fechas y **Solo vencidos**. El rango incluye ambos días y usa la fecha de pago cuando existe o el vencimiento para los demás cobros.

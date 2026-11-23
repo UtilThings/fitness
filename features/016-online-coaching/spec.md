@@ -1,6 +1,6 @@
 # Especificación: Online Coaching
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -22,10 +22,10 @@ Contrato que deja a las siguientes: 017 lee adherencia, retención y programas a
 | Elemento | Estado |
 |----------|--------|
 | `web/src/pages/online-coaching.astro` | Describe el servicio: beneficios (planes de entrenamiento, guía de nutrición, programas de 8-16 semanas, monitoreo de progreso con check-ins y ajustes), consulta gratuita inicial y precio comunicado tras la consulta; formulario de solicitud (CRM, fuera de alcance) |
-| `api/` | PocketBase; migraciones JS en `api/pb_migrations/` (última existente: `1795260843_created_admins.js`; usar timestamp mayor que el de la última presente); hooks y libs TypeScript compilados con `bun run build:ts` |
+| `api/` | PocketBase; migraciones JS en `api/pb_migrations/` (última al iniciar la feature: `1795264901_added_title_to_class_sessions.js`; usar timestamp mayor que el de la última presente); hooks y libs TypeScript compilados con `bun run build:ts` |
 | `coaching_programs`, `coaching_checkins` | No existen (esta feature los crea) |
-| `services` (kind `online`) y `plans` (008), `clients` (010), `memberships` y sus rutas (013), coaches (007) | No existen aún en disco; se usan por contrato |
-| Perfil del cliente (010) | Por contrato; verificar nombres reales al implementar |
+| `services` (kind `online`) y `plans` (008), `clients` (010), `memberships` y sus rutas (013), coaches (007) | Implementados al iniciar la feature. El catálogo permite configurar un plan online y asignarlo como membresía sin crear reservas. |
+| Perfil del cliente (010) | `app/src/views/admin/ClientDetailView.vue` usa pestañas. |
 
 > Verificación obligatoria previa: la tarea 001 debe confirmar cómo 008 modela el plan online (servicio `kind = online`, `commitment_periods` 2-4 equivalentes a 8-16 semanas) y que 013 permite membresías de ese servicio sin reservas de clase.
 
@@ -61,6 +61,7 @@ Contrato que deja a las siguientes: 017 lee adherencia, retención y programas a
 | `adherence` | number | entero 1-5 | Adherencia al plan (1 muy baja, 5 total) |
 | `notes` | text | opcional | Observaciones y ajustes |
 | `created_by` | relation→admins | opcional | Extensión: quién lo registró |
+| `created` | autodate | automático | Desempata registros hechos para la misma fecha civil |
 
 - **Índices:** `(program, checked_at)`.
 - **Reglas de API:** `listRule`/`viewRule` = staff; `createRule`/`updateRule` = owner o coach del programa (`program.coach = @request.auth.id`); `deleteRule` = owner. Reception solo lee.
@@ -164,10 +165,10 @@ active | paused → ended   (final: para retomar se crea otro programa)
 
 ### Decisiones
 - **Solo seguimiento, sin entrega de planes**: `program_url` es un enlace externo y `notes` texto libre. La entrega de planes de entrenamiento y nutrición dentro de la plataforma (biblioteca de ejercicios, plantillas, portal del cliente) queda como **"Después"**.
-- **Renovación = membresía**: no hay lógica de cobro en el programa; la fecha se deriva de 013 y los pagos de 014.
+- **Renovación = membresía**. La fecha se deriva de 013 y los pagos se gestionan en 014. La sincronización se ejecuta durante el guardado de la membresía, en la misma transacción. La auditoría se registra tras confirmar los cambios.
 - **`duration_weeks` como campo extra** (8/12/16): refleja las opciones públicas del servicio y permite calcular fin y semana actual; el contrato no lo incluye. Revisar.
 - **Un programa vivo por cliente** (índice único parcial): evita duplicados; retomar crea uno nuevo.
-- **Reception puede crear/editar programas pero no check-ins**: los check-ins son trabajo del coach.
+- **Reception** puede crear y editar programas desde `/coaching` y consultar el seguimiento en la pestaña del perfil. Owner y el coach asignado pueden registrar check-ins.
 - **El programa no termina solo**: evita perder el seguimiento por un retraso en la renovación.
 
 ### Migraciones
@@ -188,13 +189,13 @@ active | paused → ended   (final: para retomar se crea otro programa)
 
 ## Criterios de Aceptación
 
-- [ ] Se crea un programa solo para clientes con membresía online activa; no se permiten dos vivos por cliente.
-- [ ] Los check-ins validan adherencia 1-5, fecha no futura y programa no finalizado.
-- [ ] Renovar la membresía actualiza `renews_on`; pausar/cancelar la membresía pausa/finaliza el programa.
-- [ ] `/coaching` filtra por estado, coach y alerta (renovación, sin check-in, en riesgo) y muestra adherencia promedio y último check-in.
-- [ ] La pestaña Coaching del perfil muestra programa e historial y permite registrar check-ins.
-- [ ] La lógica pura tiene pruebas `bun test` y la UI pruebas Vitest.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Se crea un programa solo para clientes con membresía online activa; no se permiten dos vivos por cliente.
+- [x] Los check-ins validan adherencia 1-5, fecha no futura y programa no finalizado.
+- [x] Renovar la membresía actualiza `renews_on`; pausar/cancelar la membresía pausa/finaliza el programa.
+- [x] `/coaching` filtra por estado, coach y alerta (renovación, sin check-in, en riesgo) y muestra adherencia promedio y último check-in.
+- [x] La pestaña Coaching del perfil muestra programa e historial y permite registrar check-ins.
+- [x] La lógica pura tiene pruebas `bun test` y la UI pruebas Vitest.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
 
 ---
 

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { Database } from "bun:sqlite";
 import { addDays } from "../api/src/lib/membership-cycles";
 import { utcToLocal } from "../api/src/lib/tz";
 
@@ -22,7 +23,8 @@ async function call<T>(path: string, token = "", method = "GET", body?: Body, ex
 }
 
 const records = (collection: string) => `collections/${collection}/records`;
-const filter = (expression: string) => "?" + new URLSearchParams({ filter: expression });
+const filter = (expression: string, options: Record<string, string> = {}) =>
+  "?" + new URLSearchParams({ ...options, filter: expression });
 async function auth(collection: string, identity: string) {
   return call<{ token: string; record: Row }>(`collections/${collection}/auth-with-password`, "", "POST", { identity, password });
 }
@@ -88,11 +90,54 @@ await call(`${checkins}/${saved.id}`, owner, "PATCH", { checked_at: addDays(toda
 await call<{ items: Row[] }>(checkins + filter(`program = '${program.id}'`), reception)
   .then(({ items }) => assert.equal(items.length, 1));
 
-const coached = await call<Row>(programs, coach, "POST", { ...input, status: "ended", coach: coachRecord.id });
-assert(coached.id);
-const action = (name: string, body: Body = {}) =>
-  call<{ membership: Membership }>(`admin/memberships/${membership.id}/${name}`, reception, "POST", body);
+const { membership: otherOnline } = await call<{ membership: Membership }>(
+  "admin/memberships/assign", reception, "POST", { client: otherClient.id, plan: plan.id, starts_on: today },
+);
+const coached = await call<Row>(programs, coach, "POST", {
+  ...input, client: otherClient.id, membership: otherOnline.id, coach: coachRecord.id,
+});
+type Checkin = Row & { created: string; created_by: string; adherence: number };
+const first = await call<Checkin>(checkins, coach, "POST", { ...checkin, program: coached.id, adherence: 2 });
+await Bun.sleep(2); // PocketBase timestamps have millisecond precision.
+const latest = await call<Checkin>(checkins, coach, "POST", { ...checkin, program: coached.id, adherence: 5 });
+assert.equal(latest.created_by, coachRecord.id);
+assert(first.created < latest.created);
+const { items: history } = await call<{ items: Checkin[] }>(
+  checkins + filter(`program = '${coached.id}'`, { sort: "-checked_at,-created,-id" }), reception,
+);
+assert.deepEqual(history.map(({ adherence }) => adherence), [5, 2]);
+
+const { items: eligible } = await call<{ items: (Row & { expand: { client: Row; plan: Row } })[] }>(
+  records("memberships") + filter(`plan.service.kind = 'online' && status = 'active' && client = '${otherClient.id}'`,
+    { expand: "client,plan" }), coach,
+);
+assert.deepEqual(eligible.map(({ id, expand }) => [id, expand.client.id, expand.plan.id]),
+  [[otherOnline.id, otherClient.id, plan.id]]);
+const { items: filtered } = await call<{ items: (Program & { expand: { client: Row; coach: Row; membership: Row } })[] }>(
+  programs + filter(`coach = '${coachRecord.id}' && status = 'active' && (client.first_name ~ 'Sin' || client.last_name ~ 'Sin')`,
+    { expand: "client,coach,membership" }), reception,
+);
+assert.deepEqual(filtered.map(({ id, expand }) => [id, expand.client.id, expand.coach.id, expand.membership.id]),
+  [[coached.id, otherClient.id, coachRecord.id, otherOnline.id]]);
+
+const action = (name: string, body: Body = {}, expected = 200) =>
+  call<{ membership: Membership }>(`admin/memberships/${membership.id}/${name}`, reception, "POST", body, expected);
 const readProgram = () => call<Program>(`${programs}/${program.id}`, owner);
+const dbPath = process.env.JQ_VERIFY_DB;
+assert(dbPath);
+const db = new Database(dbPath);
+db.exec(`CREATE TRIGGER verify_coaching_rollback BEFORE UPDATE OF renews_on ON coaching_programs
+  WHEN NEW.renews_on != OLD.renews_on
+  BEGIN SELECT RAISE(ABORT, 'verify coaching rollback'); END`);
+try {
+  await action("renew", {}, 400);
+  const current = await call<Membership>(`${records("memberships")}/${membership.id}`, owner);
+  assert.equal(current.current_period_end, membership.current_period_end);
+  assert.equal((await readProgram()).renews_on, program.renews_on);
+} finally {
+  db.exec("DROP TRIGGER verify_coaching_rollback");
+  db.close();
+}
 const renewed = await action("renew");
 assert.equal((await readProgram()).renews_on.slice(0, 10), addDays(renewed.membership.current_period_end.slice(0, 10), 1));
 assert.equal((await readProgram()).renews_on.slice(0, 10), addDays(program.renews_on.slice(0, 10), 28));

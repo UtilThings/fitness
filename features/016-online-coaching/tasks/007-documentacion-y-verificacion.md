@@ -1,7 +1,7 @@
 # 007 - [Verificación] Documentación y cierre de la feature
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005, 006
 - **Fase:** Fase final: Verificación y cierre
 
@@ -22,9 +22,9 @@ La feature queda documentada (incluido lo que queda para "Después"), verificada
 
 ## Criterios de aceptación
 
-- [ ] Los READMEs describen la feature y lo que queda para "Después".
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
-- [ ] Todos los criterios del spec están marcados o los hallazgos quedan anotados.
+- [x] Los READMEs describen la feature y lo que queda para "Después".
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Todos los criterios del spec están marcados o los hallazgos quedan anotados.
 
 ## Referencias
 
@@ -36,4 +36,4 @@ La feature queda documentada (incluido lo que queda para "Después"), verificada
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Ambos scripts pasaron en el entorno local. La API ejecutó 77 pruebas de Bun y los casos HTTP con PocketBase temporal. La app ejecutó 284 pruebas Vitest además de lint, formato, tipos y build. Se verificó que un fallo al sincronizar el programa revierte también la renovación de la membresía. Por eso la sincronización se ejecuta dentro de la transacción del hook de actualización y la auditoría después de confirmar los cambios.

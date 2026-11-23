@@ -7,7 +7,9 @@ export type Permission =
   | 'audit.read'
   | 'catalog.manage'
   | 'memberships.manage'
-  | 'payments.manage';
+  | 'payments.manage'
+  | 'coaching.programs.manage'
+  | 'coaching.checkins.manage';
 
 // Cada módulo añade aquí los permisos que expone en la interfaz.
 export const PERMISSIONS: Record<Permission, readonly Role[]> = {
@@ -18,6 +20,8 @@ export const PERMISSIONS: Record<Permission, readonly Role[]> = {
   'catalog.manage': ['owner'],
   'memberships.manage': ['owner', 'reception'],
   'payments.manage': ['owner', 'reception'],
+  'coaching.programs.manage': ROLES,
+  'coaching.checkins.manage': ['owner', 'coach'],
 };
 
 export function roleCan(role: Role | null, permission: Permission): boolean {
@@ -32,4 +36,6 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'catalog.manage': 'Gestionar el catálogo',
   'memberships.manage': 'Gestionar membresías',
   'payments.manage': 'Gestionar pagos',
+  'coaching.programs.manage': 'Gestionar programas de coaching',
+  'coaching.checkins.manage': 'Registrar check-ins de coaching',
 };
