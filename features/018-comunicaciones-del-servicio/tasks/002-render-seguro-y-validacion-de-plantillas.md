@@ -1,7 +1,7 @@
 # 002 - [Lib] Render seguro y validación de plantillas
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 2: Lógica pura
 
@@ -23,11 +23,11 @@ Las librerías puras viven en `api/src/lib/*.ts`, compilan a CJS en `pb_hooks/li
 
 ## Criterios de aceptación
 
-- [ ] `renderHtml('Hola {{client_first_name}}', { client_first_name: '<b>Ana</b>' })` contiene `&lt;b&gt;Ana&lt;/b&gt;` y ningún `<b>`.
-- [ ] `validateTemplate` rechaza `{{password}}` y variables de otra clave (p. ej. `amount` en `booking_confirmed`).
-- [ ] Un asunto cuyo valor renderizado contenga un salto de línea falla.
-- [ ] Las fechas se formatean en español («sáb 21 nov, 9:00 AM») e inglés («Sat, Nov 21, 9:00 AM»).
-- [ ] `bun test` en `api/` pasa en verde.
+- [x] `renderHtml('Hola {{client_first_name}}', { client_first_name: '<b>Ana</b>' })` contiene `&lt;b&gt;Ana&lt;/b&gt;` y ningún `<b>`.
+- [x] `validateTemplate` rechaza `{{password}}` y variables de otra clave (p. ej. `amount` en `booking_confirmed`).
+- [x] Un asunto cuyo valor renderizado contenga un salto de línea falla.
+- [x] Las fechas se formatean en español («sáb 21 nov, 9:00 AM») e inglés («Sat, Nov 21, 9:00 AM»).
+- [x] `bun test` en `api/` pasa en verde.
 
 ## Referencias
 
@@ -41,3 +41,4 @@ Las librerías puras viven en `api/src/lib/*.ts`, compilan a CJS en `pb_hooks/li
 
 ## Notas de implementación
 
+- `bun test` valida el escape del cuerpo y los valores, listas de variables, sintaxis, ausencia de valores, saltos de línea y formato local bilingüe.
