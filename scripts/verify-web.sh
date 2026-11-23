@@ -14,8 +14,9 @@ run_step bun run lint
 run_step bun run format:check
 run_step bun run check
 run_step bun run test
-run_step bun run build
+run_step env PUBLIC_API_URL= bun run build
 run_step bun run test:dist
+run_step bun run test:build:offline
 
 check_no_lovable() {
   local status=0

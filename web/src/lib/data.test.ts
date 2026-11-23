@@ -22,12 +22,13 @@ it.each([
 it.each([
   [0, 'FREE'],
   [15, '$15'],
+  [15.5, '$15.50'],
   [1080, '$1,080'],
 ])('formats %i', (price, text) => {
   expect(formatPrice(price)).toBe(text);
 });
 
-it('provides all plans and weekly class templates', () => {
+it('provides the fallback plans and weekly class templates', () => {
   expect(personalOneOnOne.map(({ price }) => price)).toEqual([800, 1080, 1280]);
   expect(personalPartner.map(({ price }) => price)).toEqual([1127, 1447, 1597]);
   expect(groupPlans.map(({ price }) => price)).toEqual([260, 200]);

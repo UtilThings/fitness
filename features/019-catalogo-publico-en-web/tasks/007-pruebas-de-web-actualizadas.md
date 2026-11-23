@@ -1,7 +1,7 @@
 # 007 - [Pruebas] Pruebas de `web/` actualizadas y prueba de contrato
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003, 005, 006
 - **Fase:** Fase 4: Pruebas y cierre
 
@@ -23,11 +23,11 @@ Las pruebas actuales: `src/lib/{data,schedule,env,i18n}.test.ts`, `src/component
 
 ## Criterios de aceptación
 
-- [ ] `bun run test` y `bun run test:dist` en `web/` pasan sin depender de la hora real ni de la red.
-- [ ] La prueba de contrato falla si se renombra o elimina un campo de la respuesta de `catalog` o `schedule`.
-- [ ] El build con la API inalcanzable termina con código 0 y precios de respaldo.
-- [ ] No queda ninguna referencia a `spotsLeft` simulado en pruebas ni en código.
-- [ ] `bun run lint`, `format:check` y `check` pasan.
+- [x] `bun run test` y `bun run test:dist` en `web/` pasan sin depender de la hora real ni de la red.
+- [x] La prueba de contrato falla si se renombra o elimina un campo de la respuesta de `catalog` o `schedule`.
+- [x] El build con la API inalcanzable termina con código 0 y precios de respaldo.
+- [x] No queda ninguna referencia a `spotsLeft` simulado en pruebas ni en código.
+- [x] `bun run lint`, `format:check` y `check` pasan.
 
 ## Referencias
 
@@ -41,3 +41,4 @@ Las pruebas actuales: `src/lib/{data,schedule,env,i18n}.test.ts`, `src/component
 
 ## Notas de implementación
 
+- Las guardas verifican contra los ejemplos del spec todas las claves, incluidas las anidadas. El verificador de web pasó 60 pruebas unitarias, 17 del HTML y un build aislado con la API inalcanzable. La salida temporal comparte el sistema de archivos con Astro para que pueda mover sus assets.
