@@ -1,7 +1,7 @@
 # 005 - [Composable] Lib y composable de consulta de auditoría
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 005 (contrato)
 - **Fase:** Fase 3: Auditoría
 
@@ -21,10 +21,10 @@ La app puede consultar `audit_logs` con paginación y filtros por colección, ac
 
 ## Criterios de aceptación
 
-- [ ] `buildAuditFilter` con todos los filtros genera una expresión con parámetros (sin interpolar valores del usuario).
-- [ ] `formatDiff` representa creación, cambio y eliminación de campos.
-- [ ] `useAuditLogs` pagina y recarga al cambiar filtros reiniciando a la página 1.
-- [ ] `typecheck`, `lint`, `format:check` y `test` pasan.
+- [x] `buildAuditFilter` con todos los filtros genera una expresión con parámetros (sin interpolar valores del usuario).
+- [x] `formatDiff` representa creación, cambio y eliminación de campos.
+- [x] `useAuditLogs` pagina y recarga al cambiar filtros reiniciando a la página 1.
+- [x] `typecheck`, `lint`, `format:check` y `test` pasan.
 
 ## Referencias
 
@@ -37,3 +37,5 @@ La app puede consultar `audit_logs` con paginación y filtros por colección, ac
 
 ## Notas de implementación
 
+
+- Pruebas de filtros parametrizados con el SDK real, límites locales de fechas, diffs completos y paginación con respuestas fuera de orden. Pasaron typecheck, lint, format:check y las 184 pruebas de la app.
