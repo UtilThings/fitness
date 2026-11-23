@@ -1,6 +1,7 @@
 import {
   createRouter,
   createWebHistory,
+  stringifyQuery,
   type LocationQueryValue,
   type Router,
 } from 'vue-router';
@@ -68,6 +69,10 @@ export function installGuard(router: Router) {
 
 const router = createRouter({
   history: createWebHistory(),
+  stringifyQuery: (query) =>
+    stringifyQuery(query).replace(/(^|&)redirect=[^&]*/g, (parameter) =>
+      parameter.replaceAll('/', '%2F'),
+    ),
   routes: [
     {
       path: '/',
@@ -79,6 +84,12 @@ const router = createRouter({
           name: 'dashboard',
           component: () => import('@/views/admin/DashboardView.vue'),
           meta: { title: 'Dashboard' },
+        },
+        {
+          path: 'reports',
+          name: 'reports',
+          component: () => import('@/views/admin/ReportsView.vue'),
+          meta: { title: 'Reportes', requiresAuth: true },
         },
         {
           path: 'audit',

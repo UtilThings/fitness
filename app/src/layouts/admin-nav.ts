@@ -22,9 +22,8 @@ export const adminNav: NavGroup[] = [
       { label: 'Dashboard', icon: 'pi pi-chart-bar', to: '/' },
       {
         label: 'Reportes',
-        icon: 'pi pi-file',
+        icon: 'pi pi-chart-bar',
         to: '/reports',
-        placeholder: true,
       },
     ],
   },
