@@ -4,6 +4,7 @@ export interface PbError {
   message: string;
   fields: Record<string, string>;
   status: number;
+  code?: string;
   aborted?: true;
 }
 
@@ -49,8 +50,10 @@ export function parsePbError(error: unknown): PbError {
         typeof response.message === 'string' && response.message.trim()
           ? response.message
           : 'No se pudo completar la operación';
+      const code = response.data?.code?.code;
       return {
         message,
+        ...(typeof code === 'string' ? { code } : {}),
         fields: status === 400 ? fieldMessages(response.data) : {},
         status,
       };

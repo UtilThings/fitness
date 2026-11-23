@@ -1,7 +1,7 @@
 # 007 - [Componente] Composable `useMemberships` y componentes de membresía
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, 005
 - **Fase:** Fase 4: Interfaz
 
@@ -22,10 +22,10 @@ La app tiene un composable y componentes reutilizables para asignar planes, ver 
 
 ## Criterios de aceptación
 
-- [ ] Los diálogos no envían sin nota cuando es obligatoria.
-- [ ] `CreditLedger` muestra los movimientos ordenados del más reciente y el saldo actual con color distinto cuando es negativo.
-- [ ] Los errores del API se muestran como aviso en español.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] Los diálogos no envían sin nota cuando es obligatoria.
+- [x] `CreditLedger` muestra los movimientos ordenados del más reciente y el saldo actual con color distinto cuando es negativo.
+- [x] Los errores del API se muestran como aviso en español.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
