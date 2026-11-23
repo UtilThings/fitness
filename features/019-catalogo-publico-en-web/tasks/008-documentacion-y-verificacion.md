@@ -1,7 +1,7 @@
 # 008 - [Verificación] Documentación y cierre del catálogo público
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003, 004, 005, 006, 007
 - **Fase:** Fase 4: Pruebas y cierre
 
@@ -23,11 +23,11 @@ La integración de `web/` con la API queda documentada, verificada de extremo a 
 
 ## Criterios de aceptación
 
-- [ ] Ambos README reflejan el comportamiento real y la decisión de arquitectura.
-- [ ] `scripts/verify-api.sh` y todos los comandos de `web/` terminan en verde.
-- [ ] La imagen Docker de `web/` construye con y sin `PUBLIC_API_URL` y responde `200` en `/`.
-- [ ] La comprobación manual confirma datos reales con la API y respaldo sin ella, sin cupos inventados.
-- [ ] El spec y las tareas reflejan el estado real (Completado) y sus notas de implementación.
+- [x] Ambos README reflejan el comportamiento real y la decisión de arquitectura.
+- [x] `scripts/verify-api.sh` y todos los comandos de `web/` terminan en verde.
+- [x] La imagen Docker de `web/` construye con y sin `PUBLIC_API_URL` y responde `200` en `/`.
+- [x] La comprobación manual confirma datos reales con la API y respaldo sin ella, sin cupos inventados.
+- [x] El spec y las tareas reflejan el estado real (Completado) y sus notas de implementación.
 
 ## Referencias
 
@@ -39,3 +39,4 @@ La integración de `web/` con la API queda documentada, verificada de extremo a 
 
 ## Notas de implementación
 
+- Documentación actualizada y verificadores de API y web en verde. Nginx respondió 200 con ambas imágenes Docker. En Edge se editaron un precio y el cupo de una clase desde el panel administrativo de la instancia temporal, se comprobaron los cambios sin reconstruir y se apagó PocketBase para verificar el respaldo. Todos los criterios del spec se verificaron y quedaron marcados.

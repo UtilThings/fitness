@@ -338,3 +338,28 @@ El equipo activo puede previsualizar mensajes, consultar el historial y enviar u
 Para añadir SMS en el futuro, implementa `MessageChannel` y registra el canal en `src/lib/message-send.ts`. Añade el valor al campo `message_logs.channel` con una migración y define la elegibilidad y el transporte para ese canal. El canal actual es correo electrónico.
 
 `scripts/verify-api.sh` comprueba los flujos con una instancia temporal de PocketBase y un SMTP de captura en localhost. La captura permite cotejar contenido e idioma sin enviar a una dirección real. Se puede omitir con `JQ_VERIFY_SMTP_CAPTURE=0`.
+
+## Catálogo y horario públicos
+
+Las dos rutas consultan PocketBase en modo lectura y están disponibles para visitantes sin cuenta. El JSON tiene `version: 1` y se construye con los campos del [contrato público](../features/019-catalogo-publico-en-web/spec.md#contrato-http).
+
+| Ruta GET | Contenido |
+| --- | --- |
+| `/api/public/catalog` | Moneda `USD`, servicios y planes activos ordenados, precios en centavos y horarios semanales recurrentes. |
+| `/api/public/schedule?week=YYYY-MM-DD` | Domingo y sábado de la semana, sesiones públicas programadas, hora de Miramar (`America/New_York`), capacidad, cupos y estado. |
+
+La fecha `week` se convierte al domingo de su semana. Cuando falta o apunta al pasado, se usa la semana actual de Miramar. Una fecha inválida o una semana posterior al límite devuelve `400`. Un error interno devuelve `500` con un mensaje genérico. Los cupos se calculan descontando reservas `booked`, `attended` y `no_show`. El estado es `full` con cero cupos, `almost` con uno o dos y `available` con tres o más. Solo se publican sesiones `regular` y `special` programadas de servicios activos. Los nombres de coach se toman del campo de exhibición de los integrantes asignados. Las respuestas omiten identificadores de registros, clientes y reservas.
+
+| Variable del proceso de PocketBase | Valor por defecto | Uso |
+| --- | --- | --- |
+| `PUBLIC_SITE_ORIGINS` | Vacío | Lista de orígenes HTTP(S) exactos separados por comas, sin barra final. |
+| `PUBLIC_SCHEDULE_MAX_WEEKS` | `8` | Máximo de semanas futuras, entero entre 0 y 365. El sitio lo recibe en `X-Public-Schedule-Max-Weeks`. |
+| `PUBLIC_CATALOG_CACHE_SECONDS` | `30` | TTL en memoria del catálogo y del resultado de cada semana, entero entre 0 y 365. Cero desactiva la caché interna. |
+
+Por ejemplo, inicia PocketBase con `PUBLIC_SITE_ORIGINS=https://fitness.juicyquisine.com ./pb serve` después de compilar los hooks. Si el sitio corre en desarrollo, añade `http://localhost:4321` a la lista. PocketBase 0.40.5 permite sustituir su middleware global de CORS en las dos rutas públicas. El parámetro `--origins` sigue controlando los demás endpoints, así que incluye allí los orígenes que necesitan la API administrativa de acuerdo con el despliegue. Mantén la configuración del proxy coherente con estas listas. Las rutas públicas devuelven `Vary: Origin` y permiten leer las respuestas desde los orígenes de `PUBLIC_SITE_ORIGINS`.
+
+La cabecera de caché en respuestas exitosas es `Cache-Control: public, max-age=60, stale-while-revalidate=300`. La caché en memoria comparte el catálogo entre visitantes y utiliza el domingo local como clave para cada semana consultada.
+
+En el panel de PocketBase, abre **Ajustes → Aplicación**, habilita el limitador de solicitudes y añade una regla con la etiqueta `/api/public/`. La barra final aplica la regla al prefijo de ambas rutas. Configura la cantidad de peticiones y la ventana según el tráfico previsto. [Configuración del limitador de PocketBase](https://pocketbase.io/docs/going-to-production/#enable-rate-limiter)
+
+`scripts/verify-api.sh` comprueba ambos contratos HTTP, lista de orígenes, campos públicos, conteos de reservas, caché y errores en una instancia temporal. El [sitio web](../web/README.md#catálogo-y-horario) documenta los builds y el respaldo.

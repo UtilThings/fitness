@@ -1,6 +1,6 @@
 # Especificación: Catálogo público en `web/` desde la API
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -107,7 +107,7 @@ Reglas del contrato:
 - `status`: `full` (0 libres), `almost` (1-2), `available` (>2), igual que `availability` en `web/src/lib/data.ts`. `spots_left = max(0, capacity - reservas booked/attended/no_show)`.
 - Solo sesiones `scheduled` de `kind` `regular` o `special`; las `private` (personal training) y las canceladas **nunca** aparecen. Solo servicios y planes `active`.
 - **Sin datos personales**: no hay ids de reservas, clientes ni sesiones; el nombre del coach es el nombre de exhibición ya público en el sitio.
-- Cabeceras: `Cache-Control: public, max-age=60, stale-while-revalidate=300`; `Access-Control-Allow-Origin` solo con el origen del sitio si está en `PUBLIC_SITE_ORIGINS`; `Vary: Origin`.
+- Cabeceras: `Cache-Control: public, max-age=60, stale-while-revalidate=300`; `Access-Control-Allow-Origin` solo con el origen del sitio si está en `PUBLIC_SITE_ORIGINS`; `Vary: Origin`. El horario expone `X-Public-Schedule-Max-Weeks` para sincronizar la navegación con el límite del servidor.
 
 ### Errores
 
@@ -221,9 +221,9 @@ Reglas del contrato:
 - **Mantener `web/` estático (Astro + Nginx) en lugar de pasar a SSR**: un adaptador Node obligaría a cambiar `Dockerfile`, `nginx.conf` y el despliegue (`deploy.json`) y a operar un proceso más, para datos que cambian poco. Se descartó. A cambio, el contenido es tan fresco como el último build.
 - **Estrategia híbrida «build + revalidación en cliente»**: los precios y planes se incrustan en el HTML en el build (SEO, primera pintura sin JS, sin parpadeo) y la isla `PricingGrid` los revalida en el navegador contra la API, de modo que un cambio de precios no depende de reconstruir el sitio. El horario es dinámico por naturaleza (cupos por semana) y ya era una isla `client:only="vue"`; consulta la API en cliente. Descartadas: solo build (precios obsoletos), solo cliente para precios (sin contenido para buscadores y con parpadeo).
 - **Respaldo estático (`data.ts`)** para precios y plantillas semanales; **sin respaldo de cupos**: la disponibilidad simulada se elimina porque mostrar cupos falsos en un sitio real es engañoso; en su lugar se muestra «Consulta disponibilidad».
-- **Precios en centavos en la API, dólares enteros en `web`**: el mapeo vive en `catalog.ts` y se prueba contra los datos actuales para que el sitio se vea igual.
+- **Precios en centavos en la API y en dólares en `web`**: el mapeo vive en `catalog.ts` y se prueba contra los datos actuales para que el sitio se vea igual.
 - **Slugs de servicio fijados en una constante del cliente**: deben coincidir con los datos sembrados por la feature 008; la prueba de mapeo lo documenta.
-- **Caché corta en servidor (30 s, `$app.store()`) y en navegador/CDN (`max-age=60`)**: protege a PocketBase de ráfagas de visitantes sin atrasar los cupos más de un minuto.
+- **Caché corta en servidor (30 s, `$app.store()`) y en navegador/CDN (`max-age=60`)**: protege a PocketBase de ráfagas de visitantes. La caché HTTP puede servir una respuesta vencida durante la revalidación, según `stale-while-revalidate=300`.
 - **CORS por configuración (`PUBLIC_SITE_ORIGINS`) y sin `*`**: la API es de lectura pública, pero acotar el origen reduce el uso ajeno desde navegadores.
 - **Semana normalizada al domingo local**: coincide con `weekStart` de `web` y evita errores de zona horaria del navegador.
 
@@ -254,14 +254,22 @@ Reglas del contrato:
 
 ## Criterios de Aceptación
 
-- [ ] `GET /api/public/catalog` y `GET /api/public/schedule?week=` responden `200` sin autenticación con el contrato del spec y sin datos personales.
-- [ ] Las sesiones `private` y `cancelled`, y los servicios o planes inactivos, no aparecen; `status` sigue los umbrales `available`/`almost`/`full`.
-- [ ] Solo los orígenes de `PUBLIC_SITE_ORIGINS` reciben `Access-Control-Allow-Origin`; la respuesta lleva `Cache-Control` corto.
-- [ ] `week` inválido o fuera de rango devuelve `400`.
-- [ ] `/pricing` y las páginas de servicios muestran los precios de la API y, con la API caída o sin `PUBLIC_API_URL`, los de `data.ts`; el build no falla.
-- [ ] `/schedule` muestra horarios y cupos reales por semana, con estados de carga y error, y sin cupos simulados.
-- [ ] Un cambio de precio en la API aparece en `/pricing` sin reconstruir el sitio (revalidación en cliente).
-- [ ] Las pruebas de `web/` (incluida `test:dist`) y `scripts/verify-api.sh` terminan en verde.
+- [x] `GET /api/public/catalog` y `GET /api/public/schedule?week=` responden `200` sin autenticación con el contrato del spec y sin datos personales.
+- [x] Las sesiones `private` y `cancelled`, y los servicios o planes inactivos, no aparecen; `status` sigue los umbrales `available`/`almost`/`full`.
+- [x] Solo los orígenes de `PUBLIC_SITE_ORIGINS` reciben `Access-Control-Allow-Origin`; la respuesta lleva `Cache-Control` corto.
+- [x] `week` inválido o fuera de rango devuelve `400`.
+- [x] `/pricing` y las páginas de servicios muestran los precios de la API y, con la API caída o sin `PUBLIC_API_URL`, los de `data.ts`; el build no falla.
+- [x] `/schedule` muestra horarios y cupos reales por semana, con estados de carga y error, y sin cupos simulados.
+- [x] Un cambio de precio en la API aparece en `/pricing` sin reconstruir el sitio (revalidación en cliente).
+- [x] Las pruebas de `web/` (incluida `test:dist`) y `scripts/verify-api.sh` terminan en verde.
+
+## Verificación de cierre
+
+- PocketBase 0.40.5 pasó 99 pruebas y `scripts/verify-api.sh`. La instancia temporal verificó el contrato anónimo, CORS, caché, reservas contabilizadas y exclusiones.
+- `scripts/verify-web.sh` pasó lint, formato, tipos, 60 pruebas unitarias, 17 pruebas del HTML compilado y un build con la API inalcanzable.
+- Se construyeron y arrancaron dos imágenes Docker, con y sin `PUBLIC_API_URL`. Nginx respondió `200` en ambas. Se verificó el argumento de API en el JavaScript de la imagen configurada.
+- En Edge, con la API y el panel administrativo en localhost, un cambio de precio de `$271.50` a `$283.75` se vio en `/pricing` sin reconstruir. Al editar una clase de 6 a 2 plazas con dos reservas, `/schedule` pasó de 4 a 0 cupos. Con PocketBase apagado, `/pricing` conservó los precios del build y `/schedule` mostró el aviso y las clases base sin números de cupos.
+- El valor de `PUBLIC_API_URL` en `web/deploy.json` queda vacío hasta configurar la URL pública de PocketBase.
 
 ---
 
