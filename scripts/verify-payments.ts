@@ -44,23 +44,38 @@ const membership = await call<Row>(records("memberships"), root, "POST", {
 });
 
 const payments = records("payments");
+const database = process.env.JQ_VERIFY_DB;
+assert(database);
+const db = new Database(database);
 const seed = { client: client.id, recorded_by: admin.id, amount_cents: 100, status: "pending" };
-const insert = (body: Body, status = 200) => call<Row>(payments, root, "POST", { ...seed, ...body }, status);
-await insert({});
-await insert({});
-await insert({ status: "paid", receipt_number: "JQ-2020-000001" });
-await insert({ status: "paid", receipt_number: "JQ-2020-000001" }, 400);
+const insert = db.query(`INSERT INTO payments
+  (id, client, membership, period_index, recorded_by, amount_cents, status, receipt_number)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+const receiptNumber = "JQ-2020-000001";
+db.run("BEGIN");
+try {
+  const standalone = [client.id, "", 0, admin.id, 100] as const;
+  const cycle = [indexClient.id, membership.id, 1, admin.id, 100] as const;
+  insert.run("index_payment01", ...standalone, "pending", "");
+  insert.run("index_payment02", ...standalone, "pending", "");
+  insert.run("index_payment03", ...standalone, "paid", receiptNumber);
+  assert.throws(() => insert.run("index_payment04", ...standalone, "paid", receiptNumber),
+    /UNIQUE constraint failed: payments.receipt_number/);
 
-const cycle = { client: indexClient.id, membership: membership.id, period_index: 1 };
-const pending = await insert(cycle);
-await insert(cycle, 400);
-await call(`${payments}/${pending.id}`, root, "PATCH", { status: "void" });
-await insert(cycle);
-assert.deepEqual((await call<{ items: Row[] }>(payments, coach)).items, []);
+  insert.run("index_payment05", ...cycle, "pending", "");
+  assert.throws(() => insert.run("index_payment06", ...cycle, "pending", ""),
+    /UNIQUE constraint failed: payments.membership, payments.period_index/);
+  db.run("UPDATE payments SET status = 'void' WHERE id = ?", ["index_payment05"]);
+  insert.run("index_payment06", ...cycle, "pending", "");
+} finally {
+  db.run("ROLLBACK");
+}
 await call(payments, coach, "POST", seed, 403);
 await call(payments, owner, "POST", seed, 403);
+await call(payments, root, "POST", seed, 403);
 await call(records("receipt_sequences"), owner, "GET", undefined, 403);
-console.log("Índices parciales y reglas de pagos verificados.");
+await call(records("receipt_sequences"), root, "POST", { year: 2020, last_seq: 1 }, 403);
+console.log("Índices parciales y reglas de escritura de pagos verificados.");
 
 const { token: reception, record: cashier } = await auth("admins", "reception@catalog-verify.example.test");
 const path = "admin/payments";
@@ -82,13 +97,14 @@ await create({ ...paidBody, paid_at: "9999-01-01" }, 400);
 await create({ ...paidBody, status: "pending" }, 400);
 const first = await create(paidBody);
 assert.equal(first.receipt_number, receipt(1));
+assert.deepEqual((await call<{ items: Row[] }>(payments, coach)).items, []);
+await call(`${payments}/${first.id}`, coach, "GET", undefined, 404);
+await call(`${payments}/${first.id}`, root, "PATCH", { receipt_number: "JQ-2020-000001" }, 403);
+await call(`${payments}/${first.id}`, root, "DELETE", undefined, 403);
 const [a, b] = await Promise.all([makePending(), makePending()]);
 assert.equal(a.receipt_number, "");
 assert.equal(b.receipt_number, "");
 
-const database = process.env.JQ_VERIFY_DB;
-assert(database);
-const db = new Database(database);
 db.run(`CREATE TRIGGER verify_payment_rollback BEFORE UPDATE ON payments
   WHEN NEW.id = '${a.id}' AND NEW.status = 'paid'
   BEGIN SELECT RAISE(ABORT, 'verify_payment_rollback'); END`);
@@ -116,6 +132,12 @@ await call(`${payments}/${first.id}`, owner, "DELETE", undefined, 403);
 const query = new URLSearchParams({ filter: `record_id = '${first.id}' && action = 'custom'` });
 const { items: logs } = await call<{ items: { summary: string; actor: string }[] }>(records("audit_logs") + "?" + query, owner);
 assert.deepEqual(logs.map(log => [log.summary, log.actor]).sort(), [["Pago anulado", cashier.id], ["Pago registrado", cashier.id]]);
+const lastYear = Number(today.slice(0, 4)) - 1;
+const prior = await create({ ...paidBody, paid_at: `${lastYear}-12-31` });
+assert.equal(prior.receipt_number, `JQ-${lastYear}-000001`);
+assert.equal((await create(paidBody)).receipt_number, receipt(4));
+await call(`${records("admins")}/${cashier.id}`, owner, "DELETE", undefined, 409);
+await call(`${records("clients")}/${client.id}`, owner, "DELETE", undefined, 409);
 console.log("Registro, concurrencia, rollback del contador, permisos y anulación auditada verificados.");
 
 const list = <T>(collection: string, expression: string) =>

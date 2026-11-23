@@ -61,7 +61,14 @@ smoke_test() {
   trap 'exit 143' TERM
 
   base_url="http://127.0.0.1:$port"
-  local -a migration_flags=(--dir "$work_dir/data" --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks")
+  local migration
+  local payments_migration="1795264801_created_payments.js"
+  mkdir "$work_dir/payment-migrations"
+  for migration in "$PWD/pb_migrations/"*.js; do
+    if [[ "${migration##*/}" > "$payments_migration" ]]; then continue; fi
+    ln -s "$migration" "$work_dir/payment-migrations/"
+  done
+  local -a migration_flags=(--dir "$work_dir/data" --migrationsDir "$work_dir/payment-migrations" --hooksDir "$PWD/pb_hooks")
   check_payment_collections() {
     bun -e '
       import { Database } from "bun:sqlite";
