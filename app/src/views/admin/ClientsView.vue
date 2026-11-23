@@ -96,6 +96,7 @@ function blankClient(): ClientDetails {
     phone: '',
     joined_on: '',
     emergency_contact: '',
+    locale: 'es',
   };
 }
 

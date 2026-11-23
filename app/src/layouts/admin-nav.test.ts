@@ -14,6 +14,7 @@ describe('adminNav', () => {
         'Operaciones',
         [
           '/clients',
+          '/communications',
           '/coaching',
           '/classes',
           '/agenda',
@@ -43,6 +44,7 @@ describe('adminNav', () => {
         '/',
         '/reports',
         '/clients',
+        '/communications',
         '/coaching',
         '/team',
         '/settings/profile',

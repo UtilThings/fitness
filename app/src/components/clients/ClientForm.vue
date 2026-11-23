@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
 import { ref, useId, watch } from 'vue';
 import CatalogField from '@/components/catalog/CatalogField.vue';
 import { useClients } from '@/composables/useClients';
 import type { ClientDetails } from '@/lib/clients';
+import { LOCALES } from '@/lib/messages';
 
 const props = defineProps<{
   mode: 'create' | 'edit';
@@ -52,7 +54,7 @@ const fields = [
     max: 200,
   },
 ] as const satisfies readonly {
-  key: keyof ClientDetails;
+  key: Exclude<keyof ClientDetails, 'locale'>;
   label: string;
   type: string;
   max?: number;
@@ -118,6 +120,26 @@ function submit() {
               model = { ...model, [field.key]: $event ?? '' }
             "
             @blur="field.key === 'phone' && checkPhone()"
+          />
+        </template>
+      </CatalogField>
+      <CatalogField
+        :id="id + '-locale'"
+        label="Idioma de comunicaciones"
+        :error="errors?.locale"
+      >
+        <template #default="{ describedBy }">
+          <Select
+            :input-id="id + '-locale'"
+            :model-value="model.locale ?? 'es'"
+            :options="LOCALES"
+            option-label="label"
+            option-value="value"
+            :disabled="busy"
+            :invalid="!!errors?.locale"
+            :aria-describedby="describedBy"
+            fluid
+            @update:model-value="model = { ...model, locale: $event }"
           />
         </template>
       </CatalogField>
