@@ -7,6 +7,7 @@ import {
 import { useAuth } from '@/composables/useAuth';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import { PERMISSIONS } from '@/lib/permissions';
 import type { Role } from '@/types/pb';
 
 declare module 'vue-router' {
@@ -112,7 +113,7 @@ const router = createRouter({
           path: 'payments',
           name: 'payments',
           component: () => import('@/views/admin/PaymentsView.vue'),
-          meta: { title: 'Pagos', roles: ['owner', 'reception'] },
+          meta: { title: 'Pagos', roles: [...PERMISSIONS['payments.manage']] },
         },
         {
           path: 'team',
@@ -195,7 +196,7 @@ const router = createRouter({
       meta: {
         title: 'Recibo de pago',
         requiresAuth: true,
-        roles: ['owner', 'reception'],
+        roles: [...PERMISSIONS['payments.manage']],
       },
     },
     {

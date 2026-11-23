@@ -1,7 +1,7 @@
 # 008 - [Vista] Pestaña Pagos en el perfil del cliente y "cobros por vencer" en el dashboard
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005, 006, 007
 - **Fase:** Fase 4: Interfaz
 
@@ -22,10 +22,10 @@ El perfil de cliente (010) usa pestañas y el dashboard (012) deja una tarjeta "
 
 ## Criterios de aceptación
 
-- [ ] La pestaña Pagos lista solo los pagos del cliente y permite registrar uno nuevo preseleccionando al cliente.
-- [ ] La tarjeta del dashboard muestra los totales reales y enlaza a la vista filtrada.
-- [ ] Un coach no ve la pestaña ni la tarjeta.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] La pestaña Pagos lista solo los pagos del cliente y permite registrar uno nuevo preseleccionando al cliente.
+- [x] La tarjeta del dashboard muestra los totales reales y enlaza a la vista filtrada.
+- [x] Un coach no ve la pestaña ni la tarjeta.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -37,4 +37,4 @@ El perfil de cliente (010) usa pestañas y el dashboard (012) deja una tarjeta "
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Chromium verificó el historial de un cliente, el alta con cliente preseleccionado, los enlaces filtrados del dashboard y el acceso por rol. El selector conserva el cliente al mover el foco hacia otros filtros.

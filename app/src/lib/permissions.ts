@@ -6,7 +6,8 @@ export type Permission =
   | 'profile.edit'
   | 'audit.read'
   | 'catalog.manage'
-  | 'memberships.manage';
+  | 'memberships.manage'
+  | 'payments.manage';
 
 // Cada módulo añade aquí los permisos que expone en la interfaz.
 export const PERMISSIONS: Record<Permission, readonly Role[]> = {
@@ -16,6 +17,7 @@ export const PERMISSIONS: Record<Permission, readonly Role[]> = {
   'audit.read': ['owner'],
   'catalog.manage': ['owner'],
   'memberships.manage': ['owner', 'reception'],
+  'payments.manage': ['owner', 'reception'],
 };
 
 export function roleCan(role: Role | null, permission: Permission): boolean {
@@ -29,4 +31,5 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'audit.read': 'Consultar la auditoría',
   'catalog.manage': 'Gestionar el catálogo',
   'memberships.manage': 'Gestionar membresías',
+  'payments.manage': 'Gestionar pagos',
 };

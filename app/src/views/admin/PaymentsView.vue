@@ -6,14 +6,15 @@ import DataTable, { type DataTablePageEvent } from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
-import { onMounted, ref, shallowRef, useId, watch } from 'vue';
-import { RouterLink } from 'vue-router';
+import { computed, onMounted, ref, shallowRef, useId, watch } from 'vue';
+import { RouterLink, useRoute } from 'vue-router';
 import PageHeader from '@/components/PageHeader.vue';
 import CatalogField from '@/components/catalog/CatalogField.vue';
 import ClientPicker from '@/components/clients/ClientPicker.vue';
 import PaymentFormDialog from '@/components/payments/PaymentFormDialog.vue';
 import PaymentStatusTag from '@/components/payments/PaymentStatusTag.vue';
 import VoidPaymentDialog from '@/components/payments/VoidPaymentDialog.vue';
+import { useClients } from '@/composables/useClients';
 import { useNotify } from '@/composables/useNotify';
 import {
   paymentMethods,
@@ -30,15 +31,21 @@ import { formatCents } from '@/lib/money';
 import type { PbError } from '@/lib/pb-errors';
 
 const api = usePayments();
+const clients = useClients();
+const route = useRoute();
 const { data: due, error: dueError, refresh: refreshDue } = usePaymentsDue();
 const notify = useNotify();
 const id = useId();
 const status = ref<PaymentStatus>();
 const method = ref<PaymentMethod>();
 const client = shallowRef<Client | null>(null);
+const routeClient = computed(() =>
+  typeof route.query.client === 'string' ? route.query.client : undefined,
+);
+const clientId = ref(routeClient.value);
 const from = ref('');
 const through = ref('');
-const overdue = ref(false);
+const overdue = ref(route.query.overdue === '1');
 const page = ref(1);
 const perPage = ref(20);
 const rows = shallowRef<Payment[]>([]);
@@ -72,7 +79,7 @@ async function load() {
     const result = await api.list({
       page: page.value,
       perPage: perPage.value,
-      client: client.value?.id,
+      client: clientId.value,
       status: status.value,
       method: method.value,
       from: from.value,
@@ -123,12 +130,44 @@ function saved(payment: Payment) {
 }
 
 watch(
-  [status, method, client, from, through, overdue],
+  [status, method, clientId, from, through, overdue],
   () => {
     page.value = 1;
     void load();
   },
   { immediate: true },
+);
+
+function selectClient(value: Client | null) {
+  client.value = value;
+  clientId.value = value?.id;
+}
+
+watch(
+  routeClient,
+  async (value, _, onCleanup) => {
+    clientId.value = value;
+    client.value = null;
+    if (!value) return;
+    let current = true;
+    onCleanup(() => {
+      current = false;
+    });
+    try {
+      const record = await clients.get(value);
+      if (current && clientId.value === value) client.value = record;
+    } catch {
+      // The filter remains active even when the client label is unavailable.
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  () => route.query.overdue,
+  (value) => {
+    overdue.value = value === '1';
+  },
 );
 
 onMounted(() => void refreshDue());
@@ -194,7 +233,15 @@ onMounted(() => void refreshDue());
           class="min-w-36"
         />
       </CatalogField>
-      <ClientPicker v-model="client" />
+      <ClientPicker :model-value="client" @update:model-value="selectClient" />
+      <Button
+        v-if="clientId && !client"
+        label="Quitar filtro de cliente"
+        severity="secondary"
+        text
+        size="small"
+        @click="selectClient(null)"
+      />
       <CatalogField :id="id + '-from'" label="Desde">
         <InputText :id="id + '-from'" v-model="from" type="date" />
       </CatalogField>

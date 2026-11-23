@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   get: vi.fn(),
   send: vi.fn(),
   success: vi.fn(),
+  client: vi.fn(),
 }));
 
 vi.mock('@/lib/pocketbase', () => ({
@@ -22,6 +23,9 @@ vi.mock('@/lib/pocketbase', () => ({
       ),
     send: api.send,
   },
+}));
+vi.mock('@/composables/useClients', () => ({
+  useClients: () => ({ get: api.client }),
 }));
 vi.mock('@/composables/useNotify', () => ({
   useNotify: () => ({ success: api.success }),
@@ -156,4 +160,23 @@ it('carga el recibo anulado e impide imprimir o ver uno pendiente', async () => 
   expect(view.find('nav button').exists()).toBe(false);
   view.unmount();
   vi.unstubAllGlobals();
+});
+
+it('aplica los parámetros client y overdue desde la primera consulta', async () => {
+  api.list
+    .mockClear()
+    .mockResolvedValue({ items: [], totalPages: 0, totalItems: 0 });
+  api.client.mockResolvedValue({ id: 'ana' });
+  const { view } = await render('/payments?client=ana&overdue=1');
+  expect(api.list.mock.calls[0][2].filter).toContain('client = "ana"');
+  expect(api.list.mock.calls[0][2].filter).toContain(
+    "status = 'pending' && due_on != ''",
+  );
+  expect(api.client).toHaveBeenCalledWith('ana');
+  const overdue = view.get('input[type=checkbox]');
+  expect((overdue.element as HTMLInputElement).checked).toBe(true);
+  await overdue.setValue(false);
+  await flushPromises();
+  expect(api.list.mock.lastCall![2].filter).toBe('client = "ana"');
+  view.unmount();
 });

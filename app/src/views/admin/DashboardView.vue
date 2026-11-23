@@ -1,15 +1,28 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
+import { computed, watch } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import AttentionCard from '@/components/dashboard/AttentionCard.vue';
 import DashboardFeedback from '@/components/dashboard/DashboardFeedback.vue';
 import StatCard from '@/components/dashboard/StatCard.vue';
 import TodayClassesCard from '@/components/dashboard/TodayClassesCard.vue';
 import UpcomingPaymentsCard from '@/components/dashboard/UpcomingPaymentsCard.vue';
+import { useAuth } from '@/composables/useAuth';
+import { usePaymentsDue } from '@/composables/usePaymentsDue';
 import { useDashboard } from '@/composables/useDashboard';
 import { formatTime } from '@/lib/datetime';
 
 const { data, loading, error, refresh } = useDashboard();
+const { can } = useAuth();
+const canManagePayments = computed(() => can('payments.manage'));
+const due = usePaymentsDue();
+
+watch(
+  [canManagePayments, () => data.value?.generated_at],
+  ([allowed, generated]) => {
+    if (allowed && generated) void due.refresh(7, 1);
+  },
+);
 </script>
 
 <template>
@@ -70,7 +83,13 @@ const { data, loading, error, refresh } = useDashboard();
         />
         <div class="grid min-w-0 content-start gap-4">
           <AttentionCard :items="data.attention" />
-          <UpcomingPaymentsCard :payments="data.upcoming_payments" />
+          <UpcomingPaymentsCard
+            v-if="canManagePayments"
+            :totals="due.data.value?.totals"
+            :loading="due.loading.value"
+            :error="due.error.value?.message"
+            @retry="due.refresh(7, 1)"
+          />
         </div>
       </div>
     </template>

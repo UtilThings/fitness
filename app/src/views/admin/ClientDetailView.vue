@@ -20,6 +20,7 @@ import ClientForm from '@/components/clients/ClientForm.vue';
 import ClientHistoryTab from '@/components/clients/ClientHistoryTab.vue';
 import ClientStatusTag from '@/components/clients/ClientStatusTag.vue';
 import ClientMemberships from '@/components/memberships/ClientMemberships.vue';
+import ClientPayments from '@/components/payments/ClientPayments.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useClients } from '@/composables/useClients';
 import { useConfirmDelete } from '@/composables/useConfirmDelete';
@@ -38,7 +39,8 @@ import type { PbError } from '@/lib/pb-errors';
 
 const route = useRoute();
 const router = useRouter();
-const { user, isOwner } = useAuth();
+const { user, isOwner, can } = useAuth();
+const canManagePayments = computed(() => can('payments.manage'));
 const clients = useClients();
 const notify = useNotify();
 const confirm = useConfirm();
@@ -379,6 +381,7 @@ function requestDelete() {
           <Tab value="notes">Objetivos y notas</Tab>
           <Tab value="assessment">Evaluación inicial</Tab>
           <Tab value="memberships">Membresías</Tab>
+          <Tab v-if="canManagePayments" value="payments">Pagos</Tab>
           <Tab value="history">Historial</Tab>
         </TabList>
         <TabPanels>
@@ -470,6 +473,13 @@ function requestDelete() {
               v-if="tab === 'memberships'"
               :key="client.id"
               :client="client.id"
+            />
+          </TabPanel>
+          <TabPanel v-if="canManagePayments" value="payments">
+            <ClientPayments
+              v-if="tab === 'payments'"
+              :key="client.id"
+              :client="client"
             />
           </TabPanel>
           <TabPanel value="history">

@@ -23,12 +23,6 @@ export interface DashboardAttention {
   starts_at: string;
 }
 
-export interface UpcomingPayments {
-  count: number;
-  total_cents: number;
-  items: unknown[];
-}
-
 export interface DashboardSummary {
   generated_at: string;
   timezone: string;
@@ -43,7 +37,6 @@ export interface DashboardSummary {
   };
   sessions_today: DashboardSession[];
   attention: DashboardAttention[];
-  upcoming_payments: UpcomingPayments | null;
 }
 
 export function useDashboard() {

@@ -9,12 +9,24 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import UpcomingPaymentsCard from '@/components/dashboard/UpcomingPaymentsCard.vue';
 import type { DashboardSummary } from '@/composables/useDashboard';
+import type { PaymentsDue } from '@/composables/usePaymentsDue';
+import { roleCan } from '@/lib/permissions';
+import type { Role } from '@/types/pb';
 import DashboardView from './DashboardView.vue';
 
-const { send } = vi.hoisted(() => ({ send: vi.fn() }));
+const { send, auth } = vi.hoisted(() => ({
+  send: vi.fn(),
+  auth: { role: 'owner' as Role },
+}));
+vi.mock('@/composables/useAuth', () => ({
+  useAuth: () => ({ can: () => roleCan(auth.role, 'payments.manage') }),
+}));
 vi.mock('@/lib/pocketbase', () => ({ pb: { send } }));
 enableAutoUnmount(afterEach);
-afterEach(() => send.mockReset());
+afterEach(() => {
+  send.mockReset();
+  auth.role = 'owner';
+});
 
 const generated = '2026-11-23T14:00:00Z';
 const dashboard: DashboardSummary = {
@@ -49,13 +61,21 @@ const dashboard: DashboardSummary = {
     },
   ],
   attention: [{ session_id: 'jump', reason: 'no_coach', starts_at: generated }],
-  upcoming_payments: null,
 };
 
+const totals: PaymentsDue['totals'] = {
+  overdue_cents: 2700,
+  upcoming_cents: 17125,
+  overdue_count: 1,
+  upcoming_count: 3,
+  renewals_count: 0,
+};
 const global = { plugins: [PrimeVue], stubs: { RouterLink: RouterLinkStub } };
 
-it('muestra métricas, la ocupación, disponibilidad y el placeholder sobre una respuesta del endpoint', async () => {
-  send.mockResolvedValue(dashboard);
+it('muestra métricas, ocupación y cobros reales con enlace a los vencidos', async () => {
+  send.mockImplementation((path) =>
+    Promise.resolve(path === '/api/admin/dashboard' ? dashboard : { totals }),
+  );
   const wrapper = mount(DashboardView, { global });
   await flushPromises();
   for (const name of [
@@ -78,7 +98,24 @@ it('muestra métricas, la ocupación, disponibilidad y el placeholder sobre una 
   expect(wrapper.get('[role="progressbar"]').attributes('aria-valuenow')).toBe(
     '67',
   );
-  expect(wrapper.text()).toContain('Disponible con Pagos (próximamente)');
+  expect(wrapper.text()).toContain('Cobros por vencer');
+  expect(wrapper.text()).toContain('3 por vencer en 7 días');
+  expect(wrapper.text()).toContain('$171.25');
+  expect(wrapper.text()).toContain('1 vencido');
+  expect(wrapper.text()).toContain('$27.00');
+  expect(send).toHaveBeenCalledWith(
+    '/api/admin/payments/due',
+    expect.objectContaining({ query: { days: 7, limit: 1 } }),
+  );
+  expect(
+    wrapper
+      .getComponent(UpcomingPaymentsCard)
+      .getComponent(RouterLinkStub)
+      .props('to'),
+  ).toEqual({
+    path: '/payments',
+    query: { overdue: '1' },
+  });
   expect(
     wrapper.findAllComponents(RouterLinkStub).map((node) => node.props('to')),
   ).toContainEqual({
@@ -112,10 +149,28 @@ it('permite reintentar tras un error de red', async () => {
   expect(wrapper.text()).toContain('Clientes activos');
 });
 
-it('muestra el conteo y total USD cuando Cobros recibe datos', () => {
+it('muestra el estado vacío de los cobros', () => {
   const wrapper = mount(UpcomingPaymentsCard, {
-    props: { payments: { count: 3, total_cents: 17125, items: [] } },
+    props: {
+      loading: false,
+      totals: {
+        overdue_cents: 0,
+        upcoming_cents: 0,
+        overdue_count: 0,
+        upcoming_count: 0,
+        renewals_count: 0,
+      },
+    },
     global,
   });
-  expect(wrapper.text()).toContain('3 por vencer · $171.25');
+  expect(wrapper.text()).toContain('No hay cobros vencidos ni por vencer.');
+});
+
+it('oculta los cobros y omite la petición para coach', async () => {
+  auth.role = 'coach';
+  send.mockResolvedValue(dashboard);
+  const wrapper = mount(DashboardView, { global });
+  await flushPromises();
+  expect(wrapper.findComponent(UpcomingPaymentsCard).exists()).toBe(false);
+  expect(send).toHaveBeenCalledTimes(1);
 });

@@ -18,22 +18,33 @@ const props = withDefaults(
 );
 const client = defineModel<Client | null>({ default: null });
 const text = shallowRef<Client | string | null>(client.value);
-const suggestions = shallowRef<Client[]>([]);
+const suggestions = shallowRef<Client[]>(client.value ? [client.value] : []);
 const failed = ref(false);
 const id = useId();
 const { list } = useClients();
 let latestSearch = 0;
 
 watch(client, (next) => {
-  if (next || typeof text.value !== 'string') text.value = next;
+  if (next) {
+    text.value = next;
+    suggestions.value = [next];
+  } else if (typeof text.value !== 'string') {
+    text.value = null;
+    suggestions.value = [];
+  }
 });
 
 function changeInput(value: Client | string | null) {
   text.value = value;
   latestSearch++;
   failed.value = false;
-  suggestions.value = [];
-  if (!value || typeof value === 'string') client.value = null;
+  if (value && typeof value !== 'string') {
+    // PrimeVue checks the visible options again when the input loses focus.
+    suggestions.value = [value];
+  } else {
+    suggestions.value = [];
+    client.value = null;
+  }
 }
 
 async function search({ query }: AutoCompleteCompleteEvent) {
@@ -47,6 +58,11 @@ async function search({ query }: AutoCompleteCompleteEvent) {
   } catch {
     if (version === latestSearch) failed.value = true;
   }
+}
+
+// Keep the input focused until the option click commits the selection.
+function keepInputFocus(event: MouseEvent) {
+  event.preventDefault();
 }
 
 function select({ value }: AutoCompleteOptionSelectEvent) {
@@ -64,6 +80,7 @@ function select({ value }: AutoCompleteOptionSelectEvent) {
       :option-label="fullName"
       :min-length="2"
       :delay="300"
+      :pt="{ option: { onMousedown: keepInputFocus } }"
       :disabled="disabled"
       :empty-search-message="
         failed ? 'No se pudo buscar clientes' : 'Sin coincidencias'

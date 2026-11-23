@@ -66,11 +66,14 @@ it('omite consultas cortas, muestra resultados y emite solo una selección', asy
     perPage: 10,
     status: undefined,
   });
+  input.vm.$emit('update:modelValue', ana);
   input.vm.$emit('option-select', {
     originalEvent: new Event('click'),
     value: ana,
   });
+  await flushPromises();
   expect(wrapper.emitted('update:modelValue')).toEqual([[ana]]);
+  expect(input.props('suggestions')).toEqual([ana]);
 });
 
 it('muestra la etiqueta de pausa sin reutilizar la etiqueta de activo', () => {

@@ -36,27 +36,30 @@ export function usePaymentsDue() {
   const data = shallowRef<PaymentsDue>();
   const error = shallowRef<PbError>();
   const loading = ref(false);
-  const request = new AbortController();
+  let active: AbortController | undefined;
 
   async function refresh(days = 7, limit = 50) {
-    if (request.signal.aborted || loading.value) return;
+    active?.abort();
+    const request = new AbortController();
+    active = request;
     loading.value = true;
     error.value = undefined;
     try {
-      data.value = await paymentRequest(
+      const report = await paymentRequest(
         pb.send<PaymentsDue>('/api/admin/payments/due', {
           requestKey: null,
           signal: request.signal,
           query: { days, limit },
         }),
       );
+      if (!request.signal.aborted) data.value = report;
     } catch (cause) {
       if (!request.signal.aborted) error.value = cause as PbError;
     } finally {
-      loading.value = false;
+      if (active === request) loading.value = false;
     }
   }
 
-  onUnmounted(() => request.abort());
+  onUnmounted(() => active?.abort());
   return { data, error, loading, refresh };
 }
