@@ -128,6 +128,18 @@ export function useMemberships() {
       post('/' + encodeURIComponent(id) + '/cancel', { note }),
     adjust: (id: string, delta: number, note: string) =>
       post('/' + encodeURIComponent(id) + '/adjust', { delta, note }),
+    privateEligibility(client: string, service: string, starts_at: string) {
+      return request(
+        pb.send<BookingEligibility & { partner: boolean }>(
+          api + '/eligibility',
+          {
+            ...options,
+            method: 'GET',
+            query: { client, service, starts_at },
+          },
+        ),
+      );
+    },
     eligibility(client: string, session: string) {
       return request(
         pb.send<BookingEligibility>(api + '/eligibility', {

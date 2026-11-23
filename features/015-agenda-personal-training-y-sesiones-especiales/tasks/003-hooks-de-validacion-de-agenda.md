@@ -1,7 +1,7 @@
 # 003 - [Hook] Validación de disponibilidad y sesiones privadas/especiales
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002
 - **Fase:** Fase 3: Servidor
 
@@ -25,12 +25,12 @@ El servidor rechaza tramos de disponibilidad inválidos y sesiones `private`/`sp
 
 ## Criterios de aceptación
 
-- [ ] Un tramo solapado del mismo coach/día devuelve `400`.
-- [ ] Crear una `private` fuera de disponibilidad o con choque devuelve `400` con el código esperado; las `regular` siguen funcionando como antes.
-- [ ] Una `special` sin título devuelve `400`.
-- [ ] Editar una sesión no choca consigo misma.
-- [ ] Los cambios de disponibilidad quedan en `audit_logs`.
-- [ ] `bun run build:ts` y `scripts/verify-api.sh` pasan.
+- [x] Un tramo solapado del mismo coach/día devuelve `400`.
+- [x] Crear una `private` fuera de disponibilidad o con choque devuelve `400` con el código esperado; las `regular` siguen funcionando como antes.
+- [x] Una `special` sin título devuelve `400`.
+- [x] Editar una sesión no choca consigo misma.
+- [x] Los cambios de disponibilidad quedan en `audit_logs`.
+- [x] `bun run build:ts` y `scripts/verify-api.sh` pasan.
 
 ## Referencias
 
@@ -43,4 +43,4 @@ El servidor rechaza tramos de disponibilidad inválidos y sesiones `private`/`sp
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Los hooks de escritura de modelo validan en la transacción tanto los cambios desde la API de colecciones como las escrituras internas. Se reutiliza la protección de cupos de 011. Las clases movidas desde el flujo de 009 reciben un título. La verificación de API cubre los códigos y el registro de auditoría.

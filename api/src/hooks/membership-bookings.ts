@@ -33,7 +33,15 @@ routerAdd("GET", "/api/admin/memberships/eligibility", (e) => {
   requireMembershipRole(e, ["owner", "reception", "coach"]);
   const query = e.request!.url!.query();
   const client = getRecord(e.app, "clients", query.get("client"));
-  const session = getRecord(e.app, "class_sessions", query.get("session"));
+  const sessionId = query.get("session");
+  if (!sessionId && query.get("service") && query.get("starts_at")) {
+    if (!client) throw membershipError(404, "not_found", "Cliente no encontrado.");
+    const { privateSessionDraft } = require(`${__hooks}/lib/private-sessions`) as typeof import("../lib/private-sessions");
+    const { hasPartnerMembership } = require(`${__hooks}/lib/scheduling-store`) as typeof import("../lib/scheduling-store");
+    const draft = privateSessionDraft(e.app, { service: query.get("service"), starts_at: query.get("starts_at") });
+    return e.json(200, { ...checkEligibility(e.app, client.id, draft), partner: hasPartnerMembership(e.app, client.id, draft) });
+  }
+  const session = getRecord(e.app, "class_sessions", sessionId);
   if (!client || !session) throw membershipError(404, "not_found", "Cliente o sesión no encontrado.");
   return e.json(200, checkEligibility(e.app, client.id, session));
 });

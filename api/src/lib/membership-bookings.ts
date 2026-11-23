@@ -16,7 +16,7 @@ const eligibilityMessages: Record<EligibilityCode, string> = {
 };
 
 export function authorizeBooking(app: core.App, client: core.Record, session: core.Record,
-  options: BookingEligibilityOptions & { actor: string; today: string }) {
+  options: BookingEligibilityOptions & { actor: string; today: string; reportClient?: boolean }) {
   let selection = selectBookingMembership(app, client.id, session, { ...options, override: false });
   if (options.firstVisit && selection.code === "no_membership") {
     const service = session.getString("service");
@@ -33,7 +33,7 @@ export function authorizeBooking(app: core.App, client: core.Record, session: co
   }
   if (!selection.allowed) {
     if (!options.override || options.firstVisit) {
-      throw membershipError(400, selection.code, eligibilityMessages[selection.code]);
+      throw membershipError(400, selection.code, eligibilityMessages[selection.code], options.reportClient ? client.id : undefined);
     }
     selection = selectBookingMembership(app, client.id, session, options);
   }

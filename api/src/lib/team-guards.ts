@@ -1,6 +1,7 @@
 export const ADMIN_REFERENCES: { collection: string; field: string }[] = [
   { collection: "audit_logs", field: "actor" },
   { collection: "services", field: "default_coach" },
+  { collection: "coach_availability", field: "coach" },
   { collection: "bookings", field: "marked_by" },
   { collection: "payments", field: "recorded_by" },
   { collection: "payments", field: "voided_by" },

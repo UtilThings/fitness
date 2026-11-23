@@ -123,6 +123,20 @@ onRecordAfterUpdateSuccess((e) => {
 
 La cascada de reservas se guarda en la misma transacción que la cancelación de la sesión. Los hooks de éxito observan la sesión y las reservas ya canceladas. La feature 018 puede observar la sesión para enviar `class_cancelled`.
 
+## Agenda de Personal Training y sesiones especiales
+
+`coach_availability` guarda tramos semanales con `coach`, `weekday` (0 es domingo), `start_time` y `end_time` en formato local `HH:mm` de Miramar. Los admins activos pueden consultar los tramos. Owner puede editarlos y cada coach puede editar los propios. Los tramos de un mismo coach y día admiten bordes contiguos y deben tener fin posterior al inicio. Los cambios se auditan y desactivar al coach conserva sus tramos.
+
+Una sesión privada usa un servicio personal activo y un coach activo con rol coach u owner. Toda su duración debe quedar dentro de un único tramo. El servidor compara el intervalo con las sesiones programadas del coach y con los bloqueos de las fechas locales cubiertas. Una sesión puede empezar justo cuando termina otra.
+
+`POST /api/admin/sessions/private` está disponible para owner, reception y coaches que se asignen a sí mismos. El cuerpo incluye `service`, `coach`, `starts_at` como ISO UTC, `duration_min` de 15 a 240 y `client_ids` con uno o dos IDs distintos. Puede incluir `notes` y `capacity`. Un cliente ocupa un cupo por defecto y una pareja requiere dos. Para abrir dos cupos, cada cliente invitado debe tener una membresía activa con `plans.partner = true` del servicio que cubra la fecha. El requisito también se aplica al reservar el cupo restante.
+
+La ruta devuelve `{ session, bookings }` en HTTP 200. Guarda la sesión y todas las reservas `booked` en la misma transacción. Owner y reception pueden enviar `overrides: { "<id del cliente>": { "override_note": "Motivo" } }` cuando exista una excepción de elegibilidad. La reserva compromete el cupo y los créditos según 013. El movimiento de consumo se registra al marcar asistencia o cuando se aplica la política de cancelación tardía o ausencia.
+
+Los errores de dominio se incluyen en `data.code.code`. Entre ellos están `coach_conflict`, `block_conflict`, `outside_availability`, `invalid_capacity`, `partner_required` y los códigos de elegibilidad de 013. `data.conflict_id.code` identifica la sesión o el bloqueo que causa el conflicto. `data.client.code` identifica al cliente cuya elegibilidad falló. Una sesión privada programada con el mismo coach, servicio e instante devuelve HTTP 409. Para consultar la elegibilidad antes de crearla, usa `GET /api/admin/memberships/eligibility` con `client`, `service` y `starts_at`. La respuesta incluye `partner`.
+
+Para una especial, owner o reception guarda en `class_sessions` con `kind = special`, `title` de hasta 120 caracteres, un servicio y capacidad de al menos un cupo. El coach es opcional. Cuando se asigna, se comprueban los choques de horario y bloqueos. Las especiales admiten reservas sin membresía y quedan exentas de créditos. Ambos tipos se crean sin plantilla. Se conservan las rutas de cancelación y el historial de reservas. Para cambiar el horario de una privada con reservas, cancela la sesión y agenda otra desde el flujo privado.
+
 ## Clientes
 
 La colección `clients` se usa mediante la API estándar de PocketBase. Los admins activos pueden listar, consultar, crear y editar. Solo un `owner` activo puede eliminar o cambiar `free_class_used` por HTTP. Los hooks de reservas pueden marcarla mediante `app.save`, que ejecuta los hooks de modelo y omite los hooks de petición.

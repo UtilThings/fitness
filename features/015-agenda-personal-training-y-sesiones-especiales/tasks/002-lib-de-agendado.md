@@ -1,7 +1,7 @@
 # 002 - [Lib] Reglas de agendado: solapes, disponibilidad y capacidad privada
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 2: Lógica pura
 
@@ -20,10 +20,10 @@ Las sesiones se guardan en UTC (`starts_at`) y la disponibilidad en hora local; 
 
 ## Criterios de aceptación
 
-- [ ] Una sesión 10:00-11:00 y otra 11:00-12:00 del mismo coach no chocan; 10:30-11:30 sí.
-- [ ] Una sesión 08:30-09:30 dentro del tramo 08:00-12:00 es válida; 11:30-12:30 no.
-- [ ] Dos clientes sin ambos partner devuelven `partner_required`.
-- [ ] `bun test` y `bun run build:ts` pasan.
+- [x] Una sesión 10:00-11:00 y otra 11:00-12:00 del mismo coach no chocan; 10:30-11:30 sí.
+- [x] Una sesión 08:30-09:30 dentro del tramo 08:00-12:00 es válida; 11:30-12:30 no.
+- [x] Dos clientes sin ambos partner devuelven `partner_required`.
+- [x] `bun test` y `bun run build:ts` pasan.
 
 ## Referencias
 
@@ -35,4 +35,4 @@ Las sesiones se guardan en UTC (`starts_at`) y la disponibilidad en hora local; 
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Las funciones reciben minutos locales y fechas ya convertidas por el llamador con el helper de 009. Se verificó con `bun test` y `bun run build:ts`.

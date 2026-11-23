@@ -9,7 +9,6 @@ import { parsePbError, type PbError } from '@/lib/pb-errors';
 import { pb } from '@/lib/pocketbase';
 import {
   weekStartFor,
-  type ClassDetails,
   type ClassSession,
   type ClassTemplate,
   type ClassTemplateInput,
@@ -152,16 +151,10 @@ export function useSchedule() {
           apply_to_future: applyToFuture,
         },
       ),
-    createSpecialSession: (input: ClassDetails & { starts_at: string }) =>
-      mutate(() =>
-        sessionRecords.create<ClassSession>(
-          { ...input, kind: 'special', status: 'scheduled' },
-          { requestKey: null },
-        ),
-      ),
     updateSession: (
       id: string,
-      changes: Pick<ClassSession, 'coach' | 'notes'>,
+      changes: Pick<ClassSession, 'coach' | 'notes'> &
+        Partial<Pick<ClassSession, 'title' | 'capacity'>>,
     ) =>
       mutate(() =>
         sessionRecords.update<ClassSession>(id, changes, { requestKey: null }),

@@ -18,6 +18,8 @@ onRecordCreateRequest((e) => {
     require(`${__hooks}/lib/booking-store`) as typeof import("../lib/booking-store");
   const { auditActor, inScheduleTransaction } =
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
+  const { hasPartnerMembership, schedulingError } =
+    require(`${__hooks}/lib/scheduling-store`) as typeof import("../lib/scheduling-store");
   const actor = requireBookingStaff(e);
   const requested = e.record!;
   const { authorizeBooking } =
@@ -42,6 +44,10 @@ onRecordCreateRequest((e) => {
     });
     if (!decision.ok) throw bookingError(decision.field, decision.message);
 
+    if (session.getString("kind") === "private" && session.getInt("capacity") === 2 &&
+        !hasPartnerMembership(tx, client.id, session)) {
+      throw schedulingError("partner_required");
+    }
     const entitlement = authorizeBooking(tx, client, session, {
       actor, today: membershipToday(), bookingId: existing?.id, override: !!note, firstVisit: useFreeClass,
     });

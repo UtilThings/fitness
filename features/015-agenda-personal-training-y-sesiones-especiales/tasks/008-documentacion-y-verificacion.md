@@ -1,7 +1,7 @@
 # 008 - [Verificación] Documentación y cierre de la feature
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, 007
 - **Fase:** Fase final: Verificación y cierre
 
@@ -22,9 +22,9 @@ La feature queda documentada, verificada de extremo a extremo y marcada como com
 
 ## Criterios de aceptación
 
-- [ ] Los READMEs describen la feature y las decisiones.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
-- [ ] Todos los criterios del spec están marcados o los hallazgos quedan anotados.
+- [x] Los READMEs describen la feature y las decisiones.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Todos los criterios del spec están marcados o los hallazgos quedan anotados.
 
 ## Referencias
 
@@ -36,4 +36,6 @@ La feature queda documentada, verificada de extremo a extremo y marcada como com
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+`scripts/verify-api.sh` completó 71 pruebas unitarias y la prueba de humo contra PocketBase. Se comprobó que las sesiones previas sobreviven a la reversión y reaplicación de las migraciones. Los casos de agenda verifican que los choques, la falta de disponibilidad y el segundo cliente sin créditos no dejan registros parciales. También cubren el cupo partner, la baja de un coach, el cambio de hora, el consumo al asistir a una privada y la asistencia a una especial sin membresía ni movimientos de crédito.
+
+`scripts/verify-app.sh` completó lint, formato, typecheck, 270 pruebas Vitest y build. Vitest cubre el editor semanal, los permisos de agenda, la agrupación local cerca de medianoche y los flujos de creación y filtrado del calendario.
