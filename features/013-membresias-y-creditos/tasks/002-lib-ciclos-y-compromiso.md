@@ -1,7 +1,7 @@
 # 002 - [Lib] Ciclos de 4 semanas y compromiso de 16 semanas
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 2: Lógica pura
 
@@ -21,10 +21,10 @@ Las fechas de membresía son cadenas locales `YYYY-MM-DD` (zona `America/New_Yor
 
 ## Criterios de aceptación
 
-- [ ] `periodBounds("2026-01-05", 1)` devuelve fin `2026-02-01` y el periodo 2 empieza `2026-02-02`.
-- [ ] `commitmentEnd("2026-01-05", 4)` devuelve `2026-04-26`.
-- [ ] Las pruebas cubren los casos de borde listados y `bun test` pasa.
-- [ ] `bun run build:ts` genera `pb_hooks/lib/membership-cycles` sin errores.
+- [x] `periodBounds("2026-01-05", 1)` devuelve fin `2026-02-01` y el periodo 2 empieza `2026-02-02`.
+- [x] `commitmentEnd("2026-01-05", 4)` devuelve `2026-04-26`.
+- [x] Las pruebas cubren los casos de borde listados y `bun test` pasa.
+- [x] `bun run build:ts` genera `pb_hooks/lib/membership-cycles` sin errores.
 
 ## Referencias
 
