@@ -1,9 +1,10 @@
 /// <reference path="../../pb_data/types.d.ts" />
 
-import { canUseFirstClass, creditsToGrant, isFirstVisit, type CreditReason } from "./credits";
-import { isEarlyCancellation, extendByPause, nextPeriod, periodBounds, shouldExpire } from "./membership-cycles";
-import { auditActor, getRecord, inScheduleTransaction, scheduleAudit } from "./schedule-store";
-import { utcToLocal } from "./tz";
+import { canUseFirstClass, checkBookingEligibility, creditsToGrant, isFirstVisit, localWeekKey,
+  requiresCredit, type CreditReason, type Eligibility } from "./credits";
+import { addDays, isEarlyCancellation, extendByPause, nextPeriod, periodBounds, shouldExpire } from "./membership-cycles";
+import { auditActor, getRecord, inScheduleTransaction, pocketBaseDate, scheduleAudit } from "./schedule-store";
+import { startOfLocalDay, utcToLocal } from "./tz";
 
 type Context = { actor: string; today: string };
 type Body = Record<string, unknown>;
@@ -213,3 +214,97 @@ export function manageMembership(app: core.App, id: string, action: MembershipAc
     return { membership, movement };
   });
 }
+
+export type BookingEligibilityOptions = { now?: number; bookingId?: string; override?: boolean; firstVisit?: boolean };
+type Selection = Eligibility & { membership?: core.Record; freeClass?: boolean };
+
+export function sessionDate(session: core.Record) {
+  return utcToLocal(session.getString("starts_at").replace(" ", "T")).date;
+}
+
+export function chargeable(app: core.App, session: core.Record) {
+  const service = app.findRecordById("services", session.getString("service"));
+  return requiresCredit({ kind: session.getString("kind") || "regular" }, { kind: service.getString("kind") });
+}
+
+export function matchingMemberships(app: core.App, client: string, service: string) {
+  return app.findRecordsByFilter("memberships", "client = {:client} && plan.service = {:service}",
+    "current_period_end,id", 0, 0, { client, service }).flatMap((record) => record ? [{
+      record, plan: planData(app.findRecordById("plans", record.getString("plan"))),
+    }] : []);
+}
+
+export function covers(membership: core.Record, date: string) {
+  return membershipDate(membership, "current_period_start") <= date &&
+    membershipDate(membership, "current_period_end") >= date;
+}
+
+function commitments(app: core.App, client: string, session: core.Record, membership: core.Record,
+  date: string, options: BookingEligibilityOptions) {
+  const week = localWeekKey(date);
+  const weekEnd = addDays(week, 7);
+  const periodStart = membershipDate(membership, "current_period_start");
+  const periodEnd = membershipDate(membership, "current_period_end");
+  const from = periodStart < week ? periodStart : week;
+  const to = periodEnd >= weekEnd ? addDays(periodEnd, 1) : weekEnd;
+  const now = options.now ?? Date.now();
+  const bookings = app.findRecordsByFilter("bookings",
+    "client = {:client} && id != {:id} && session.service = {:service} && session.kind != 'special'" +
+    " && session.starts_at >= {:from} && session.starts_at < {:to}" +
+    " && (membership = {:membership} || (membership = '' && override_note = ''))" +
+    " && status != 'cancelled'", "", 0, 0, {
+    client, id: options.bookingId ?? "", service: session.getString("service"),
+    from: pocketBaseDate(startOfLocalDay(from)), to: pocketBaseDate(startOfLocalDay(to)),
+    membership: membership.id,
+  });
+  let committedBookings = 0;
+  let weekBookings = 0;
+  for (const booking of bookings) {
+    if (!booking) continue;
+    const related = app.findRecordById("class_sessions", booking.getString("session"));
+    const startsAt = Date.parse(related.getString("starts_at").replace(" ", "T"));
+    const localDate = sessionDate(related);
+    if (localDate >= week && localDate < weekEnd) weekBookings++;
+    if (booking.getString("status") === "booked" && startsAt > now && localDate >= periodStart && localDate <= periodEnd) {
+      committedBookings++;
+    }
+  }
+  return { committedBookings, weekBookings };
+}
+
+export function selectBookingMembership(app: core.App, clientId: string, session: core.Record, options: BookingEligibilityOptions = {}): Selection {
+  if (!chargeable(app, session)) return { allowed: true, code: "ok", available: null };
+  const client = app.findRecordById("clients", clientId);
+  const date = sessionDate(session);
+  const matching = matchingMemberships(app, clientId, session.getString("service"))
+    .filter(({ plan }) => !options.firstVisit || isFirstVisit(plan));
+  let rejected: Selection | undefined;
+  for (const { record, plan } of matching) {
+    if (record.getString("status") !== "active" || !covers(record, date)) continue;
+    const freeClass = isFirstVisit(plan);
+    if (freeClass && client.getBool("free_class_used")) continue;
+    const attempt = {
+      ...checkBookingEligibility({
+        membership: { status: "active", credits_balance: record.getInt("credits_balance") },
+        plan, ...commitments(app, clientId, session, record, date, options),
+      }),
+      membership: record, freeClass,
+    };
+    if (attempt.allowed) return attempt;
+    rejected ??= attempt;
+  }
+
+  // An override can still debit an active plan for this service when the date is outside its period.
+  const fallback = matching.find(({ record, plan }) => record.getString("status") === "active" && !isFirstVisit(plan));
+  const result = rejected ?? {
+    allowed: false, code: matching.length ? "membership_not_active" as const : "no_membership" as const,
+    available: 0, membership: fallback?.record,
+  };
+  return options.override ? { ...result, allowed: true, code: "overridden" } : result;
+}
+
+export function checkEligibility(app: core.App, clientId: string, session: core.Record, options: BookingEligibilityOptions = {}): Eligibility {
+  const { allowed, code, available } = selectBookingMembership(app, clientId, session, options);
+  return { allowed, code, available };
+}
+

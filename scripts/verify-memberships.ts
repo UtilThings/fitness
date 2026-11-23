@@ -140,3 +140,95 @@ assert.deepEqual(audit.map(({ summary }) => summary).sort(), [
   "Membresía reanudada", "Membresía renovada", "Plan asignado",
 ].sort());
 console.log("Gestión de membresías, auditoría y rollback verificados.");
+
+type Booking = Row & { status: string; override_note: string; membership: string };
+const bookings = records("bookings");
+const bookingPath = ({ id }: Row) => `${bookings}/${id}`;
+const sessionPath = records("class_sessions");
+const memberTwo = await call<Row>(records("clients"), owner, "POST", {
+  first_name: "Membresías", last_name: "Reservas", status: "active",
+});
+const entitlement = (await call<Result>(route + "/assign", owner, "POST", { client: memberTwo.id, plan: pack.id })).membership;
+const bookingLedger = ({ id }: Row) => call<{ items: Movement[] }>(
+  records("credit_movements") + filter(`booking = '${id}'`), owner,
+).then(({ items }) => items);
+let minutes = 0;
+function session(kind = "regular", service = pack.service) {
+  return call<Row>(sessionPath, owner, "POST", {
+    service, starts_at: new Date(Date.now() + (++minutes * 60_000)).toISOString(), duration_min: 60, capacity: 6, kind,
+  });
+}
+function reserve(session: Row, token = coach, override_note?: string, expected = 200, client = memberTwo) {
+  return call<Booking>(bookings, token, "POST", { client: client.id, session: session.id, override_note }, expected);
+}
+function eligibility(session: Row, client = memberTwo) {
+  return call<{ allowed: boolean; code: string; available: number | null }>(
+    route + "/eligibility?" + new URLSearchParams({ client: client.id, session: session.id }), coach,
+  );
+}
+const attendedSession = await session();
+assert.deepEqual(await eligibility(attendedSession), { allowed: true, code: "ok", available: pack.sessions });
+await action("adjust", { delta: -pack.sessions, note: "Agotar saldo" }, 200, owner, entitlement.id);
+assert.deepEqual(await eligibility(attendedSession), { allowed: false, code: "no_credits", available: 0 });
+const rejectedCredit = await call<{ data: { code: { code: string } } }>(bookings, reception, "POST", {
+  client: memberTwo.id, session: attendedSession.id, override_note: "   ",
+}, 400);
+assert.equal(rejectedCredit.data.code.code, "no_credits");
+await reserve(attendedSession, coach, "Excepción", 403);
+const booked = await reserve(attendedSession, reception, "Excepción aprobada");
+assert.equal(booked.override_note, "Excepción aprobada");
+assert.equal(booked.membership, entitlement.id);
+const bookingDb = new Database(dbPath);
+bookingDb.exec(`CREATE TRIGGER verify_booking_rollback BEFORE UPDATE OF credits_balance ON memberships
+  WHEN NEW.credits_balance = OLD.credits_balance - 1
+  BEGIN SELECT RAISE(ABORT, 'verify rollback'); END`);
+try {
+  await call(bookingPath(booked), coach, "PATCH", { status: "attended", override_note: "Impartida" }, 400);
+  assert.equal((await call<Booking>(bookingPath(booked), coach)).status, "booked");
+  assert.deepEqual(await bookingLedger(booked), []);
+} finally {
+  bookingDb.exec("DROP TRIGGER verify_booking_rollback");
+  bookingDb.close();
+}
+await call(bookingPath(booked), coach, "PATCH", { status: "attended", override_note: "Impartida" });
+await call(bookingPath(booked), coach, "PATCH", { status: "attended", override_note: "Impartida" }, 400);
+await call(bookingPath(booked), coach, "PATCH", { status: "no_show", override_note: "Corrección" });
+await call(bookingPath(booked), coach, "PATCH", { status: "attended", override_note: "Corrección" });
+assert.deepEqual((await bookingLedger(booked)).map(({ reason, delta }) => [reason, delta]), [["attend", -1]]);
+assert.equal((await call<Membership>(`${memberships}/${entitlement.id}`, owner)).credits_balance, -1);
+await call(bookingPath(booked), reception, "PATCH", { status: "cancelled", override_note: "Error de asistencia" });
+assert.deepEqual((await bookingLedger(booked)).map(({ reason, delta }) => [reason, delta]).sort(), [["adjust", 1], ["attend", -1]]);
+assert.equal((await call<Membership>(`${memberships}/${entitlement.id}`, owner)).credits_balance, 0);
+
+const missing = await reserve(await session(), reception, "Excepción aprobada");
+await call(bookingPath(missing), coach, "PATCH", { status: "no_show", override_note: "Corrección" });
+assert.deepEqual((await bookingLedger(missing)).map(({ reason, delta, note }) => [reason, delta, note]), [["late_cancel", -1, "No-show"]]);
+const late = await reserve(await session(), reception, "Excepción aprobada");
+const lateResult = await call<Booking>(bookingPath(late), coach, "PATCH", { status: "cancelled" });
+assert.equal(lateResult.status, "late_cancelled");
+assert.deepEqual((await bookingLedger(late)).map(({ reason, delta }) => [reason, delta]), [["late_cancel", -1]]);
+
+const { items: [online] } = await call<{ items: Row[] }>(records("services") + filter("kind = 'online' && active = true"), owner);
+assert(online);
+for (const exempt of [await session("special"), await session("regular", online.id)]) {
+  assert.deepEqual(await eligibility(exempt), { allowed: true, code: "ok", available: null });
+  const reservation = await reserve(exempt);
+  await call(bookingPath(reservation), coach, "PATCH", { status: "attended", override_note: "Impartida" });
+  assert.deepEqual(await bookingLedger(reservation), []);
+}
+const { items: [firstPlan] } = await call<{ items: (Row & { service: string })[] }>(records("plans") +
+  filter("is_first_class = true && active = true"), coach);
+assert(firstPlan);
+const firstMember = await call<Row>(records("clients"), owner, "POST", {
+  first_name: "Membresías", last_name: "Primera visita", status: "active",
+});
+await call(route + "/assign", reception, "POST", { client: firstMember.id, plan: firstPlan.id });
+const firstBooking = await reserve(await session("regular", firstPlan.service), coach, undefined, 200, firstMember);
+assert.deepEqual(await eligibility(await session("regular", firstPlan.service), firstMember), {
+  allowed: false, code: "no_credits", available: 0,
+});
+const clientPath = records("clients") + "/" + firstMember.id;
+assert.equal((await call<{ free_class_used: boolean }>(clientPath, coach)).free_class_used, false);
+await call(bookingPath(firstBooking), coach, "PATCH", { status: "attended", override_note: "Impartida" });
+assert.equal((await call<{ free_class_used: boolean }>(clientPath, coach)).free_class_used, true);
+console.log("Elegibilidad, excepciones y reconciliación de créditos en reservas verificadas.");

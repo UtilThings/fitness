@@ -48,7 +48,7 @@ export function serviceCancellationHours(app: core.App, session: core.Record): n
 }
 
 export function restoreFreeClass(app: core.App, booking: core.Record, actor: string) {
-  if (!booking.getBool("free_class") || booking.getString("status") !== "cancelled") return;
+  if (!booking.getBool("free_class") || booking.getString("membership") || booking.getString("status") !== "cancelled") return;
   const client = app.findRecordById("clients", booking.getString("client"));
   const reservations = app.findRecordsByFilter("bookings", "client = {:client} && free_class = true",
     "", 0, 0, { client: client.id }).map(bookingData);

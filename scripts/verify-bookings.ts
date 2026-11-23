@@ -65,6 +65,14 @@ const { items: plans } = await call<{ items: { service: string }[] }>(
 );
 assert(plans.length > 0, "El catálogo debe incluir un plan de primera clase");
 
+const paidPlan = await call<Row>(records("plans"), owner, "POST", {
+  service: plans[0].service, name: "Plan verificación de reservas", billing_unit: "per_4_weeks",
+  price_cents: 100, sessions: 0, per_week: 0, active: true,
+});
+function assignPlan(client: Row) {
+  return call("admin/memberships/assign", owner, "POST", { client: client.id, plan: paidPlan.id });
+}
+
 const now = Date.now();
 function createSession(hours: number, capacity: number) {
   return call<Session>(records("class_sessions"), owner, "POST", {
@@ -100,10 +108,11 @@ const future = await createSession(240, 2);
 const [firstClient, secondClient, thirdClient, fourthClient] = await Promise.all(
   Array.from({ length: 4 }, createClient),
 );
+await Promise.all([firstClient, secondClient, thirdClient, fourthClient].map(assignPlan));
 const first = await reserve(future, firstClient, true);
 assert.equal(first.status, "booked");
 assert.equal(first.free_class, true);
-await confirmFreeClass(firstClient, true);
+await confirmFreeClass(firstClient, false);
 
 const pair = await Promise.all([reserve(future, secondClient), reserve(future, thirdClient)]);
 assert.deepEqual(pair.map(({ status }) => status).sort(), ["booked", "waitlisted"]);
@@ -118,10 +127,11 @@ assert.equal((await read(next)).waitlist_position, 1);
 assert.equal((await reserve(future, firstClient)).id, first.id);
 
 const soon = await createSession(1, 1);
-const late = await reserve(soon, firstClient, true);
+const lateClient = await createClient();
+const late = await reserve(soon, lateClient, true);
 const exception = await reserve(soon, secondClient);
 assert.equal((await cancel(late)).status, "late_cancelled");
-await confirmFreeClass(firstClient, true);
+await confirmFreeClass(lateClient, false);
 assert.equal((await read(exception)).status, "booked");
 const rejected = await call<{ data: Body }>(
   bookingPath(exception), coach, "PATCH", { status: "cancelled", override: true }, 400,

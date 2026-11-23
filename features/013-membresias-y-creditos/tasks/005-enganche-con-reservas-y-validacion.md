@@ -1,7 +1,7 @@
 # 005 - [Hook] Consumo de créditos y validación de reservas sin créditos
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003, 004
 - **Fase:** Fase 3: Servidor
 
@@ -24,12 +24,12 @@ Los créditos se descuentan automáticamente cuando 011 marca asistencia o cance
 
 ## Criterios de aceptación
 
-- [ ] `attended` y `late_cancelled` crean un único movimiento enlazado a la reserva; repetir el guardado no duplica.
-- [ ] `no_show` registra `late_cancel` con nota "No-show".
-- [ ] Reserva con saldo 0 sin `override_note` → `400 no_credits`; con nota → creada y saldo negativo tras asistir.
-- [ ] Sesiones `special` y servicios `online` no se validan ni consumen.
-- [ ] `GET /eligibility` devuelve `allowed`, `code` y `available`.
-- [ ] `bun run build:ts` y `scripts/verify-api.sh` pasan.
+- [x] `attended` y `late_cancelled` crean un único movimiento enlazado a la reserva; repetir el guardado no duplica.
+- [x] `no_show` registra `late_cancel` con nota "No-show".
+- [x] Reserva con saldo 0 sin `override_note` → `400 no_credits`; con nota → creada y saldo negativo tras asistir.
+- [x] Sesiones `special` y servicios `online` no se validan ni consumen.
+- [x] `GET /eligibility` devuelve `allowed`, `code` y `available`.
+- [x] `bun run build:ts` y `scripts/verify-api.sh` pasan.
 
 ## Referencias
 
@@ -43,4 +43,6 @@ Los créditos se descuentan automáticamente cuando 011 marca asistencia o cance
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+En PocketBase 0.40.5, `original()` conservó el estado anterior en el hook de petición. `onRecordAfterUpdateSuccess` se disparó también en guardados internos y observó el registro confirmado. Se reconciliaron los créditos después de guardar dentro del hook de modelo, en la misma transacción, para revertir también la reserva si falla el libro mayor. Una prueba fuerza ese fallo.
+
+La relación opcional `bookings.membership` conserva el plan elegido aunque cambie su estado o el cliente compre otro. Las altas y reactivaciones pasan por la misma validación en el POST. La promoción interna conserva la membresía validada al entrar en espera. La opción existente de primera clase puede asignar el plan de prueba y marca el uso al asistir.
