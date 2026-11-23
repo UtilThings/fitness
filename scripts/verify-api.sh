@@ -20,7 +20,8 @@ stop_pocketbase() {
 start_pocketbase() {
   local attempt
   MESSAGES_REMINDER_HOURS=24 MESSAGES_DUE_DAYS_BEFORE=3 MESSAGES_RENEWAL_DAYS_BEFORE=5 STUDIO_NAME="JQ Fitness" \
-    ./pb serve --dir "$work_dir/data" --http "127.0.0.1:$port" \
+    PUBLIC_SITE_ORIGINS="https://fitness.example.test" PUBLIC_SCHEDULE_MAX_WEEKS=8 PUBLIC_CATALOG_CACHE_SECONDS=30 \
+    ./pb serve --dev --dir "$work_dir/data" --http "127.0.0.1:$port" \
     --migrationsDir "$PWD/pb_migrations" --hooksDir "$work_dir/hooks" --hooksWatch=false --automigrate=false \
     >"$work_dir/pocketbase.log" 2>&1 &
   pb_pid=$!
@@ -195,6 +196,7 @@ JS
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-coaching.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-reports.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-messages.ts "$base_url"
+  bun ../scripts/verify-public.ts "$base_url" "$work_dir/data/data.db" "$work_dir/pocketbase.log"
 }
 
 run_step bun install --frozen-lockfile
