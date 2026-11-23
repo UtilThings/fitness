@@ -323,30 +323,22 @@ if (phase === "seed") {
   assert.equal(audit[0].actor, staff.owner.id);
   assert.match(String(audit[0].summary), /Tropical Jump: 2/);
 
-  const { id: plansCollection } = await call<RecordData>("collections/plans", {
-    token: root.token,
+  const member = await call<RecordData>("collections/clients/records", {
+    method: "POST",
+    token: owner,
+    body: { first_name: "Prueba", last_name: "Catálogo", status: "active" },
   });
-  const memberships = await call<RecordData>("collections", {
+  const membership = await call<RecordData>("collections/memberships/records", {
     method: "POST",
     token: root.token,
     body: {
-      name: "memberships",
-      type: "base",
-      fields: [
-        {
-          name: "plan",
-          type: "relation",
-          collectionId: plansCollection,
-          maxSelect: 1,
-          required: true,
-        },
-      ],
+      client: member.id,
+      plan: single.id,
+      status: "expired",
+      starts_on: "2026-01-05",
+      current_period_start: "2026-01-05",
+      current_period_end: "2026-02-01",
     },
-  });
-  await call("collections/memberships/records", {
-    method: "POST",
-    token: root.token,
-    body: { plan: single.id },
   });
   const blocked = await call<{ message: string }>(plans + "/" + single.id, {
     method: "DELETE",
@@ -359,7 +351,7 @@ if (phase === "seed") {
     token: owner,
     expected: 204,
   });
-  await call("collections/" + memberships.id, {
+  await call("collections/memberships/records/" + membership.id, {
     method: "DELETE",
     token: root.token,
     expected: 204,
