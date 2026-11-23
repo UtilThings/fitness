@@ -268,3 +268,37 @@ for (const membership of [withinGrace, afterGrace]) {
 assert.deepEqual(await runDaily(), { expiredCredits: 0, expiredMemberships: 0 });
 assert.equal((await ledger(daySeven)).filter(({ reason }) => reason === "expire").length, 1);
 console.log("Expiración, gracia, auditoría e idempotencia del cron de membresías verificadas.");
+
+async function filterClient(name: string) {
+  return call<Row>(records("clients"), owner, "POST", {
+    first_name: "Filtro membresías", last_name: name, status: "active",
+  });
+}
+const splitClient = await filterClient("Plan vencido y otro activo");
+const matchedClient = await filterClient("Plan activo");
+const noMembership = await filterClient("Sin membresías");
+const expiredOnly = await filterClient("Solo plan vencido");
+for (const [client, plan, status] of [
+  [splitClient, pack, "expired"], [splitClient, firstPlan, "active"], [matchedClient, pack, "active"],
+  [matchedClient, firstPlan, "expired"], [expiredOnly, pack, "expired"],
+] as const) {
+  await call(memberships, root, "POST", { ...seed, client: client.id, plan: plan.id, status });
+}
+async function filteredClients(expression: string) {
+  const query = new URLSearchParams({
+    filter: `first_name = 'Filtro membresías' && ${expression}`,
+    expand: "memberships_via_client.plan.service",
+  });
+  const { items } = await call<{ items: (Row & { expand?: { memberships_via_client?: { status: string; expand?: { plan?: Row } }[] } })[] }>(
+    records("clients") + "?" + query, coach,
+  );
+  return items;
+}
+const matchedPlan = await filteredClients(`memberships_via_client.plan ?= '${pack.id}' && memberships_via_client.status ?= 'active'`);
+assert.deepEqual(matchedPlan.map(({ id }) => id), [matchedClient.id]);
+assert(matchedPlan[0].expand?.memberships_via_client?.some((m) => m.status === "active" && m.expand?.plan?.id === pack.id));
+assert.deepEqual((await filteredClients("memberships_via_client.status ?= 'active'")).map(({ id }) => id).sort(),
+  [matchedClient.id, splitClient.id].sort());
+assert.deepEqual((await filteredClients("memberships_via_client.status != 'active'")).map(({ id }) => id).sort(),
+  [noMembership.id, expiredOnly.id].sort());
+console.log("Filtrado de clientes por plan y estado de la misma membresía verificado.");

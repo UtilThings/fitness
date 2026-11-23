@@ -8,20 +8,23 @@ import DataTable, {
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
-import { computed, ref, shallowRef, watch } from 'vue';
+import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import DataToolbar from '@/components/DataToolbar.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import ClientForm from '@/components/clients/ClientForm.vue';
 import ClientStatusTag from '@/components/clients/ClientStatusTag.vue';
-import { useClients } from '@/composables/useClients';
+import {
+  useClients,
+  type ClientWithMemberships,
+} from '@/composables/useClients';
+import { usePlans } from '@/composables/usePlans';
 import {
   CLIENT_STATUS,
   CLIENT_STATUSES,
   formatPhone,
   fullName,
-  type Client,
   type ClientDetails,
   type ClientStatus,
 } from '@/lib/clients';
@@ -29,6 +32,7 @@ import { formatDate, localToUtcIso } from '@/lib/datetime';
 import type { PbError } from '@/lib/pb-errors';
 
 const clients = useClients();
+const plans = usePlans();
 const route = useRoute();
 const router = useRouter();
 const q = computed(() =>
@@ -46,9 +50,34 @@ const statusOptions = [
     label: CLIENT_STATUS[value].label,
   })),
 ];
+const plan = computed(() =>
+  typeof route.query.plan === 'string' ? route.query.plan : null,
+);
+const activeMembership = computed(() => {
+  if (route.query.membership === 'with') return true;
+  if (route.query.membership === 'without') return false;
+  return undefined;
+});
+const planOptions = computed(() =>
+  plans.items.value.map((plan) => ({
+    id: plan.id,
+    label: [plan.expand?.service?.name, plan.name].filter(Boolean).join(' · '),
+  })),
+);
+const membershipOptions = [
+  { value: 'with', label: 'Con membresía activa' },
+  { value: 'without', label: 'Sin membresía activa' },
+];
+const membershipFilter = computed(() =>
+  activeMembership.value === undefined
+    ? null
+    : activeMembership.value
+      ? 'with'
+      : 'without',
+);
 const page = ref(1);
 const perPage = ref(20);
-const rows = shallowRef<Client[]>([]);
+const rows = shallowRef<ClientWithMemberships[]>([]);
 const total = ref(0);
 const loading = ref(false);
 const listError = shallowRef<PbError | null>(null);
@@ -71,7 +100,7 @@ function blankClient(): ClientDetails {
 }
 
 watch(
-  [q, status],
+  [q, status, plan, activeMembership],
   () => {
     page.value = 1;
     void load();
@@ -89,6 +118,38 @@ function filterStatus(value: ClientStatus | 'all') {
   });
 }
 
+onMounted(() => void plans.load());
+
+function filterPlan(value: string | null) {
+  return router.replace({
+    query: {
+      ...route.query,
+      plan: value || undefined,
+      membership:
+        value && activeMembership.value === false
+          ? undefined
+          : route.query.membership,
+    },
+  });
+}
+
+function filterMembership(value: string | null) {
+  return router.replace({
+    query: {
+      ...route.query,
+      membership: value || undefined,
+      plan: value === 'without' ? undefined : route.query.plan,
+    },
+  });
+}
+
+function activePlans(client: ClientWithMemberships) {
+  return client.expand?.memberships_via_client
+    ?.filter(({ status }) => status === 'active')
+    .map(({ plan, expand }) => expand?.plan?.name ?? plan)
+    .join(', ');
+}
+
 async function load() {
   const version = ++latestLoad;
   loading.value = true;
@@ -97,6 +158,9 @@ async function load() {
     const result = await clients.list({
       q: q.value,
       status: status.value === 'all' ? null : status.value,
+      activePlan: plan.value,
+      activeMembership: plan.value ? undefined : activeMembership.value,
+      includeMemberships: true,
       page: page.value,
       perPage: perPage.value,
     });
@@ -183,22 +247,42 @@ async function create(values: ClientDetails) {
           class="min-w-32 self-start"
           @update:model-value="filterStatus"
         />
-        <div
-          v-for="label in ['Servicio', 'Plan activo']"
-          :key="label"
-          class="grid gap-1 self-start"
-        >
-          <Select
-            :aria-label="label"
-            :placeholder="label"
-            class="min-w-36"
-            disabled
-          />
-          <small class="text-muted-color">Disponible con Membresías</small>
-        </div>
+        <Select
+          :model-value="plan"
+          :options="planOptions"
+          option-label="label"
+          option-value="id"
+          aria-label="Plan activo"
+          placeholder="Plan activo"
+          show-clear
+          filter
+          :loading="plans.loading.value"
+          class="min-w-40"
+          @update:model-value="filterPlan"
+        />
+        <Select
+          :model-value="membershipFilter"
+          :options="membershipOptions"
+          option-label="label"
+          option-value="value"
+          aria-label="Membresía activa"
+          placeholder="Cualquier membresía"
+          show-clear
+          class="min-w-44"
+          @update:model-value="filterMembership"
+        />
       </template>
     </DataToolbar>
 
+    <Message v-if="plans.error.value" severity="error" :closable="false">
+      {{ plans.error.value.message }}
+      <Button
+        label="Reintentar planes"
+        size="small"
+        text
+        @click="plans.load()"
+      />
+    </Message>
     <Message v-if="listError" severity="error" :closable="false">
       {{ listError.message }}
       <Button
@@ -231,7 +315,7 @@ async function create(values: ClientDetails) {
           v-if="!loading"
           icon="pi pi-users"
           title="No hay clientes para mostrar"
-          description="Prueba otra búsqueda o cambia el filtro de estado."
+          description="Prueba otra búsqueda o cambia los filtros."
         />
       </template>
       <Column header="Nombre">
@@ -268,12 +352,8 @@ async function create(values: ClientDetails) {
           data.joined_on ? formatDate(data.joined_on) : '—'
         }}</template>
       </Column>
-      <Column
-        v-for="label in ['Servicio', 'Plan activo']"
-        :key="label"
-        :header="label"
-      >
-        <template #body><span class="text-muted-color">—</span></template>
+      <Column header="Planes activos">
+        <template #body="{ data }">{{ activePlans(data) || '—' }}</template>
       </Column>
     </DataTable>
 

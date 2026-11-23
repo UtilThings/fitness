@@ -5,18 +5,26 @@ import {
   type Client,
   type ClientStatus,
 } from '@/lib/clients';
+import type { Membership } from '@/lib/memberships';
 import { parsePbError } from '@/lib/pb-errors';
 import { pb } from '@/lib/pocketbase';
+
+export interface ClientWithMemberships extends Client {
+  expand?: { memberships_via_client?: Membership[] };
+}
 
 export interface ClientListOptions {
   q?: string;
   status?: ClientStatus | null;
   page?: number;
   perPage?: number;
+  activePlan?: string | null;
+  activeMembership?: boolean;
+  includeMemberships?: boolean;
 }
 
 export function useClients() {
-  const collection = pb.collection<Client>('clients');
+  const collection = pb.collection<ClientWithMemberships>('clients');
   const options = { requestKey: null };
 
   async function request<T>(operation: Promise<T>): Promise<T> {
@@ -39,10 +47,20 @@ export function useClients() {
     status,
     page = 1,
     perPage = 20,
+    activePlan,
+    activeMembership,
+    includeMemberships,
   }: ClientListOptions = {}) {
     const filter = [
       buildSearchFilter(q),
       status && pb.filter('status = {:status}', { status }),
+      activePlan &&
+        pb.filter('memberships_via_client.plan ?= {:activePlan}', {
+          activePlan,
+        }),
+      (activePlan || activeMembership === true) &&
+        "memberships_via_client.status ?= 'active'",
+      activeMembership === false && "memberships_via_client.status != 'active'",
     ]
       .filter(Boolean)
       .join(' && ');
@@ -51,6 +69,9 @@ export function useClients() {
         ...options,
         filter,
         sort: 'last_name,first_name,id',
+        ...(includeMemberships
+          ? { expand: 'memberships_via_client.plan.service' }
+          : {}),
       }),
     );
   }

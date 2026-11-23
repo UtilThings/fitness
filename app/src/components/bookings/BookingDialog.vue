@@ -5,6 +5,8 @@ import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
 import { computed, ref, shallowRef, useId, watch } from 'vue';
 import ClientPicker from '@/components/clients/ClientPicker.vue';
+import CreditOverrideDialog from '@/components/memberships/CreditOverrideDialog.vue';
+import { useAuth } from '@/composables/useAuth';
 import { useBookingClock } from '@/composables/useBookingClock';
 import { useBookings } from '@/composables/useBookings';
 import { useSessionAvailability } from '@/composables/useSessionAvailability';
@@ -24,6 +26,7 @@ const emit = defineEmits<{ booked: [booking: Booking] }>();
 const open = defineModel<boolean>({ required: true });
 const id = useId();
 const bookings = useBookings();
+const { can } = useAuth();
 const availabilityApi = useSessionAvailability();
 const now = useBookingClock();
 const picked = shallowRef<Client | null>(null);
@@ -35,8 +38,17 @@ const useFreeClass = ref(false);
 const saving = ref(false);
 const loadError = shallowRef<PbError>();
 const saveError = shallowRef<PbError>();
+const overrideOpen = ref(false);
+const overrideError = ref('');
+const creditErrorCodes = [
+  'no_credits',
+  'weekly_limit',
+  'no_membership',
+  'membership_not_active',
+];
 const eligible = computed(
   () =>
+    props.session.kind !== 'special' &&
     freePlan.value &&
     !!client.value &&
     client.value.status !== 'inactive' &&
@@ -54,6 +66,8 @@ watch(
     useFreeClass.value = false;
     loadError.value = undefined;
     saveError.value = undefined;
+    overrideOpen.value = false;
+    overrideError.value = '';
     if (!visible) return;
 
     let current = true;
@@ -85,9 +99,10 @@ watch(
 watch(client, () => {
   useFreeClass.value = false;
   saveError.value = undefined;
+  overrideOpen.value = false;
 });
 
-async function submit() {
+async function submit(overrideNote?: string) {
   if (
     saving.value ||
     !availability.value ||
@@ -97,17 +112,32 @@ async function submit() {
   )
     return;
   saving.value = true;
-  saveError.value = undefined;
+  if (!overrideNote) saveError.value = undefined;
+  overrideError.value = '';
   try {
     const result = await bookings.create({
       session: props.session.id,
       client: client.value.id,
       useFreeClass: eligible.value && useFreeClass.value,
+      ...(overrideNote ? { overrideNote } : {}),
     });
     emit('booked', result);
+    overrideOpen.value = false;
     open.value = false;
   } catch (cause) {
-    saveError.value = cause as PbError;
+    const error = cause as PbError;
+    if (overrideNote) overrideError.value = error.message;
+    else {
+      saveError.value = error;
+      if (
+        error.code &&
+        creditErrorCodes.includes(error.code) &&
+        !(eligible.value && useFreeClass.value) &&
+        can('memberships.manage')
+      ) {
+        overrideOpen.value = true;
+      }
+    }
   } finally {
     saving.value = false;
   }
@@ -123,7 +153,7 @@ async function submit() {
     :closable="!saving"
     :close-on-escape="!saving"
   >
-    <form class="grid gap-4" @submit.prevent="submit">
+    <form class="grid gap-4" @submit.prevent="submit()">
       <div>
         <p v-if="session.expand?.service" class="font-medium">
           {{ session.expand.service.name }}
@@ -176,7 +206,11 @@ async function submit() {
       <p v-else-if="planError" class="text-sm text-muted-color">
         No se pudo comprobar la primera clase gratis.
       </p>
-      <Message v-if="saveError" severity="error" :closable="false">
+      <Message
+        v-if="saveError && !overrideOpen"
+        severity="error"
+        :closable="false"
+      >
         {{ Object.values(saveError.fields).join(' ') || saveError.message }}
       </Message>
       <div class="flex justify-end gap-2">
@@ -201,4 +235,11 @@ async function submit() {
       </div>
     </form>
   </Dialog>
+  <CreditOverrideDialog
+    v-model="overrideOpen"
+    :message="saveError?.message ?? ''"
+    :saving="saving"
+    :error="overrideError"
+    @confirmed="submit"
+  />
 </template>

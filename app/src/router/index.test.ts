@@ -56,6 +56,7 @@ describe('guard', () => {
     '/classes/templates',
     '/classes/blocks',
     '/plans?service=jump',
+    '/memberships',
   ])('protege %s y conserva la ruta al iniciar sesión', async (path) => {
     await router.push(path);
     expect(router.currentRoute.value.name).toBe('login');
@@ -73,6 +74,7 @@ describe('guard', () => {
         ['/team', 'team', 'Equipo'],
         ['/services', 'services', 'Servicios'],
         ['/plans', 'plans', 'Planes'],
+        ['/memberships', 'memberships', 'Suscripciones'],
         ['/classes/templates', 'classes-templates', 'Plantillas de clases'],
         ['/classes/blocks', 'classes-blocks', 'Bloqueos de horario'],
         ['/team/coach', 'team-member', 'Ficha del equipo'],

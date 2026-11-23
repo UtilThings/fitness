@@ -7,7 +7,11 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 import type { Client } from '@/lib/clients';
 import ClientsView from './ClientsView.vue';
 
-const mocks = vi.hoisted(() => ({ getList: vi.fn(), create: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  getList: vi.fn(),
+  getFullList: vi.fn(),
+  create: vi.fn(),
+}));
 vi.mock('@/lib/pocketbase', async () => {
   const { default: PocketBase } = await import('pocketbase');
   const client = new PocketBase('http://localhost');
@@ -36,6 +40,7 @@ const ana: Client = {
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.getList.mockResolvedValue({ items: [ana], totalItems: 1 });
+  mocks.getFullList.mockResolvedValue([{ id: 'pack', name: 'Plan de prueba' }]);
 });
 
 async function view(url = '/clients') {
@@ -88,13 +93,6 @@ it('sincroniza búsqueda y estado, filtra en el servidor y muestra el estado vac
   expect(mocks.getList.mock.lastCall?.[2].filter).toMatch(
     /phone ~ "30555501".*status = "paused"/,
   );
-  expect(
-    wrapper
-      .findAllComponents(Select)
-      .slice(1)
-      .map((select) => select.props('disabled')),
-  ).toEqual([true, true]);
-  expect(wrapper.text().match(/Disponible con Membresías/g)).toHaveLength(2);
   wrapper.unmount();
 });
 
@@ -130,5 +128,34 @@ it('muestra errores de alta y abre el perfil al guardar', async () => {
     { requestKey: null },
   );
   expect(router.currentRoute.value.path).toBe('/clients/ana');
+  wrapper.unmount();
+});
+
+it('aplica el plan activo y permite consultar clientes sin membresía activa', async () => {
+  const { router, wrapper } = await view('/clients?status=all');
+  const [, plan, membership] = wrapper.findAllComponents(Select);
+  expect(plan.props('options')).toContainEqual({
+    id: 'pack',
+    label: 'Plan de prueba',
+  });
+  plan.vm.$emit('update:modelValue', 'pack');
+  await flushPromises();
+  expect(router.currentRoute.value.query).toEqual({
+    status: 'all',
+    plan: 'pack',
+  });
+  expect(mocks.getList.mock.lastCall?.[2]).toMatchObject({
+    expand: 'memberships_via_client.plan.service',
+    filter: `memberships_via_client.plan ?= "pack" && memberships_via_client.status ?= 'active'`,
+  });
+  membership.vm.$emit('update:modelValue', 'without');
+  await flushPromises();
+  expect(router.currentRoute.value.query).toEqual({
+    status: 'all',
+    membership: 'without',
+  });
+  expect(mocks.getList.mock.lastCall?.[2].filter).toBe(
+    "memberships_via_client.status != 'active'",
+  );
   wrapper.unmount();
 });

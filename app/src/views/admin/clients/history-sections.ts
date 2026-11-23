@@ -14,13 +14,6 @@ export const historySections: readonly HistorySection[] = [
     component: ClientBookings,
   },
   {
-    key: 'memberships',
-    label: 'Membresías',
-    available: false,
-    component: null,
-    feature: '013',
-  },
-  {
     key: 'payments',
     label: 'Pagos',
     available: false,

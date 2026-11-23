@@ -19,6 +19,7 @@ import AssessmentForm from '@/components/clients/AssessmentForm.vue';
 import ClientForm from '@/components/clients/ClientForm.vue';
 import ClientHistoryTab from '@/components/clients/ClientHistoryTab.vue';
 import ClientStatusTag from '@/components/clients/ClientStatusTag.vue';
+import ClientMemberships from '@/components/memberships/ClientMemberships.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useClients } from '@/composables/useClients';
 import { useConfirmDelete } from '@/composables/useConfirmDelete';
@@ -377,6 +378,7 @@ function requestDelete() {
           <Tab value="details">Datos</Tab>
           <Tab value="notes">Objetivos y notas</Tab>
           <Tab value="assessment">Evaluación inicial</Tab>
+          <Tab value="memberships">Membresías</Tab>
           <Tab value="history">Historial</Tab>
         </TabList>
         <TabPanels>
@@ -461,6 +463,13 @@ function requestDelete() {
               "
               :busy="saving"
               @submit="saveAssessment"
+            />
+          </TabPanel>
+          <TabPanel value="memberships">
+            <ClientMemberships
+              v-if="tab === 'memberships'"
+              :key="client.id"
+              :client="client.id"
             />
           </TabPanel>
           <TabPanel value="history">

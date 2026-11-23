@@ -5,7 +5,7 @@ import router from '@/router';
 describe('adminNav', () => {
   const items = adminNav.flatMap((group) => group.items);
 
-  it('mantiene los cinco grupos acordados, sin badges, Rutinas ni Suscripciones', () => {
+  it('mantiene los cinco grupos acordados, sin badges', () => {
     expect(
       adminNav.map(({ label, items }) => [label, items.map(({ to }) => to)]),
     ).toEqual([
@@ -47,6 +47,7 @@ describe('adminNav', () => {
         '/classes',
         '/classes/templates',
         '/classes/blocks',
+        '/memberships',
       ]),
     );
     enabled.forEach(({ to }) => expect(paths).toContain(to));
