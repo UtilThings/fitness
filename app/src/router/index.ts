@@ -104,6 +104,12 @@ const router = createRouter({
           meta: { title: 'Cliente' },
         },
         {
+          path: 'coaching',
+          name: 'coaching',
+          component: () => import('@/views/admin/CoachingView.vue'),
+          meta: { title: 'Online Coaching', requiresAuth: true },
+        },
+        {
           path: 'memberships',
           name: 'memberships',
           component: () => import('@/views/admin/MembershipsView.vue'),

@@ -18,6 +18,7 @@ migrate((app) => {
       { name: "checked_at", type: "date", required: true },
       { name: "adherence", type: "number", onlyInt: true, min: 1, max: 5, required: true },
       { name: "notes", type: "text" },
+      { name: "created", type: "autodate", onCreate: true },
       { name: "created_by", type: "relation", collectionId: app.findCollectionByNameOrId("admins").id, maxSelect: 1, cascadeDelete: false },
     ],
     indexes: ["CREATE INDEX idx_coaching_checkins_program_date ON coaching_checkins (program, checked_at)"],

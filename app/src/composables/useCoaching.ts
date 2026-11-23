@@ -1,6 +1,6 @@
 import {
   programFlags,
-  renewalAlerts,
+  matchesProgramAlert,
   type CheckinInput,
   type CoachingCheckin,
   type CoachingProgram,
@@ -27,7 +27,7 @@ const programOptions = {
   ...options,
   expand: 'client,coach,membership,membership.plan',
 };
-const checkinOptions = { ...options, sort: '-checked_at,-id' };
+const checkinOptions = { ...options, sort: '-checked_at,-created,-id' };
 
 async function request<T>(operation: Promise<T>) {
   try {
@@ -127,13 +127,7 @@ export function useCoaching() {
     const today = todayLocal();
     return records
       .map((record) => describe(record, byProgram.get(record.id) ?? [], today))
-      .filter(
-        ({ flags }) =>
-          !alert ||
-          (alert === 'renewal'
-            ? flags.alerts.some((value) => renewalAlerts.includes(value))
-            : flags.alerts.includes(alert)),
-      );
+      .filter(({ flags }) => matchesProgramAlert(flags.alerts, alert));
   }
 
   async function getProgram(id: string) {

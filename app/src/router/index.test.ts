@@ -48,6 +48,7 @@ describe('guard', () => {
     '/audit',
     '/clients?q=ana',
     '/clients/ana',
+    '/coaching',
     '/team',
     '/team/coach',
     '/settings/profile',
@@ -74,6 +75,7 @@ describe('guard', () => {
       state.role = role;
       for (const [path, name, title] of [
         ['/clients', 'clients', 'Clientes'],
+        ['/coaching', 'coaching', 'Online Coaching'],
         ['/clients/ana', 'client-detail', 'Cliente'],
         ['/team', 'team', 'Equipo'],
         ['/services', 'services', 'Servicios'],

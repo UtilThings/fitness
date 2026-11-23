@@ -46,6 +46,7 @@ export interface CoachingCheckin extends CheckinInput {
   id: string;
   program: string;
   created_by: string;
+  created?: string;
   expand?: { created_by?: Admin };
 }
 
@@ -73,6 +74,16 @@ export const renewalAlerts: readonly ProgramAlert[] = [
   'renewal_overdue',
   'membership_expired',
 ];
+
+export function matchesProgramAlert(
+  alerts: readonly ProgramAlert[],
+  filter?: ProgramAlert | 'renewal',
+) {
+  if (!filter) return true;
+  return filter === 'renewal'
+    ? alerts.some((alert) => renewalAlerts.includes(alert))
+    : alerts.includes(filter);
+}
 
 export function canManageProgram(
   user: Admin | null,

@@ -8,7 +8,7 @@ export type RenewalAlert = "renewal_soon" | "renewal_overdue" | "membership_expi
 export type ProgramAlert = RenewalAlert | "checkin_due" | "at_risk" | "ending";
 type ProgramInput = { starts_on: string; duration_weeks: number; status: string };
 type Program = ProgramInput & { renews_on?: string };
-type Checkin = { checked_at: string; adherence: number };
+type Checkin = { checked_at: string; adherence: number; created?: string };
 type Membership = { status: string };
 export type Trend = "up" | "flat" | "down";
 export type ValidationErrors = Record<string, string>;
@@ -28,7 +28,9 @@ function mean(values: number[]) {
 }
 
 export function adherenceSummary(checkins: readonly Checkin[]) {
-  const ordered = [...checkins].sort((a, b) => b.checked_at.localeCompare(a.checked_at));
+  const ordered = [...checkins].sort((a, b) =>
+    b.checked_at.localeCompare(a.checked_at) || (b.created ?? "").localeCompare(a.created ?? ""),
+  );
   const lastFour = ordered.slice(0, 4).map(({ adherence }) => adherence);
   const previous = ordered.slice(4, 8).map(({ adherence }) => adherence);
   const average = lastFour.length ? mean(lastFour) : null;

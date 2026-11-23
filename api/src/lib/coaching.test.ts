@@ -26,6 +26,13 @@ test("ordena los check-ins, promedia cuatro y compara con hasta cuatro anteriore
   expect(adherenceSummary(checkins(4, 3, 2, 1, 2, 2, 2, 2, 5)).trend).toBe("up");
 });
 
+test("los check-ins de la misma fecha se ordenan por registro", () => {
+  expect(adherenceSummary([
+    { checked_at: "2026-02-20", adherence: 5, created: "2026-02-20 16:00:00.000Z" },
+    { checked_at: "2026-02-20", adherence: 2, created: "2026-02-20 17:00:00.000Z" },
+  ])).toMatchObject({ lastFour: [2, 5], atRisk: true });
+});
+
 test("la cadencia se supera en el día ocho y se reinicia con el último check-in", () => {
   expect(needsCheckin(program, null, "2026-01-12")).toBe(false);
   expect(needsCheckin(program, null, "2026-01-13")).toBe(true);

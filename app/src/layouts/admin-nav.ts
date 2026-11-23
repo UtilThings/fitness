@@ -36,6 +36,7 @@ export const adminNav: NavGroup[] = [
         icon: 'pi pi-users',
         to: '/clients',
       },
+      { label: 'Online Coaching', icon: 'pi pi-comments', to: '/coaching' },
       {
         label: 'Clases',
         icon: 'pi pi-calendar',
