@@ -1,7 +1,7 @@
 # 004 - [Endpoint] Servicio y rutas para registrar, pagar y anular pagos
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002
 - **Fase:** Fase 3: Servidor
 
@@ -23,12 +23,12 @@ Reception y owner registran cobros, los marcan como pagados con recibo consecuti
 
 ## Criterios de aceptación
 
-- [ ] Registrar un pago `paid` devuelve `receipt_number` con el formato correcto; el siguiente es consecutivo.
-- [ ] Un error forzado después de incrementar el contador no deja el contador avanzado.
-- [ ] `/void` sin `reason` devuelve `400`; con motivo guarda `void_reason`, `voided_at`, `voided_by` y conserva `receipt_number`.
-- [ ] Pagar un `void` devuelve `409`.
-- [ ] Un coach recibe `403`.
-- [ ] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan.
+- [x] Registrar un pago `paid` devuelve `receipt_number` con el formato correcto; el siguiente es consecutivo.
+- [x] Un error forzado después de incrementar el contador no deja el contador avanzado.
+- [x] `/void` sin `reason` devuelve `400`; con motivo guarda `void_reason`, `voided_at`, `voided_by` y conserva `receipt_number`.
+- [x] Pagar un `void` devuelve `409`.
+- [x] Un coach recibe `403`.
+- [x] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan.
 
 ## Referencias
 
@@ -42,4 +42,4 @@ Reception y owner registran cobros, los marcan como pagados con recibo consecuti
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+La prueba de API fuerza un fallo de SQLite al guardar el pago y comprueba que el contador conserva su valor anterior. Dos cobros posteriores en paralelo reciben los dos números siguientes.
