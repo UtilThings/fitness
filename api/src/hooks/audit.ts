@@ -29,6 +29,15 @@ function writeAuditLog(e: core.RecordEvent) {
     if (isAudited(collection) && (action === "create" || action === "update" || action === "delete")) {
       const { buildEntry } = require(`${__hooks}/lib/audit`) as typeof import("../lib/audit");
       const before = action === "update" ? record.original() : record;
+      const snapshot = (row: core.Record) => {
+        const fields = row.publicExport();
+        for (const name of row.collection().fields.fieldNames()) {
+          if (row.collection().fields.getByName(name)?.type() === "date") {
+            fields[name] = row.getString(name);
+          }
+        }
+        return fields;
+      };
       const data = buildEntry({
         action,
         collection,
@@ -36,8 +45,8 @@ function writeAuditLog(e: core.RecordEvent) {
         actorId: record.getString("@pbInternalAuditActor"),
         credentialsChanged: collection === "admins" && action === "update"
           && record.getString("password:hash") !== before.getString("password:hash"),
-        before: action === "create" ? undefined : before.publicExport(),
-        after: action === "delete" ? undefined : record.publicExport(),
+        before: action === "create" ? undefined : snapshot(before),
+        after: action === "delete" ? undefined : snapshot(record),
       });
 
       if (data) {
