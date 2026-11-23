@@ -114,8 +114,11 @@ export function servePublicSchedule(e: core.RequestEvent) {
   try {
     const query = e.request.url.query();
     const today = utcToLocal(new Date().toISOString()).date;
-    const week = normalizeWeek(query.has("week") ? query.get("week") : undefined,
-      today, setting("PUBLIC_SCHEDULE_MAX_WEEKS", PUBLIC_SCHEDULE_MAX_WEEKS));
+    const maxWeeks = setting("PUBLIC_SCHEDULE_MAX_WEEKS", PUBLIC_SCHEDULE_MAX_WEEKS);
+    const week = normalizeWeek(query.has("week") ? query.get("week") : undefined, today, maxWeeks);
+    const header = e.response.header();
+    header.set("X-Public-Schedule-Max-Weeks", String(maxWeeks));
+    header.set("Access-Control-Expose-Headers", "X-Public-Schedule-Max-Weeks");
     return cachedResponse(e, `schedule:${week}`, () => schedule(e.app, week));
   } catch (error) {
     return publicError(e, error);

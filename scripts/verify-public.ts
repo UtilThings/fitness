@@ -78,6 +78,8 @@ const response = await publicFetch(`schedule?week=${date}`, allowed);
 assert.equal(response.status, 200);
 assert.equal(response.headers.get("access-control-allow-origin"), allowed);
 assert.equal(response.headers.get("cache-control"), cache);
+assert.equal(response.headers.get("x-public-schedule-max-weeks"), "8");
+assert.match(response.headers.get("access-control-expose-headers") ?? "", /x-public-schedule-max-weeks/i);
 const schedule = await response.json();
 columns(schedule, "version timezone week_start week_end sessions");
 assert.equal(schedule.version, 1);

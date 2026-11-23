@@ -159,7 +159,7 @@ async function fetchPublic<T>(
   path: string,
   validate: (value: unknown) => value is T,
   signal?: AbortSignal,
-): Promise<T> {
+): Promise<{ payload: T; headers: Headers }> {
   if (!env.PUBLIC_API_URL) throw new ApiError('PUBLIC_API_URL is missing.');
 
   const controller = new AbortController();
@@ -179,7 +179,7 @@ async function fetchPublic<T>(
       throw new ApiError(`Public API returned HTTP ${response.status}.`);
     const payload: unknown = await response.json();
     if (!validate(payload)) throw new ApiError('Invalid public API response.');
-    return payload;
+    return { payload, headers: response.headers };
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError('Could not read the public API.', { cause: error });
@@ -189,17 +189,20 @@ async function fetchPublic<T>(
   }
 }
 
-export function fetchCatalog(): Promise<PublicCatalog> {
-  return fetchPublic('catalog', isPublicCatalog);
+export async function fetchCatalog(): Promise<PublicCatalog> {
+  const { payload } = await fetchPublic('catalog', isPublicCatalog);
+  return payload;
 }
 
-export function fetchSchedule(
-  week: string,
-  signal?: AbortSignal,
-): Promise<PublicSchedule> {
-  return fetchPublic(
+export async function fetchSchedule(week: string, signal?: AbortSignal) {
+  const { payload, headers } = await fetchPublic(
     `schedule?${new URLSearchParams({ week })}`,
     isPublicSchedule,
     signal,
   );
+  const limit = headers.get('X-Public-Schedule-Max-Weeks') ?? '';
+  return {
+    schedule: payload,
+    maxWeeks: /^\d{1,3}$/.test(limit) ? Number(limit) : undefined,
+  };
 }
