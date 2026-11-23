@@ -1,6 +1,6 @@
 export const AUDITED_COLLECTIONS: readonly string[] = [
   "admins", "services", "plans", "class_templates", "class_sessions", "schedule_blocks", "clients", "bookings",
-  "memberships", "credit_movements", "payments", "coach_availability",
+  "memberships", "credit_movements", "payments", "coach_availability", "coaching_programs", "coaching_checkins",
 ];
 export const SENSITIVE_FIELDS = ["password", "passwordHash", "tokenKey"];
 export const IGNORED_FIELDS: readonly string[] = ["created", "updated"];

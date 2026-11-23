@@ -17,6 +17,7 @@ import {
 import type { PbError } from '@/lib/pb-errors';
 
 const props = defineProps<{ client: string }>();
+const emit = defineEmits<{ changed: [] }>();
 const { can } = useAuth();
 const members = useMemberships();
 const assigning = ref(false);
@@ -86,6 +87,7 @@ watch([selected, revision], async ([id], _, onCleanup) => {
 function refresh(membership: Membership) {
   selected.value = membership.id;
   revision.value++;
+  emit('changed');
 }
 </script>
 

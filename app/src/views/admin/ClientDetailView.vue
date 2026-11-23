@@ -19,10 +19,12 @@ import AssessmentForm from '@/components/clients/AssessmentForm.vue';
 import ClientForm from '@/components/clients/ClientForm.vue';
 import ClientHistoryTab from '@/components/clients/ClientHistoryTab.vue';
 import ClientStatusTag from '@/components/clients/ClientStatusTag.vue';
+import ClientCoaching from '@/components/coaching/ClientCoaching.vue';
 import ClientMemberships from '@/components/memberships/ClientMemberships.vue';
 import ClientPayments from '@/components/payments/ClientPayments.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useClients } from '@/composables/useClients';
+import { useCoaching } from '@/composables/useCoaching';
 import { useConfirmDelete } from '@/composables/useConfirmDelete';
 import { useNotify } from '@/composables/useNotify';
 import {
@@ -35,6 +37,8 @@ import {
   type ClientStatus,
 } from '@/lib/clients';
 import { localToUtcIso, utcToLocalParts } from '@/lib/datetime';
+import type { ProgramOverview } from '@/lib/coaching';
+import type { Membership } from '@/lib/memberships';
 import type { PbError } from '@/lib/pb-errors';
 
 const route = useRoute();
@@ -57,6 +61,47 @@ const status = ref<ClientStatus>('active');
 const classUsed = ref(false);
 const historyConflict = ref(false);
 const tab = ref('details');
+const coaching = useCoaching();
+const coachingPrograms = shallowRef<ProgramOverview[]>([]);
+const coachingMemberships = shallowRef<Membership[]>([]);
+const coachingRevision = ref(0);
+const coachingError = ref('');
+const showCoaching = computed(
+  () =>
+    coachingPrograms.value.length > 0 || coachingMemberships.value.length > 0,
+);
+const hasActiveOnlineMembership = computed(() =>
+  coachingMemberships.value.some(({ status }) => status === 'active'),
+);
+
+watch(
+  [() => client.value?.id, coachingRevision],
+  async ([clientId], [previousId], onCleanup) => {
+    let current = true;
+    onCleanup(() => {
+      current = false;
+    });
+    if (clientId !== previousId) {
+      coachingPrograms.value = [];
+      coachingMemberships.value = [];
+    }
+    coachingError.value = '';
+    if (!clientId) return;
+    try {
+      const [programs, memberships] = await Promise.all([
+        coaching.listPrograms({ client: clientId }),
+        coaching.listOnlineMemberships({ client: clientId, activeOnly: false }),
+      ]);
+      if (!current) return;
+      coachingPrograms.value = programs;
+      coachingMemberships.value = memberships;
+      if (!showCoaching.value && tab.value === 'coaching')
+        tab.value = 'details';
+    } catch (cause) {
+      if (current) coachingError.value = (cause as PbError).message;
+    }
+  },
+);
 
 type Section = 'details' | 'notes' | 'assessment' | 'actions';
 const errors = ref<Partial<Record<Section, PbError>>>({});
@@ -375,12 +420,22 @@ function requestDelete() {
         />
       </Message>
 
+      <Message v-if="coachingError" severity="error" :closable="false">
+        No se pudo consultar Coaching. {{ coachingError }}
+        <Button
+          label="Reintentar"
+          size="small"
+          text
+          @click="coachingRevision++"
+        />
+      </Message>
       <Tabs v-model:value="tab" scrollable>
         <TabList>
           <Tab value="details">Datos</Tab>
           <Tab value="notes">Objetivos y notas</Tab>
           <Tab value="assessment">Evaluación inicial</Tab>
           <Tab value="memberships">Membresías</Tab>
+          <Tab v-if="showCoaching" value="coaching">Coaching</Tab>
           <Tab v-if="canManagePayments" value="payments">Pagos</Tab>
           <Tab value="history">Historial</Tab>
         </TabList>
@@ -473,6 +528,17 @@ function requestDelete() {
               v-if="tab === 'memberships'"
               :key="client.id"
               :client="client.id"
+              @changed="coachingRevision++"
+            />
+          </TabPanel>
+          <TabPanel v-if="showCoaching" value="coaching">
+            <ClientCoaching
+              v-if="tab === 'coaching'"
+              :key="client.id"
+              :client="client.id"
+              :programs="coachingPrograms"
+              :has-active-membership="hasActiveOnlineMembership"
+              @changed="coachingRevision++"
             />
           </TabPanel>
           <TabPanel v-if="canManagePayments" value="payments">

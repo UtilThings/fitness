@@ -1,7 +1,7 @@
 # 001 - [Migración] Colecciones `coaching_programs` y `coaching_checkins`
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 010 (contrato), Feature 013 (contrato)
 - **Fase:** Fase 1: Modelo de datos
 
@@ -22,11 +22,11 @@ Las colecciones `coaching_programs` y `coaching_checkins` existen con índices y
 
 ## Criterios de aceptación
 
-- [ ] `up` y `down` funcionan y `up` es repetible tras `down`.
-- [ ] Dos programas `active` del mismo cliente fallan; uno `ended` más uno `active` se permite.
-- [ ] Un check-in con `adherence = 6` o `0` es rechazado.
-- [ ] Un coach distinto al del programa recibe `403`/`400` al crear check-in; reception puede listar pero no crear.
-- [ ] `scripts/verify-api.sh` pasa.
+- [x] `up` y `down` funcionan y `up` es repetible tras `down`.
+- [x] Dos programas `active` del mismo cliente fallan; uno `ended` más uno `active` se permite.
+- [x] Un check-in con `adherence = 6` o `0` es rechazado.
+- [x] Un coach distinto al del programa recibe `403`/`400` al crear check-in; reception puede listar pero no crear.
+- [x] `scripts/verify-api.sh` pasa.
 
 ## Referencias
 
@@ -40,4 +40,4 @@ Las colecciones `coaching_programs` y `coaching_checkins` existen con índices y
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+El catálogo de 008 permite servicios con kind = online y planes per_4_weeks configurados con 2, 3 o 4 periodos (8, 12 o 16 semanas). El seed actual no incluye planes online. La ruta de asignación de 013 acepta estos planes sin crear reservas ni movimientos si el plan tiene cero sesiones. Se verificó con un plan online de tres periodos y el ciclo up/down/up en una base temporal.

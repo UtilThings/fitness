@@ -1,7 +1,7 @@
 # 003 - [Hook] Validación de coaching y sincronización con la membresía
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002
 - **Fase:** Fase 3: Servidor
 
@@ -24,11 +24,11 @@ Las reglas de colección (001) permiten escribir a ciertos roles; los hooks apli
 
 ## Criterios de aceptación
 
-- [ ] Crear un programa sin membresía online activa devuelve `400`.
-- [ ] Un check-in con adherencia 6, fecha futura o sobre programa `ended` devuelve `400`.
-- [ ] Renovar la membresía mueve `renews_on`; cancelarla deja el programa `ended`; pausarla lo pausa.
-- [ ] Los cambios quedan en `audit_logs`.
-- [ ] `bun run build:ts` y `scripts/verify-api.sh` pasan.
+- [x] Crear un programa sin membresía online activa devuelve `400`.
+- [x] Un check-in con adherencia 6, fecha futura o sobre programa `ended` devuelve `400`.
+- [x] Renovar la membresía mueve `renews_on`; cancelarla deja el programa `ended`; pausarla lo pausa.
+- [x] Los cambios quedan en `audit_logs`.
+- [x] `bun run build:ts` y `scripts/verify-api.sh` pasan.
 
 ## Referencias
 
@@ -41,4 +41,4 @@ Las reglas de colección (001) permiten escribir a ciertos roles; los hooks apli
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+La renovación se deriva en el servidor. Las ediciones conservan la membresía enlazada cuando está pausada o vencida; una nueva vinculación o reactivación requiere una membresía activa. Se verificaron los cambios de estado, incluida la expiración, y los valores anterior y nuevo de la renovación en auditoría.

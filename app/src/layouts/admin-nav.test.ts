@@ -14,6 +14,7 @@ describe('adminNav', () => {
         'Operaciones',
         [
           '/clients',
+          '/coaching',
           '/classes',
           '/agenda',
           '/classes/templates',
@@ -41,6 +42,7 @@ describe('adminNav', () => {
       expect.arrayContaining([
         '/',
         '/clients',
+        '/coaching',
         '/team',
         '/settings/profile',
         '/services',

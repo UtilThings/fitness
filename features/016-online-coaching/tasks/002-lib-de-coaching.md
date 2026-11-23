@@ -1,7 +1,7 @@
 # 002 - [Lib] Semana del programa, adherencia y alertas
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 2: Lógica pura
 
@@ -20,10 +20,10 @@ Fechas locales `YYYY-MM-DD`; `today` por parámetro; sin `Intl`. `api/src/lib/me
 
 ## Criterios de aceptación
 
-- [ ] `endsOn("2026-01-05", 12)` devuelve `2026-03-30`.
-- [ ] `adherenceSummary` promedia los últimos 4 y marca `atRisk` si el último es ≤ 2.
-- [ ] `needsCheckin` es verdadero el día 8 sin check-in y falso el día 7.
-- [ ] `bun test` y `bun run build:ts` pasan.
+- [x] `endsOn("2026-01-05", 12)` devuelve `2026-03-30`.
+- [x] `adherenceSummary` promedia los últimos 4 y marca `atRisk` si el último es ≤ 2.
+- [x] `needsCheckin` es verdadero el día 8 sin check-in y falso el día 7.
+- [x] `bun test` y `bun run build:ts` pasan.
 
 ## Referencias
 
@@ -35,4 +35,4 @@ Fechas locales `YYYY-MM-DD`; `today` por parámetro; sin `Intl`. `api/src/lib/me
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+El frontend comparte esta implementación por importación directa. La tendencia compara con hasta cuatro registros anteriores cuando existe una muestra previa; la cadencia se aplica a programas activos.

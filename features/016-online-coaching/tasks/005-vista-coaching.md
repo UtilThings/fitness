@@ -1,7 +1,7 @@
 # 005 - [Vista] `/coaching` con filtros y alertas
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004
 - **Fase:** Fase 4: Interfaz
 
@@ -23,11 +23,11 @@ Rutas protegidas hijas de `AdminLayout` con `meta.requiresAuth` y `meta.title`; 
 
 ## Criterios de aceptación
 
-- [ ] Los filtros por estado, coach y alerta devuelven los programas esperados.
-- [ ] Registrar un check-in desde el detalle actualiza adherencia y limpia la alerta pendiente.
-- [ ] Un coach ve por defecto solo sus programas; reception no ve el botón de check-in.
-- [ ] Sin sesión, `/coaching` redirige a login.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] Los filtros por estado, coach y alerta devuelven los programas esperados.
+- [x] Registrar un check-in desde el detalle actualiza adherencia y limpia la alerta pendiente.
+- [x] Un coach ve por defecto solo sus programas; reception no ve el botón de check-in.
+- [x] Sin sesión, `/coaching` redirige a login.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -39,4 +39,4 @@ Rutas protegidas hijas de `AdminLayout` con `meta.requiresAuth` y `meta.title`; 
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+El resumen sigue el coach seleccionado y los filtros se combinan en la tabla. Se usa la fecha de registro para desempatar check-ins de la misma fecha, de forma que un nuevo check-in pueda actualizar el indicador de riesgo ese mismo día.

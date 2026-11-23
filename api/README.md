@@ -160,7 +160,7 @@ El API responde `400` con `data.assessment` para claves desconocidas o valores i
 
 ### Relaciones con clientes
 
-`bookings.client` enlaza a `clients` sin borrado en cascada. `memberships.client` sigue la misma regla. `payments.client` también usa una relación sin borrado en cascada. Los programas de coaching deben preservar esa relación. Un cliente referenciado en `bookings`, `memberships`, `payments` o `coaching_programs` devuelve `409` al intentar borrarlo. Usa `status: "inactive"` para conservar el historial.
+`bookings.client` enlaza a `clients` sin borrado en cascada. `memberships.client` sigue la misma regla. `payments.client` también usa una relación sin borrado en cascada. `coaching_programs.client` sigue la misma regla. Un cliente referenciado en `bookings`, `memberships`, `payments` o `coaching_programs` devuelve `409` al intentar borrarlo. Usa `status: "inactive"` para conservar el historial.
 
 Queda pendiente decidir si se necesita importar clientes por CSV o crear un endpoint de alta externa. La feature 010 habilita el alta manual desde el panel.
 
@@ -233,6 +233,20 @@ Owner y reception pueden crear una reserva con `override_note` no vacía cuando 
 El hook de pagos usa `periods_paid` y `current_period_start` para generar un cobro pendiente por ciclo. La feature 015 puede reutilizar `checkEligibility(app, clientId, session)` del servicio. La feature 016 puede enlazar sus programas con `memberships`.
 
 `scripts/verify-api.sh` verifica en una base temporal la asignación, la renovación, los ajustes y su rollback, la auditoría, las reservas con y sin excepción, el filtro por plan activo y el cron.
+
+## Online Coaching
+
+`coaching_programs` enlaza al cliente, al coach responsable y a la membresía que financia el programa. El alta exige una membresía activa del mismo cliente y un plan de un servicio con `kind = online`. Crea el plan como `per_4_weeks` con 2, 3 o 4 periodos de compromiso para 8, 12 o 16 semanas. El catálogo inicial no incluye un plan online. El índice parcial permite un único programa activo o pausado por cliente y conserva los finalizados.
+
+El servidor deriva `renews_on` del fin del periodo vigente más un día. Una pausa o reanudación de la membresía sincroniza el estado y una cancelación finaliza el programa. La membresía y el programa se actualizan en la misma transacción. Una membresía vencida genera la alerta correspondiente y conserva el estado del programa. Al alcanzar el fin previsto sin cobertura posterior se muestra **Por finalizar**. Los programas finalizados quedan cerrados.
+
+`coaching_checkins` guarda la fecha civil de Miramar, adherencia entera de 1 a 5, notas y autor. El servidor rechaza fechas futuras y check-ins de programas finalizados. El staff activo puede consultar ambas colecciones. Owner y reception gestionan programas y coach gestiona los que tiene asignados. Owner y el coach asignado registran check-ins. El borrado está reservado a owner y ambas colecciones se auditan.
+
+`src/lib/coaching.ts` calcula semana, fin previsto, alertas y adherencia. La cadencia semanal alerta a partir del octavo día en programas activos. El promedio toma los últimos cuatro check-ins y la tendencia los compara con hasta cuatro anteriores. `scripts/verify-api.sh` comprueba el ciclo de migraciones, la elegibilidad, la escritura por rol, la validación, la sincronización y la auditoría con una base temporal.
+
+### Después
+
+La entrega de planes de entrenamiento y nutrición, el portal del cliente, las fotos y las medidas de progreso quedan para una entrega posterior.
 
 ## Pagos y recibos
 

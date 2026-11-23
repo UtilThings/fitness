@@ -5,6 +5,8 @@ export const ADMIN_REFERENCES: { collection: string; field: string }[] = [
   { collection: "bookings", field: "marked_by" },
   { collection: "payments", field: "recorded_by" },
   { collection: "payments", field: "voided_by" },
+  { collection: "coaching_programs", field: "coach" },
+  { collection: "coaching_checkins", field: "created_by" },
 ];
 
 interface AdminState {
