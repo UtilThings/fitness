@@ -63,10 +63,14 @@ smoke_test() {
   base_url="http://127.0.0.1:$port"
   local migration
   local payments_migration="1795264801_created_payments.js"
-  mkdir "$work_dir/payment-migrations"
+  mkdir "$work_dir/payment-migrations" "$work_dir/agenda-migrations"
   for migration in "$PWD/pb_migrations/"*.js; do
-    if [[ "${migration##*/}" > "$payments_migration" ]]; then continue; fi
-    ln -s "$migration" "$work_dir/payment-migrations/"
+    if [[ ! "${migration##*/}" > "$payments_migration" ]]; then
+      ln -s "$migration" "$work_dir/payment-migrations/"
+    fi
+    if [[ ! "${migration##*/}" > "1795264901_added_title_to_class_sessions.js" ]]; then
+      ln -s "$migration" "$work_dir/agenda-migrations/"
+    fi
   done
   local -a migration_flags=(--dir "$work_dir/data" --migrationsDir "$work_dir/payment-migrations" --hooksDir "$PWD/pb_hooks")
   check_payment_collections() {
@@ -89,7 +93,7 @@ smoke_test() {
     db.query("INSERT INTO class_sessions (id, service, starts_at, duration_min, capacity, status, kind, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
       .run("preagenda000001", "cat008service00", "2026-01-01 15:00:00.000Z", 60, 6, "scheduled", "regular", "Sesión anterior a la migración");
   ' "$work_dir/data/data.db"
-  local -a agenda_migration_flags=(--dir "$work_dir/data" --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks")
+  local -a agenda_migration_flags=(--dir "$work_dir/data" --migrationsDir "$work_dir/agenda-migrations" --hooksDir "$PWD/pb_hooks")
   check_agenda_schema() {
     bun -e '
       import { Database } from "bun:sqlite";
@@ -115,6 +119,21 @@ smoke_test() {
     const db = new Database(process.argv[1]);
     db.query("DELETE FROM class_sessions WHERE id = ?").run("preagenda000001");
   ' "$work_dir/data/data.db"
+  local -a coaching_migration_flags=(--dir "$work_dir/data" --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks")
+  check_coaching_collections() {
+    bun -e '
+      import { Database } from "bun:sqlite";
+      const db = new Database(process.argv[1], { readonly: true });
+      const row = db.query("SELECT count(*) AS total FROM _collections WHERE name IN (?, ?)").get("coaching_programs", "coaching_checkins");
+      if (row.total !== Number(process.argv[2])) throw new Error("Migración de coaching incompleta");
+    ' "$work_dir/data/data.db" "$1"
+  }
+  ./pb migrate up "${coaching_migration_flags[@]}"
+  check_coaching_collections 2
+  printf 'y\n' | ./pb migrate down 2 "${coaching_migration_flags[@]}"
+  check_coaching_collections 0
+  ./pb migrate up "${coaching_migration_flags[@]}"
+  check_coaching_collections 2
   start_pocketbase
 
   code="$(curl --noproxy '*' --silent --show-error --max-time 5 --output "$work_dir/response.json" \
@@ -156,6 +175,7 @@ smoke_test() {
   JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-bookings.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-memberships.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-payments.ts "$base_url"
+  JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-coaching.ts "$base_url"
 }
 
 run_step bun install --frozen-lockfile
