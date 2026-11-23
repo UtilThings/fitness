@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { Database } from "bun:sqlite";
+import { addDays } from "../api/src/lib/membership-cycles";
 import { utcToLocal } from "../api/src/lib/tz";
 
 const base = process.argv[2];
@@ -34,8 +35,11 @@ const client = await call<Row>(records("clients"), owner, "POST", {
 });
 const { items: [plan] } = await call<{ items: Row[] }>(records("plans"), owner);
 assert(plan);
+const indexClient = await call<Row>(records("clients"), owner, "POST", {
+  first_name: "Pagos", last_name: "Índices", status: "active",
+});
 const membership = await call<Row>(records("memberships"), root, "POST", {
-  client: client.id, plan: plan.id, status: "active", starts_on: "2026-01-01",
+  client: indexClient.id, plan: plan.id, status: "active", starts_on: "2026-01-01",
   current_period_start: "2026-01-01", current_period_end: "2026-01-28",
 });
 
@@ -47,7 +51,7 @@ await insert({});
 await insert({ status: "paid", receipt_number: "JQ-2020-000001" });
 await insert({ status: "paid", receipt_number: "JQ-2020-000001" }, 400);
 
-const cycle = { membership: membership.id, period_index: 1 };
+const cycle = { client: indexClient.id, membership: membership.id, period_index: 1 };
 const pending = await insert(cycle);
 await insert(cycle, 400);
 await call(`${payments}/${pending.id}`, root, "PATCH", { status: "void" });
@@ -113,3 +117,67 @@ const query = new URLSearchParams({ filter: `record_id = '${first.id}' && action
 const { items: logs } = await call<{ items: { summary: string; actor: string }[] }>(records("audit_logs") + "?" + query, owner);
 assert.deepEqual(logs.map(log => [log.summary, log.actor]).sort(), [["Pago anulado", cashier.id], ["Pago registrado", cashier.id]]);
 console.log("Registro, concurrencia, rollback del contador, permisos y anulación auditada verificados.");
+
+const list = <T>(collection: string, expression: string) =>
+  call<{ items: T[] }>(records(collection) + "?" + new URLSearchParams({ filter: expression }), owner);
+type Plan = Row & { price_cents: number; name: string };
+type Membership = Row & { current_period_start: string };
+type Charge = Payment & { amount_cents: number; period_index: number; due_on: string };
+const { items: [pack] } = await list<Plan>("plans", "active = true && billing_unit = 'per_4_weeks' && price_cents > 0");
+const { items: [free] } = await list<Plan>("plans", "active = true && is_first_class = true && price_cents = 0");
+assert(pack && free);
+const assign = (plan: Plan, starts_on: string) =>
+  call<{ membership: Membership }>("admin/memberships/assign", reception, "POST", { plan: plan.id, client: client.id, starts_on });
+const oldDate = addDays(today, -28);
+const cycleOne = (await assign(pack, oldDate)).membership;
+const charges = async (id: string) =>
+  (await list<Charge>("payments", `membership = '${id}'`)).items.sort((a, b) => a.period_index - b.period_index);
+const firstCharge = (await charges(cycleOne.id))[0];
+assert(firstCharge);
+assert.equal(firstCharge.status, "pending");
+assert.equal(firstCharge.amount_cents, pack.price_cents);
+assert.equal(firstCharge.due_on.slice(0, 10), oldDate);
+assert.equal(firstCharge.period_index, 1);
+
+const cycleTwo = (await call<{ membership: Membership }>(
+  `admin/memberships/${cycleOne.id}/renew`, reception, "POST", {},
+)).membership;
+const secondCharge = (await charges(cycleOne.id))[1];
+assert(secondCharge);
+assert.equal(secondCharge.status, "pending");
+assert.equal(secondCharge.period_index, 2);
+assert.equal(secondCharge.due_on.slice(0, 10), cycleTwo.current_period_start.slice(0, 10));
+
+const adjust = () => call(`admin/memberships/${cycleOne.id}/adjust`, reception, "POST", { delta: 1, note: "Verificación" });
+await adjust();
+assert.deepEqual((await charges(cycleOne.id)).map(p => p.id), [firstCharge.id, secondCharge.id]);
+await action(secondCharge, "void", { reason: "Reponer cobro" });
+await adjust();
+const replaced = (await charges(cycleOne.id)).find(p => p.period_index === 2 && p.status === "pending");
+assert(replaced && replaced.id !== secondCharge.id);
+const freeMembership = (await assign(free, oldDate)).membership;
+assert.deepEqual(await charges(freeMembership.id), []);
+
+await call(path + "/due", coach, "GET", undefined, 403);
+await call(path + "/due?days=61", reception, "GET", undefined, 400);
+type Due = {
+  today: string;
+  overdue: { id: string; client: { id: string }; plan: string; amount_cents: number; days_overdue: number }[];
+  upcoming: { id: string; amount_cents: number; days_until: number }[];
+  renewals: { membership: string; state: string }[];
+  totals: Record<string, number>;
+};
+const due = await call<Due>(path + "/due?limit=500", reception);
+assert.equal(due.today, today);
+assert(due.overdue.some(p => p.id === firstCharge.id && p.client.id === client.id && p.plan === pack.name && p.days_overdue === 28));
+assert(due.upcoming.some(p => p.id === replaced.id && p.days_until === 0));
+assert(due.renewals.some(m => m.membership === freeMembership.id && m.state === "lapsed"));
+assert.deepEqual(due.totals, {
+  overdue_count: due.overdue.length, overdue_cents: due.overdue.reduce((sum, p) => sum + p.amount_cents, 0),
+  upcoming_count: due.upcoming.length, upcoming_cents: due.upcoming.reduce((sum, p) => sum + p.amount_cents, 0),
+  renewals_count: due.renewals.length,
+});
+const limited = await call<Due>(path + "/due?limit=1", reception);
+assert.deepEqual(limited.totals, due.totals);
+assert.equal(limited.overdue.length, 1);
+console.log("Cobros por ciclo, reposición, primera clase y reporte de vencimientos verificados.");

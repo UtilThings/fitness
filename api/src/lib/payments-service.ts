@@ -1,5 +1,6 @@
 /// <reference path="../../pb_data/types.d.ts" />
 
+import { chargeForPeriod } from "./payments-due";
 import { formatReceipt, localYear, nextSequence } from "./receipt-number";
 import { auditActor, getRecord, inScheduleTransaction, scheduleAudit } from "./schedule-store";
 import { utcToLocal } from "./tz";
@@ -133,5 +134,46 @@ export function voidPayment(app: core.App, id: string, { reason, by }: { reason:
     tx.save(payment);
     scheduleAudit(tx, "payments", id, by, "Pago anulado", {});
     return payment;
+  });
+}
+
+export function ensurePendingCharge(app: core.App, membership: core.Record) {
+  const membershipId = membership.id;
+  const planId = membership.getString("plan");
+  const status = membership.getString("status");
+  const periods_paid = membership.getInt("periods_paid");
+  if (status === "cancelled" || periods_paid < 1) return;
+
+  inScheduleTransaction(app, tx => {
+    const plan = tx.findRecordById("plans", planId);
+    const charge = chargeForPeriod({
+      price_cents: plan.getInt("price_cents"),
+      billing_unit: plan.getString("billing_unit"),
+      is_first_class: plan.getBool("is_first_class"),
+    }, {
+      status, periods_paid, current_period_start: membership.getString("current_period_start").slice(0, 10),
+    });
+    if (!charge) return;
+
+    const [existing] = tx.findRecordsByFilter("payments",
+      "membership = {:membershipId} && period_index = {:index} && status != 'void'",
+      "", 1, 0, { membershipId, index: charge.period_index });
+    if (existing) return;
+
+    const actor = membership.getString("@pbInternalAuditActor");
+    if (!actor) return; // Legacy records and system updates can have no staff actor.
+
+    const payment = new Record(tx.findCollectionByNameOrId("payments"), {
+      ...charge, client: membership.getString("client"), membership: membershipId,
+      plan: planId, recorded_by: actor, status: "pending",
+    });
+    auditActor(payment, actor);
+    try {
+      tx.save(payment);
+    } catch (error) {
+      if (String(error).includes("UNIQUE constraint failed: payments.membership, payments.period_index")) return;
+      throw error;
+    }
+    scheduleAudit(tx, "payments", payment.id, actor, "Cobro por ciclo generado", { period_index: charge.period_index });
   });
 }
