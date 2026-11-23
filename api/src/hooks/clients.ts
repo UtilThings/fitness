@@ -8,6 +8,9 @@ onRecordsListRequest((e) => {
 // PocketBase select fields have no configurable default.
 onRecordCreate((e) => {
   if (!e.record!.getString("status")) e.record!.set("status", "active");
+  if (e.record!.collection().fields.getByName("locale") && !e.record!.getString("locale")) {
+    e.record!.set("locale", "es");
+  }
   return e.next();
 }, "clients");
 
@@ -61,7 +64,7 @@ onRecordDeleteRequest((e) => {
     return app.runInTransaction((tx) => {
       e.app = tx;
       const client = e.record!;
-      for (const name of ["bookings", "memberships", "payments", "coaching_programs"]) {
+      for (const name of ["bookings", "memberships", "payments", "coaching_programs", "message_logs"]) {
         let collection;
         try {
           collection = tx.findCollectionByNameOrId(name);
