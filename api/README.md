@@ -31,6 +31,8 @@ Las migraciones guardan las reglas como literales. Genera las expresiones con lo
 
 En una base nueva, un superusuario de PocketBase puede crear el primer admin desde `/_/`. Asígnale explícitamente `role = owner` y `active = true`. La colección `_superusers` administra la instancia y sus privilegios son independientes de los roles de la aplicación.
 
+La colección heredada `users` tiene el alta pública cerrada. Su regla de autenticación conserva el acceso mediante credenciales de las cuentas existentes. La app y las rutas staff usan `admins`.
+
 ## Equipo: reglas y `ADMIN_REFERENCES`
 
 El API permite crear integrantes a los owners activos. Cada integrante puede editar su propio perfil y cambiar su contraseña con la actual. Una actualización o baja debe conservar al menos un owner activo. Cada integrante conserva su estado activo al editar su propia cuenta. Si el registro es actor de una entrada de auditoría u otra relación declarada, el borrado responde `409` y la app ofrece desactivarlo. Un admin inactivo queda excluido del inicio de sesión.
