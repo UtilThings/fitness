@@ -308,3 +308,32 @@ export function checkEligibility(app: core.App, clientId: string, session: core.
   return { allowed, code, available };
 }
 
+
+export function runDaily(app: core.App, today: string, actor = "") {
+  return inScheduleTransaction(app, (tx) => {
+    let expiredCredits = 0;
+    let expiredMemberships = 0;
+    const due = tx.findRecordsByFilter("memberships",
+      "status = 'active' && current_period_end < {:today}", "current_period_end,id", 0, 0, { today });
+    for (const membership of due) {
+      if (!membership) continue;
+      const movement = expirePeriodCredits(tx, membership, actor);
+      const credits = movement ? -movement.getInt("delta") : 0;
+      const expire = shouldExpire({
+        status: membership.getString("status"), current_period_end: membershipDate(membership, "current_period_end"),
+      }, today);
+      if (expire) {
+        membership.load({ status: "expired", ended_on: today });
+        saveMembership(tx, membership, actor);
+        expiredMemberships++;
+      }
+      expiredCredits += credits;
+      if (expire || credits) {
+        scheduleAudit(tx, "memberships", membership.id, actor,
+          expire ? "Membresía vencida al terminar la gracia" : "Créditos vencidos al cierre del periodo",
+          { expiredCredits: credits, expiredMemberships: Number(expire) });
+      }
+    }
+    return { expiredCredits, expiredMemberships };
+  });
+}

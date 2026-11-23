@@ -1,7 +1,7 @@
 # 006 - [Hook] Cron diario de expiración y renovación pendiente
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 004
 - **Fase:** Fase 3: Servidor
 
@@ -25,11 +25,11 @@ PocketBase ofrece `cronAdd` para tareas programadas. "Hoy" debe ser la fecha loc
 
 ## Criterios de aceptación
 
-- [ ] Membresía con periodo vencido y saldo 5 genera `expire -5` y saldo 0.
-- [ ] Día 7 de gracia sigue `active`; día 8 pasa a `expired` con `ended_on` = ese día.
-- [ ] Segunda ejecución no crea movimientos nuevos.
-- [ ] `run-daily` con rol distinto de `owner` devuelve `403`.
-- [ ] `bun run build:ts` y `scripts/verify-api.sh` pasan.
+- [x] Membresía con periodo vencido y saldo 5 genera `expire -5` y saldo 0.
+- [x] Día 7 de gracia sigue `active`; día 8 pasa a `expired` con `ended_on` = ese día.
+- [x] Segunda ejecución no crea movimientos nuevos.
+- [x] `run-daily` con rol distinto de `owner` devuelve `403`.
+- [x] `bun run build:ts` y `scripts/verify-api.sh` pasan.
 
 ## Referencias
 
@@ -42,4 +42,4 @@ PocketBase ofrece `cronAdd` para tareas programadas. "Hoy" debe ser la fecha loc
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+El endpoint devuelve la suma de créditos expirados y el número de membresías vencidas. La prueba de integración cubre los días 7 y 8 en la misma ejecución, la auditoría y una segunda ejecución sin cambios.

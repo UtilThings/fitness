@@ -232,3 +232,39 @@ assert.equal((await call<{ free_class_used: boolean }>(clientPath, coach)).free_
 await call(bookingPath(firstBooking), coach, "PATCH", { status: "attended", override_note: "Impartida" });
 assert.equal((await call<{ free_class_used: boolean }>(clientPath, coach)).free_class_used, true);
 console.log("Elegibilidad, excepciones y reconciliación de créditos en reservas verificadas.");
+
+async function due(daysAgo: number) {
+  const client = await call<Row>(records("clients"), owner, "POST", {
+    first_name: "Membresías", last_name: `Gracia ${daysAgo}`, status: "active",
+  });
+  const result = await call<Result>(route + "/assign", owner, "POST", {
+    client: client.id, plan: pack.id, starts_on: addDays(today, -27 - daysAgo),
+  });
+  await action("adjust", { delta: 5 - pack.sessions, note: "Saldo de prueba" }, 200, owner, result.membership.id);
+  return result.membership.id;
+}
+const daySeven = await due(7);
+const dayEight = await due(8);
+const runDaily = (token = owner, expected = 200) =>
+  call<{ expiredCredits: number; expiredMemberships: number }>(route + "/run-daily", token, "POST", {}, expected);
+await runDaily(reception, 403);
+await runDaily(coach, 403);
+assert.deepEqual(await runDaily(), { expiredCredits: 10, expiredMemberships: 1 });
+const withinGrace = await call<Membership>(`${memberships}/${daySeven}`, owner);
+const afterGrace = await call<Membership>(`${memberships}/${dayEight}`, owner);
+assert.equal(withinGrace.status, "active");
+assert.equal(withinGrace.ended_on, "");
+assert.equal(afterGrace.status, "expired");
+assert.equal(afterGrace.ended_on.slice(0, 10), today);
+for (const membership of [withinGrace, afterGrace]) {
+  assert.equal(membership.credits_balance, 0);
+  const expiry = (await ledger(membership.id)).filter(({ reason }) => reason === "expire");
+  assert.deepEqual(expiry.map(({ delta }) => delta), [-5]);
+  const { items: audit } = await call<{ items: { summary: string }[] }>(
+    records("audit_logs") + filter(`record_id = '${membership.id}' && action = 'custom'`), owner,
+  );
+  assert(audit.some(({ summary }) => /venci|vencid/.test(summary)));
+}
+assert.deepEqual(await runDaily(), { expiredCredits: 0, expiredMemberships: 0 });
+assert.equal((await ledger(daySeven)).filter(({ reason }) => reason === "expire").length, 1);
+console.log("Expiración, gracia, auditoría e idempotencia del cron de membresías verificadas.");
