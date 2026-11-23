@@ -2,10 +2,10 @@ import { SESSION_CANCELLED_NOTE } from "./booking-store";
 import { serviceContext } from "./message-context";
 import { dueNotices, isSendHour, noticeDate, reminderTargets, renewalNotices } from "./message-policy";
 import type { ServiceKey } from "./message-render";
-import { sendServiceMessage } from "./message-send";
+import { sendServiceMessage, type MessageApp } from "./message-send";
 import { addLocalDays } from "./tz";
 
-function dispatch(app: core.App, clientId: string, key: ServiceKey, dedupeKey: string, session?: core.Record) {
+function dispatch(app: MessageApp, clientId: string, key: ServiceKey, dedupeKey: string, session?: core.Record) {
   try {
     const client = app.findRecordById("clients", clientId);
     const context = serviceContext(app, key, session, dedupeKey);
@@ -15,7 +15,7 @@ function dispatch(app: core.App, clientId: string, key: ServiceKey, dedupeKey: s
   }
 }
 
-export function bookingMessage(app: core.App, booking: core.Record, created: boolean) {
+export function bookingMessage(app: MessageApp, booking: core.Record, created: boolean) {
   const original = booking.original().getString("status");
   const status = booking.getString("status");
   const confirmed = created && status === "booked";
@@ -30,7 +30,7 @@ export function bookingMessage(app: core.App, booking: core.Record, created: boo
   dispatch(app, booking.getString("client"), key, `${key}:${booking.id}`, session);
 }
 
-export function classChangeMessages(app: core.App, session: core.Record) {
+export function classChangeMessages(app: MessageApp, session: core.Record) {
   if (session.getString("status") !== "scheduled") return;
   const before = session.original();
   if (["starts_at", "coach"].every((field) => before.getString(field) === session.getString(field))) return;
@@ -47,14 +47,14 @@ export function classChangeMessages(app: core.App, session: core.Record) {
 function setting(name: string, fallback: number) {
   const raw = $os.getenv(name).trim();
   const count = Number(raw);
-  return /^\d+$/.test(raw) && Number.isSafeInteger(count) && count > 0 && count <= 10_000 ? count : fallback;
+  return /^\d+$/.test(raw) && Number.isSafeInteger(count) && count > 0 ? count : fallback;
 }
 
 function dateFilter(date: Date) {
   return date.toISOString().replace("T", " ");
 }
 
-export function sendReminders(app: core.App, now = new Date()) {
+export function sendReminders(app: MessageApp, now = new Date()) {
   const hours = setting("MESSAGES_REMINDER_HOURS", 24);
   const time = { from: dateFilter(now), to: dateFilter(new Date(now.getTime() + hours * 3_600_000)) };
   const bookings = app.findRecordsByFilter("bookings",
@@ -76,7 +76,7 @@ export function sendReminders(app: core.App, now = new Date()) {
   }
 }
 
-export function sendDatedNotices(app: core.App, type: "payment_due" | "membership_renewal", now = new Date()) {
+export function sendDatedNotices(app: MessageApp, type: "payment_due" | "membership_renewal", now = new Date()) {
   if (!isSendHour(now)) return;
   const payment = type === "payment_due";
   const days = payment ? setting("MESSAGES_DUE_DAYS_BEFORE", 3) : setting("MESSAGES_RENEWAL_DAYS_BEFORE", 5);

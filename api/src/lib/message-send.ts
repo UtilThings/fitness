@@ -2,6 +2,10 @@ import { relatedRecord, serviceContext } from "./message-context";
 import { isEligible, MAX_ATTEMPTS, nextRetry, resolveLocale } from "./message-policy";
 import { renderTemplate, type Locale, type MessageKey, type ServiceKey, type Template, type Variables } from "./message-render";
 
+export type MessageApp = Pick<core.App,
+  "findRecordsByFilter" | "findRecordById" | "findCollectionByNameOrId" | "runInTransaction" |
+  "save" | "settings" | "newMailClient" | "logger">;
+
 type Rendered = ReturnType<typeof renderTemplate>;
 
 export interface MessageChannel {
@@ -10,7 +14,7 @@ export interface MessageChannel {
 }
 
 // To add SMS, register a channel implementation and extend the log's channel select.
-function channels(app: core.App): Record<string, MessageChannel> {
+function channels(app: MessageApp): Record<string, MessageChannel> {
   return {
     email: {
       name: "email",
@@ -30,7 +34,7 @@ function channels(app: core.App): Record<string, MessageChannel> {
   };
 }
 
-export function sendTestMessage(app: core.App, recipient: string, template: Template, vars: Variables) {
+export function sendTestMessage(app: MessageApp, recipient: string, template: Template, vars: Variables) {
   channels(app).email!.send({ to: recipient, ...renderTemplate(template, vars) });
 }
 
@@ -46,7 +50,7 @@ export function clientVariables(client: core.Record): Variables {
   };
 }
 
-function activeTemplate(app: core.App, key: ServiceKey, locale: Locale) {
+function activeTemplate(app: MessageApp, key: ServiceKey, locale: Locale) {
   const find = (language: Locale) =>
     app.findRecordsByFilter("message_templates", "key = {:key} && locale = {:locale}", "", 1, 0, { key, locale: language })[0];
   const record = find(locale) ?? find(locale === "es" ? "en" : "es");
@@ -64,7 +68,7 @@ function sqlDate(date: Date): string {
   return date.toISOString().replace("T", " ");
 }
 
-function firstClaim(app: core.App, options: BaseOptions & { key: MessageKey }, now: Date): core.Record | undefined {
+function firstClaim(app: MessageApp, options: BaseOptions & { key: MessageKey }, now: Date): core.Record | undefined {
   let claimed: core.Record | undefined;
   app.runInTransaction((tx) => {
     const dedupeKey = options.dedupeKey ?? "";
@@ -86,7 +90,7 @@ function firstClaim(app: core.App, options: BaseOptions & { key: MessageKey }, n
   return claimed;
 }
 
-function deliver(app: core.App, log: core.Record, client: core.Record, template: Template, vars: () => Variables): Result {
+function deliver(app: MessageApp, log: core.Record, client: core.Record, template: Template, vars: () => Variables): Result {
   let result: Result = "failed";
   let error = "";
   let retryable = template.key !== "manual";
@@ -112,7 +116,7 @@ function deliver(app: core.App, log: core.Record, client: core.Record, template:
   return result;
 }
 
-export function sendServiceMessage(app: core.App, options: ServiceOptions): Result {
+export function sendServiceMessage(app: MessageApp, options: ServiceOptions): Result {
   try {
     const details = clientDetails(options.client);
     if (!isEligible(details, options.key)) return "skipped";
@@ -130,7 +134,7 @@ export function sendServiceMessage(app: core.App, options: ServiceOptions): Resu
   }
 }
 
-export function sendManualMessage(app: core.App, options: BaseOptions & { template: Template; context: Context; locale?: Locale }): Result {
+export function sendManualMessage(app: MessageApp, options: BaseOptions & { template: Template; context: Context; locale?: Locale }): Result {
   try {
     const details = clientDetails(options.client);
     if (!isEligible(details, "manual")) return "skipped";
@@ -146,48 +150,51 @@ export function sendManualMessage(app: core.App, options: BaseOptions & { templa
   }
 }
 
-function claimRetry(app: core.App, id: string, now: Date) {
+function claimRetry(app: MessageApp, id: string, now: Date, retryable: boolean) {
   let claimed: core.Record | undefined;
   app.runInTransaction((tx) => {
     const log = tx.findRecordById("message_logs", id);
     const next = log.getString("next_retry_at");
     const attempts = log.getInt("attempts");
     if (log.getString("status") !== "failed" || attempts >= MAX_ATTEMPTS || !next || next > sqlDate(now)) return;
-    log.load({
-      attempts: attempts + 1,
-      next_retry_at: attempts + 1 < MAX_ATTEMPTS ? sqlDate(new Date(now.getTime() + LEASE_MS)) : "",
-    });
+    log.set("next_retry_at", "");
+    if (retryable) {
+      log.set("attempts", attempts + 1);
+      log.set("error", "El intento no quedó confirmado.");
+      if (attempts + 1 < MAX_ATTEMPTS) log.set("next_retry_at", sqlDate(new Date(now.getTime() + LEASE_MS)));
+    }
     tx.save(log);
-    claimed = log;
+    if (retryable) claimed = log;
   });
   return claimed;
 }
 
-function stopRetry(app: core.App, log: core.Record) {
-  log.set("next_retry_at", "");
-  app.save(log);
-}
-
-export function retryFailedMessages(app: core.App, now = new Date()) {
+export function retryFailedMessages(app: MessageApp, now = new Date()) {
   const queue = app.findRecordsByFilter("message_logs",
     "status = 'failed' && next_retry_at != '' && next_retry_at <= {:now} && attempts < {:max}",
     "next_retry_at,id", 0, 0, { now: sqlDate(now), max: MAX_ATTEMPTS });
   for (const candidate of queue) {
     if (!candidate) continue;
     try {
-      const log = claimRetry(app, candidate.id, now);
-      if (!log) continue;
-      const key = log.getString("template_key") as ServiceKey;
-      const client = app.findRecordById("clients", log.getString("client"));
+      const key = candidate.getString("template_key") as ServiceKey;
+      const client = app.findRecordById("clients", candidate.getString("client"));
       const details = clientDetails(client);
-      const session = relatedRecord(app, "class_sessions", log.getString("session"));
+      const session = relatedRecord(app, "class_sessions", candidate.getString("session"));
       const template = activeTemplate(app, key, resolveLocale(details));
-      const context = serviceContext(app, key, session, log.getString("dedupe_key"));
-      if (!isEligible(details, key) || !template || !context) {
-        stopRetry(app, log);
-        continue;
+      const dedupeKey = candidate.getString("dedupe_key");
+      const [event, source, change] = dedupeKey.split(":");
+      const bookingNotice = key === "booking_confirmed" || key === "waitlist_promoted" || key === "class_reminder";
+      const booking = bookingNotice && source && event === key ? relatedRecord(app, "bookings", source) : undefined;
+      const obsolete = (bookingNotice && session && session.getString("status") !== "scheduled") ||
+        (bookingNotice && event === key && booking?.getString("status") !== "booked") ||
+        (key === "class_cancelled" && change === "change" && session?.getString("status") !== "scheduled") ||
+        (key === "class_reminder" && session && Date.parse(session.getString("starts_at").replace(" ", "T")) <= now.getTime());
+      const context = obsolete ? undefined : serviceContext(app, key, session, dedupeKey);
+      const eligible = isEligible(details, key);
+      const log = claimRetry(app, candidate.id, now, eligible && !!template && !!context);
+      if (log && template && context) {
+        deliver(app, log, client, template, () => ({ ...clientVariables(client), ...context(template.locale) }));
       }
-      deliver(app, log, client, template, () => ({ ...clientVariables(client), ...context(template.locale) }));
     } catch {
       app.logger().error("No se pudo reintentar el mensaje.", "message_log", candidate.id);
     }

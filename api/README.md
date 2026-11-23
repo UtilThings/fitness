@@ -298,3 +298,43 @@ Las rutas de solo lectura devuelven datos agregados y no incluyen nombres, corre
 **Retención.** Las altas se fechan por `starts_on` y las bajas de membresías canceladas o expiradas por `ended_on`. Las pausas se incluyen en el saldo. `churn_rate = churned / active_start` y `retention_rate = 1 - churn_rate`. Si `active_start` es 0, las tasas son 0 y 1, respectivamente.
 
 `../scripts/verify-api.sh` verifica los permisos, filtros y contratos de respuesta con datos de ejemplo, incluido un día de 23 horas.
+
+## Comunicaciones del servicio
+
+Las comunicaciones cubren reservas, clases, cobros y renovaciones. No incluyen marketing, boletines ni seguimiento comercial.
+
+### Configurar el correo
+
+En el panel de PocketBase, abre **Ajustes → Correo**, habilita SMTP y guarda el servidor, puerto, credenciales y remitente del estudio. Envía una prueba como owner con `POST /api/admin/messages/test` y el cuerpo `{"key":"booking_confirmed","locale":"es"}`. PocketBase entrega la prueba al correo del owner autenticado.
+
+| Variable del proceso de PocketBase | Valor por defecto | Uso |
+| --- | --- | --- |
+| `MESSAGES_REMINDER_HOURS` | `24` | Anticipación del recordatorio de clase, en horas |
+| `MESSAGES_DUE_DAYS_BEFORE` | `3` | Días de anticipación del aviso de cobro |
+| `MESSAGES_RENEWAL_DAYS_BEFORE` | `5` | Días de anticipación del aviso de renovación |
+| `STUDIO_NAME` | `JQ Fitness` | Nombre disponible en las plantillas |
+| `STUDIO_PHONE` | Vacío | Teléfono disponible en las plantillas |
+
+El cron de recordatorios corre cada 15 minutos. Los avisos de cobro y renovación corren cada hora y envían a las 09:00 de Miramar, Florida (`America/New_York`). Para limitar el uso de las rutas, habilita el limitador de PocketBase en Ajustes y añade reglas para `POST /api/admin/messages/` o para cada ruta.
+
+### Plantillas e historial
+
+Las seis plantillas se inicializan activas en español e inglés. `clients.locale` determina el idioma y los clientes anteriores usan español. Si falta la plantilla del idioma preferido se busca la del otro idioma. Una plantilla desactivada suprime el envío en su idioma. Las ediciones quedan en auditoría y requieren el rol owner.
+
+| Clave | Variables específicas |
+| --- | --- |
+| `booking_confirmed`, `class_reminder`, `waitlist_promoted` | `class_name`, `class_date`, `class_time`, `coach_name` |
+| `class_cancelled` | `class_name`, `class_date`, `class_time`, `cancel_reason` |
+| `payment_due` | `plan_name`, `amount`, `due_date` |
+| `membership_renewal` | `plan_name`, `period_end`, `amount` |
+| `manual` | `client_first_name`, `studio_name`, `class_name`, `class_date`, `class_time` |
+
+Las seis plantillas automáticas también admiten `client_first_name`, `studio_name` y `studio_phone`. Usa la sintaxis `{{nombre}}` en texto plano. La API valida las variables y genera HTML escapado. Los importes se muestran en dólares estadounidenses y las fechas de clase usan la hora de Miramar.
+
+Los clientes activos y en pausa pueden recibir correo si su dirección es válida. Los clientes inactivos o sin dirección válida se omiten. El motor registra el resultado, intentos y un error genérico en `message_logs`. Ante un fallo automático, programa los reintentos a los 5 y 30 minutos después del intento previo. El cron revisa la cola cada diez minutos y el máximo es de tres intentos totales. Al reintentar se verifica que el aviso siga vigente y se reconstruye el contexto a partir de la sesión o del vencimiento. La clave de deduplicación protege frente a ejecuciones concurrentes y crons repetidos. Si el proceso muere después de que SMTP acepta el correo y antes de registrar el resultado, SMTP y SQLite no pueden confirmar el envío en una transacción común.
+
+El equipo activo puede previsualizar mensajes, consultar el historial y enviar un mensaje manual a hasta 200 inscritos de una clase próxima. Cada destinatario elegible de un mensaje manual tiene un intento. Su texto se mantiene en memoria durante la solicitud y no se guarda en el historial.
+
+Para añadir SMS en el futuro, implementa `MessageChannel` y registra el canal en `src/lib/message-send.ts`. Añade el valor al campo `message_logs.channel` con una migración y define la elegibilidad y el transporte para ese canal. El canal actual es correo electrónico.
+
+`scripts/verify-api.sh` comprueba los flujos con una instancia temporal de PocketBase y un SMTP de captura en localhost. La captura permite cotejar contenido e idioma sin enviar a una dirección real. Se puede omitir con `JQ_VERIFY_SMTP_CAPTURE=0`.

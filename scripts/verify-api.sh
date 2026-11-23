@@ -19,8 +19,9 @@ stop_pocketbase() {
 
 start_pocketbase() {
   local attempt
-  ./pb serve --dir "$work_dir/data" --http "127.0.0.1:$port" \
-    --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks" --hooksWatch=false --automigrate=false \
+  MESSAGES_REMINDER_HOURS=24 MESSAGES_DUE_DAYS_BEFORE=3 MESSAGES_RENEWAL_DAYS_BEFORE=5 STUDIO_NAME="JQ Fitness" \
+    ./pb serve --dir "$work_dir/data" --http "127.0.0.1:$port" \
+    --migrationsDir "$PWD/pb_migrations" --hooksDir "$work_dir/hooks" --hooksWatch=false --automigrate=false \
     >"$work_dir/pocketbase.log" 2>&1 &
   pb_pid=$!
 
@@ -61,6 +62,18 @@ smoke_test() {
   trap 'exit 143' TERM
 
   base_url="http://127.0.0.1:$port"
+  cp -r "$PWD/pb_hooks" "$work_dir/hooks"
+  # Inyecta un reloj únicamente en la instancia temporal de verificación.
+  cat >"$work_dir/hooks/verify-message-clock.pb.js" <<'JS'
+routerAdd("POST", "/api/verify/messages/daily", (e) => {
+  const { sendDatedNotices } = require(`${__hooks}/lib/message-triggers`);
+  const { instant } = e.requestInfo().body;
+  sendDatedNotices(e.app, "payment_due", new Date(instant));
+  sendDatedNotices(e.app, "membership_renewal", new Date(instant));
+  return e.json(200, {});
+}, $apis.requireSuperuserAuth());
+JS
+
   local migration
   local payments_migration="1795264801_created_payments.js"
   mkdir "$work_dir/payment-migrations" "$work_dir/agenda-migrations" "$work_dir/coaching-migrations"

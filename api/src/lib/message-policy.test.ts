@@ -8,7 +8,7 @@ test("envía solo a clientes elegibles y usa español por defecto", () => {
     expect(isEligible({ status, email: "ana+reservas@example.test" })).toBe(true);
   }
   expect(isEligible({ status: "inactive", email: "ana@example.test" })).toBe(false);
-  for (const email of [undefined, "", "ana", "ana@localhost", " ana@example.test", "ana@example.test\n"]) {
+  for (const email of [undefined, "", "ana", "ana@localhost", "ana..rojas@example.test", " ana@example.test", "ana@example.test\n"]) {
     expect(isEligible({ status: "active", email })).toBe(false);
   }
   expect(resolveLocale({})).toBe("es");

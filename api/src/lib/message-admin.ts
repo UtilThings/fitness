@@ -58,7 +58,7 @@ export function messageClass(e: core.RequestEvent) {
   const problems = validateTemplate(template);
   if (problems.length) return problemsResponse(e, problems);
 
-  const session = relatedRecord(e.app, "class_sessions", e.request.pathValue("sessionId"));
+  const session = relatedRecord(e.app, "class_sessions", e.request?.pathValue("sessionId") ?? "");
   if (!session) throw new NotFoundError("No se encontró la clase.");
   if (session.getString("status") !== "scheduled" || Date.parse(session.getString("starts_at").replace(" ", "T")) <= Date.now()) {
     throw new BadRequestError("Selecciona una clase próxima y programada.");

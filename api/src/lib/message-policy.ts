@@ -10,8 +10,11 @@ export function resolveLocale(client: { locale?: string }): Locale {
 
 // All operational keys share the same eligibility policy.
 export function isEligible(client: { status: string; email?: string }, _key?: MessageKey): boolean {
+  const email = client.email ?? "";
+  const local = email.split("@")[0] ?? "";
   return (client.status === "active" || client.status === "paused") &&
-    /^[^\s@<>(),;:\\"\[\]]+@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i.test(client.email ?? "");
+    local.length <= 64 && email.length <= 254 && !local.startsWith(".") && !local.endsWith(".") && !local.includes("..") &&
+    /^[^\s@<>(),;:\\"\[\]]+@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i.test(email);
 }
 
 export function nextRetry(attempts: number, now: Date): Date | null {

@@ -1,7 +1,7 @@
 # 009 - [Verificación] Pruebas de integración, documentación y cierre
 
 - **Prioridad:** 9
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003, 004, 005, 006, 007, 008
 - **Fase:** Fase final: Verificación y cierre
 
@@ -23,11 +23,11 @@ El flujo completo de mensajes está verificado de extremo a extremo, documentado
 
 ## Criterios de aceptación
 
-- [ ] Ambos README describen la configuración y el funcionamiento reales, incluido el punto de extensión de SMS y la exclusión explícita de marketing.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
-- [ ] La verificación con SMTP de captura confirma idioma por cliente, no envío a inactivos y reintento tras fallo.
-- [ ] Se comprueba manualmente que un nombre de cliente con HTML llega escapado en el correo.
-- [ ] El spec y las tareas reflejan el estado real (Completado) y sus notas de implementación.
+- [x] Ambos README describen la configuración y el funcionamiento reales, incluido el punto de extensión de SMS y la exclusión explícita de marketing.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] La verificación con SMTP de captura confirma idioma por cliente, no envío a inactivos y reintento tras fallo.
+- [x] Se comprueba manualmente que un nombre de cliente con HTML llega escapado en el correo.
+- [x] El spec y las tareas reflejan el estado real (Completado) y sus notas de implementación.
 
 ## Referencias
 
@@ -39,3 +39,6 @@ El flujo completo de mensajes está verificado de extremo a extremo, documentado
 
 ## Notas de implementación
 
+- PocketBase temporal con SMTP de captura. Se comprobaron los seis avisos, los idiomas de cliente, el mensaje manual, el envío de prueba, las exclusiones y el reintento hasta el tercer intento total.
+- Se inspeccionó la parte HTML del mensaje recibido. El nombre sintético se recibió como `&lt;script&gt;Ana&lt;/script&gt;`.
+- Pasaron `bun run build:ts`, `bun test`, `scripts/verify-api.sh` y `scripts/verify-app.sh`. Se repitió la reversión y reaplicación de las migraciones de la feature.

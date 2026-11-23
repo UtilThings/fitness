@@ -34,3 +34,11 @@ cronAdd("retry_failed_messages", "*/10 * * * *", () => {
     $app.logger().error("No se pudo consultar la cola de mensajes.");
   }
 });
+
+function blockMessageLogWrites() {
+  throw new ForbiddenError("El historial de mensajes se escribe en el servidor.");
+}
+
+onRecordCreateRequest(blockMessageLogWrites, "message_logs");
+onRecordUpdateRequest(blockMessageLogWrites, "message_logs");
+onRecordDeleteRequest(blockMessageLogWrites, "message_logs");

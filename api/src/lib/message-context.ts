@@ -1,11 +1,13 @@
 import { formatDate, formatMoneyCents, formatTime, type Locale, type ServiceKey, type Variables } from "./message-render";
 
-export function relatedRecord(app: core.App, collection: string, id: string): core.Record | undefined {
+type MessageLookup = Pick<core.App, "findRecordsByFilter">;
+
+export function relatedRecord(app: MessageLookup, collection: string, id: string): core.Record | undefined {
   if (!id) return;
   return app.findRecordsByFilter(collection, "id = {:id}", "", 1, 0, { id })[0];
 }
 
-export function classVariables(app: core.App, session: core.Record, locale: Locale): Variables {
+export function classVariables(app: MessageLookup, session: core.Record, locale: Locale): Variables {
   const start = session.getString("starts_at");
   const service = relatedRecord(app, "services", session.getString("service"));
   const coach = relatedRecord(app, "admins", session.getString("coach"));
@@ -17,7 +19,7 @@ export function classVariables(app: core.App, session: core.Record, locale: Loca
   };
 }
 
-export function serviceContext(app: core.App, key: ServiceKey, session: core.Record | undefined, dedupeKey: string) {
+export function serviceContext(app: MessageLookup, key: ServiceKey, session: core.Record | undefined, dedupeKey: string) {
   if (session) {
     return (locale: Locale): Variables => {
       const vars = classVariables(app, session, locale);
