@@ -1,7 +1,7 @@
 # 001 - [Migración] `coach_availability` y campo `title` en `class_sessions`
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 009 (contrato), Feature 011 (contrato), Feature 013 (contrato)
 - **Fase:** Fase 1: Modelo de datos
 
@@ -21,11 +21,11 @@ Existen la colección `coach_availability` y el campo opcional `title` en `class
 
 ## Criterios de aceptación
 
-- [ ] `up` y `down` ejecutan sin error y `up` es repetible tras `down`.
-- [ ] Un coach crea disponibilidad para sí mismo (`200`) y recibe `403`/`400` al hacerlo para otro coach.
-- [ ] Una reception no puede crear disponibilidad; sí puede listarla.
-- [ ] `class_sessions` acepta `title` y los registros existentes siguen válidos.
-- [ ] `scripts/verify-api.sh` pasa.
+- [x] `up` y `down` ejecutan sin error y `up` es repetible tras `down`.
+- [x] Un coach crea disponibilidad para sí mismo (`200`) y recibe `403`/`400` al hacerlo para otro coach.
+- [x] Una reception no puede crear disponibilidad; sí puede listarla.
+- [x] `class_sessions` acepta `title` y los registros existentes siguen válidos.
+- [x] `scripts/verify-api.sh` pasa.
 
 ## Referencias
 
@@ -38,4 +38,4 @@ Existen la colección `coach_availability` y el campo opcional `title` en `class
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+La migración de plantillas 009 usa un entero de 0 a 6 (domingo a sábado) y texto local HH:mm. La conversión existente está en `api/src/lib/tz.ts` (`localToUtc` y `utcToLocal`). Se verificaron la reversión, la reaplicación y las reglas de acceso en PocketBase.

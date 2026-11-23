@@ -57,6 +57,7 @@ type Session = {
   status: string;
   starts_at: string;
   kind: string;
+  title: string;
   cancel_reason: string;
 };
 const templates = "collections/class_templates/records";
@@ -83,7 +84,7 @@ async function staff(role: string) {
   return { id, token: await auth("admins", email) };
 }
 
-const { token: owner } = await staff("owner");
+const { id: ownerId, token: owner } = await staff("owner");
 const { token: reception } = await staff("reception");
 const coach = await staff("coach");
 const listSessions = (token = owner) =>
@@ -151,11 +152,14 @@ await call(
   400,
 );
 for (let index = 0; index < 2; index++) {
-  await call(sessions, reception, "POST", {
+  const title = `Clase especial ${index + 1}`;
+  const special = await call<Session>(sessions, reception, "POST", {
     ...fixture,
     starts_at: first.starts_at,
     kind: "special",
+    title,
   });
+  assert.equal(special.title, title);
 }
 
 const cancel = `admin/sessions/${first.id}/cancel`;
@@ -297,3 +301,11 @@ assert.equal(
 console.log(
   "Horarios verificados en PocketBase: seed, generación, índice, rutas, bloqueos, roles, cron y DST.",
 );
+
+const availability = "collections/coach_availability/records";
+const slot = { coach: coach.id, weekday: 0, start_time: "08:00", end_time: "12:00" };
+const ownSlot = await call<{ id: string }>(availability, coach.token, "POST", slot);
+await call(availability, coach.token, "POST", { ...slot, coach: ownerId }, 400);
+await call(`${availability}/${ownSlot.id}`, coach.token, "PATCH", { coach: ownerId }, 404);
+await call(availability, reception, "POST", slot, 400);
+assert.equal((await call<{ totalItems: number }>(availability, reception)).totalItems, 1);

@@ -83,6 +83,23 @@ smoke_test() {
   check_payment_collections 0
   ./pb migrate up "${migration_flags[@]}"
   check_payment_collections 2
+  local -a agenda_migration_flags=(--dir "$work_dir/data" --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks")
+  check_agenda_schema() {
+    bun -e '
+      import { Database } from "bun:sqlite";
+      const db = new Database(process.argv[1], { readonly: true });
+      const availability = db.query("SELECT name FROM sqlite_master WHERE type = ? AND name = ?").get("table", "coach_availability");
+      const title = db.query("PRAGMA table_info(class_sessions)").all().some((column) => column.name === "title");
+      const expected = process.argv[2] === "yes";
+      if (Boolean(availability) !== expected || title !== expected) throw new Error("Migración de agenda incompleta");
+    ' "$work_dir/data/data.db" "$1"
+  }
+  ./pb migrate up "${agenda_migration_flags[@]}"
+  check_agenda_schema yes
+  printf 'y\n' | ./pb migrate down 2 "${agenda_migration_flags[@]}"
+  check_agenda_schema no
+  ./pb migrate up "${agenda_migration_flags[@]}"
+  check_agenda_schema yes
   start_pocketbase
 
   code="$(curl --noproxy '*' --silent --show-error --max-time 5 --output "$work_dir/response.json" \
