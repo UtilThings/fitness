@@ -1,14 +1,78 @@
 <script setup lang="ts">
-import Card from 'primevue/card';
+import Button from 'primevue/button';
+import PageHeader from '@/components/PageHeader.vue';
+import AttentionCard from '@/components/dashboard/AttentionCard.vue';
+import DashboardFeedback from '@/components/dashboard/DashboardFeedback.vue';
+import StatCard from '@/components/dashboard/StatCard.vue';
+import TodayClassesCard from '@/components/dashboard/TodayClassesCard.vue';
+import UpcomingPaymentsCard from '@/components/dashboard/UpcomingPaymentsCard.vue';
+import { useDashboard } from '@/composables/useDashboard';
+import { formatTime } from '@/lib/datetime';
+
+const { data, loading, error, refresh } = useDashboard();
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
-    <h1 class="text-xl font-semibold">Panel de administración</h1>
-    <Card>
-      <template #content>
-        <p class="text-surface-500">Aquí irán las métricas del gimnasio.</p>
+  <div class="grid min-w-0 gap-4">
+    <PageHeader title="Panel de administración">
+      <template #actions>
+        <p
+          v-if="data"
+          class="text-sm text-surface-600 dark:text-surface-300"
+          aria-live="polite"
+        >
+          Actualizado {{ formatTime(data.generated_at) }}
+        </p>
+        <Button
+          label="Actualizar"
+          icon="pi pi-refresh"
+          :loading="loading"
+          outlined
+          @click="refresh"
+        />
       </template>
-    </Card>
+    </PageHeader>
+
+    <DashboardFeedback
+      :error="error?.message"
+      :loading="loading && !data"
+      @retry="refresh"
+    />
+    <template v-if="data">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Clientes activos"
+          icon="pi pi-users"
+          :value="data.counts.active_clients"
+          :to="{ path: '/clients', query: { status: 'active' } }"
+        />
+        <StatCard
+          title="Clases hoy"
+          icon="pi pi-calendar"
+          :value="data.counts.sessions_today"
+          to="/classes"
+        />
+        <StatCard
+          title="Reservas hoy"
+          icon="pi pi-bookmark"
+          :value="data.counts.bookings_today"
+        />
+        <StatCard
+          title="En espera"
+          icon="pi pi-clock"
+          :value="data.counts.waitlisted_today"
+        />
+      </div>
+      <div class="grid min-w-0 gap-4 lg:grid-cols-3">
+        <TodayClassesCard
+          class="lg:col-span-2"
+          :sessions="data.sessions_today"
+        />
+        <div class="grid min-w-0 content-start gap-4">
+          <AttentionCard :items="data.attention" />
+          <UpcomingPaymentsCard :payments="data.upcoming_payments" />
+        </div>
+      </div>
+    </template>
   </div>
 </template>

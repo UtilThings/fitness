@@ -209,6 +209,32 @@ function openSession(session: ClassSession) {
   fields.value = {};
 }
 
+watch(
+  () => route.query.session,
+  async (id, _previous, onCleanup) => {
+    if (typeof id !== 'string' || !id) return;
+    let current = true;
+    onCleanup(() => {
+      current = false;
+    });
+    try {
+      const session = await schedule.getSession(id);
+      if (current) openSession(session);
+    } catch (cause) {
+      if (current) notify.error((cause as PbError).message);
+    }
+  },
+  { immediate: true },
+);
+
+function closeSession() {
+  bookingOpen.value = false;
+  selected.value = null;
+  if (route.query.session) {
+    void router.replace({ query: { ...route.query, session: undefined } });
+  }
+}
+
 function openDialog(action: NonNullable<typeof mode.value>) {
   if (action === 'new') {
     draft.value = {
@@ -468,10 +494,7 @@ function generate() {
       header="Detalle de sesión"
       @update:visible="
         (visible) => {
-          if (!visible) {
-            bookingOpen = false;
-            selected = null;
-          }
+          if (!visible) closeSession();
         }
       "
     >
