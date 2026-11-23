@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { addLocalDays, utcToLocal } from "../api/src/lib/tz";
+import { addLocalDays, localToUtc, utcToLocal } from "../api/src/lib/tz";
 
 const base = process.argv[2];
 const password = process.env.JQ_VERIFY_PASSWORD;
@@ -149,3 +149,53 @@ for (const event of ["created", "waitlisted", "promoted", "cancelled", "late_can
 }
 
 console.log("Reservas, concurrencia, cancelación, asistencia, disponibilidad y auditoría verificadas.");
+
+const dashboardPath = "admin/dashboard";
+for (const days of ["0", "30", "1.5", ""]) {
+  await call(dashboardPath + "?days=" + days, coach, "GET", undefined, 400);
+}
+await call(dashboardPath, "", "GET", undefined, 401);
+await call(dashboardPath, root, "GET", undefined, 403);
+
+const today = utcToLocal(new Date().toISOString()).date;
+async function createAt(localDate: string, coachId = "") {
+  return call<Session>(records("class_sessions"), owner, "POST", {
+    service: plans[0].service, starts_at: localToUtc(localDate, "23:30"), duration_min: 30, capacity: 4, coach: coachId,
+  });
+}
+const ownerId = (await call<{ record: Row }>("collections/admins/auth-refresh", owner, "POST")).record.id;
+const midnightClass = await createAt(today, ownerId);
+const previousClass = await createAt(addLocalDays(today, -1));
+const nextClass = await createAt(addLocalDays(today, 1));
+const dashboard = await call<{
+  generated_at: string;
+  timezone: string;
+  today: { date: string; start_utc: string; end_utc: string };
+  counts: { active_clients: number; sessions_today: number };
+  sessions_today: {
+    id: string; service: Row; coach: Row | null; spots_left: number; availability: string;
+  }[];
+  attention: { session_id: string; reason: string }[];
+  upcoming_payments: null;
+}>(dashboardPath, coach);
+assert.equal(dashboard.timezone, "America/New_York");
+assert.equal(dashboard.today.date, utcToLocal(dashboard.generated_at).date);
+assert.equal(dashboard.today.start_utc, localToUtc(dashboard.today.date, "00:00"));
+assert.equal(dashboard.today.end_utc, localToUtc(addLocalDays(dashboard.today.date, 1), "00:00"));
+const evening = dashboard.sessions_today.find(({ id }) => id === midnightClass.id);
+assert(evening);
+assert.equal(evening.service.id, plans[0].service);
+assert.equal(evening.coach?.id, ownerId);
+assert.equal(evening.spots_left, 4);
+assert.equal(evening.availability, "available");
+assert(!dashboard.sessions_today.some(({ id }) => id === previousClass.id || id === nextClass.id));
+assert(!dashboard.attention.some(({ session_id }) => session_id === previousClass.id));
+for (const reason of ["no_coach", "no_bookings"]) {
+  assert(dashboard.attention.some((entry) => entry.session_id === nextClass.id && entry.reason === reason));
+}
+assert(dashboard.attention.some(({ session_id, reason }) => session_id === future.id && reason === "no_coach") === false);
+assert.equal(dashboard.counts.sessions_today, dashboard.sessions_today.length);
+assert(dashboard.counts.active_clients >= 4);
+assert.equal(dashboard.upcoming_payments, null);
+assert(!JSON.stringify(dashboard).includes(firstClient.id));
+console.log("Contrato, permisos y ventana local del dashboard verificados.");

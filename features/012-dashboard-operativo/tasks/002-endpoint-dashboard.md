@@ -1,7 +1,7 @@
 # 002 - [Endpoint] GET /api/admin/dashboard
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 1: Resumen operativo en la API
 
@@ -25,12 +25,12 @@ Las rutas custom se registran con `routerAdd` en `api/src/hooks/*.ts` (compilan 
 
 ## Criterios de aceptación
 
-- [ ] La respuesta cumple el contrato y `timezone = "America/New_York"`.
-- [ ] Una sesión a las 23:30 locales aparece en `sessions_today` de ese día y no del siguiente.
-- [ ] Una sesión sin coach y otra sin reservas aparecen en `attention` con su `reason`.
-- [ ] `days=0` o `days=30` devuelve `400`; sin token `401`; un coach activo recibe `200`.
-- [ ] La respuesta no incluye datos personales de clientes.
-- [ ] `bun run build:ts` genera el hook y `bun test` pasa.
+- [x] La respuesta cumple el contrato y `timezone = "America/New_York"`.
+- [x] Una sesión a las 23:30 locales aparece en `sessions_today` de ese día y no del siguiente.
+- [x] Una sesión sin coach y otra sin reservas aparecen en `attention` con su `reason`.
+- [x] `days=0` o `days=30` devuelve `400`; sin token `401`; un coach activo recibe `200`.
+- [x] La respuesta no incluye datos personales de clientes.
+- [x] `bun run build:ts` genera el hook y `bun test` pasa.
 
 ## Referencias
 
@@ -43,3 +43,5 @@ Las rutas custom se registran con `routerAdd` en `api/src/hooks/*.ts` (compilan 
 
 ## Notas de implementación
 
+
+- Verificado contra PocketBase temporal con `scripts/verify-api.sh`: permisos, límites de days, clases de las 23:30 en días contiguos, alertas y ausencia de datos de clientes. La consulta usa como máximo cinco lecturas de datos, incluidas las dos expansiones por lote.
