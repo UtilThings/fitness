@@ -16,7 +16,9 @@ const api = vi.hoisted(() => ({
   markAttendance: vi.fn(),
   hasFreeClassPlan: vi.fn(),
   get: vi.fn(),
+  can: vi.fn(),
 }));
+vi.mock('@/composables/useAuth', () => ({ useAuth: () => ({ can: api.can }) }));
 vi.mock('@/composables/useBookings', () => ({ useBookings: () => api }));
 vi.mock('@/composables/useSessionAvailability', () => ({
   useSessionAvailability: () => api,
@@ -34,7 +36,7 @@ const session: ClassSession = {
   duration_min: 60,
   capacity: 1,
   status: 'scheduled',
-  kind: 'special',
+  kind: 'regular',
   cancel_reason: '',
   notes: '',
 };
@@ -92,6 +94,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
   vi.setSystemTime(new Date(time));
   api.get.mockResolvedValue(availability);
+  api.can.mockReturnValue(true);
   api.hasFreeClassPlan.mockResolvedValue(true);
   api.listBySession.mockResolvedValue([booking]);
 });
@@ -248,3 +251,59 @@ it.each([
     expect(wrapper.classes()).toContain('p-tag-' + severity);
   },
 );
+
+it.each(['no_credits', 'weekly_limit'])(
+  'solicita una nota y reenvía la reserva ante %s',
+  async (code) => {
+    const wrapper = mount(BookingDialog, {
+      props: { modelValue: true, session, client },
+      global,
+    });
+    await flushPromises();
+    api.create.mockRejectedValueOnce({
+      code,
+      status: 400,
+      message: 'Sin créditos disponibles.',
+      fields: {},
+    });
+    await wrapper.get('form').trigger('submit');
+    await flushPromises();
+    const forms = wrapper.findAll('form');
+    expect(forms).toHaveLength(2);
+    await forms[1].trigger('submit');
+    expect(wrapper.text()).toContain('Indica el motivo de la excepción');
+    expect(api.create).toHaveBeenCalledTimes(1);
+    await forms[1].get('textarea').setValue(' Excepción aprobada ');
+    api.create.mockResolvedValueOnce(booking);
+    await forms[1].trigger('submit');
+    await flushPromises();
+    expect(api.create).toHaveBeenLastCalledWith({
+      session: session.id,
+      client: client.id,
+      useFreeClass: false,
+      overrideNote: 'Excepción aprobada',
+    });
+    expect(wrapper.emitted('booked')).toEqual([[booking]]);
+    wrapper.unmount();
+  },
+);
+
+it('muestra el error sin solicitar excepción cuando el rol es de consulta', async () => {
+  api.can.mockReturnValue(false);
+  api.create.mockRejectedValueOnce({
+    code: 'no_credits',
+    status: 400,
+    message: 'Sin créditos disponibles.',
+    fields: {},
+  });
+  const wrapper = mount(BookingDialog, {
+    props: { modelValue: true, session, client },
+    global,
+  });
+  await flushPromises();
+  await wrapper.get('form').trigger('submit');
+  await flushPromises();
+  expect(wrapper.findAll('form')).toHaveLength(1);
+  expect(wrapper.text()).toContain('Sin créditos disponibles.');
+  wrapper.unmount();
+});

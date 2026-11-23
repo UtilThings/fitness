@@ -14,13 +14,20 @@ onRecordCreate((e) => {
 onRecordCreateRequest((e) => {
   const { canBook, decideBookingStatus } =
     require(`${__hooks}/lib/booking-rules`) as typeof import("../lib/booking-rules");
-  const { bookingError, bookingRelation, bookingData, requireBookingStaff, sessionBookings, setFreeClassUsed } =
+  const { bookingError, bookingRelation, bookingData, requireBookingStaff, sessionBookings } =
     require(`${__hooks}/lib/booking-store`) as typeof import("../lib/booking-store");
   const { auditActor, inScheduleTransaction } =
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   const actor = requireBookingStaff(e);
   const requested = e.record!;
-  const useFreeClass = e.requestInfo().body.use_free_class === true;
+  const { authorizeBooking } =
+    require(`${__hooks}/lib/membership-bookings`) as typeof import("../lib/membership-bookings");
+  const { membershipToday, requireMembershipRole } =
+    require(`${__hooks}/lib/memberships-service`) as typeof import("../lib/memberships-service");
+  const body = e.requestInfo().body;
+  const useFreeClass = body.use_free_class === true;
+  const note = typeof body.override_note === "string" ? body.override_note.trim() : "";
+  if (note) requireMembershipRole(e, ["owner", "reception"]);
 
   const result = inScheduleTransaction(e.app, (tx) => {
     const session = bookingRelation(tx, "class_sessions", requested.getString("session"), "session");
@@ -35,12 +42,9 @@ onRecordCreateRequest((e) => {
     });
     if (!decision.ok) throw bookingError(decision.field, decision.message);
 
-    if (useFreeClass) {
-      const hasPlan = !client.getBool("free_class_used") && tx.countRecords("plans", $dbx.hashExp({
-        service: session.getString("service"), active: true, is_first_class: true,
-      }));
-      if (!hasPlan) throw bookingError("use_free_class", "El cliente no puede usar una clase gratis en este servicio.");
-    }
+    const entitlement = authorizeBooking(tx, client, session, {
+      actor, today: membershipToday(), bookingId: existing?.id, override: !!note, firstVisit: useFreeClass,
+    });
 
     const next = decideBookingStatus(session.getInt("capacity"), records.map(bookingData));
     const booking = existing ?? new Record(requested.collection(), { session: session.id, client: client.id });
@@ -50,12 +54,12 @@ onRecordCreateRequest((e) => {
       cancelled_at: "",
       marked_by: "",
       source: "admin",
-      override_note: "",
-      free_class: useFreeClass,
+      override_note: note,
+      free_class: entitlement.freeClass ?? false,
+      membership: entitlement.membership?.id ?? "",
     });
     auditActor(booking, actor);
     tx.save(booking);
-    if (useFreeClass) setFreeClassUsed(tx, client, true, actor);
     return booking;
   });
 
@@ -70,6 +74,8 @@ onRecordUpdateRequest((e) => {
     require(`${__hooks}/lib/booking-store`) as typeof import("../lib/booking-store");
   const { auditActor, inScheduleTransaction } =
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
+  const { requireMembershipRole } =
+    require(`${__hooks}/lib/memberships-service`) as typeof import("../lib/memberships-service");
   const actor = requireBookingStaff(e);
   const body = e.requestInfo().body;
   const status = body.status;
@@ -87,15 +93,20 @@ onRecordUpdateRequest((e) => {
       override: { requested: body.override === true, note },
     };
 
-    if (status === "cancelled") {
+    if (status === "cancelled" && ["attended", "late_cancelled", "no_show"].includes(input.booking.status)) {
+      requireMembershipRole(e, ["owner", "reception"]);
+      if (!note) throw bookingError("override_note", "Indica el motivo de la corrección.");
+      saveCancellation(tx, booking, "cancelled", input.now, actor, note);
+      updateWaitlist(tx, session, actor, input.booking.status !== "late_cancelled");
+    } else if (status === "cancelled") {
       const decision = decideCancellation({ ...input, cancellationHours: serviceCancellationHours(tx, session) });
       if (!decision.ok) throw bookingError(decision.field, decision.message);
-      saveCancellation(tx, booking, decision.status, input.now, actor, note);
+      saveCancellation(tx, booking, decision.status, input.now, actor, note || booking.getString("override_note"));
       updateWaitlist(tx, session, actor, input.booking.status === "booked");
     } else {
       const decision = nextAttendanceStatus({ ...input, status });
       if (!decision.ok) throw bookingError(decision.field, decision.message);
-      booking.load({ status, marked_by: actor, override_note: note });
+      booking.load({ status, marked_by: actor, override_note: note || booking.getString("override_note") });
       auditActor(booking, actor);
       tx.save(booking);
     }

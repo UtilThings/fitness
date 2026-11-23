@@ -1,7 +1,7 @@
 # 004 - [Endpoint] Rutas para asignar, renovar, pausar, cancelar y ajustar membresías
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003
 - **Fase:** Fase 3: Servidor
 
@@ -23,14 +23,14 @@ Reception y owner gestionan el ciclo de vida de una membresía mediante rutas tr
 
 ## Criterios de aceptación
 
-- [ ] `assign` crea la membresía con periodo 1 y un movimiento `grant` igual a los créditos del plan.
-- [ ] `cancel` deja `status = cancelled` y `ended_on` con la fecha local de hoy; renovar una `expired` vacía `ended_on`.
-- [ ] `renew` suma 28 días al periodo y otorga créditos; sobre una `cancelled` devuelve `409`.
-- [ ] `adjust` sin nota devuelve `400`; con nota crea `adjust` y el saldo coincide con la suma de movimientos.
-- [ ] Un `coach` recibe `403` en todas las rutas.
-- [ ] Un fallo a mitad de operación no deja movimiento sin saldo (transacción).
-- [ ] Cada acción deja una fila en `audit_logs`.
-- [ ] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan.
+- [x] `assign` crea la membresía con periodo 1 y un movimiento `grant` igual a los créditos del plan.
+- [x] `cancel` deja `status = cancelled` y `ended_on` con la fecha local de hoy; renovar una `expired` vacía `ended_on`.
+- [x] `renew` suma 28 días al periodo y otorga créditos; sobre una `cancelled` devuelve `409`.
+- [x] `adjust` sin nota devuelve `400`; con nota crea `adjust` y el saldo coincide con la suma de movimientos.
+- [x] Un `coach` recibe `403` en todas las rutas.
+- [x] Un fallo a mitad de operación no deja movimiento sin saldo (transacción).
+- [x] Cada acción deja una fila en `audit_logs`.
+- [x] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan.
 
 ## Referencias
 

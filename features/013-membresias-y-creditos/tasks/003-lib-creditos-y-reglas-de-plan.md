@@ -1,7 +1,7 @@
 # 003 - [Lib] Créditos, reglas por plan y elegibilidad de reserva
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002
 - **Fase:** Fase 2: Lógica pura
 
@@ -29,11 +29,11 @@ Forma de `plans` (contrato 008): `billing_unit` (`per_4_weeks`, `per_class`, `fi
 
 ## Criterios de aceptación
 
-- [ ] `creditsToApply("attended", 0)` da `-1/attend`; con `alreadyApplied = -1` da `null`; `creditsToApply("cancelled", -1)` da `+1/adjust`.
-- [ ] Plan ilimitado sin `per_week` siempre permite; con `per_week = 3` rechaza la cuarta reserva de la semana con `weekly_limit`.
-- [ ] Saldo 0 sin override da `no_credits`; con override da `allowed` y `overridden`.
-- [ ] Primera clase se rechaza si `free_class_used` es `true`.
-- [ ] `bun test` y `bun run build:ts` pasan.
+- [x] `creditsToApply("attended", 0)` da `-1/attend`; con `alreadyApplied = -1` da `null`; `creditsToApply("cancelled", -1)` da `+1/adjust`.
+- [x] Plan ilimitado sin `per_week` siempre permite; con `per_week = 3` rechaza la cuarta reserva de la semana con `weekly_limit`.
+- [x] Saldo 0 sin override da `no_credits`; con override da `allowed` y `overridden`.
+- [x] Primera clase se rechaza si `free_class_used` es `true`.
+- [x] `bun test` y `bun run build:ts` pasan.
 
 ## Referencias
 

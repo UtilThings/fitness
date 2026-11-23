@@ -100,6 +100,7 @@ smoke_test() {
   JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-catalog.ts "$base_url" restart
   JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-schedule.ts "$base_url"
   JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-bookings.ts "$base_url"
+  JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-memberships.ts "$base_url"
 }
 
 run_step bun install --frozen-lockfile

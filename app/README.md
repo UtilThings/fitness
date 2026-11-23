@@ -153,7 +153,7 @@ Ejecuta `scripts/verify-app.sh` desde la raíz para correr las pruebas de las vi
 
 ## Clientes
 
-`/clients` lista clientes con búsqueda paginada y guarda el texto y el estado en los parámetros `q` y `status` de la URL. Si se omite el estado, muestra clientes activos. Los filtros de servicio y plan activo quedan reservados para Membresías. El perfil `/clients/:id` edita datos, objetivos, notas y evaluación inicial. Los owners también pueden corregir la marca de primera clase gratis y eliminar clientes sin historial.
+`/clients` lista clientes con búsqueda paginada y guarda el texto y el estado en los parámetros `q` y `status` de la URL. Si se omite el estado, muestra clientes activos. La lista también acepta `plan` para filtrar por plan activo y `membership` para distinguir clientes con o sin membresía activa. El perfil `/clients/:id` edita datos, objetivos, notas y evaluación inicial. Los owners también pueden corregir la marca de primera clase gratis y eliminar clientes sin historial.
 
 ### Seleccionar un cliente
 
@@ -179,7 +179,7 @@ const selectedClient = shallowRef<Client | null>(null);
 
 ### Registrar una sección de historial
 
-En `src/views/admin/clients/history-sections.ts`, conserva la clave de la sección (`bookings`, `memberships` o `payments`), asigna su componente a `component` y cambia `available` a `true`. `ClientHistoryTab` instancia el componente con `clientId` y, cuando está disponible, el registro `client`. Usa el ID para filtrar la colección relacionada. El componente puede emitir `changed` tras una mutación que actualice datos del perfil. Las secciones pendientes muestran el número de su feature.
+En `src/views/admin/clients/history-sections.ts`, conserva la clave de la sección (`bookings` o `payments`), asigna su componente a `component` y cambia `available` a `true`. `ClientHistoryTab` instancia el componente con `clientId` y, cuando está disponible, el registro `client`. Usa el ID para filtrar la colección relacionada. El componente puede emitir `changed` tras una mutación que actualice datos del perfil. Las secciones pendientes muestran el número de su feature.
 
 Queda pendiente decidir si se necesita importar clientes por CSV o exponer un endpoint de alta externa. El panel admite el alta manual.
 
@@ -191,6 +191,15 @@ Queda pendiente decidir si se necesita importar clientes por CSV o exponer un en
 - Desde la sesión o el historial, `CancelBookingDialog` muestra el límite en hora de Miramar. Una cancelación tardía permite aplicar una excepción con motivo obligatorio. Al guardar, las vistas vuelven a consultar los datos y muestran las promociones y los resultados registrados.
 
 `useBookings` consulta reservas por sesión o por cliente, envía altas y transiciones y convierte los errores de PocketBase en mensajes por campo. Los estados y sus etiquetas se definen en `src/lib/bookings.ts`.
+
+## Membresías y créditos
+
+- **Clientes → Membresías** muestra los planes activos y anteriores del cliente. Selecciona **Historial** junto al plan para ver el saldo, los movimientos y las reservas relacionadas. Owner y reception pueden asignar un plan activo desde esta pestaña. El diálogo muestra el aviso de primera visita o de compromiso cuando corresponde.
+- **Clientes** permite seleccionar un **Plan activo** o filtrar por clientes con o sin membresía activa. El filtro de plan exige que ese mismo plan esté activo en la ficha del cliente.
+- **Facturación → Suscripciones** (`/memberships`) muestra una lista paginada que se puede filtrar por estado, plan o **Renovación pendiente**. El menú **Acciones** permite renovar, pausar, reanudar, cancelar y ajustar el saldo según el estado. La pausa, la cancelación y el ajuste exigen una nota. Coach puede consultar la vista.
+- Si una reserva supera la disponibilidad de créditos o el límite aplicable, **Excepción de créditos** permite a owner y reception reenviarla con una nota obligatoria. El saldo negativo se destaca como deuda en el historial.
+
+`useMemberships` concentra las listas, el historial, las acciones y la preconsulta de elegibilidad. En `src/components/memberships/`, `MembershipStatusTag` deriva la renovación pendiente de la fecha local. `AssignPlanDialog`, `MembershipActions`, `CreditAdjustDialog`, `CreditLedger` y `CreditOverrideDialog` se comparten entre las vistas.
 
 ## Dashboard operativo
 

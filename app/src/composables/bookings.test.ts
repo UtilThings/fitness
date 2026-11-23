@@ -50,6 +50,20 @@ it('sends the class option, notes and attendance status, and maps field errors',
     { session: 'class', client: 'client', use_free_class: true },
     { requestKey: null },
   );
+  await bookings.create({
+    session: 'class',
+    client: 'client',
+    overrideNote: 'Aprobado',
+  });
+  expect(mock.create).toHaveBeenLastCalledWith(
+    {
+      session: 'class',
+      client: 'client',
+      use_free_class: false,
+      override_note: 'Aprobado',
+    },
+    { requestKey: null },
+  );
   await bookings.cancel('booking', { overrideNote: 'Emergencia' });
   expect(mock.update).toHaveBeenLastCalledWith(
     'booking',

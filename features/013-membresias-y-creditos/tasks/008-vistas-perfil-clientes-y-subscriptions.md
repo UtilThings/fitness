@@ -1,7 +1,7 @@
 # 008 - [Vista] Pestaña Membresías, filtro en clientes y vista `/memberships`
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005, 007
 - **Fase:** Fase 4: Interfaz
 
@@ -24,11 +24,11 @@ Las vistas de 010 (perfil con pestañas, lista de clientes) y el diálogo de res
 
 ## Criterios de aceptación
 
-- [ ] Desde el perfil se asigna un plan y aparecen saldo e historial.
-- [ ] La lista de clientes filtra por plan activo con resultados correctos.
-- [ ] `/memberships` lista, filtra y permite renovar/pausar/cancelar; sin sesión redirige a login.
-- [ ] Reservar sin créditos muestra el diálogo de excepción y no permite confirmar sin nota.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] Desde el perfil se asigna un plan y aparecen saldo e historial.
+- [x] La lista de clientes filtra por plan activo con resultados correctos.
+- [x] `/memberships` lista, filtra y permite renovar/pausar/cancelar; sin sesión redirige a login.
+- [x] Reservar sin créditos muestra el diálogo de excepción y no permite confirmar sin nota.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -41,4 +41,4 @@ Las vistas de 010 (perfil con pestañas, lista de clientes) y el diálogo de res
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+La verificación REST confirmó que el filtro inverso exige plan y estado en la misma membresía. El filtro sin membresía activa incluye clientes sin registros y clientes con historial vencido.

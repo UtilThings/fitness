@@ -103,6 +103,12 @@ const router = createRouter({
           meta: { title: 'Cliente' },
         },
         {
+          path: 'memberships',
+          name: 'memberships',
+          component: () => import('@/views/admin/MembershipsView.vue'),
+          meta: { title: 'Suscripciones', requiresAuth: true },
+        },
+        {
           path: 'team',
           name: 'team',
           component: () => import('@/views/admin/TeamView.vue'),

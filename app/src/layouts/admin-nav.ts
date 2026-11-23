@@ -76,10 +76,9 @@ export const adminNav: NavGroup[] = [
     label: 'Facturación',
     items: [
       {
-        label: 'Membresías',
+        label: 'Suscripciones',
         icon: 'pi pi-ticket',
         to: '/memberships',
-        placeholder: true,
       },
       {
         label: 'Pagos',

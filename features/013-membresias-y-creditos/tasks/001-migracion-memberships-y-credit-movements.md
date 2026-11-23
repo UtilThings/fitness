@@ -1,7 +1,7 @@
 # 001 - [Migración] Colecciones `memberships` y `credit_movements`
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 008 (contrato), Feature 010 (contrato), Feature 011 (contrato)
 - **Fase:** Fase 1: Modelo de datos
 
@@ -23,11 +23,11 @@ Las colecciones `memberships` y `credit_movements` existen con campos, índices 
 
 ## Criterios de aceptación
 
-- [ ] Con una base limpia, `up` crea ambas colecciones con campos, índices y reglas indicados.
-- [ ] `down` las elimina sin error y `up` puede volver a ejecutarse.
-- [ ] Una petición de creación vía API REST con sesión admin devuelve `403` (regla `null`).
-- [ ] Crear dos membresías `active` del mismo cliente y plan falla por el índice único.
-- [ ] `scripts/verify-api.sh` pasa en verde.
+- [x] Con una base limpia, `up` crea ambas colecciones con campos, índices y reglas indicados.
+- [x] `down` las elimina sin error y `up` puede volver a ejecutarse.
+- [x] Una petición de creación vía API REST con sesión admin devuelve `403` (regla `null`).
+- [x] Crear dos membresías `active` del mismo cliente y plan falla por el índice único.
+- [x] `scripts/verify-api.sh` pasa en verde.
 
 ## Referencias
 
@@ -40,4 +40,4 @@ Las colecciones `memberships` y `credit_movements` existen con campos, índices 
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+PocketBase 0.40.5 ejecutó una transacción en goja y resolvió el filtro inverso memberships_via_client.status antes de aplicar la migración. También se verificó up → down 2 → up en una base temporal.

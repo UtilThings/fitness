@@ -109,7 +109,8 @@ it('renders the role-filtered admin menu and the restricted-route fallback', asy
     expect(disabledItems).toContain('Pagos');
     expect(disabledItems).not.toContain('Clientes');
     expect(sidebar.find('a[href="/clients"]').exists()).toBe(true);
-    expect(sidebar.text()).not.toMatch(/Rutinas|Suscripciones/);
+    expect(sidebar.text()).not.toContain('Rutinas');
+    expect(sidebar.get('a[href="/memberships"]').text()).toBe('Suscripciones');
     await sidebar.get('button[aria-controls="user-menu"]').trigger('click');
     const menu = document.getElementById('user-menu');
     expect(menu?.textContent).toContain('Cerrar sesión');

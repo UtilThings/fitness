@@ -39,14 +39,21 @@ export function useBookings() {
       session,
       client,
       useFreeClass,
+      overrideNote,
     }: {
       session: string;
       client: string;
       useFreeClass?: boolean;
+      overrideNote?: string;
     }) {
       return request(
         records.create(
-          { session, client, use_free_class: useFreeClass === true },
+          {
+            session,
+            client,
+            use_free_class: useFreeClass === true,
+            ...(overrideNote ? { override_note: overrideNote } : {}),
+          },
           options,
         ),
       );
