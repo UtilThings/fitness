@@ -1,7 +1,7 @@
 # 001 - [Migración] Colecciones `payments` y `receipt_sequences`
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 013 (contrato)
 - **Fase:** Fase 1: Modelo de datos
 
@@ -22,11 +22,11 @@
 
 ## Criterios de aceptación
 
-- [ ] `up` crea ambas colecciones y `down` las revierte sin error.
-- [ ] Insertar dos pagos con el mismo `receipt_number` falla; varios con `receipt_number` vacío se permiten.
-- [ ] Insertar dos pagos no anulados con la misma `(membership, period_index)` falla; si el primero está `void`, el segundo se permite.
-- [ ] Un coach autenticado recibe lista vacía o `403` al listar `payments`; una creación REST devuelve `403`.
-- [ ] `scripts/verify-api.sh` pasa.
+- [x] `up` crea ambas colecciones y `down` las revierte sin error.
+- [x] Insertar dos pagos con el mismo `receipt_number` falla; varios con `receipt_number` vacío se permiten.
+- [x] Insertar dos pagos no anulados con la misma `(membership, period_index)` falla; si el primero está `void`, el segundo se permite.
+- [x] Un coach autenticado recibe lista vacía o `403` al listar `payments`; una creación REST devuelve `403`.
+- [x] `scripts/verify-api.sh` pasa.
 
 ## Referencias
 
@@ -39,4 +39,4 @@
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+PocketBase 0.40.5 serializó 24 incrementos concurrentes del mismo contador y devolvió todos los valores del 1 al 24. La verificación de API aplicó y revirtió las dos migraciones en una base temporal, comprobó los índices parciales y confirmó los permisos de coach y staff.

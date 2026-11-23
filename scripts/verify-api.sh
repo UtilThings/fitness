@@ -61,6 +61,21 @@ smoke_test() {
   trap 'exit 143' TERM
 
   base_url="http://127.0.0.1:$port"
+  local -a migration_flags=(--dir "$work_dir/data" --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks")
+  check_payment_collections() {
+    bun -e '
+      import { Database } from "bun:sqlite";
+      const db = new Database(process.argv[1], { readonly: true });
+      const row = db.query("SELECT count(*) AS total FROM _collections WHERE name IN (?, ?)").get("payments", "receipt_sequences");
+      if (row.total !== Number(process.argv[2])) throw new Error("Migración de pagos incompleta");
+    ' "$work_dir/data/data.db" "$1"
+  }
+  ./pb migrate up "${migration_flags[@]}"
+  check_payment_collections 2
+  printf 'y\n' | ./pb migrate down 2 "${migration_flags[@]}"
+  check_payment_collections 0
+  ./pb migrate up "${migration_flags[@]}"
+  check_payment_collections 2
   start_pocketbase
 
   code="$(curl --noproxy '*' --silent --show-error --max-time 5 --output "$work_dir/response.json" \
@@ -101,6 +116,7 @@ smoke_test() {
   JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-schedule.ts "$base_url"
   JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-bookings.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-memberships.ts "$base_url"
+  JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-payments.ts "$base_url"
 }
 
 run_step bun install --frozen-lockfile
