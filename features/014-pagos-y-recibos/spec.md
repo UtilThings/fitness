@@ -1,6 +1,6 @@
 # Especificación: Pagos y recibos
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -23,11 +23,11 @@ Contrato que deja a las siguientes: 017 lee `payments` para ingresos y cobranza;
 
 | Elemento | Estado |
 |----------|--------|
-| `api/` | PocketBase; migraciones JS en `api/pb_migrations/` (última existente: `1795260843_created_admins.js`; usar timestamp mayor que el de la última presente); hooks y libs TypeScript compilados con `bun run build:ts` |
+| `api/` | PocketBase; migraciones JS en `api/pb_migrations/` (última existente: `1795264702_linked_booking_membership.js`; usar timestamp mayor que el de la última presente); hooks y libs TypeScript compilados con `bun run build:ts` |
 | `payments`, `receipt_sequences` | No existen (esta feature los crea) |
-| `memberships`, `plans`, `clients` | No existen aún en disco; se usan por contrato (013, 008, 010) |
-| `audit-config.ts`, middleware de roles (005) | Por contrato |
-| Dashboard (012) y perfil del cliente (010) | Por contrato; verificar nombres reales al implementar |
+| `memberships`, `plans`, `clients` | Ya existen en las migraciones de 013, 008 y 010 |
+| `audit-config.ts`, middleware de roles (005) | Disponible en las librerías de API |
+| Dashboard (012) y perfil del cliente (010) | Disponibles en `DashboardView.vue` y `ClientDetailView.vue` |
 | `app/src/lib/` | Sin datos del negocio para el recibo; se crea `business.ts` |
 
 > Verificación obligatoria previa: la tarea 001 debe confirmar que `$app.runInTransaction` serializa las escrituras en SQLite (dos peticiones simultáneas no obtienen el mismo número) y que los índices únicos parciales (`WHERE receipt_number != ''`) están soportados en la versión instalada.
@@ -230,14 +230,14 @@ Un pago `void` conserva su `receipt_number` (el hueco no existe: el número qued
 
 ## Criterios de Aceptación
 
-- [ ] Pagar un cobro asigna `JQ-AAAA-NNNNNN` consecutivo; los pendientes no tienen número.
-- [ ] Dos pagos simultáneos obtienen números distintos y consecutivos; un fallo no consume número.
-- [ ] Anular exige motivo, no borra y conserva el recibo; transiciones inválidas devuelven `409`.
-- [ ] Renovar una membresía crea un único cobro `pending` por periodo; repetir el hook no duplica.
-- [ ] `GET /api/admin/payments/due` clasifica vencidos, por vencer y renovaciones y devuelve totales.
-- [ ] `/payments` filtra por estado, método, cliente, rango y vencidos; el recibo se imprime sin menú ni botones.
-- [ ] El perfil del cliente muestra la pestaña Pagos y el dashboard muestra los cobros por vencer reales.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Pagar un cobro asigna `JQ-AAAA-NNNNNN` consecutivo; los pendientes no tienen número.
+- [x] Dos pagos simultáneos obtienen números distintos y consecutivos; un fallo no consume número.
+- [x] Anular exige motivo, no borra y conserva el recibo; transiciones inválidas devuelven `409`.
+- [x] Renovar una membresía crea un único cobro `pending` por periodo; repetir el hook no duplica.
+- [x] `GET /api/admin/payments/due` clasifica vencidos, por vencer y renovaciones y devuelve totales.
+- [x] `/payments` filtra por estado, método, cliente, rango y vencidos; el recibo se imprime sin menú ni botones.
+- [x] El perfil del cliente muestra la pestaña Pagos y el dashboard muestra los cobros por vencer reales.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
 
 ---
 

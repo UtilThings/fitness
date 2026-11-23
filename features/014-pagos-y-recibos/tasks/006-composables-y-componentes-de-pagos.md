@@ -1,7 +1,7 @@
 # 006 - [Componente] Composables y componentes de pagos
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004
 - **Fase:** Fase 4: Interfaz
 
@@ -22,10 +22,10 @@ La app dispone de composables y componentes reutilizables para listar, registrar
 
 ## Criterios de aceptación
 
-- [ ] `parseToCents("12,50")` y `parseToCents("12.5")` devuelven 1250.
-- [ ] El diálogo de anulación no envía sin motivo.
-- [ ] Los errores del API se muestran como aviso en español.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] `parseToCents("12,50")` y `parseToCents("12.5")` devuelven 1250.
+- [x] El diálogo de anulación no envía sin motivo.
+- [x] Los errores del API se muestran como aviso en español.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -37,4 +37,4 @@ La app dispone de composables y componentes reutilizables para listar, registrar
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Se reutilizó el formateador de USD existente. Los montos del diálogo aceptan coma o punto decimal y redondean al centavo. El contacto público del recibo se configura con VITE_BUSINESS_CONTACT.

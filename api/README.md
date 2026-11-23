@@ -58,7 +58,7 @@ Para consultar los registros, usa `GET /api/collections/audit_logs/records` con 
 | `counts` | `active_clients`, `sessions_today`, `bookings_today`, `waitlisted_today`, `sessions_without_coach` y `sessions_without_bookings` |
 | `sessions_today` | Sesiones programadas o completadas del día, ordenadas por inicio, con servicio, coach, duración, cupo, ocupación, espera y disponibilidad |
 | `attention` | Entradas `{ session_id, reason, starts_at }` con motivos `no_coach` o `no_bookings` en sesiones programadas desde ahora hasta el final exclusivo de la ventana de `days` días de 24 horas |
-| `upcoming_payments` | `null` durante el MVP. La feature 014 devolverá `{ count, total_cents, items }` |
+| `upcoming_payments` | `null` en el resumen operativo. Los cobros se consultan en `GET /api/admin/payments/due` |
 
 `bookings_today` incluye las reservas `booked`, `attended` y `no_show` de las sesiones del día. La alerta `no_bookings` considera solo las reservas `booked` de su sesión. Los conteos de clientes y reservas no incluyen datos personales de clientes.
 
@@ -146,7 +146,7 @@ El API responde `400` con `data.assessment` para claves desconocidas o valores i
 
 ### Relaciones con clientes
 
-`bookings.client` enlaza a `clients` sin borrado en cascada. `memberships.client` sigue la misma regla. Los pagos y programas de coaching deben preservar esa relación. Un cliente referenciado en `bookings`, `memberships`, `payments` o `coaching_programs` devuelve `409` al intentar borrarlo. Usa `status: "inactive"` para conservar el historial.
+`bookings.client` enlaza a `clients` sin borrado en cascada. `memberships.client` sigue la misma regla. `payments.client` también usa una relación sin borrado en cascada. Los programas de coaching deben preservar esa relación. Un cliente referenciado en `bookings`, `memberships`, `payments` o `coaching_programs` devuelve `409` al intentar borrarlo. Usa `status: "inactive"` para conservar el historial.
 
 Queda pendiente decidir si se necesita importar clientes por CSV o crear un endpoint de alta externa. La feature 010 habilita el alta manual desde el panel.
 
@@ -216,6 +216,31 @@ Owner y reception pueden crear una reserva con `override_note` no vacía cuando 
 
 `memberships_daily` corre a las 09:00 UTC. En el primer procesamiento tras el cierre expira el saldo positivo del periodo. La membresía permanece activa durante siete días de gracia y pasa a `expired` el día ocho. El cron conserva el saldo negativo y evita duplicar la expiración si se repite.
 
-La feature 014 puede usar los cambios de `periods_paid` y `current_period_*` para generar cobros. La feature 015 puede reutilizar `checkEligibility(app, clientId, session)` del servicio. La feature 016 puede enlazar sus programas con `memberships`.
+El hook de pagos usa `periods_paid` y `current_period_start` para generar un cobro pendiente por ciclo. La feature 015 puede reutilizar `checkEligibility(app, clientId, session)` del servicio. La feature 016 puede enlazar sus programas con `memberships`.
 
 `scripts/verify-api.sh` verifica en una base temporal la asignación, la renovación, los ajustes y su rollback, la auditoría, las reservas con y sin excepción, el filtro por plan activo y el cron.
+
+## Pagos y recibos
+
+`payments` conserva cobros manuales y de membresía en centavos USD. Los admins activos con rol `owner` o `reception` pueden consultar los registros de `payments` y usar las rutas de cobro. Las escrituras directas por la API de registros quedan cerradas, incluso para superusuarios. El historial conserva las referencias al cliente, a quien registró el cobro y a quien lo anuló.
+
+| Ruta | Operación |
+| --- | --- |
+| `POST /api/admin/payments` | Registra un cobro con `client`, `amount_cents` y `status` (`pending` o `paid`). Un pendiente exige `due_on`; un pagado exige `method`. Acepta `membership`, `plan`, `paid_at` y `note` cuando corresponda. |
+| `POST /api/admin/payments/{id}/pay` | Pasa un pendiente a pagado con `method` y, opcionalmente, `paid_at` y `note`. |
+| `POST /api/admin/payments/{id}/void` | Anula un pendiente o pagado con un `reason` obligatorio. Conserva el importe, el método y el recibo, y registra motivo, fecha y autor. |
+| `GET /api/admin/payments/due?days=7&limit=50` | Devuelve `overdue`, `upcoming`, `renewals` y `totals`. `days` admite de 1 a 60 y `limit` de 1 a 500 entradas por sección. Los totales se calculan antes de aplicar el límite. |
+
+Los métodos son `cash`, `zelle`, `card` y `other`. Las fechas de cobro y vencimiento son días civiles en formato `YYYY-MM-DD` de Miramar. Si se omite `paid_at`, se usa la fecha local actual. Los datos inválidos devuelven `400`, los roles sin acceso `403`, los registros inexistentes `404` y las transiciones incompatibles `409`.
+
+`receipt_sequences` mantiene un contador por año de `paid_at`. El servicio incrementa el contador, guarda el pago con `JQ-AAAA-NNNNNN` y registra la operación de auditoría en la misma transacción. Un fallo revierte el incremento. Un cobro pendiente recibe número al pagarse. Un recibo anulado sigue visible con su número original.
+
+Al asignar o renovar una membresía, el hook usa el precio del plan y el inicio del periodo para generar un pendiente con un `period_index` único entre cobros vigentes. Los planes por clase generan un único cobro y los planes gratuitos quedan excluidos. Si el cobro se anula, un guardado posterior de la membresía por staff puede reponerlo. La generación automática se atribuye al integrante que guardó la membresía. Las membresías históricas se pueden cobrar manualmente.
+
+El reporte cuenta como vencidos los pendientes con fecha anterior a hoy. La ventana incluye hoy y el día límite. Las alertas incluyen membresías activas con cierre próximo o pasado e indican si hay un cobro pendiente para el siguiente periodo. La mora se muestra al staff y las reglas de reserva y membresía siguen operando por separado.
+
+### Punto de extensión de la pasarela de pago
+
+Una integración futura añadiría `provider` y `external_ref` al modelo y una ruta webhook que verifique la firma del proveedor. Después de verificar la notificación e identificar el cobro, el webhook llamaría a `settlePayment(app, paymentId, { method, paidAt, recordedBy, note })` para usar la misma transacción, numeración y auditoría. La integración con proveedor, el webhook y la conciliación quedan fuera de esta entrega.
+
+`scripts/verify-api.sh` aplica, revierte y reaplica las migraciones de pagos en una base temporal. También comprueba los índices parciales, permisos, dos liquidaciones concurrentes, rollback del contador, reinicio anual, anulación, cobros por ciclo y vencimientos.

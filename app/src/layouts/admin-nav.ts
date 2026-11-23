@@ -1,3 +1,4 @@
+import { PERMISSIONS } from '@/lib/permissions';
 import type { Role } from '@/types/pb';
 
 export interface NavItem {
@@ -84,8 +85,7 @@ export const adminNav: NavGroup[] = [
         label: 'Pagos',
         icon: 'pi pi-credit-card',
         to: '/payments',
-        roles: ['owner', 'reception'],
-        placeholder: true,
+        roles: [...PERMISSIONS['payments.manage']],
       },
     ],
   },

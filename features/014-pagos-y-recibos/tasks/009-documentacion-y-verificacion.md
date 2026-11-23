@@ -1,7 +1,7 @@
 # 009 - [Verificación] Documentación, punto de extensión de pasarela y cierre
 
 - **Prioridad:** 9
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005, 008
 - **Fase:** Fase final: Verificación y cierre
 
@@ -22,9 +22,9 @@ La feature queda documentada (incluido el punto de extensión de la pasarela), v
 
 ## Criterios de aceptación
 
-- [ ] Los READMEs describen la feature y el punto de extensión.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
-- [ ] Todos los criterios del spec están marcados o los hallazgos quedan anotados.
+- [x] Los READMEs describen la feature y el punto de extensión.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Todos los criterios del spec están marcados o los hallazgos quedan anotados.
 
 ## Referencias
 
@@ -36,4 +36,4 @@ La feature queda documentada (incluido el punto de extensión de la pasarela), v
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Pasaron 67 pruebas unitarias de API, la integración contra PocketBase y 251 pruebas de la app, además de lint, formato, tipos y build. Chromium comprobó los filtros, registro, ficha del cliente, dashboard, permisos y recibo impreso en tamaño carta. La verificación también cubre el rechazo de escrituras directas sobre pagos y secuencias.

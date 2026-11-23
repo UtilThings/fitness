@@ -1,5 +1,10 @@
 import { expect, it } from 'vitest';
-import { centsToDecimal, formatUsd, parseUsdToCents } from './money';
+import {
+  centsToDecimal,
+  formatUsd,
+  parseToCents,
+  parseUsdToCents,
+} from './money';
 
 it.each([
   [0, '0.00', '$0.00'],
@@ -25,3 +30,20 @@ it.each(['', '$', '1.234', '-1.00', '1,23', '1 2', '1e2', '90071992547409.92'])(
     expect(parseUsdToCents(input)).toBeNull();
   },
 );
+
+it.each([
+  ['12,50', 1250],
+  ['12.5', 1250],
+  ['$1,234.56', 123456],
+  ['1.234,56', 123456],
+  ['1.005', 101],
+  ['0,004', 0],
+  ['9.999', 1000],
+  ['1e3', null],
+  ['-2', null],
+  ['1,2.34', null],
+  ['', null],
+  ['90071992547409.915', null],
+])('convierte %j a centavos', (input, expected) => {
+  expect(parseToCents(input)).toBe(expected);
+});

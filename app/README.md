@@ -19,9 +19,10 @@ Abre http://localhost:5173. Sin sesión, `/` redirige a `/login`.
 
 ## Variables de entorno
 
-| Variable              | Obligatoria | Descripción                                                                   |
-| --------------------- | ----------- | ----------------------------------------------------------------------------- |
-| `VITE_POCKETBASE_URL` | Sí          | URL base de PocketBase, sin barra final (por defecto `http://127.0.0.1:8090`) |
+| Variable                | Obligatoria | Descripción                                                                   |
+| ----------------------- | ----------- | ----------------------------------------------------------------------------- |
+| `VITE_POCKETBASE_URL`   | Sí          | URL base de PocketBase, sin barra final (por defecto `http://127.0.0.1:8090`) |
+| `VITE_BUSINESS_CONTACT` | No          | Contacto público que figura en la cabecera de los recibos.                    |
 
 Solo `src/lib/env.ts` lee `import.meta.env`. Las variables `VITE_*` llegan al navegador: nunca pongas secretos en ellas.
 
@@ -201,9 +202,17 @@ Queda pendiente decidir si se necesita importar clientes por CSV o exponer un en
 
 `useMemberships` concentra las listas, el historial, las acciones y la preconsulta de elegibilidad. En `src/components/memberships/`, `MembershipStatusTag` deriva la renovación pendiente de la fecha local. `AssignPlanDialog`, `MembershipActions`, `CreditAdjustDialog`, `CreditLedger` y `CreditOverrideDialog` se comparten entre las vistas.
 
+## Pagos y recibos
+
+- **Facturación → Pagos** (`/payments`) permite a owner y reception registrar un cobro, marcarlo como pagado, anularlo con motivo y abrir su recibo. La vista combina filtros de estado, método, cliente, fechas y **Solo vencidos**. El rango incluye ambos días y usa la fecha de pago cuando existe o el vencimiento para los demás cobros.
+- **Clientes → Pagos** muestra el historial del cliente y sus totales de pagos, pendientes y vencidos. **Registrar pago** abre el formulario con ese cliente seleccionado. **Ver en Pagos** aplica el filtro de cliente en el listado general.
+- **Recibo** (`/receipts/:id`) muestra el número, fecha, cliente, concepto, método, importe y la marca **ANULADO** cuando corresponde. **Imprimir** abre el diálogo del navegador con una hoja carta sin controles de navegación. Configura `VITE_BUSINESS_CONTACT` para imprimir el contacto público del negocio.
+
+`usePayments` consulta la colección de pagos y usa rutas de servicio para registrar, liquidar y anular. `usePaymentsDue` consulta los vencimientos que usan Pagos y el dashboard. Los diálogos y estados compartidos viven en `src/components/payments/`. `src/lib/money.ts` formatea centavos USD y acepta coma o punto decimal en la captura.
+
 ## Dashboard operativo
 
-En **Dashboard** (`/`) el equipo consulta las métricas del día de Miramar, la ocupación de las clases y las sesiones que necesitan coach o reservas. **Actualizar** vuelve a consultar el resumen y la pestaña visible se refresca cada minuto. Los enlaces de clase abren el detalle en `/classes?session=<id>`. **Cobros por vencer** muestra «Disponible con Pagos (próximamente)» hasta que la feature 014 publique el conteo y total.
+En **Dashboard** (`/`) el equipo consulta las métricas del día de Miramar, la ocupación de las clases y las sesiones que necesitan coach o reservas. **Actualizar** vuelve a consultar el resumen y la pestaña visible se refresca cada minuto. Los enlaces de clase abren el detalle en `/classes?session=<id>`. Para owner y reception, **Cobros por vencer** muestra el conteo e importe de vencidos y de cobros por vencer en siete días. **Ver vencidos** abre `/payments?overdue=1`.
 
 Para añadir una métrica, enlaza su dato de `useDashboard` en `DashboardView` y reutiliza `StatCard` con título, valor, icono y un destino opcional. Las tarjetas de listas se componen en `src/components/dashboard/` y comparten las fechas de `src/lib/datetime.ts`.
 
@@ -222,7 +231,7 @@ Ejecuta `scripts/verify-mvp.sh` desde la raíz. Usa PocketBase en localhost con 
 | 009     | En **Clases**, genera sesiones como owner. Abre el detalle de una clase.                                                                                                                                      | El calendario de Miramar muestra las sesiones generadas. Solo el owner genera sesiones y gestiona plantillas y bloqueos.                                                                            |
 | 010     | Crea dos clientes activos. Abre su perfil desde **Clientes**.                                                                                                                                                 | El alta lleva a la ficha del cliente y las dos fichas aparecen en el listado activo.                                                                                                                |
 | 011     | Usa una sesión futura con cupo 1. Reserva a dos clientes y cancela a tiempo la primera reserva. En otra sesión, cancela dentro del plazo de penalización. Tras el inicio de una sesión, marca una asistencia. | El segundo cliente entra en espera y asciende al liberar el cupo. La cancelación tardía queda registrada y la asistencia aparece en la sesión.                                                      |
-| 012     | Compara el dashboard con las sesiones y reservas del día. Abre **Ajustes → Auditoría**, filtra por **Reservas**, actor y fechas y abre **Ver cambios**.                                                       | El resumen coincide con la agenda y las reservas en hora de Miramar. Cobros muestra su mensaje de disponibilidad y el diff refleja la operación registrada.                                         |
+| 012     | Compara el dashboard con las sesiones y reservas del día. Abre **Ajustes → Auditoría**, filtra por **Reservas**, actor y fechas y abre **Ver cambios**.                                                       | El resumen coincide con la agenda y las reservas en hora de Miramar. El diff refleja la operación registrada.                                                                                       |
 | 005–012 | Entra como coach y recepción. Revisa catálogo, equipo, clases y acceso directo a `/audit`.                                                                                                                    | Los dos roles consultan catálogo, equipo y clases. Recepción puede gestionar sesiones especiales. El menú de auditoría solo aparece para owner y la API devuelve `403` a los demás roles de la app. |
 
 El recorrido se verificó en Chromium con una base temporal de PocketBase. La suite HTTP cotejó los conteos del dashboard con las colecciones y comprobó permisos, cupos, cancelaciones, asistencia y cambios de auditoría. La prueba de horarios incluyó ambos cambios de hora de Nueva York.

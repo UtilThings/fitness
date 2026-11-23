@@ -7,6 +7,8 @@ import { ref } from 'vue';
 import AssessmentForm from '@/components/clients/AssessmentForm.vue';
 import AssignPlanDialog from '@/components/memberships/AssignPlanDialog.vue';
 import type { CreditMovement, Membership } from '@/lib/memberships';
+import PaymentFormDialog from '@/components/payments/PaymentFormDialog.vue';
+import type { Payment } from '@/composables/usePayments';
 import type { Client } from '@/lib/clients';
 import ClientDetailView from './ClientDetailView.vue';
 
@@ -21,8 +23,10 @@ const mocks = vi.hoisted(() => ({
   listForClient: vi.fn(),
   ledger: vi.fn(),
   assign: vi.fn(),
+  listPayments: vi.fn(),
 }));
 const isOwner = ref(false);
+const isReception = ref(false);
 vi.mock('vue-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('vue-router')>()),
   useRoute: () => ({ params: { id: 'ana' } }),
@@ -32,11 +36,15 @@ vi.mock('@/composables/useAuth', () => ({
   useAuth: () => ({
     isOwner,
     user: ref({ id: 'staff-id' }),
-    can: () => isOwner.value,
+    can: () => isOwner.value || isReception.value,
   }),
 }));
 vi.mock('@/composables/useMemberships', () => ({
   useMemberships: () => mocks,
+}));
+vi.mock('@/composables/usePayments', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/composables/usePayments')>()),
+  usePayments: () => ({ listForClient: mocks.listPayments }),
 }));
 vi.mock('@/composables/usePlans', () => ({
   usePlans: () => ({
@@ -74,6 +82,7 @@ const ana: Client = {
 beforeEach(() => {
   vi.resetAllMocks();
   isOwner.value = false;
+  isReception.value = false;
   mocks.get.mockResolvedValue(ana);
 });
 
@@ -226,5 +235,41 @@ it('asigna un plan en la pestaña Membresías y recarga el saldo y el historial'
   expect(mocks.ledger).toHaveBeenCalledWith('m');
   expect(wrapper.text()).toContain('Créditos: 8');
   expect(wrapper.text()).toContain('Otorgamiento');
+  wrapper.unmount();
+});
+
+it('restringe la pestaña por rol y preselecciona al cliente al registrar', async () => {
+  const wrapper = await view();
+  const tab = () =>
+    wrapper.findAll('[role=tab]').find((item) => item.text() === 'Pagos');
+  expect(tab()).toBeUndefined();
+  expect(mocks.listPayments).not.toHaveBeenCalled();
+
+  isReception.value = true;
+  await wrapper.vm.$nextTick();
+  mocks.listPayments.mockResolvedValueOnce([
+    {
+      id: 'p',
+      client: 'ana',
+      amount_cents: 17125,
+      status: 'paid',
+      method: 'card',
+      paid_at: '2026-11-20',
+      receipt_number: 'JQ-2026-000042',
+    } as Payment,
+  ]);
+  await tab()!.trigger('click');
+  await flushPromises();
+  expect(mocks.listPayments).toHaveBeenCalledExactlyOnceWith('ana');
+  const history = wrapper.get('[aria-label="Historial de pagos"]');
+  expect(history.text()).toContain('$171.25');
+  expect(history.text()).toContain('JQ-2026-000042');
+  await history
+    .findAll('button')
+    .find((button) => button.text() === 'Registrar pago')!
+    .trigger('click');
+  const form = wrapper.getComponent(PaymentFormDialog);
+  expect(form.props('client')).toEqual(ana);
+  expect(form.props('modelValue')).toBe(true);
   wrapper.unmount();
 });

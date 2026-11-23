@@ -1,7 +1,7 @@
 # 005 - [Hook] Cobros pendientes por ciclo y ruta `GET /api/admin/payments/due`
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 003, 004
 - **Fase:** Fase 3: Servidor
 
@@ -23,11 +23,11 @@ Cada periodo de membresía genera su cobro pendiente automáticamente, y el staf
 
 ## Criterios de aceptación
 
-- [ ] Asignar un plan de precio > 0 crea un `payments pending` con `due_on = current_period_start` y `period_index = 1`.
-- [ ] Renovar crea el cobro del periodo 2; actualizar otros campos de la membresía no crea cobros.
-- [ ] Plan de primera clase (precio 0) no crea cobro.
-- [ ] `due` devuelve las secciones `overdue`, `upcoming`, `renewals` y `totals` según el contrato.
-- [ ] `bun run build:ts` y `scripts/verify-api.sh` pasan.
+- [x] Asignar un plan de precio > 0 crea un `payments pending` con `due_on = current_period_start` y `period_index = 1`.
+- [x] Renovar crea el cobro del periodo 2; actualizar otros campos de la membresía no crea cobros.
+- [x] Plan de primera clase (precio 0) no crea cobro.
+- [x] `due` devuelve las secciones `overdue`, `upcoming`, `renewals` y `totals` según el contrato.
+- [x] `bun run build:ts` y `scripts/verify-api.sh` pasan.
 
 ## Referencias
 
@@ -40,4 +40,4 @@ Cada periodo de membresía genera su cobro pendiente automáticamente, y el staf
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+El límite se aplica por sección y los totales cubren el reporte completo. Los cobros automáticos se atribuyen al staff que guardó la membresía. Las membresías históricas y los cambios del sistema sin actor no generan un cobro sin autoría.

@@ -32,6 +32,15 @@ describe('parseEnv', () => {
     );
   });
 
+  it('recorta el contacto público de los recibos', () => {
+    const base = { VITE_POCKETBASE_URL: 'http://127.0.0.1:8090' };
+    expect(parseEnv(base).businessContact).toBeUndefined();
+    expect(
+      parseEnv({ ...base, VITE_BUSINESS_CONTACT: ' contacto@example.test ' })
+        .businessContact,
+    ).toBe('contacto@example.test');
+  });
+
   it('expone la licencia de PrimeVue solo si no está vacía', () => {
     const base = { VITE_POCKETBASE_URL: 'http://127.0.0.1:8090' };
     expect(

@@ -1,7 +1,7 @@
 # 003 - [Lib] Vencimientos, cobro por periodo y alertas de renovación
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 2: Lógica pura
 
@@ -24,10 +24,10 @@ Fechas locales `YYYY-MM-DD`; `today` se recibe por parámetro. La lib `membershi
 
 ## Criterios de aceptación
 
-- [ ] `classifyDue("2026-11-21", "2026-11-21", 7)` es `due_soon`; con `today = 2026-11-22` es `overdue`.
-- [ ] `chargeForPeriod` devuelve `null` para la primera clase gratuita.
-- [ ] El reporte excluye pagos no `pending` y calcula totales en centavos.
-- [ ] `bun test` y `bun run build:ts` pasan.
+- [x] `classifyDue("2026-11-21", "2026-11-21", 7)` es `due_soon`; con `today = 2026-11-22` es `overdue`.
+- [x] `chargeForPeriod` devuelve `null` para la primera clase gratuita.
+- [x] El reporte excluye pagos no `pending` y calcula totales en centavos.
+- [x] `bun test` y `bun run build:ts` pasan.
 
 ## Referencias
 

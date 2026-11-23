@@ -106,7 +106,8 @@ it('renders the role-filtered admin menu and the restricted-route fallback', asy
     const disabledItems = sidebar
       .findAll('button[disabled]')
       .map((item) => item.text());
-    expect(disabledItems).toContain('Pagos');
+    expect(disabledItems).not.toContain('Pagos');
+    expect(sidebar.find('a[href="/payments"]').exists()).toBe(true);
     expect(disabledItems).not.toContain('Clientes');
     expect(sidebar.find('a[href="/clients"]').exists()).toBe(true);
     expect(sidebar.text()).not.toContain('Rutinas');

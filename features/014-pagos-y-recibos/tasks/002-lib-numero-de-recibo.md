@@ -1,7 +1,7 @@
 # 002 - [Lib] Número de recibo `JQ-AAAA-NNNNNN`
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 2: Lógica pura
 
@@ -21,10 +21,10 @@ El año del recibo es el año local del negocio (`America/New_York`) de `paid_at
 
 ## Criterios de aceptación
 
-- [ ] `formatReceipt(2026, 42)` devuelve `JQ-2026-000042`.
-- [ ] `parseReceipt("JQ-2026-000042")` devuelve `{ year: 2026, seq: 42 }`; entradas malformadas devuelven `null`.
-- [ ] `nextSequence(999999)` lanza error.
-- [ ] `bun test` y `bun run build:ts` pasan.
+- [x] `formatReceipt(2026, 42)` devuelve `JQ-2026-000042`.
+- [x] `parseReceipt("JQ-2026-000042")` devuelve `{ year: 2026, seq: 42 }`; entradas malformadas devuelven `null`.
+- [x] `nextSequence(999999)` lanza error.
+- [x] `bun test` y `bun run build:ts` pasan.
 
 ## Referencias
 

@@ -57,6 +57,8 @@ describe('guard', () => {
     '/classes/blocks',
     '/plans?service=jump',
     '/memberships',
+    '/payments',
+    '/receipts/payment',
   ])('protege %s y conserva la ruta al iniciar sesión', async (path) => {
     await router.push(path);
     expect(router.currentRoute.value.name).toBe('login');
@@ -126,6 +128,24 @@ describe('guard', () => {
       state.role = role;
       await router.push('/audit');
       expect(router.currentRoute.value.name).toBe('dashboard');
+    },
+  );
+
+  it.each(['owner', 'reception', 'coach'] as const)(
+    'protege pagos y recibos para %s',
+    async (role) => {
+      state.valid = true;
+      state.role = role;
+      await router.push('/payments');
+      expect(router.currentRoute.value.name).toBe(
+        role === 'coach' ? 'forbidden' : 'payments',
+      );
+      await router.push('/receipts/payment');
+      expect(router.currentRoute.value.name).toBe(
+        role === 'coach' ? 'forbidden' : 'receipt',
+      );
+      if (role !== 'coach')
+        expect(router.currentRoute.value.matched).toHaveLength(1);
     },
   );
 

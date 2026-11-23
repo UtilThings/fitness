@@ -41,3 +41,26 @@ export function parseUsdToCents(text: string): number | null {
   const cents = dollars * 100n + fraction;
   return cents <= maxCents ? Number(cents) : null;
 }
+
+export const formatCents = formatUsd;
+
+export function parseToCents(text: string): number | null {
+  let amount = text.trim().replace(/^\$\s*/, '');
+  if (amount.includes(',') && amount.includes('.')) {
+    if (/^\d{1,3}(?:,\d{3})+\.\d+$/.test(amount)) {
+      amount = amount.replaceAll(',', '');
+    } else if (/^\d{1,3}(?:\.\d{3})+,\d+$/.test(amount)) {
+      amount = amount.replaceAll('.', '');
+    } else {
+      return null;
+    }
+  }
+
+  const match = /^(\d+)(?:[.,](\d+))?$/.exec(amount);
+  if (!match) return null;
+  const fraction = (match[2] ?? '').padEnd(3, '0');
+  const rounded = fraction[2] >= '5' ? 1n : 0n;
+  const cents =
+    BigInt(match[1]) * 100n + BigInt(fraction.slice(0, 2)) + rounded;
+  return cents <= maxCents ? Number(cents) : null;
+}

@@ -7,6 +7,7 @@ import {
 import { useAuth } from '@/composables/useAuth';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import { PERMISSIONS } from '@/lib/permissions';
 import type { Role } from '@/types/pb';
 
 declare module 'vue-router' {
@@ -109,6 +110,12 @@ const router = createRouter({
           meta: { title: 'Suscripciones', requiresAuth: true },
         },
         {
+          path: 'payments',
+          name: 'payments',
+          component: () => import('@/views/admin/PaymentsView.vue'),
+          meta: { title: 'Pagos', roles: [...PERMISSIONS['payments.manage']] },
+        },
+        {
           path: 'team',
           name: 'team',
           component: () => import('@/views/admin/TeamView.vue'),
@@ -181,6 +188,16 @@ const router = createRouter({
           meta: { title: 'Recuperar contraseña' },
         },
       ],
+    },
+    {
+      path: '/receipts/:id',
+      name: 'receipt',
+      component: () => import('@/views/admin/ReceiptView.vue'),
+      meta: {
+        title: 'Recibo de pago',
+        requiresAuth: true,
+        roles: [...PERMISSIONS['payments.manage']],
+      },
     },
     {
       path: '/:pathMatch(.*)*',
