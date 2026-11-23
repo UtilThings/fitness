@@ -1,7 +1,7 @@
 # 003 - [Lib] Agregación de ingresos y retención
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, Feature 013 (contrato), Feature 014 (contrato)
 - **Fase:** Fase 1: Lógica pura de agregación
 
@@ -23,11 +23,11 @@ Existen funciones puras y probadas que calculan ingresos por plan, servicio y pe
 
 ## Criterios de aceptación
 
-- [ ] Tres pagos `paid` de 8000, 10800 y 8000 centavos suman 26800 y se reparten correctamente por plan y por mes.
-- [ ] Un pago `void` no aparece en `paid_cents` pero sí en `void_cents`.
-- [ ] Con `active_start = 0`, `churn_rate = 0` y `retention_rate = 1`.
-- [ ] La suma de `by_plan`, `by_service` y `by_period` iguala `totals.paid_cents`.
-- [ ] `bun test` en `api/` pasa en verde.
+- [x] Tres pagos `paid` de 8000, 10800 y 8000 centavos suman 26800 y se reparten correctamente por plan y por mes.
+- [x] Un pago `void` no aparece en `paid_cents` pero sí en `void_cents`.
+- [x] Con `active_start = 0`, `churn_rate = 0` y `retention_rate = 1`.
+- [x] La suma de `by_plan`, `by_service` y `by_period` iguala `totals.paid_cents`.
+- [x] `bun test` en `api/` pasa en verde.
 
 ## Referencias
 
@@ -41,3 +41,4 @@ Existen funciones puras y probadas que calculan ingresos por plan, servicio y pe
 
 ## Notas de implementación
 
+Los ingresos usan paid_at y los importes pendientes y anulados usan la fecha local de referencia. La retención cuenta las bajas por ended_on y mantiene las pausas en el saldo. bun test: 85 pruebas.

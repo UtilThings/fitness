@@ -1,7 +1,7 @@
 # 004 - [Endpoint] Rutas `GET /api/admin/reports/*`
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003, Feature 005 (contrato)
 - **Fase:** Fase 2: API
 
@@ -25,12 +25,12 @@ Los hooks TypeScript viven en `api/src/hooks/*.ts` y compilan con `bun run build
 
 ## Criterios de aceptación
 
-- [ ] Las cuatro rutas responden con el contrato del spec (`range` + cuerpo del reporte) con token de owner.
-- [ ] Coach y reception reciben `403` en `revenue`; coach recibe `200` en las demás; sin token, `401`/`403`.
-- [ ] `from`/`to` ausentes, invertidos o con más de 366 días, `service` inexistente y `group_by` inválido devuelven `400` con mensaje en español.
-- [ ] Un rango sin datos devuelve `200` con totales en cero.
-- [ ] Ninguna respuesta contiene nombre, correo ni teléfono de clientes.
-- [ ] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan en verde.
+- [x] Las cuatro rutas responden con el contrato del spec (`range` + cuerpo del reporte) con token de owner.
+- [x] Coach y reception reciben `403` en `revenue`; coach recibe `200` en las demás; sin token, `401`/`403`.
+- [x] `from`/`to` ausentes, invertidos o con más de 366 días, `service` inexistente y `group_by` inválido devuelven `400` con mensaje en español.
+- [x] Un rango sin datos devuelve `200` con totales en cero.
+- [x] Ninguna respuesta contiene nombre, correo ni teléfono de clientes.
+- [x] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan en verde.
 
 ## Referencias
 
@@ -47,3 +47,4 @@ Los hooks TypeScript viven en `api/src/hooks/*.ts` y compilan con `bun run build
 
 ## Notas de implementación
 
+Se reutilizó requireBookingStaff. Las consultas filtran los registros en PocketBase con parámetros enlazados y límite 0. La fecha de anulación se usa cuando el pago anulado carece de vencimiento. verify-api.sh confirmó los contratos, permisos, privacidad y el límite de un día de 23 horas.

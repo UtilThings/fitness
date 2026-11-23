@@ -41,6 +41,7 @@ describe('adminNav', () => {
     expect(enabled.map(({ to }) => to)).toEqual(
       expect.arrayContaining([
         '/',
+        '/reports',
         '/clients',
         '/coaching',
         '/team',
@@ -57,6 +58,20 @@ describe('adminNav', () => {
     );
     enabled.forEach(({ to }) => expect(paths).toContain(to));
   });
+
+  it.each(['owner', 'coach', 'reception'] as const)(
+    'habilita Reportes para %s',
+    (role) => {
+      const analysis = visibleNav(role).find(
+        ({ label }) => label === 'Análisis',
+      );
+      expect(analysis?.items).toContainEqual({
+        label: 'Reportes',
+        icon: 'pi pi-chart-bar',
+        to: '/reports',
+      });
+    },
+  );
 
   it('filtra pagos para coach y permite verlos a owner y reception', () => {
     const paths = (groups: ReturnType<typeof visibleNav>) =>

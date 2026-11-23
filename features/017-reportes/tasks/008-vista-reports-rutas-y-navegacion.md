@@ -1,7 +1,7 @@
 # 008 - [Vista] `/reports` con pestañas, permisos y exportación
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005, 006, 007, Feature 006 (contrato)
 - **Fase:** Fase 4: Interfaz
 
@@ -24,13 +24,13 @@ Las vistas viven en `app/src/views/admin/*View.vue`, las rutas protegidas son hi
 
 ## Criterios de aceptación
 
-- [ ] `/reports` sin sesión redirige a `/login?redirect=%2Freports`.
-- [ ] Owner ve cuatro pestañas; coach ve Ocupación, Asistencia y Retención.
-- [ ] Un coach con `?tab=revenue` ve el aviso y no se hace ninguna petición a `/api/admin/reports/revenue`.
-- [ ] «Exportar CSV» descarga un archivo con BOM cuyo contenido coincide con la tabla mostrada.
-- [ ] Cambiar el rango o el servicio recarga los datos y actualiza gráficos, tarjetas y tabla.
-- [ ] La entrada «Reportes» aparece en la navegación y resalta la ruta activa.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` en `app/` pasan.
+- [x] `/reports` sin sesión redirige a `/login?redirect=%2Freports`.
+- [x] Owner ve cuatro pestañas; coach ve Ocupación, Asistencia y Retención.
+- [x] Un coach con `?tab=revenue` ve el aviso y no se hace ninguna petición a `/api/admin/reports/revenue`.
+- [x] «Exportar CSV» descarga un archivo con BOM cuyo contenido coincide con la tabla mostrada.
+- [x] Cambiar el rango o el servicio recarga los datos y actualiza gráficos, tarjetas y tabla.
+- [x] La entrada «Reportes» aparece en la navegación y resalta la ruta activa.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` en `app/` pasan.
 
 ## Referencias
 
@@ -46,3 +46,4 @@ Las vistas viven en `app/src/views/admin/*View.vue`, las rutas protegidas son hi
 
 ## Notas de implementación
 
+Reportes usa la sesión y el resaltado de AdminLayout. El CSV usa las columnas de la agrupación seleccionada y todas sus filas. Se verificaron los roles, la URL forzada, los filtros, la exportación y el manifiesto del build: ReportsView importa de forma diferida PrimeVue Chart, que a su vez importa Chart.js. verify-app.sh pasó con 302 pruebas.

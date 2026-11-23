@@ -46,6 +46,7 @@ describe('guard', () => {
 
   it.each([
     '/audit',
+    '/reports',
     '/clients?q=ana',
     '/clients/ana',
     '/coaching',
@@ -68,6 +69,13 @@ describe('guard', () => {
     expect(router.currentRoute.value.query.redirect).toBe(path);
   });
 
+  it('codifica el redirect de Reportes', async () => {
+    await router.push('/reports');
+    expect(router.currentRoute.value.fullPath).toBe(
+      '/login?redirect=%2Freports',
+    );
+  });
+
   it.each(['owner', 'coach', 'reception'] as const)(
     'permite consultar equipo, ficha y perfil con el rol %s',
     async (role) => {
@@ -76,6 +84,7 @@ describe('guard', () => {
       for (const [path, name, title] of [
         ['/clients', 'clients', 'Clientes'],
         ['/coaching', 'coaching', 'Online Coaching'],
+        ['/reports', 'reports', 'Reportes'],
         ['/clients/ana', 'client-detail', 'Cliente'],
         ['/team', 'team', 'Equipo'],
         ['/services', 'services', 'Servicios'],

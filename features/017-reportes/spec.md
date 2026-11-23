@@ -1,6 +1,6 @@
 # Especificación: Reportes de ocupación, asistencia, ingresos y retención
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -220,14 +220,16 @@ Definiciones fijas:
 
 ## Criterios de Aceptación
 
-- [ ] `GET /api/admin/reports/occupancy|attendance|retention` responden con el contrato para staff activo y `403` o `401` sin sesión.
-- [ ] `GET /api/admin/reports/revenue` responde `200` solo a `owner`; `coach` y `reception` reciben `403`.
-- [ ] Los rangos se interpretan en hora de `America/New_York`, incluidos los días de cambio de horario; los parámetros inválidos devuelven `400`.
-- [ ] Las tasas no producen `NaN` ni `Infinity` con rangos vacíos; la suma de los grupos coincide con los totales.
-- [ ] `/reports` muestra cuatro pestañas para `owner` y tres para `coach`, con gráficos, tabla y filtros de rango y servicio.
-- [ ] «Exportar CSV» genera un archivo con BOM UTF-8, comillas y saltos de línea escapados y celdas con fórmulas neutralizadas.
-- [ ] `chart.js` se carga de forma diferida solo en la ruta `/reports`.
-- [ ] `bun test` (api) y `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] `GET /api/admin/reports/occupancy|attendance|retention` responden con el contrato para staff activo y `403` o `401` sin sesión.
+- [x] `GET /api/admin/reports/revenue` responde `200` solo a `owner`; `coach` y `reception` reciben `403`.
+- [x] Los rangos se interpretan en hora de `America/New_York`, incluidos los días de cambio de horario; los parámetros inválidos devuelven `400`.
+- [x] Las tasas no producen `NaN` ni `Infinity` con rangos vacíos; la suma de los grupos coincide con los totales.
+- [x] `/reports` muestra cuatro pestañas para `owner` y tres para `coach`, con gráficos, tabla y filtros de rango y servicio.
+- [x] «Exportar CSV» genera un archivo con BOM UTF-8, comillas y saltos de línea escapados y celdas con fórmulas neutralizadas.
+- [x] `chart.js` se carga de forma diferida solo en la ruta `/reports`.
+- [x] `bun test` (api) y `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+
+La verificación local ejecutó 85 pruebas de API, las comprobaciones con PocketBase y 302 pruebas de la app. El manifiesto de producción confirmó la importación diferida de Chart.js desde Reportes. En Edge se comprobó el flujo de owner y coach con una base temporal. LibreOffice Calc importó el CSV descargado con acentos y comillas correctos y mantuvo la fórmula de prueba como texto.
 
 ---
 

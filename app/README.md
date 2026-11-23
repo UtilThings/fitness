@@ -243,6 +243,16 @@ Para añadir una métrica, enlaza su dato de `useDashboard` en `DashboardView` y
 
 Un owner activo abre **Ajustes → Auditoría** (`/audit`). La vista consulta 25 registros por página, del más reciente al más antiguo. Se puede combinar **Colección**, **Actor**, **Desde** y **Hasta**. El rango incluye ambas fechas de Miramar. **Ver cambios** muestra el valor anterior y el nuevo de cada campo. Los registros de acciones automáticas pueden aparecer con el actor **Sistema**.
 
+## Reportes
+
+En **Análisis → Reportes**, el equipo activo puede consultar Ocupación, Asistencia y Retención. La pestaña Ingresos está disponible para owner. Si un coach o un usuario de recepción abre `/reports?tab=revenue`, la vista muestra un aviso y evita la petición de ingresos. La API aplica el mismo permiso.
+
+El rango se interpreta en hora de Miramar, Florida (`America/New_York`). Selecciona las fechas o un preset. Ocupación, Asistencia e Ingresos admiten el filtro de servicio. Ingresos y Retención permiten agrupar por día, semana o mes. Cada pestaña presenta totales, un gráfico y un selector de detalle. PrimeVue Chart y Chart.js se cargan de forma diferida al mostrar un gráfico en esta ruta.
+
+**Exportar CSV** descarga las columnas del detalle seleccionado y todas sus filas filtradas. El archivo usa BOM UTF-8, separadores de coma y finales de línea CRLF. Las comillas internas se duplican y los textos que podrían interpretarse como fórmulas se prefijan con un apóstrofo. Los importes se exportan en dólares decimales con punto.
+
+La prueba de ida y vuelta del CSV usa `python3` y su módulo estándar `csv`.
+
 ## Aceptación del MVP
 
 Ejecuta `scripts/verify-mvp.sh` desde la raíz. Usa PocketBase en localhost con una base temporal para aplicar las migraciones y comprobar las reglas efectivas, los hooks y las rutas. También ejecuta las pruebas, revisiones y build de la app. Para repetir el recorrido en el navegador, levanta API y app en desarrollo y prepara cuentas activas de owner, coach y recepción.
