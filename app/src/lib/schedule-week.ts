@@ -33,6 +33,7 @@ export interface ClassSession
   starts_at: string;
   status: 'scheduled' | 'cancelled' | 'completed';
   kind: 'regular' | 'special' | 'private';
+  title?: string;
   cancel_reason: string;
   notes: string;
 }

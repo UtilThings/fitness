@@ -1,7 +1,7 @@
 # 005 - [Componente] Composables y componentes de agenda
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004
 - **Fase:** Fase 4: Interfaz
 
@@ -21,10 +21,10 @@ La app dispone de composables y componentes para editar disponibilidad, ver una 
 
 ## Criterios de aceptación
 
-- [ ] El editor impide guardar tramos solapados o con fin ≤ inicio.
-- [ ] El diálogo de privada muestra un mensaje claro por cada código de error del servidor.
-- [ ] La cuadrícula muestra correctamente sesiones en zona `America/New_York` también cerca de medianoche.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] El editor impide guardar tramos solapados o con fin ≤ inicio.
+- [x] El diálogo de privada muestra un mensaje claro por cada código de error del servidor.
+- [x] La cuadrícula muestra correctamente sesiones en zona `America/New_York` también cerca de medianoche.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -36,4 +36,4 @@ La app dispone de composables y componentes para editar disponibilidad, ver una 
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+La cuadrícula y los formularios usan la hora de Miramar (America/New_York). El diálogo privado consulta disponibilidad y elegibilidad antes de enviar, y muestra los errores de la validación definitiva. La suite de la app pasó con los casos nuevos de tramos, agenda y errores.
