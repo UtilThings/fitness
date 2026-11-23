@@ -1,7 +1,7 @@
 # 003 - [Config] Variables de entorno de `web/` para la API
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 2: Cliente y configuración en `web/`
 
@@ -22,11 +22,11 @@
 
 ## Criterios de aceptación
 
-- [ ] `parseEnv` rechaza `PUBLIC_API_TIMEOUT_MS=abc`, `100` y `60000` nombrando la variable.
-- [ ] Sin `PUBLIC_API_URL`, `parseEnv` no falla y `env.PUBLIC_API_URL` es `undefined`.
-- [ ] `PUBLIC_API_URL=https://api.example.com/` se normaliza sin barra final.
-- [ ] `docker build` con `--build-arg PUBLIC_SITE_URL=... --build-arg PUBLIC_API_URL=...` conserva el valor en el bundle.
-- [ ] `bun run lint`, `format:check`, `check` y `test` en `web/` pasan.
+- [x] `parseEnv` rechaza `PUBLIC_API_TIMEOUT_MS=abc`, `100` y `60000` nombrando la variable.
+- [x] Sin `PUBLIC_API_URL`, `parseEnv` no falla y `env.PUBLIC_API_URL` es `undefined`.
+- [x] `PUBLIC_API_URL=https://api.example.com/` se normaliza sin barra final.
+- [x] `docker build` con `--build-arg PUBLIC_SITE_URL=... --build-arg PUBLIC_API_URL=...` conserva el valor en el bundle.
+- [x] `bun run lint`, `format:check`, `check` y `test` en `web/` pasan.
 
 ## Referencias
 
@@ -41,3 +41,4 @@
 
 ## Notas de implementación
 
+- El argumento PUBLIC_API_URL de deploy.json queda vacío hasta disponer de la URL pública de PocketBase. Una compilación Docker con una página temporal confirmó que el valor del argumento se incrusta en el JavaScript entregado al navegador. Lint, formato, tipos y 39 pruebas pasaron.
