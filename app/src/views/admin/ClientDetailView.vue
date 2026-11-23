@@ -131,6 +131,7 @@ function editableDetails(record: Client): ClientDetails {
     email: record.email,
     phone: formatPhone(record.phone),
     emergency_contact: record.emergency_contact,
+    locale: record.locale === 'en' ? 'en' : 'es',
     joined_on: record.joined_on ? utcToLocalParts(record.joined_on).date : '',
   };
 }

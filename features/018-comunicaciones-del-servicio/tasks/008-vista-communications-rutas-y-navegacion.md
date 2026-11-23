@@ -1,7 +1,7 @@
 # 008 - [Vista] `/communications`: plantillas, historial y mensaje a clase
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 006, 007, Feature 006 (contrato), Feature 010 (contrato)
 - **Fase:** Fase 4: Interfaz
 
@@ -22,12 +22,12 @@ Las vistas viven en `app/src/views/admin/*View.vue`; las rutas protegidas son hi
 
 ## Criterios de aceptación
 
-- [ ] `/communications` sin sesión redirige a `/login?redirect=%2Fcommunications`.
-- [ ] El historial muestra fecha local, cliente, clave, estado y error, filtra y pagina.
-- [ ] Solo el owner puede guardar plantillas; reception y coach las ven en solo lectura.
-- [ ] El mensaje a clase requiere confirmación, muestra cuántos recibirán y cuántos se omiten, y no permite enviar con asunto o cuerpo vacíos.
-- [ ] El formulario de clientes guarda `locale` y la próxima confirmación sale en ese idioma.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` en `app/` pasan.
+- [x] `/communications` sin sesión redirige a `/login?redirect=%2Fcommunications`.
+- [x] El historial muestra fecha local, cliente, clave, estado y error, filtra y pagina.
+- [x] Solo el owner puede guardar plantillas; reception y coach las ven en solo lectura.
+- [x] El mensaje a clase requiere confirmación, muestra cuántos recibirán y cuántos se omiten, y no permite enviar con asunto o cuerpo vacíos.
+- [x] El formulario de clientes guarda `locale` y la próxima confirmación sale en ese idioma.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` en `app/` pasan.
 
 ## Referencias
 
@@ -43,3 +43,5 @@ Las vistas viven en `app/src/views/admin/*View.vue`; las rutas protegidas son hi
 
 ## Notas de implementación
 
+- Vitest comprueba la ruta protegida, los permisos de edición, las fechas locales y la paginación del historial, la confirmación del mensaje y el selector de idioma.
+- El cambio de idioma del cliente se verificó en PocketBase y en el mensaje recibido por SMTP de captura. `scripts/verify-app.sh` pasó completa.

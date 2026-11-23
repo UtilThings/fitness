@@ -1,6 +1,6 @@
 # Especificación: Comunicaciones del servicio (mensajes operativos por correo)
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -249,15 +249,21 @@ Fechas y horas se formatean en hora de `America/New_York` y en el idioma del cli
 
 ## Criterios de Aceptación
 
-- [ ] Existen `message_templates` (12 plantillas por defecto es/en), `message_logs` y `clients.locale`; las migraciones tienen `down` y se pueden reaplicar sin duplicar.
-- [ ] Crear una reserva `booked` envía la confirmación en el idioma del cliente y deja un registro `sent`.
-- [ ] Una promoción desde lista de espera, una cancelación de clase, los recordatorios, los avisos de cobro y los de renovación envían su mensaje una sola vez por destinatario.
-- [ ] Clientes `inactive` o sin correo no reciben nada; un fallo de SMTP no impide la operación de negocio y se reintenta hasta 3 veces.
-- [ ] Los valores con HTML se escapan; las plantillas con variables no permitidas o asuntos con saltos de línea se rechazan con `400`.
-- [ ] El editor muestra variables permitidas y vista previa; solo `owner` edita plantillas.
-- [ ] El historial lista envíos con filtros; el mensaje manual llega solo a inscritos de la clase.
-- [ ] No existe ninguna plantilla ni flujo de marketing o seguimiento comercial.
-- [ ] `bun test`, `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Existen `message_templates` (12 plantillas por defecto es/en), `message_logs` y `clients.locale`; las migraciones tienen `down` y se pueden reaplicar sin duplicar.
+- [x] Crear una reserva `booked` envía la confirmación en el idioma del cliente y deja un registro `sent`.
+- [x] Una promoción desde lista de espera, una cancelación de clase, los recordatorios, los avisos de cobro y los de renovación envían su mensaje una sola vez por destinatario.
+- [x] Clientes `inactive` o sin correo no reciben nada; un fallo de SMTP no impide la operación de negocio y se reintenta hasta 3 veces.
+- [x] Los valores con HTML se escapan; las plantillas con variables no permitidas o asuntos con saltos de línea se rechazan con `400`.
+- [x] El editor muestra variables permitidas y vista previa; solo `owner` edita plantillas.
+- [x] El historial lista envíos con filtros; el mensaje manual llega solo a inscritos de la clase.
+- [x] No existe ninguna plantilla ni flujo de marketing o seguimiento comercial.
+- [x] `bun test`, `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+
+### Verificación de cierre
+
+Las cuatro migraciones se aplicaron, revirtieron y reaplicaron en una base temporal. La suite de API comprobó los seis avisos automáticos, el mensaje manual, los permisos y la recuperación de SMTP con un servidor local de captura. La parte HTML del correo conservó escapado el nombre de prueba. La suite de la app verificó editor, historial, envío con confirmación, idioma y ruta protegida.
+
+El límite de reintentos equivale a tres intentos totales por aviso automático. El envío manual realiza un intento por inscrito elegible y conserva su texto en memoria durante la solicitud.
 
 ---
 

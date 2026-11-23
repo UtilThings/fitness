@@ -1,7 +1,7 @@
 # 007 - [Componente] Composable y editor de plantillas
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 006, Feature 006 (contrato)
 - **Fase:** Fase 4: Interfaz
 
@@ -22,11 +22,11 @@ El owner edita plantillas con una lista de variables permitidas que se insertan 
 
 ## Criterios de aceptación
 
-- [ ] Pulsar un chip inserta `{{class_name}}` en el cursor y actualiza la vista previa.
-- [ ] Una variable no permitida muestra un aviso y bloquea el guardado local; el `400` del servidor también se muestra.
-- [ ] La vista previa no interpreta HTML: `<script>` en un valor se muestra como texto.
-- [ ] Un usuario que no es owner ve el editor en solo lectura.
-- [ ] `bun run test`, `lint`, `format:check` y `typecheck` en `app/` pasan.
+- [x] Pulsar un chip inserta `{{class_name}}` en el cursor y actualiza la vista previa.
+- [x] Una variable no permitida muestra un aviso y bloquea el guardado local; el `400` del servidor también se muestra.
+- [x] La vista previa no interpreta HTML: `<script>` en un valor se muestra como texto.
+- [x] Un usuario que no es owner ve el editor en solo lectura.
+- [x] `bun run test`, `lint`, `format:check` y `typecheck` en `app/` pasan.
 
 ## Referencias
 
@@ -40,3 +40,5 @@ El owner edita plantillas con una lista de variables permitidas que se insertan 
 
 ## Notas de implementación
 
+- La interfaz reutiliza la lista blanca y la validación de la API. La vista previa cancela solicitudes obsoletas y muestra texto mediante interpolación de Vue.
+- Pasaron Vitest, lint, format:check y typecheck. Las pruebas de editor cubren selección del cursor, control de variables, errores del servidor, escape y modo de lectura.

@@ -1,3 +1,4 @@
+import type { Locale } from '@/lib/messages';
 import { pb } from '@/lib/pocketbase';
 import type { BaseRecord } from '@/types/pb';
 
@@ -19,6 +20,7 @@ export interface Client extends Pick<
   email: string;
   phone: string;
   status: ClientStatus;
+  locale?: Locale;
   goals: string;
   notes: string;
   assessment: unknown;
@@ -34,6 +36,7 @@ export type ClientDetails = Pick<
   | 'email'
   | 'phone'
   | 'joined_on'
+  | 'locale'
   | 'emergency_contact'
 >;
 

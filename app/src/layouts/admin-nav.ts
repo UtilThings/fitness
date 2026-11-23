@@ -35,6 +35,11 @@ export const adminNav: NavGroup[] = [
         icon: 'pi pi-users',
         to: '/clients',
       },
+      {
+        label: 'Comunicaciones',
+        icon: 'pi pi-envelope',
+        to: '/communications',
+      },
       { label: 'Online Coaching', icon: 'pi pi-comments', to: '/coaching' },
       {
         label: 'Clases',

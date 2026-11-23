@@ -47,6 +47,7 @@ describe('guard', () => {
   it.each([
     '/audit',
     '/reports',
+    '/communications',
     '/clients?q=ana',
     '/clients/ana',
     '/coaching',
@@ -167,6 +168,13 @@ describe('guard', () => {
         expect(router.currentRoute.value.matched).toHaveLength(1);
     },
   );
+
+  it('codifica el destino de Comunicaciones al pedir sesión', async () => {
+    await router.push('/communications');
+    expect(router.currentRoute.value.fullPath).toBe(
+      '/login?redirect=%2Fcommunications',
+    );
+  });
 
   it('abre auditoría para el owner', async () => {
     state.valid = true;

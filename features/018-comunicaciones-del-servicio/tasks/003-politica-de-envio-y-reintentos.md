@@ -1,7 +1,7 @@
 # 003 - [Lib] Política de envío, ventanas y reintentos
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 2: Lógica pura
 
@@ -23,11 +23,11 @@ Existe una librería pura que decide a quién se envía, en qué idioma, cuándo
 
 ## Criterios de aceptación
 
-- [ ] `isEligible` devuelve `false` para `inactive` y para correo vacío o mal formado, y `true` para `active` y `paused`.
-- [ ] `nextRetry(1)`, `(2)` y `(3)` devuelven +5 min, +30 min y `null` respectivamente (a partir del fallo del intento indicado).
-- [ ] Las mismas entradas producen siempre las mismas `dedupeKey`, y periodos distintos producen claves distintas.
-- [ ] Un recordatorio solo se genera para reservas `booked` de sesiones `scheduled` dentro de la ventana.
-- [ ] `bun test` en `api/` pasa en verde.
+- [x] `isEligible` devuelve `false` para `inactive` y para correo vacío o mal formado, y `true` para `active` y `paused`.
+- [x] `nextRetry(1)`, `(2)` y `(3)` devuelven +5 min, +30 min y `null` respectivamente (a partir del fallo del intento indicado).
+- [x] Las mismas entradas producen siempre las mismas `dedupeKey`, y periodos distintos producen claves distintas.
+- [x] Un recordatorio solo se genera para reservas `booked` de sesiones `scheduled` dentro de la ventana.
+- [x] `bun test` en `api/` pasa en verde.
 
 ## Referencias
 
@@ -40,3 +40,4 @@ Existe una librería pura que decide a quién se envía, en qué idioma, cuándo
 
 ## Notas de implementación
 
+- `bun test` cubre elegibilidad, claves estables, ventanas y ambos cambios de horario. El máximo es de tres intentos totales, con esperas de 5 y 30 minutos.

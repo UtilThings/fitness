@@ -1,7 +1,7 @@
 # 001 - [Migración] Plantillas, registros de mensajes e idioma del cliente
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 010 (contrato), Feature 005 (contrato)
 - **Fase:** Fase 1: Modelo de datos
 
@@ -24,11 +24,11 @@ Las migraciones son JS en `api/pb_migrations/<timestamp>_<verbo>_<objeto>.js` co
 
 ## Criterios de aceptación
 
-- [ ] PocketBase arranca desde cero, aplica las 4 migraciones sin errores y existen 12 plantillas activas.
-- [ ] Reiniciar o reaplicar las migraciones no duplica plantillas ni pisa una plantilla editada.
-- [ ] `message_templates` rechaza crear/editar con token de coach o reception y con token ausente; `message_logs` rechaza cualquier escritura por API.
-- [ ] Insertar dos plantillas con la misma (`key`,`locale`) falla por el índice único; dos logs con la misma `dedupe_key` no vacía también.
-- [ ] `down` de cada migración revierte solo lo creado por ella.
+- [x] PocketBase arranca desde cero, aplica las 4 migraciones sin errores y existen 12 plantillas activas.
+- [x] Reiniciar o reaplicar las migraciones no duplica plantillas ni pisa una plantilla editada.
+- [x] `message_templates` rechaza crear/editar con token de coach o reception y con token ausente; `message_logs` rechaza cualquier escritura por API.
+- [x] Insertar dos plantillas con la misma (`key`,`locale`) falla por el índice único; dos logs con la misma `dedupe_key` no vacía también.
+- [x] `down` de cada migración revierte solo lo creado por ella.
 
 ## Referencias
 
@@ -43,3 +43,5 @@ Las migraciones son JS en `api/pb_migrations/<timestamp>_<verbo>_<objeto>.js` co
 
 ## Notas de implementación
 
+- PocketBase 0.40.5 confirma `MailerMessage`, `app.newMailClient().send`, `app.settings().smtp`/`meta` y `cronAdd`. Los mensajes operativos se construyen como `MailerMessage` propio.
+- Verificado el arranque limpio, el rollback de las cuatro migraciones y la reaplicación del seed con una edición conservada. `scripts/verify-api.sh` verifica los permisos y los índices en PocketBase.

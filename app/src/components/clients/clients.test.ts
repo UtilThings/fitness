@@ -1,7 +1,9 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import AutoComplete from 'primevue/autocomplete';
 import PrimeVue from 'primevue/config';
+import Select from 'primevue/select';
 import { expect, it, vi } from 'vitest';
+import { nextTick } from 'vue';
 import ClientForm from './ClientForm.vue';
 import ClientPicker from './ClientPicker.vue';
 import ClientStatusTag from './ClientStatusTag.vue';
@@ -25,6 +27,8 @@ it('muestra los errores junto a cada campo y avisa sobre teléfonos compartidos'
         emergency_contact: '',
       },
       errors: { email: 'Correo inválido', phone: 'Revisa el número' },
+      'onUpdate:modelValue': (modelValue) =>
+        void wrapper.setProps({ modelValue }),
     },
   });
   const field = wrapper.get('input[type=email]');
@@ -38,7 +42,10 @@ it('muestra los errores junto a cada campo y avisa sobre teléfonos compartidos'
   await phone.trigger('blur');
   await flushPromises();
   expect(wrapper.text()).toContain('Otro cliente tiene este teléfono.');
+  wrapper.getComponent(Select).vm.$emit('update:modelValue', 'en');
+  await nextTick();
   await wrapper.get('form').trigger('submit');
+  expect(wrapper.emitted('submit')?.[0]?.[0]).toMatchObject({ locale: 'en' });
   expect(wrapper.emitted('submit')).toHaveLength(1);
   await wrapper.setProps({ busy: true });
   await wrapper.get('form').trigger('submit');
