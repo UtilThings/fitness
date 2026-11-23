@@ -78,6 +78,9 @@ routerAdd("POST", "/api/admin/sessions/{id}/move", (e) => {
     const original = getRecord(tx, "class_sessions", id);
     if (!original) throw new NotFoundError("Sesión no encontrada.");
     if (original.getString("status") !== "scheduled") throw new BadRequestError("La sesión no se puede cancelar.");
+    if (original.getString("kind") === "private") {
+      throw new BadRequestError("Cancela la sesión privada antes de agendarla en otro horario.");
+    }
     const coach = body.coach === undefined ? original.getString("coach") : body.coach;
     if (typeof coach !== "string") throw fieldError("coach", "Selecciona un coach válido.");
     validateCoach(tx, coach);
@@ -98,6 +101,9 @@ routerAdd("POST", "/api/admin/sessions/{id}/move", (e) => {
     const created = new Record(original.collection(), {
       service: original.getString("service"), starts_at: startsAt, duration_min: duration,
       capacity: original.getInt("capacity"), coach, kind: "special", status: "scheduled",
+      title: original.getString("title") || Array.from(
+        tx.findRecordById("services", original.getString("service")).getString("name"),
+      ).slice(0, 120).join(""),
       notes: "Movida desde la sesión " + id,
     });
     auditActor(created, actor);

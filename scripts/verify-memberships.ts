@@ -156,6 +156,7 @@ let minutes = 0;
 function session(kind = "regular", service = pack.service) {
   return call<Row>(sessionPath, owner, "POST", {
     service, starts_at: new Date(Date.now() + (++minutes * 60_000)).toISOString(), duration_min: 60, capacity: 6, kind,
+    ...(kind === "special" && { title: "Clase especial sin créditos" }),
   });
 }
 function reserve(session: Row, token = coach, override_note?: string, expected = 200, client = memberTwo) {

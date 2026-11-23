@@ -309,3 +309,43 @@ await call(availability, coach.token, "POST", { ...slot, coach: ownerId }, 400);
 await call(`${availability}/${ownSlot.id}`, coach.token, "PATCH", { coach: ownerId }, 404);
 await call(availability, reception, "POST", slot, 400);
 assert.equal((await call<{ totalItems: number }>(availability, reception)).totalItems, 1);
+
+type DomainError = { data: { code: { code: string }; conflict_id?: { code: string } } };
+async function expectSchedulingCode(path: string, body: Json, code: string, conflictId?: string) {
+  const error = await call<DomainError>(path, owner, "POST", body, 400);
+  assert.equal(error.data.code?.code, code, JSON.stringify(error));
+  if (conflictId) assert.equal(error.data.conflict_id?.code, conflictId);
+}
+await expectSchedulingCode(availability, { ...slot, start_time: "09:00" }, "overlapping_slots");
+const { items: availabilityLogs } = await call<{ items: { actor: string }[] }>(
+  "collections/audit_logs/records?" + new URLSearchParams({
+    filter: `collection = "coach_availability" && record_id = "${ownSlot.id}"`,
+  }),
+  owner,
+);
+assert.equal(availabilityLogs.length, 1);
+assert.equal(availabilityLogs[0].actor, coach.id);
+
+const { items: [personal] } = await call<{ items: { id: string }[] }>(
+  "collections/services/records?" + new URLSearchParams({ filter: 'kind = "personal"' }), owner,
+);
+assert(personal);
+const sunday = addLocalDays(from, (7 - utcToLocal(localToUtc(from, "12:00")).weekday) % 7 + 98);
+const time = (value: string) => localToUtc(sunday, value);
+const privateInput = { ...fixture, kind: "private", coach: coach.id, service: personal.id, capacity: 1 };
+await expectSchedulingCode(sessions, { ...privateInput, starts_at: time("11:30") }, "outside_availability");
+await expectSchedulingCode(sessions, { ...fixture, kind: "special", starts_at: time("07:00") }, "title_required");
+const regular = await call<Session>(sessions, owner, "POST", {
+  ...fixture, coach: coach.id, starts_at: time("09:00"),
+});
+assert.equal(regular.kind, "regular");
+await expectSchedulingCode(sessions, { ...privateInput, starts_at: time("09:30") }, "coach_conflict", regular.id);
+const adjacent = await call<Session>(sessions, owner, "POST", { ...privateInput, starts_at: time("10:00") });
+await call(`${sessions}/${adjacent.id}`, owner, "PATCH", { notes: "Edición de la misma sesión" });
+
+const blocked = await call<{ id: string }>(blocks, owner, "POST", {
+  title: "Bloqueo de agenda", date_from: sunday, date_to: sunday,
+});
+await expectSchedulingCode(sessions, { ...privateInput, starts_at: time("08:00") }, "block_conflict", blocked.id);
+await call(sessions, owner, "POST", { ...fixture, kind: "special", title: "Evento sin coach", starts_at: time("08:00") });
+console.log("Agenda verificada: disponibilidad, solapes, títulos, bloqueo, edición y auditoría.");
