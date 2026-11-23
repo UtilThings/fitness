@@ -1,7 +1,7 @@
 # 004 - [Componente] Composable `useCoaching` y componentes de coaching
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003
 - **Fase:** Fase 4: Interfaz
 
@@ -21,10 +21,10 @@ La app dispone de un composable y de componentes para crear programas, registrar
 
 ## Criterios de aceptación
 
-- [ ] El diálogo de check-in no permite adherencia fuera de 1-5 ni fecha futura.
-- [ ] El diálogo de programa solo ofrece clientes con membresía online activa.
-- [ ] Las alertas calculadas coinciden con las de la lib en los casos de prueba.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] El diálogo de check-in no permite adherencia fuera de 1-5 ni fecha futura.
+- [x] El diálogo de programa solo ofrece clientes con membresía online activa.
+- [x] Las alertas calculadas coinciden con las de la lib en los casos de prueba.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -36,4 +36,4 @@ La app dispone de un composable y de componentes para crear programas, registrar
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+El composable importa la lógica pura de la API y normaliza las fechas civiles de PocketBase antes de calcular alertas. La verificación de la app cubre la oferta de membresías, las validaciones de ambos diálogos y los indicadores de adherencia.
