@@ -272,3 +272,29 @@ El reporte cuenta como vencidos los pendientes con fecha anterior a hoy. La vent
 Una integración futura añadiría `provider` y `external_ref` al modelo y una ruta webhook que verifique la firma del proveedor. Después de verificar la notificación e identificar el cobro, el webhook llamaría a `settlePayment(app, paymentId, { method, paidAt, recordedBy, note })` para usar la misma transacción, numeración y auditoría. La integración con proveedor, el webhook y la conciliación quedan fuera de esta entrega.
 
 `scripts/verify-api.sh` aplica, revierte y reaplica las migraciones de pagos en una base temporal. También comprueba los índices parciales, permisos, dos liquidaciones concurrentes, rollback del contador, reinicio anual, anulación, cobros por ciclo y vencimientos.
+
+## Reportes
+
+Las rutas de solo lectura devuelven datos agregados y no incluyen nombres, correos ni teléfonos de clientes. Requieren un registro activo de `admins`.
+
+| Ruta GET | Owner | Coach | Recepción | Campos adicionales a `range` |
+| --- | --- | --- | --- | --- |
+| `/api/admin/reports/occupancy` | Sí | Sí | Sí | `totals`, `by_service`, `by_class` |
+| `/api/admin/reports/attendance` | Sí | Sí | Sí | `totals`, `by_service`, `by_day` |
+| `/api/admin/reports/revenue` | Sí | — | — | `totals`, `by_plan`, `by_service`, `by_period` |
+| `/api/admin/reports/retention` | Sí | Sí | Sí | `totals`, `by_plan`, `by_period` |
+
+- `from` y `to` son fechas inclusivas en formato `YYYY-MM-DD`. El máximo es de 366 días. `range` devuelve `from`, `to`, `timezone` (`America/New_York`), `start_utc` y `end_utc`. El primer límite UTC es inclusivo y el segundo corresponde a la medianoche local posterior a `to`, excluida. El cálculo respeta el horario de verano.
+- `service` acepta un slug existente y es opcional en ocupación, asistencia e ingresos.
+- `group_by` admite `day`, `week` y `month` en ingresos y retención. Por defecto usa `month`. Una semana comienza el domingo y se identifica por esa fecha. La agrupación diaria admite hasta 92 días. Los periodos sin altas, bajas o cobros aparecen con cero en esos campos. El saldo de membresías se arrastra al periodo siguiente.
+- La API devuelve `400` ante parámetros inválidos, `401` si falta sesión y `403` si el rol o el estado del registro impiden el acceso.
+
+**Ocupación.** `occupancy_rate` divide las reservas `booked`, `attended` y `no_show` entre los cupos. Las clases canceladas se excluyen. `by_class` incluye la lista de espera, la fecha y hora locales y el nombre del coach.
+
+**Asistencia.** `no_show_rate` y `attendance_rate` dividen las inasistencias y las asistencias, respectivamente, entre `attended + no_show`. Los conteos muestran por separado las reservas pendientes de asistencia y las cancelaciones ordinarias y tardías. Ambas tasas devuelven 0 si el denominador es 0. La tasa de ocupación aplica la misma regla.
+
+**Ingresos.** Los importes son centavos enteros de USD. `paid_cents` usa `paid_at`. `pending_cents` y `void_cents` usan la fecha local de vencimiento. Si un pago anulado carece de vencimiento, usa su fecha local de anulación. Los pagos sin plan se agrupan en «Sin plan». `by_period` incluye solo importes y conteos de pagos cobrados.
+
+**Retención.** Las altas se fechan por `starts_on` y las bajas de membresías canceladas o expiradas por `ended_on`. Las pausas se incluyen en el saldo. `churn_rate = churned / active_start` y `retention_rate = 1 - churn_rate`. Si `active_start` es 0, las tasas son 0 y 1, respectivamente.
+
+`../scripts/verify-api.sh` verifica los permisos, filtros y contratos de respuesta con datos de ejemplo, incluido un día de 23 horas.
