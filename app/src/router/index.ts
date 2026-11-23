@@ -128,6 +128,18 @@ const router = createRouter({
           meta: { title: 'Ficha del equipo' },
         },
         {
+          path: 'agenda',
+          name: 'coach-agenda',
+          component: () => import('@/views/admin/CoachAgendaView.vue'),
+          meta: { title: 'Agenda por coach', requiresAuth: true },
+        },
+        {
+          path: 'agenda/disponibilidad',
+          name: 'coach-availability',
+          component: () => import('@/views/admin/CoachAvailabilityView.vue'),
+          meta: { title: 'Disponibilidad semanal', requiresAuth: true },
+        },
+        {
           path: 'classes',
           name: 'classes',
           component: () => import('@/views/admin/ClassesView.vue'),

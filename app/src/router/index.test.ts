@@ -55,6 +55,8 @@ describe('guard', () => {
     '/classes?coach=jq',
     '/classes/templates',
     '/classes/blocks',
+    '/agenda',
+    '/agenda/disponibilidad',
     '/plans?service=jump',
     '/memberships',
     '/payments',
@@ -79,6 +81,12 @@ describe('guard', () => {
         ['/memberships', 'memberships', 'Suscripciones'],
         ['/classes/templates', 'classes-templates', 'Plantillas de clases'],
         ['/classes/blocks', 'classes-blocks', 'Bloqueos de horario'],
+        ['/agenda', 'coach-agenda', 'Agenda por coach'],
+        [
+          '/agenda/disponibilidad',
+          'coach-availability',
+          'Disponibilidad semanal',
+        ],
         ['/team/coach', 'team-member', 'Ficha del equipo'],
         ['/settings/profile', 'profile', 'Mi perfil'],
       ] as const) {

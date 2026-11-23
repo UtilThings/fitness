@@ -1,7 +1,7 @@
 # 006 - [Vista] Disponibilidad y agenda por coach
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005
 - **Fase:** Fase 4: Interfaz
 
@@ -22,10 +22,10 @@ Rutas protegidas hijas de `AdminLayout` con `meta.requiresAuth` y `meta.title`; 
 
 ## Criterios de aceptación
 
-- [ ] `/agenda` muestra sesiones y disponibilidad del coach elegido, en día y semana.
-- [ ] Un coach no puede editar la disponibilidad de otro; reception ve el editor en solo lectura.
-- [ ] Sin sesión, las rutas redirigen a login.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] `/agenda` muestra sesiones y disponibilidad del coach elegido, en día y semana.
+- [x] Un coach no puede editar la disponibilidad de otro; reception ve el editor en solo lectura.
+- [x] Sin sesión, las rutas redirigen a login.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -37,4 +37,4 @@ Rutas protegidas hijas de `AdminLayout` con `meta.requiresAuth` y `meta.title`; 
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+La agenda enlaza el detalle de reservas y asistencia con el calendario existente. Recepción y los coaches que consultan a otro coach tienen lectura de disponibilidad. Las rutas, los permisos y el cambio día/semana están cubiertos por Vitest.

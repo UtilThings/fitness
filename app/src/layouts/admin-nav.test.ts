@@ -15,6 +15,7 @@ describe('adminNav', () => {
         [
           '/clients',
           '/classes',
+          '/agenda',
           '/classes/templates',
           '/classes/blocks',
           '/bookings',
@@ -45,6 +46,7 @@ describe('adminNav', () => {
         '/services',
         '/plans',
         '/classes',
+        '/agenda',
         '/classes/templates',
         '/classes/blocks',
         '/memberships',
