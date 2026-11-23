@@ -1,7 +1,7 @@
 # 004 - [Hook] Motor de envío, registro y reintentos
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003, Feature 005 (contrato)
 - **Fase:** Fase 3: Hooks
 
@@ -24,12 +24,12 @@ Los hooks TypeScript van en `api/src/hooks/*.ts` y compilan a `api/pb_hooks/*.pb
 
 ## Criterios de aceptación
 
-- [ ] Con SMTP configurado, `sendServiceMessage` envía y deja un `message_logs` `sent` con el cliente, la clave y el canal `email`.
-- [ ] Con SMTP caído deja `failed` con `next_retry_at`, y el cron lo reenvía y lo marca `sent` al restaurarse; tras 3 intentos no se reintenta más.
-- [ ] Llamarla dos veces con el mismo `dedupe_key` envía una sola vez.
-- [ ] Un cliente `inactive` o sin correo no genera envío ni log de fallo.
-- [ ] Guardar una plantilla con una variable no permitida devuelve `400`; las ediciones válidas quedan en `audit_logs`.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Con SMTP configurado, `sendServiceMessage` envía y deja un `message_logs` `sent` con el cliente, la clave y el canal `email`.
+- [x] Con SMTP caído deja `failed` con `next_retry_at`, y el cron lo reenvía y lo marca `sent` al restaurarse; tras 3 intentos no se reintenta más.
+- [x] Llamarla dos veces con el mismo `dedupe_key` envía una sola vez.
+- [x] Un cliente `inactive` o sin correo no genera envío ni log de fallo.
+- [x] Guardar una plantilla con una variable no permitida devuelve `400`; las ediciones válidas quedan en `audit_logs`.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Referencias
 
@@ -46,3 +46,4 @@ Los hooks TypeScript van en `api/src/hooks/*.ts` y compilan a `api/pb_hooks/*.pb
 
 ## Notas de implementación
 
+- Verificado con PocketBase y SMTP local de captura, incluido el cron real, el tercer intento terminal y el reclamo concurrente de la misma clave. Los reintentos operativos reconstruyen el contexto a partir de la sesión o del vencimiento, sin guardar el cuerpo.

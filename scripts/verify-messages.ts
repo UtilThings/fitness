@@ -68,3 +68,14 @@ const saved = await call<{ id: string }>(logs, root, "POST", log);
 await call(logs, root, "POST", log, 400);
 await call(`${logs}/${saved.id}`, root, "DELETE", undefined, 204);
 await call(`${clients}/${client.id}`, owner, "DELETE", undefined, 204);
+
+const invalid = await call<{ data: { body?: { message: string } } }>(
+  `${templates}/${id}`, owner, "PATCH", { body: "{{password}}" }, 400,
+);
+assert.match(invalid.data.body?.message ?? "", /password/);
+await call(`${templates}/${id}`, owner, "PATCH", { body: "Prueba de auditoría" });
+const audit = "collections/audit_logs/records?" + new URLSearchParams({
+  filter: `collection = "message_templates" && record_id = "${id}" && action = "update"`,
+});
+assert.equal((await call<{ items: unknown[] }>(audit, owner)).items.length, 1);
+await call(`${templates}/${id}`, owner, "PATCH", { body });
