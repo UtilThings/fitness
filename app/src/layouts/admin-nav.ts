@@ -59,6 +59,12 @@ export const adminNav: NavGroup[] = [
     items: [
       { label: 'Servicios', icon: 'pi pi-briefcase', to: '/services' },
       {
+        label: 'Auditoría',
+        icon: 'pi pi-history',
+        to: '/audit',
+        roles: ['owner'],
+      },
+      {
         label: 'Equipo',
         icon: 'pi pi-id-card',
         to: '/team',

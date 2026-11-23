@@ -36,7 +36,7 @@ async function auth(collection: string, email: string) {
 }
 
 const root = await auth("_superusers", "catalog-verify@example.test");
-async function createAdmin(role: "owner" | "coach") {
+async function createAdmin(role: "owner" | "coach" | "reception") {
   const email = `bookings-${role}@example.test`;
   await call(records("admins"), root, "POST", { email, name: role, role, active: true, password, passwordConfirm: password });
   return auth("admins", email);
@@ -143,10 +143,13 @@ for (const entry of [free, queue]) {
 await confirmFreeClass(fourthClient, false);
 
 const logs = records("audit_logs") + filter('collection = "bookings"') + "&perPage=100";
-const { items } = await call<{ items: { actor: string; summary: string }[] }>(logs, owner);
+const { items } = await call<{ items: { actor: string; summary: string; diff: { status?: { to?: string } } }[] }>(logs, owner);
 for (const event of ["created", "waitlisted", "promoted", "cancelled", "late_cancelled", "attended", "cancelled_by_session"]) {
   assert(items.some((item) => item.actor && item.summary.startsWith(`booking.${event}: `)), event);
 }
+
+assert(items.some((item) => item.summary.startsWith("booking.waitlisted: ") && item.diff?.status?.to === "waitlisted"),
+  "El diff de auditoría debe conservar los cambios al persistirlos.");
 
 console.log("Reservas, concurrencia, cancelación, asistencia, disponibilidad y auditoría verificadas.");
 
@@ -199,3 +202,18 @@ assert(dashboard.counts.active_clients >= 4);
 assert.equal(dashboard.upcoming_payments, null);
 assert(!JSON.stringify(dashboard).includes(firstClient.id));
 console.log("Contrato, permisos y ventana local del dashboard verificados.");
+
+const reception = await createAdmin("reception");
+const auditCollection = await call<Row>("collections/audit_logs", root);
+for (const token of [coach, reception]) {
+  for (const path of [records("audit_logs"), records(auditCollection.id)]) {
+    const { exitCode, stdout } = Bun.spawnSync([
+      "curl", "--noproxy", "*", "--silent", "--show-error", "--max-time", "5",
+      "--output", "/dev/null", "--write-out", "%{http_code}", "-H", "Authorization: " + token,
+      `${base}/api/${path}`,
+    ]);
+    assert.equal(exitCode, 0);
+    assert.equal(stdout.toString(), "403");
+  }
+}
+console.log("Auditoría: acceso de owner y HTTP 403 para coach y recepción verificados.");

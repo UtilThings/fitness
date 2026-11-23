@@ -1,7 +1,7 @@
 # 006 - [Vista] Vista de auditoría /audit solo para owner
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005
 - **Fase:** Fase 3: Auditoría
 
@@ -21,10 +21,10 @@ Las rutas protegidas son hijas de `AdminLayout` (`meta.requiresAuth`, `meta.titl
 
 ## Criterios de aceptación
 
-- [ ] El owner ve la lista, filtra por colección, actor y rango de fechas y abre el diff de un registro.
-- [ ] Un coach o recepcionista no ve la entrada de menú y al abrir `/audit` es redirigido a `/`.
-- [ ] La API sigue respondiendo `403` a no-owners en `audit_logs` (comprobado con `curl`).
-- [ ] `typecheck`, `lint`, `format:check`, `test` y `build` pasan.
+- [x] El owner ve la lista, filtra por colección, actor y rango de fechas y abre el diff de un registro.
+- [x] Un coach o recepcionista no ve la entrada de menú y al abrir `/audit` es redirigido a `/`.
+- [x] La API sigue respondiendo `403` a no-owners en `audit_logs` (comprobado con `curl`).
+- [x] `typecheck`, `lint`, `format:check`, `test` y `build` pasan.
 
 ## Referencias
 
@@ -37,3 +37,5 @@ Las rutas protegidas son hijas de `AdminLayout` (`meta.requiresAuth`, `meta.titl
 
 ## Notas de implementación
 
+
+- Chromium verificó los filtros combinados, el detalle y la redirección al dashboard de coach y recepción. La prueba con curl verificó HTTP 403 por nombre e ID de la colección. Se mantuvieron las reglas de colección y se añadió el 403 explícito en la API de registros. La prueba de integración reveló que goja no persistía el diff anidado; guardar JSON explícito corrigió los registros nuevos. Los registros históricos sin cambios guardados muestran el estado vacío. Pasaron verify-api y verify-app.

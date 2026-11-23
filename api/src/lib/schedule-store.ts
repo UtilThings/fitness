@@ -46,7 +46,9 @@ export function scheduleAudit(app: core.App, collection: string, recordId: strin
   summary: string, counts: Record<string, number>) {
   const data = buildEntry({ action: "custom", collection, recordId: recordId || app.findCollectionByNameOrId(collection).id, actorId, after: counts });
   if (data) {
-    app.save(new Record(app.findCollectionByNameOrId("audit_logs"), { ...data, summary }));
+    app.save(new Record(app.findCollectionByNameOrId("audit_logs"), {
+      ...data, summary, diff: JSON.stringify(data.diff),
+    }));
   }
 }
 

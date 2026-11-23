@@ -21,7 +21,7 @@ describe('adminNav', () => {
         ],
       ],
       ['Catálogo', ['/plans']],
-      ['Ajustes', ['/services', '/team', '/settings/profile']],
+      ['Ajustes', ['/services', '/audit', '/team', '/settings/profile']],
       ['Facturación', ['/memberships', '/payments']],
     ]);
     expect(items.every((item) => !('badge' in item))).toBe(true);
@@ -58,6 +58,15 @@ describe('adminNav', () => {
     expect(paths(visibleNav('coach'))).not.toContain('/payments');
     expect(paths(visibleNav('owner'))).toContain('/payments');
     expect(paths(visibleNav('reception'))).toContain('/payments');
+  });
+
+  it('muestra auditoría solo al owner', () => {
+    const paths = (role: Parameters<typeof visibleNav>[0]) =>
+      visibleNav(role).flatMap(({ items }) => items.map(({ to }) => to));
+    expect(paths('owner')).toContain('/audit');
+    expect(paths('coach')).not.toContain('/audit');
+    expect(paths('reception')).not.toContain('/audit');
+    expect(paths(null)).not.toContain('/audit');
   });
 
   it('descarta un grupo cuando todas sus entradas requieren owner', () => {
