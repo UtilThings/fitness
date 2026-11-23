@@ -1,7 +1,7 @@
 # 003 - [Componente] useDashboard y tarjetas del dashboard
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, Feature 011 (contrato)
 - **Fase:** Fase 2: Dashboard en la app
 
@@ -25,10 +25,10 @@ La app tiene el composable de datos del dashboard y las tarjetas reutilizables, 
 
 ## Criterios de aceptación
 
-- [ ] `useDashboard` expone los datos del endpoint y refresca sin acumular temporizadores.
-- [ ] `TodayClassesCard` muestra «Sin coach» y el estado de disponibilidad correcto.
-- [ ] `UpcomingPaymentsCard` se ve como placeholder con `upcoming_payments = null`.
-- [ ] `typecheck`, `lint`, `format:check` y `test` pasan.
+- [x] `useDashboard` expone los datos del endpoint y refresca sin acumular temporizadores.
+- [x] `TodayClassesCard` muestra «Sin coach» y el estado de disponibilidad correcto.
+- [x] `UpcomingPaymentsCard` se ve como placeholder con `upcoming_payments = null`.
+- [x] `typecheck`, `lint`, `format:check` y `test` pasan.
 
 ## Referencias
 
@@ -41,3 +41,5 @@ La app tiene el composable de datos del dashboard y las tarjetas reutilizables, 
 
 ## Notas de implementación
 
+
+- Verificados el estado de carga y reintento, la única suscripción de 60 s con limpieza al desmontar, el uso de `AvailabilityTag` y la rama de cobros con valor nulo. Pasaron typecheck, lint, format:check y las 177 pruebas de la app.

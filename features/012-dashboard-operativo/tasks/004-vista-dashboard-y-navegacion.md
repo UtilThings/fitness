@@ -1,7 +1,7 @@
 # 004 - [Vista] DashboardView operativo y navegación
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003
 - **Fase:** Fase 2: Dashboard en la app
 
@@ -22,10 +22,10 @@ La ruta `/` muestra el panel operativo con todas las tarjetas del spec.
 
 ## Criterios de aceptación
 
-- [ ] `/` muestra las cuatro métricas, las clases de hoy con ocupación, las alertas y el placeholder de cobros.
-- [ ] Los datos coinciden con `/classes` y con las reservas del día.
-- [ ] En móvil las tarjetas se apilan sin desbordar.
-- [ ] `typecheck`, `lint`, `format:check`, `test` y `build` pasan.
+- [x] `/` muestra las cuatro métricas, las clases de hoy con ocupación, las alertas y el placeholder de cobros.
+- [x] Los datos coinciden con `/classes` y con las reservas del día.
+- [x] En móvil las tarjetas se apilan sin desbordar.
+- [x] `typecheck`, `lint`, `format:check`, `test` y `build` pasan.
 
 ## Referencias
 
@@ -38,3 +38,5 @@ La ruta `/` muestra el panel operativo con todas las tarjetas del spec.
 
 ## Notas de implementación
 
+
+- Chromium a 360 px confirmó que las métricas se apilan sin desbordar y que el enlace abre el detalle de la clase. Se cotejó la ocupación con las reservas de PocketBase. La entrada Dashboard ya apuntaba a /. Pasaron typecheck, lint, format:check, test y build.

@@ -192,6 +192,32 @@ Queda pendiente decidir si se necesita importar clientes por CSV o exponer un en
 
 `useBookings` consulta reservas por sesión o por cliente, envía altas y transiciones y convierte los errores de PocketBase en mensajes por campo. Los estados y sus etiquetas se definen en `src/lib/bookings.ts`.
 
+## Dashboard operativo
+
+En **Dashboard** (`/`) el equipo consulta las métricas del día de Miramar, la ocupación de las clases y las sesiones que necesitan coach o reservas. **Actualizar** vuelve a consultar el resumen y la pestaña visible se refresca cada minuto. Los enlaces de clase abren el detalle en `/classes?session=<id>`. **Cobros por vencer** muestra «Disponible con Pagos (próximamente)» hasta que la feature 014 publique el conteo y total.
+
+Para añadir una métrica, enlaza su dato de `useDashboard` en `DashboardView` y reutiliza `StatCard` con título, valor, icono y un destino opcional. Las tarjetas de listas se componen en `src/components/dashboard/` y comparten las fechas de `src/lib/datetime.ts`.
+
+## Auditoría
+
+Un owner activo abre **Ajustes → Auditoría** (`/audit`). La vista consulta 25 registros por página, del más reciente al más antiguo. Se puede combinar **Colección**, **Actor**, **Desde** y **Hasta**. El rango incluye ambas fechas de Miramar. **Ver cambios** muestra el valor anterior y el nuevo de cada campo. Los registros de acciones automáticas pueden aparecer con el actor **Sistema**.
+
+## Aceptación del MVP
+
+Ejecuta `scripts/verify-mvp.sh` desde la raíz. Usa PocketBase en localhost con una base temporal para aplicar las migraciones y comprobar las reglas efectivas, los hooks y las rutas. También ejecuta las pruebas, revisiones y build de la app. Para repetir el recorrido en el navegador, levanta API y app en desarrollo y prepara cuentas activas de owner, coach y recepción.
+
+| Feature | Recorrido                                                                                                                                                                                                     | Resultado esperado                                                                                                                                                                                  |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 005–007 | Entra como owner. En **Equipo**, crea un coach y entra después con esa cuenta.                                                                                                                                | El owner puede dar de alta al coach. El coach puede iniciar sesión y consultar el equipo.                                                                                                           |
+| 008     | Como owner, crea un servicio, asigna el coach por defecto y crea un plan para el servicio.                                                                                                                    | El equipo consulta el servicio y el plan. Solo el owner gestiona el catálogo.                                                                                                                       |
+| 009     | En **Clases**, genera sesiones como owner. Abre el detalle de una clase.                                                                                                                                      | El calendario de Miramar muestra las sesiones generadas. Solo el owner genera sesiones y gestiona plantillas y bloqueos.                                                                            |
+| 010     | Crea dos clientes activos. Abre su perfil desde **Clientes**.                                                                                                                                                 | El alta lleva a la ficha del cliente y las dos fichas aparecen en el listado activo.                                                                                                                |
+| 011     | Usa una sesión futura con cupo 1. Reserva a dos clientes y cancela a tiempo la primera reserva. En otra sesión, cancela dentro del plazo de penalización. Tras el inicio de una sesión, marca una asistencia. | El segundo cliente entra en espera y asciende al liberar el cupo. La cancelación tardía queda registrada y la asistencia aparece en la sesión.                                                      |
+| 012     | Compara el dashboard con las sesiones y reservas del día. Abre **Ajustes → Auditoría**, filtra por **Reservas**, actor y fechas y abre **Ver cambios**.                                                       | El resumen coincide con la agenda y las reservas en hora de Miramar. Cobros muestra su mensaje de disponibilidad y el diff refleja la operación registrada.                                         |
+| 005–012 | Entra como coach y recepción. Revisa catálogo, equipo, clases y acceso directo a `/audit`.                                                                                                                    | Los dos roles consultan catálogo, equipo y clases. Recepción puede gestionar sesiones especiales. El menú de auditoría solo aparece para owner y la API devuelve `403` a los demás roles de la app. |
+
+El recorrido se verificó en Chromium con una base temporal de PocketBase. La suite HTTP cotejó los conteos del dashboard con las colecciones y comprobó permisos, cupos, cancelaciones, asistencia y cambios de auditoría. La prueba de horarios incluyó ambos cambios de hora de Nueva York.
+
 ## Despliegue
 
 El servidor estático debe devolver `index.html` para cualquier ruta desconocida (fallback de SPA). El despliegue no forma parte del boilerplate.

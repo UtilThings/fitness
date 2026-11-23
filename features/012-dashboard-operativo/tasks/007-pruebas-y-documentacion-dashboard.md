@@ -1,7 +1,7 @@
 # 007 - [Pruebas] Pruebas de interfaz y documentación del dashboard y la auditoría
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002, 003, 004, 005, 006
 - **Fase:** Fase 4: Pruebas y cierre del MVP
 
@@ -21,9 +21,9 @@ La lógica pura del servidor está cubierta en 001 y la de auditoría en 005; fa
 
 ## Criterios de aceptación
 
-- [ ] Las pruebas nuevas pasan y cubren casos negativos (error de red, rol no permitido).
-- [ ] Los READMEs documentan endpoint, zona horaria, placeholder y auditoría.
-- [ ] `bun test` (api) y `bun run test` (app) pasan.
+- [x] Las pruebas nuevas pasan y cubren casos negativos (error de red, rol no permitido).
+- [x] Los READMEs documentan endpoint, zona horaria, placeholder y auditoría.
+- [x] `bun test` (api) y `bun run test` (app) pasan.
 
 ## Referencias
 
@@ -35,3 +35,5 @@ La lógica pura del servidor está cubierta en 001 y la de auditoría en 005; fa
 
 ## Notas de implementación
 
+
+- Pasaron 54 pruebas de API y 196 de la app. Vitest cubre carga, reintento, temporizador, tarjetas, filtros, paginación, diff y rutas por rol. Los dos READMEs documentan los flujos y contratos.

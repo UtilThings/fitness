@@ -31,6 +31,8 @@ Las migraciones guardan las reglas como literales. Genera las expresiones con lo
 
 En una base nueva, un superusuario de PocketBase puede crear el primer admin desde `/_/`. Asígnale explícitamente `role = owner` y `active = true`. La colección `_superusers` administra la instancia y sus privilegios son independientes de los roles de la aplicación.
 
+La colección heredada `users` tiene el alta pública cerrada. Su regla de autenticación conserva el acceso mediante credenciales de las cuentas existentes. La app y las rutas staff usan `admins`.
+
 ## Equipo: reglas y `ADMIN_REFERENCES`
 
 El API permite crear integrantes a los owners activos. Cada integrante puede editar su propio perfil y cambiar su contraseña con la actual. Una actualización o baja debe conservar al menos un owner activo. Cada integrante conserva su estado activo al editar su propia cuenta. Si el registro es actor de una entrada de auditoría u otra relación declarada, el borrado responde `409` y la app ofrece desactivarlo. Un admin inactivo queda excluido del inicio de sesión.
@@ -42,6 +44,23 @@ Cuando una feature agregue una relación a `admins`, añade en el mismo cambio s
 Añade el nombre de una colección a `AUDITED_COLLECTIONS` en `src/lib/audit-config.ts` y recompila. El hook registra altas, cambios y bajas confirmados. Para las operaciones CRUD de la API, toma el actor de la sesión de `admins`. Las escrituras del sistema tienen actor vacío. Las reglas dan acceso de lectura a los owners activos. Los superusuarios también pueden consultar la auditoría en el panel de PocketBase. Las escrituras están reservadas al código del servidor, incluso cuando la petición HTTP proviene de un superusuario.
 
 Mantén los nuevos campos sensibles en `SENSITIVE_FIELDS`. Los diffs también excluyen variantes de campos de contraseña, campos sensibles anidados y las marcas de tiempo automáticas del registro. Los cambios de contraseña se registran con la marca `credentials_changed`. Una edición sin cambios auditables no crea una fila.
+
+Para consultar los registros, usa `GET /api/collections/audit_logs/records` con `page`, `perPage`, `sort=-created,-id`, `expand=actor` y filtros por `collection`, `actor` y `created`. La API de registros devuelve `403` a coach, recepción y visitantes. El diff tiene un par `{ from, to }` por campo, con un lado omitido al crear o eliminar. Los registros anteriores a la corrección de la escritura JSON pueden conservar un diff vacío.
+
+## Dashboard operativo
+
+`GET /api/admin/dashboard?days=7` requiere un integrante activo de `admins` (owner, coach o reception). Devuelve `401` sin sesión, `403` para otras cuentas y `400` si `days` no es un entero de 1 a 14. El valor por defecto es 7.
+
+| Campo | Contenido |
+| --- | --- |
+| `generated_at`, `timezone` | Instante de generación en UTC y zona `America/New_York` |
+| `today` | Fecha local `date`, medianoche inicial `start_utc` y medianoche siguiente exclusiva `end_utc`, calculadas por separado para los días de 23 y 25 horas |
+| `counts` | `active_clients`, `sessions_today`, `bookings_today`, `waitlisted_today`, `sessions_without_coach` y `sessions_without_bookings` |
+| `sessions_today` | Sesiones programadas o completadas del día, ordenadas por inicio, con servicio, coach, duración, cupo, ocupación, espera y disponibilidad |
+| `attention` | Entradas `{ session_id, reason, starts_at }` con motivos `no_coach` o `no_bookings` en sesiones programadas desde ahora hasta el final exclusivo de la ventana de `days` días de 24 horas |
+| `upcoming_payments` | `null` durante el MVP. La feature 014 devolverá `{ count, total_cents, items }` |
+
+`bookings_today` incluye las reservas `booked`, `attended` y `no_show` de las sesiones del día. La alerta `no_bookings` considera solo las reservas `booked` de su sesión. Los conteos de clientes y reservas no incluyen datos personales de clientes.
 
 ## Catálogo
 

@@ -1,7 +1,7 @@
 # 001 - [Lib] Resumen operativo y límites del día local
 
 - **Prioridad:** 1
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 011 (contrato), Feature 009 (contrato)
 - **Fase:** Fase 1: Resumen operativo en la API
 
@@ -26,11 +26,11 @@ goja no tiene `Intl` fiable. Verifica primero qué ofrece (`typeof Intl`, `toLoc
 
 ## Criterios de aceptación
 
-- [ ] Para `now = 2026-11-22T03:30:00Z` el día local es `2026-11-21` con inicio `2026-11-21T05:00:00Z` (EST) o el que corresponda según el desfase vigente.
-- [ ] En el día del cambio de horario el rango dura 23 o 25 horas.
-- [ ] Las sesiones canceladas no cuentan en las alertas ni en las reservas del día.
-- [ ] La lib no usa `Intl` en servidor ni importa PocketBase.
-- [ ] `bun test` pasa y `bun run build:ts` genera `pb_hooks/lib/dashboard.js`.
+- [x] Para `now = 2026-11-22T03:30:00Z` el día local es `2026-11-21` con inicio `2026-11-21T05:00:00Z` (EST) o el que corresponda según el desfase vigente.
+- [x] En el día del cambio de horario el rango dura 23 o 25 horas.
+- [x] Las sesiones canceladas no cuentan en las alertas ni en las reservas del día.
+- [x] La lib no usa `Intl` en servidor ni importa PocketBase.
+- [x] `bun test` pasa y `bun run build:ts` genera `pb_hooks/lib/dashboard.js`.
 
 ## Referencias
 
@@ -44,3 +44,6 @@ goja no tiene `Intl` fiable. Verifica primero qué ofrece (`typeof Intl`, `toLoc
 
 ## Notas de implementación
 
+
+- En PocketBase con `TZ=UTC`, goja reportó `typeof Intl === "undefined"` y devolvió la misma hora con `toLocaleString` para UTC y Nueva York. Se reutilizó `tz.ts` de la feature 009 para calcular ambos extremos.
+- `bun test` pasó con 54 pruebas y `bun run build:ts` generó `pb_hooks/lib/dashboard.js`.

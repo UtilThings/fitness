@@ -41,7 +41,10 @@ function writeAuditLog(e: core.RecordEvent) {
       });
 
       if (data) {
-        e.app.save(new Record(e.app.findCollectionByNameOrId("audit_logs"), data));
+        // Pass JSON text to the PocketBase field so nested changes survive goja conversion.
+        e.app.save(new Record(e.app.findCollectionByNameOrId("audit_logs"), {
+          ...data, diff: JSON.stringify(data.diff),
+        }));
       }
     }
   } catch (error) {
@@ -53,3 +56,23 @@ function writeAuditLog(e: core.RecordEvent) {
 onRecordAfterCreateSuccess(writeAuditLog);
 onRecordAfterUpdateSuccess(writeAuditLog);
 onRecordAfterDeleteSuccess(writeAuditLog);
+
+routerUse((e) => {
+  const request = e.request;
+  const collection = request.pathValue("collection");
+  if (request.method !== "GET" || !collection || e.hasSuperuserAuth()) return e.next();
+  const recordsPath = `/api/collections/${collection}/records`;
+  const path = request.url.path;
+  if (path !== recordsPath && !path.startsWith(recordsPath + "/")) return e.next();
+  const actor = e.auth;
+  if (actor?.collection().name === "admins" && actor.getBool("active") && actor.getString("role") === "owner") {
+    return e.next();
+  }
+
+  // The collection rules filter results. Return a 403 for the records API before that filtering.
+  const audit = e.app.findCachedCollectionByNameOrId("audit_logs");
+  if ([audit.name, audit.id].includes(collection.toLowerCase())) {
+    throw new ForbiddenError("Solo el owner puede consultar la auditoría.");
+  }
+  return e.next();
+});

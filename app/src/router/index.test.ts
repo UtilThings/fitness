@@ -45,6 +45,7 @@ describe('guard', () => {
   });
 
   it.each([
+    '/audit',
     '/clients?q=ana',
     '/clients/ana',
     '/team',
@@ -114,6 +115,23 @@ describe('guard', () => {
     state.role = 'owner';
     await router.push('/owner-only/details');
     expect(router.currentRoute.value.name).toBe('owner-details');
+  });
+
+  it.each(['coach', 'reception'] as const)(
+    'redirige a Dashboard desde /audit para %s',
+    async (role) => {
+      state.valid = true;
+      state.role = role;
+      await router.push('/audit');
+      expect(router.currentRoute.value.name).toBe('dashboard');
+    },
+  );
+
+  it('abre auditoría para el owner', async () => {
+    state.valid = true;
+    state.role = 'owner';
+    await router.push('/audit');
+    expect(router.currentRoute.value.name).toBe('audit');
   });
 
   it('solicita iniciar sesión antes de comprobar los roles', async () => {

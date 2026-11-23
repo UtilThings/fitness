@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { addLocalDays, utcToLocal } from "../api/src/lib/tz";
+import { addLocalDays, localToUtc, utcToLocal } from "../api/src/lib/tz";
 
 const base = process.argv[2];
 const password = process.env.JQ_VERIFY_PASSWORD;
@@ -36,7 +36,24 @@ async function auth(collection: string, email: string) {
 }
 
 const root = await auth("_superusers", "catalog-verify@example.test");
-async function createAdmin(role: "owner" | "coach") {
+const { items: collections, totalItems: collectionCount } = await call<{
+  items: { name: string; system: boolean; createRule: string | null }[];
+  totalItems: number;
+}>("collections?perPage=200", root);
+assert.equal(collections.length, collectionCount);
+assert(collections.find(({ name }) => name === "admins")?.createRule?.includes('role = "owner"'));
+for (const collection of collections) {
+  if (collection.system) continue;
+  for (const [field, value] of Object.entries(collection)) {
+    // Existing users can still authenticate with credentials. Public registration is locked.
+    if (field.endsWith("Rule") && !(collection.name === "users" && field === "authRule")) {
+      assert.notEqual(value, "", `Regla pública inesperada: ${collection.name}.${field}`);
+    }
+  }
+}
+await call("collections/users/records", "", "POST", {}, 403);
+console.log("Reglas efectivas de las colecciones del MVP verificadas.");
+async function createAdmin(role: "owner" | "coach" | "reception") {
   const email = `bookings-${role}@example.test`;
   await call(records("admins"), root, "POST", { email, name: role, role, active: true, password, passwordConfirm: password });
   return auth("admins", email);
@@ -143,9 +160,105 @@ for (const entry of [free, queue]) {
 await confirmFreeClass(fourthClient, false);
 
 const logs = records("audit_logs") + filter('collection = "bookings"') + "&perPage=100";
-const { items } = await call<{ items: { actor: string; summary: string }[] }>(logs, owner);
+const { items } = await call<{ items: { id: string; actor: string; summary: string; diff: { status?: { to?: string } } }[] }>(logs, owner);
 for (const event of ["created", "waitlisted", "promoted", "cancelled", "late_cancelled", "attended", "cancelled_by_session"]) {
   assert(items.some((item) => item.actor && item.summary.startsWith(`booking.${event}: `)), event);
 }
 
+assert(items.some((item) => item.summary.startsWith("booking.waitlisted: ") && item.diff?.status?.to === "waitlisted"),
+  "El diff de auditoría debe conservar los cambios al persistirlos.");
+
 console.log("Reservas, concurrencia, cancelación, asistencia, disponibilidad y auditoría verificadas.");
+
+const dashboardPath = "admin/dashboard";
+for (const days of ["0", "30", "1.5", ""]) {
+  await call(dashboardPath + "?days=" + days, coach, "GET", undefined, 400);
+}
+await call(dashboardPath, "", "GET", undefined, 401);
+await call(dashboardPath, root, "GET", undefined, 403);
+const legacyEmail = "legacy-verify@example.test";
+await call(records("users"), root, "POST", { email: legacyEmail, password, passwordConfirm: password });
+await call(dashboardPath, await auth("users", legacyEmail), "GET", undefined, 403);
+
+const today = utcToLocal(new Date().toISOString()).date;
+async function createAt(localDate: string, coachId = "") {
+  return call<Session>(records("class_sessions"), owner, "POST", {
+    service: plans[0].service, starts_at: localToUtc(localDate, "23:30"), duration_min: 30, capacity: 4, coach: coachId,
+  });
+}
+const ownerId = (await call<{ record: Row }>("collections/admins/auth-refresh", owner, "POST")).record.id;
+const midnightClass = await createAt(today, ownerId);
+const previousClass = await createAt(addLocalDays(today, -1));
+const nextClass = await createAt(addLocalDays(today, 1));
+const dashboard = await call<{
+  generated_at: string;
+  timezone: string;
+  today: { date: string; start_utc: string; end_utc: string };
+  counts: { active_clients: number; sessions_today: number; bookings_today: number; waitlisted_today: number };
+  sessions_today: {
+    id: string; service: Row; coach: Row | null; booked: number; waitlisted: number; spots_left: number; availability: string;
+  }[];
+  attention: { session_id: string; reason: string }[];
+  upcoming_payments: null;
+}>(dashboardPath, coach);
+assert.equal(dashboard.timezone, "America/New_York");
+assert.equal(dashboard.today.date, utcToLocal(dashboard.generated_at).date);
+assert.equal(dashboard.today.start_utc, localToUtc(dashboard.today.date, "00:00"));
+assert.equal(dashboard.today.end_utc, localToUtc(addLocalDays(dashboard.today.date, 1), "00:00"));
+const evening = dashboard.sessions_today.find(({ id }) => id === midnightClass.id);
+assert(evening);
+assert.equal(evening.service.id, plans[0].service);
+assert.equal(evening.coach?.id, ownerId);
+assert.equal(evening.spots_left, 4);
+assert.equal(evening.availability, "available");
+assert(!dashboard.sessions_today.some(({ id }) => id === previousClass.id || id === nextClass.id));
+assert(!dashboard.attention.some(({ session_id }) => session_id === previousClass.id));
+for (const reason of ["no_coach", "no_bookings"]) {
+  assert(dashboard.attention.some((entry) => entry.session_id === nextClass.id && entry.reason === reason));
+}
+assert(!dashboard.attention.some(({ session_id }) => session_id === future.id));
+assert.equal(dashboard.counts.sessions_today, dashboard.sessions_today.length);
+const asRecordDate = (iso: string) => iso.replace("T", " ");
+const dayFilter = `starts_at >= "${asRecordDate(dashboard.today.start_utc)}" && starts_at < "${asRecordDate(dashboard.today.end_utc)}"`;
+const { items: calendar, totalItems: calendarTotal } = await call<{ items: Session[]; totalItems: number }>(
+  records("class_sessions") + filter(dayFilter + ' && (status = "scheduled" || status = "completed")') + "&perPage=200",
+  coach,
+);
+assert.equal(calendar.length, calendarTotal);
+assert.deepEqual(dashboard.sessions_today.map(({ id }) => id).sort(), calendar.map(({ id }) => id).sort());
+const dailyBookings = await Promise.all(calendar.map(async ({ id }) => {
+  const { items, totalItems } = await call<{ items: Booking[]; totalItems: number }>(
+    bookings + filter(`session = "${id}"`) + "&perPage=200",
+    coach,
+  );
+  assert.equal(items.length, totalItems);
+  return items;
+}));
+assert.equal(dashboard.counts.bookings_today,
+  dailyBookings.flat().filter(({ status }) => ["booked", "attended", "no_show"].includes(status)).length);
+assert.equal(dashboard.counts.waitlisted_today, dailyBookings.flat().filter(({ status }) => status === "waitlisted").length);
+const { totalItems: activeClients } = await call<{ totalItems: number }>(
+  records("clients") + filter('status = "active"') + "&perPage=1", coach,
+);
+assert.equal(dashboard.counts.active_clients, activeClients);
+assert(activeClients >= 4);
+assert.equal(dashboard.upcoming_payments, null);
+assert(!JSON.stringify(dashboard).includes(firstClient.id));
+console.log("Contrato, permisos y ventana local del dashboard verificados.");
+
+const reception = await createAdmin("reception");
+const auditCollection = await call<Row>("collections/audit_logs", root);
+for (const token of [coach, reception]) {
+  for (const path of [
+    records("audit_logs"), records(auditCollection.id), `${records("audit_logs")}/${items[0].id}`,
+  ]) {
+    const { exitCode, stdout } = Bun.spawnSync([
+      "curl", "--noproxy", "*", "--silent", "--show-error", "--max-time", "5",
+      "--output", "/dev/null", "--write-out", "%{http_code}", "-H", "Authorization: " + token,
+      `${base}/api/${path}`,
+    ]);
+    assert.equal(exitCode, 0);
+    assert.equal(stdout.toString(), "403");
+  }
+}
+console.log("Auditoría: acceso de owner y HTTP 403 para coach y recepción verificados.");

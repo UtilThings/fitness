@@ -1,7 +1,7 @@
 # 008 - [Verificación] Checklist de aceptación del MVP y script de verificación
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 007
 - **Fase:** Fase 4: Pruebas y cierre del MVP
 
@@ -22,10 +22,10 @@ El MVP completo (features 005-012) queda verificado con una checklist documentad
 
 ## Criterios de aceptación
 
-- [ ] `scripts/verify-mvp.sh` termina en verde.
-- [ ] La checklist de aceptación del MVP está documentada y recorrida sin bloqueos.
-- [ ] No quedan colecciones con reglas abiertas (`""`) sin intención explícita ni referencias a `businesses`.
-- [ ] Todos los criterios del spec de 012 están marcados y su estado es Completado.
+- [x] `scripts/verify-mvp.sh` termina en verde.
+- [x] La checklist de aceptación del MVP está documentada y recorrida sin bloqueos.
+- [x] No quedan colecciones con reglas abiertas (`""`) sin intención explícita ni referencias a `businesses`.
+- [x] Todos los criterios del spec de 012 están marcados y su estado es Completado.
 
 ## Referencias
 
@@ -38,3 +38,5 @@ El MVP completo (features 005-012) queda verificado con una checklist documentad
 
 ## Notas de implementación
 
+
+- `scripts/verify-mvp.sh` pasó con PocketBase temporal, 54 pruebas de API, 196 de app y build. Chromium completó la checklist con los tres roles y datos de prueba persistidos. Se verificaron los criterios y estados de 005–011, que ya figuraban como completados. La migración cierra el registro público heredado de users, conserva la autenticación existente y se verificó al aplicar y revertir. El spec de 012 quedó completado.

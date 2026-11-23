@@ -14,6 +14,7 @@ declare module 'vue-router' {
     requiresAuth?: boolean;
     title?: string;
     roles?: Role[];
+    roleDeniedRedirect?: string;
   }
 }
 
@@ -44,13 +45,14 @@ export function installGuard(router: Router) {
     if (requiresAuth && !isAuthenticated.value) {
       return { name: 'login', query: { redirect: to.fullPath } };
     }
-    if (
-      to.matched.some(
-        ({ meta }) =>
-          meta.roles && (!role.value || !meta.roles.includes(role.value)),
-      )
-    ) {
-      return { name: 'forbidden' };
+    const denied = to.matched.find(
+      ({ meta }) =>
+        meta.roles && (!role.value || !meta.roles.includes(role.value)),
+    );
+    if (denied) {
+      return denied.meta.roleDeniedRedirect
+        ? { path: denied.meta.roleDeniedRedirect }
+        : { name: 'forbidden' };
     }
     if (
       typeof to.name === 'string' &&
@@ -76,6 +78,17 @@ const router = createRouter({
           name: 'dashboard',
           component: () => import('@/views/admin/DashboardView.vue'),
           meta: { title: 'Dashboard' },
+        },
+        {
+          path: 'audit',
+          name: 'audit',
+          component: () => import('@/views/admin/AuditView.vue'),
+          meta: {
+            title: 'Auditoría',
+            requiresAuth: true,
+            roles: ['owner'],
+            roleDeniedRedirect: '/',
+          },
         },
         {
           path: 'clients',

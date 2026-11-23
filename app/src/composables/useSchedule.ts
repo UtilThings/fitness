@@ -100,6 +100,10 @@ export function useSchedule() {
         blockRecords.error.value,
     ),
     loadWeek,
+    getSession: (id: string) =>
+      mutate(() =>
+        sessionRecords.getOne<ClassSession>(id, { expand, requestKey: null }),
+      ),
     listUpcoming: (date: string, now = new Date()) =>
       mutate(() =>
         sessionRecords.getFullList<ClassSession>({

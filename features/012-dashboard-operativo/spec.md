@@ -1,6 +1,6 @@
 # Especificación: Dashboard operativo, auditoría y cierre del MVP
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -202,12 +202,14 @@ Sin colecciones nuevas. Se leen `class_sessions`, `bookings`, `clients`, `servic
 
 ## Criterios de Aceptación
 
-- [ ] `GET /api/admin/dashboard` responde con la estructura del contrato solo a staff y calcula el día en `America/New_York`, también en cambios de horario.
-- [ ] `/` muestra clases de hoy con ocupación y disponibilidad, clientes activos, reservas del día y en espera, y sesiones sin coach o sin reservas.
-- [ ] «Cobros por vencer» aparece como placeholder claro hasta la feature 014.
-- [ ] `/audit` lista `audit_logs` paginados con filtros por colección, actor y fecha, y muestra el diff; solo el owner accede (UI y API).
-- [ ] La checklist de aceptación del MVP (005-012) está documentada y recorrida.
-- [ ] `scripts/verify-mvp.sh` termina en verde.
+- [x] `GET /api/admin/dashboard` responde con la estructura del contrato solo a staff y calcula el día en `America/New_York`, también en cambios de horario.
+- [x] `/` muestra clases de hoy con ocupación y disponibilidad, clientes activos, reservas del día y en espera, y sesiones sin coach o sin reservas.
+- [x] «Cobros por vencer» aparece como placeholder claro hasta la feature 014.
+- [x] `/audit` lista `audit_logs` paginados con filtros por colección, actor y fecha, y muestra el diff; solo el owner accede (UI y API).
+- [x] La checklist de aceptación del MVP (005-012) está documentada y recorrida.
+- [x] `scripts/verify-mvp.sh` termina en verde.
+
+El recorrido se verificó en Chromium con PocketBase de desarrollo y los tres roles. `scripts/verify-mvp.sh` pasó con las migraciones y rutas reales, 54 pruebas de API, 196 pruebas de app y el build de producción.
 
 ---
 
