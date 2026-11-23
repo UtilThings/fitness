@@ -1,6 +1,6 @@
 # Especificación: Membresías y créditos
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -243,14 +243,21 @@ active | paused | expired → cancelled   (final)
 
 ## Criterios de Aceptación
 
-- [ ] Asignar un plan crea la membresía con fechas de periodo correctas y los créditos del plan; no permite dos activas del mismo plan.
-- [ ] Marcar `attended` o `late_cancelled` crea el movimiento una sola vez; cambiar de estado ajusta la diferencia.
-- [ ] Reservar sin créditos devuelve `no_credits`; con `override_note` se permite y el saldo puede ser negativo.
-- [ ] Renovar, pausar, reanudar, cancelar y ajustar funcionan y exigen nota donde corresponde; roles sin permiso reciben `403`.
-- [ ] El cron expira créditos al cierre del periodo y pasa a `expired` tras la gracia.
-- [ ] La pestaña Membresías muestra saldo e historial; la lista de clientes filtra por plan activo; `/memberships` lista y filtra por estado.
-- [ ] Las lógicas puras tienen pruebas `bun test` y los componentes pruebas Vitest.
-- [ ] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+- [x] Asignar un plan crea la membresía con fechas de periodo correctas y los créditos del plan; no permite dos activas del mismo plan.
+- [x] Marcar `attended` o `late_cancelled` crea el movimiento una sola vez; cambiar de estado ajusta la diferencia.
+- [x] Reservar sin créditos devuelve `no_credits`; con `override_note` se permite y el saldo puede ser negativo.
+- [x] Renovar, pausar, reanudar, cancelar y ajustar funcionan y exigen nota donde corresponde; roles sin permiso reciben `403`.
+- [x] El cron expira créditos al cierre del periodo y pasa a `expired` tras la gracia.
+- [x] La pestaña Membresías muestra saldo e historial; la lista de clientes filtra por plan activo; `/memberships` lista y filtra por estado.
+- [x] Las lógicas puras tienen pruebas `bun test` y los componentes pruebas Vitest.
+- [x] `scripts/verify-api.sh` y `scripts/verify-app.sh` terminan en verde.
+
+
+### Verificación de cierre
+
+- `scripts/verify-api.sh` pasó 62 pruebas unitarias y la suite de integración contra PocketBase 0.40.5. Se aplicaron, revirtieron y volvieron a aplicar las tres migraciones de la feature en una base limpia.
+- `scripts/verify-app.sh` pasó lint, formato, typecheck, 221 pruebas Vitest y build. En Chromium se verificaron el inicio de sesión, la asignación desde el perfil, los filtros, el ajuste a saldo cero, la excepción con nota, el cargo de asistencia y la membresía vencida tras ejecutar el cron.
+- `bookings.membership` conserva la membresía a la que se imputa una reserva. La reconciliación ocurre dentro de la transacción del guardado, de modo que un fallo del libro mayor revierte también la transición de la reserva.
 
 ---
 

@@ -27,7 +27,7 @@ export function chargedAmount(status: string): number {
   return reasonFor(status) ? -1 : 0;
 }
 
-export function creditsToApply(status: string, alreadyApplied: number) {
+export function creditsToApply(status: string, alreadyApplied: number): { delta: number; reason: CreditReason } | null {
   const delta = chargedAmount(status) - alreadyApplied;
   const reason = delta < 0 ? reasonFor(status) ?? "adjust" : "adjust";
   return delta === 0 ? null : { delta, reason };

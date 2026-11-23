@@ -31,7 +31,7 @@ routerAdd("GET", "/api/admin/memberships/eligibility", (e) => {
     require(`${__hooks}/lib/memberships-service`) as typeof import("../lib/memberships-service");
   const { getRecord } = require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   requireMembershipRole(e, ["owner", "reception", "coach"]);
-  const query = e.request.url.query();
+  const query = e.request!.url!.query();
   const client = getRecord(e.app, "clients", query.get("client"));
   const session = getRecord(e.app, "class_sessions", query.get("session"));
   if (!client || !session) throw membershipError(404, "not_found", "Cliente o sesión no encontrado.");

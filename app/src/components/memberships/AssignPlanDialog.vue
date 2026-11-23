@@ -86,6 +86,7 @@ async function submit() {
         <Select
           v-model="selected"
           :input-id="id + '-plan'"
+          aria-label="Plan activo"
           :options="plans"
           option-value="id"
           option-label="label"

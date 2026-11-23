@@ -309,7 +309,7 @@ export function checkEligibility(app: core.App, clientId: string, session: core.
 }
 
 
-export function runDaily(app: core.App, today: string, actor = "") {
+export function runDaily(app: Pick<core.App, "runInTransaction">, today: string, actor = "") {
   return inScheduleTransaction(app, (tx) => {
     let expiredCredits = 0;
     let expiredMemberships = 0;

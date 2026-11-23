@@ -158,7 +158,7 @@ export function hasCoachConflict(app: core.App, id: string, coach: string, start
   });
 }
 
-export function inScheduleTransaction<T>(app: core.App, operation: (tx: core.App) => T): T {
+export function inScheduleTransaction<T>(app: Pick<core.App, "runInTransaction">, operation: (tx: core.App) => T): T {
   let result!: T;
   app.runInTransaction((tx) => {
     result = operation(tx);

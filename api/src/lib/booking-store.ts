@@ -25,7 +25,8 @@ export function bookingData(record: core.Record): BookingLike {
 }
 
 export function sessionBookings(app: core.App, session: string) {
-  return app.findRecordsByFilter("bookings", "session = {:session}", "", 0, 0, { session });
+  return app.findRecordsByFilter("bookings", "session = {:session}", "", 0, 0, { session })
+    .filter((record): record is core.Record => !!record);
 }
 
 export function bookingRelation(app: core.App, collection: string, id: string, field: string) {
@@ -51,7 +52,7 @@ export function restoreFreeClass(app: core.App, booking: core.Record, actor: str
   if (!booking.getBool("free_class") || booking.getString("membership") || booking.getString("status") !== "cancelled") return;
   const client = app.findRecordById("clients", booking.getString("client"));
   const reservations = app.findRecordsByFilter("bookings", "client = {:client} && free_class = true",
-    "", 0, 0, { client: client.id }).map(bookingData);
+    "", 0, 0, { client: client.id }).flatMap((record) => record ? [bookingData(record)] : []);
   if (shouldRestoreFreeClass(bookingData(booking), "cancelled", reservations)) {
     setFreeClassUsed(app, client, false, actor);
   }

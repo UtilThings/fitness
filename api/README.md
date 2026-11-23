@@ -146,17 +146,17 @@ El API responde `400` con `data.assessment` para claves desconocidas o valores i
 
 ### Relaciones con clientes
 
-`bookings.client` enlaza a `clients` sin borrado en cascada. Usa la misma relación para membresías, pagos y programas de coaching. Un cliente referenciado en `bookings`, `memberships`, `payments` o `coaching_programs` devuelve `409` al intentar borrarlo. Usa `status: "inactive"` para conservar el historial.
+`bookings.client` enlaza a `clients` sin borrado en cascada. `memberships.client` sigue la misma regla. Los pagos y programas de coaching deben preservar esa relación. Un cliente referenciado en `bookings`, `memberships`, `payments` o `coaching_programs` devuelve `409` al intentar borrarlo. Usa `status: "inactive"` para conservar el historial.
 
 Queda pendiente decidir si se necesita importar clientes por CSV o crear un endpoint de alta externa. La feature 010 habilita el alta manual desde el panel.
 
 ## Reservas y asistencia
 
-`bookings` relaciona una sesión y un cliente con un índice único sobre `(session, client)`. Los admins activos pueden listar, consultar, crear y actualizar. El borrado queda reservado a owner. El flujo operativo usa cancelaciones para conservar el historial. `marked_by` identifica a quien cancela o marca asistencia y `source` es `admin`.
+`bookings` relaciona una sesión y un cliente con un índice único sobre `(session, client)`. Los admins activos pueden listar, consultar, crear y actualizar. El borrado queda reservado a owner. Una reserva con movimientos de crédito se conserva y se corrige mediante cambios de estado. `marked_by` identifica a quien cancela o marca asistencia y `source` es `admin`.
 
 En `POST /api/collections/bookings/records`, envía `session` y `client`. El servidor calcula el estado y la posición. Si el mismo cliente reserva de nuevo después de una cancelación, el POST reactiva el registro con el mismo ID. El cliente debe estar activo o en pausa y la sesión debe estar programada y ser futura.
 
-En `PATCH /api/collections/bookings/records/{id}`, envía `status` con `cancelled`, `attended` o `no_show`. En una cancelación tardía, `override_note` con un motivo evita la penalización. Si envías `override: true`, el motivo es obligatorio. Desde la hora de inicio se puede marcar asistencia. Para hacerlo antes, o para corregir un resultado anterior, se exige una nota.
+En `PATCH /api/collections/bookings/records/{id}`, envía `status` con `cancelled`, `attended` o `no_show`. En una cancelación tardía, `override_note` con un motivo evita la penalización. Si envías `override: true`, el motivo es obligatorio. Desde la hora de inicio se puede marcar asistencia. Para hacerlo antes, o para corregir un resultado anterior, se exige una nota. Owner y reception también pueden corregir una asistencia, ausencia o cancelación tardía a `cancelled` con una nota.
 
 | Cambio | Evento de `classifyTransition` |
 | --- | --- |
@@ -171,11 +171,11 @@ En `PATCH /api/collections/bookings/records/{id}`, envía `status` con `cancelle
 
 Cuenta como ocupado cada registro en `booked`, `attended` o `no_show`. La espera se ordena por posición. Al cancelar una reserva confirmada se promueve la primera de la lista cuando hay cupo. La cancelación de la sesión cancela a todos los inscritos y a quienes esperan, sin promociones. Los cambios quedan en `audit_logs` con el evento en el resumen y el actor de la operación cuando corresponde.
 
-La feature 013 puede observar `onRecordAfterCreateSuccess` y `onRecordAfterUpdateSuccess` de `bookings`. Dentro del callback, carga `lib/booking-rules` y `lib/booking-store` con `require`. En altas, llama a `classifyTransition(undefined, bookingData(e.record))`. En actualizaciones, compara `bookingData(e.record.original())` con `bookingData(e.record)`. Un cambio de posición sin transición de estado devuelve `undefined`. Las features 015 y 018 pueden usar el mismo contrato.
+Los consumidores pueden observar `onRecordAfterCreateSuccess` y `onRecordAfterUpdateSuccess` de `bookings`. Dentro del callback, carga `lib/booking-rules` y `lib/booking-store` con `require`. En altas, llama a `classifyTransition(undefined, bookingData(e.record))`. En actualizaciones, compara `bookingData(e.record.original())` con `bookingData(e.record)`. Un cambio de posición sin transición de estado devuelve `undefined`. Las features 015 y 018 pueden usar este contrato. El libro mayor de créditos se reconcilia dentro de la transacción de la reserva.
 
 ### Primera clase gratis
 
-`use_free_class: true` en el POST exige que el cliente tenga `free_class_used = false` y que el servicio ofrezca un plan activo con `is_first_class`. La reserva registra `free_class = true` y el cliente queda marcado en la misma transacción. La opción también aplica a una reserva en espera. Si se cancela a tiempo, desde la espera, por excepción o por cancelación de la sesión, se restituye el beneficio siempre que el cliente carezca de otra reserva gratis en `booked`, `attended`, `no_show` o `late_cancelled`. La primera clase sigue consumida en `late_cancelled`, `no_show` y `attended`. El owner conserva el restablecimiento manual desde el perfil del cliente.
+`use_free_class: true` en el POST usa el plan de primera visita del servicio. Si el cliente aún puede recibirlo y no tiene una membresía de primera visita, la transacción crea una. La reserva guarda `free_class = true` y el cliente queda marcado en `free_class_used` al asistir. Una cancelación a tiempo libera el crédito comprometido. La cancelación tardía y la ausencia descuentan el crédito. Las reservas gratis anteriores a la migración conservan las reglas de liberación de su marca.
 
 ### Disponibilidad
 
@@ -185,3 +185,37 @@ La feature 013 puede observar `onRecordAfterCreateSuccess` y `onRecordAfterUpdat
 | `/api/admin/sessions/availability?from=&to=` | Disponibilidad de las sesiones programadas en un rango `[from, to)` de hasta 62 días. Acepta fechas locales `YYYY-MM-DD` de Miramar o instantes ISO UTC. Un rango inválido devuelve `400`. |
 
 Ambas rutas requieren un admin activo. Devuelven `401` sin autenticación. Cada entrada contiene `session`, `capacity`, `booked`, `waitlisted`, `spots_left`, `availability` y `cancellation_deadline` en UTC. El valor de `availability` es `full` con cero cupos, `almost` con uno o dos, y `available` con tres o más. El límite para cancelar sin penalización se calcula restando `services.cancellation_hours` a `starts_at`. El instante exacto del límite cuenta como cancelación a tiempo.
+
+
+## Membresías y créditos
+
+`memberships` relaciona un cliente con un plan. Puede haber una sola membresía activa o pausada por cliente y plan. `credit_movements` es un historial inmutable con los motivos `grant`, `attend`, `late_cancel`, `adjust` y `expire`. Su suma es `credits_balance`. Las colecciones se consultan con un admin activo. Las escrituras normales pasan por rutas y hooks, que actualizan el saldo y registran auditoría dentro de las transacciones de gestión.
+
+### Gestión y elegibilidad
+
+Todas las rutas de la tabla tienen el prefijo `/api/admin/memberships`. Owner y reception gestionan membresías. Coach puede consultar las colecciones y la elegibilidad. Las acciones devuelven `{ membership, movement }`. `movement` vale `null` si la acción no produjo un movimiento principal. Los códigos de dominio se incluyen en `data.code.code` del error de PocketBase.
+
+| Método y ruta | Datos y efecto |
+| --- | --- |
+| `POST /assign` | `client`, `plan`, `starts_on` opcional y `notes` opcionales. Otorga los créditos del primer periodo. |
+| `POST /{id}/renew` | `notes` opcionales. Abre otro periodo y otorga sus créditos. |
+| `POST /{id}/pause` | `note` obligatoria. Guarda el día de inicio de la pausa. |
+| `POST /{id}/resume` | Desplaza el cierre por los días pausados. |
+| `POST /{id}/cancel` | `note` obligatoria. Fija `ended_on`, expira el saldo positivo y registra la cancelación anticipada cuando corresponde. |
+| `POST /{id}/adjust` | `delta` entero distinto de cero y `note` obligatoria. |
+| `GET /eligibility?client=&session=` | Devuelve `{ allowed, code, available }`. `available` vale `null` cuando no hay un límite de créditos aplicable. |
+| `POST /run-daily` | Solo owner. Devuelve el total de créditos expirados y la cantidad de membresías vencidas en `{ expiredCredits, expiredMemberships }`. |
+
+Cada periodo abarca 28 días inclusivos en la fecha civil de Miramar (`America/New_York`). Renovar dentro de la gracia abre el periodo siguiente al cierre anterior. Si la membresía venció o se agotó la gracia, el periodo empieza el día de la renovación y `ended_on` se vacía. El compromiso se copia del plan al asignarlo. `periods_paid` cuenta los periodos otorgados y `auto_renew` empieza en `false`.
+
+Un plan de cuatro semanas otorga `sessions` créditos por periodo. Con cero sesiones es ilimitado y conserva el límite semanal si tiene `per_week`. La semana local empieza el lunes. Una clase suelta otorga un crédito por compra. Un plan de primera visita otorga un solo crédito por cliente y no se renueva.
+
+Las sesiones regulares y privadas de servicios grupales y personales exigen una membresía activa cuyo plan cubra la fecha y el servicio. El disponible descuenta las reservas confirmadas futuras que ya comprometen créditos del periodo. La lista de espera se valida al ingresar. Las sesiones especiales y los servicios en línea quedan exentos. La elegibilidad distingue `no_credits`, `weekly_limit`, `no_membership` y `membership_not_active`.
+
+Owner y reception pueden crear una reserva con `override_note` no vacía cuando falla la validación de créditos. `bookings.membership` conserva la membresía elegida. Si la reserva se imputa a un plan con créditos, al asistir se descuenta un crédito, aunque el saldo quede negativo. La cancelación tardía y la ausencia generan `late_cancel`. Una corrección a un estado sin cobro registra `adjust` por la diferencia. Los guardados repetidos conservan el mismo cargo.
+
+`memberships_daily` corre a las 09:00 UTC. En el primer procesamiento tras el cierre expira el saldo positivo del periodo. La membresía permanece activa durante siete días de gracia y pasa a `expired` el día ocho. El cron conserva el saldo negativo y evita duplicar la expiración si se repite.
+
+La feature 014 puede usar los cambios de `periods_paid` y `current_period_*` para generar cobros. La feature 015 puede reutilizar `checkEligibility(app, clientId, session)` del servicio. La feature 016 puede enlazar sus programas con `memberships`.
+
+`scripts/verify-api.sh` verifica en una base temporal la asignación, la renovación, los ajustes y su rollback, la auditoría, las reservas con y sin excepción, el filtro por plan activo y el cron.
