@@ -8,7 +8,7 @@ export type ReportPayment = {
   status: string;
   amount_cents: number;
   paid_at: string;
-  // For unpaid payments, the local due date or local creation date.
+  // For unpaid payments, the local due date or local void date.
   reference_on?: string;
 };
 export type ReportMembership = { plan: string; status: string; starts_on: string; ended_on: string };
