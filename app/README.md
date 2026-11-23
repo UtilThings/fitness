@@ -192,6 +192,16 @@ Queda pendiente decidir si se necesita importar clientes por CSV o exponer un en
 
 `useBookings` consulta reservas por sesión o por cliente, envía altas y transiciones y convierte los errores de PocketBase en mensajes por campo. Los estados y sus etiquetas se definen en `src/lib/bookings.ts`.
 
+## Dashboard operativo
+
+En **Dashboard** (`/`) el equipo consulta las métricas del día de Miramar, la ocupación de las clases y las sesiones que necesitan coach o reservas. **Actualizar** vuelve a consultar el resumen y la pestaña visible se refresca cada minuto. Los enlaces de clase abren el detalle en `/classes?session=<id>`. **Cobros por vencer** muestra «Disponible con Pagos (próximamente)» hasta que la feature 014 publique el conteo y total.
+
+Para añadir una métrica, enlaza su dato de `useDashboard` en `DashboardView` y reutiliza `StatCard` con título, valor, icono y un destino opcional. Las tarjetas de listas se componen en `src/components/dashboard/` y comparten las fechas de `src/lib/datetime.ts`.
+
+## Auditoría
+
+Un owner activo abre **Ajustes → Auditoría** (`/audit`). La vista consulta 25 registros por página, del más reciente al más antiguo. Se puede combinar **Colección**, **Actor**, **Desde** y **Hasta**. El rango incluye ambas fechas de Miramar. **Ver cambios** muestra el valor anterior y el nuevo de cada campo. Los registros de acciones automáticas pueden aparecer con el actor **Sistema**.
+
 ## Despliegue
 
 El servidor estático debe devolver `index.html` para cualquier ruta desconocida (fallback de SPA). El despliegue no forma parte del boilerplate.
