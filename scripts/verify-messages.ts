@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { Database } from "bun:sqlite";
 
 const [base] = process.argv.slice(2);
 const password = process.env.JQ_VERIFY_PASSWORD;
@@ -9,7 +10,7 @@ async function call<T = Record<string, unknown>>(
   token = "",
   method = "GET",
   body?: Record<string, unknown>,
-  expected = 200,
+  expected: number | number[] = 200,
 ): Promise<T> {
   const response = await fetch(`${base}/api/${path}`, {
     method,
@@ -18,7 +19,7 @@ async function call<T = Record<string, unknown>>(
     signal: AbortSignal.timeout(10_000),
   });
   const data = response.status === 204 ? null : await response.json();
-  assert.equal(response.status, expected, `${method} ${path}: ${JSON.stringify(data)}`);
+  assert((Array.isArray(expected) ? expected : [expected]).includes(response.status), `${method} ${path}: ${JSON.stringify(data)}`);
   return data as T;
 }
 
@@ -142,3 +143,44 @@ await call(`${bookings}/${booked.id}`, owner, "PATCH", { status: "cancelled", ov
 assert.deepEqual((await sessionLogs(promotion, "waitlist_promoted")).map(({ client }) => client), [recipients[1]!.id]);
 assert.equal((await sessionLogs(promotion, "booking_confirmed")).length, 1);
 console.log("Confirmación, recordatorio, lista de espera, cambios y cancelación verificados.");
+
+const preview = "admin/messages/preview";
+const testMail = "admin/messages/test";
+const manual = (session: Row) => `admin/messages/class/${session.id}`;
+const draft = { key: "manual", locale: "es", subject: "Aviso", body: "<b>{{client_first_name}}</b>" };
+const compiled = await call<{ html: string; unknown_variables: string[] }>(preview, coach, "POST", draft);
+assert.equal(compiled.html, "<p>&lt;b&gt;Ana&lt;/b&gt;</p>");
+assert.deepEqual(compiled.unknown_variables, []);
+const unknown = await call<{ unknown_variables: string[] }>(preview, coach, "POST", { ...draft, body: "{{password}}" }, 400);
+assert.deepEqual(unknown.unknown_variables, ["password"]);
+for (const path of [preview, testMail, manual(promotion)]) await call(path, "", "POST", draft, [401, 403]);
+for (const token of [coach, reception]) await call(testMail, token, "POST", { key, locale }, 403);
+assert.equal((await call(testMail, owner, "POST", { key, locale }, 400)).message, "El correo no está configurado.");
+
+const manualTarget = await createSession(4, 1);
+await reserve(manualTarget, recipients[2]!);
+await reserve(manualTarget, recipients[3]!);
+await call(`${clients}/${recipients[3]!.id}`, owner, "PATCH", { status: "inactive" });
+await call(manual({ id: "missing00000000" }), owner, "POST", draft, 404);
+await call(manual(target), owner, "POST", draft, 400);
+await call(manual(manualTarget), owner, "POST", { ...draft, body: "  " }, 400);
+assert.deepEqual(await call(manual(manualTarget), reception, "POST", draft), { sent: 0, failed: 1, skipped: 1 });
+assert.deepEqual((await sessionLogs(manualTarget, "manual")).map(({ client }) => client), [recipients[2]!.id]);
+
+const dbPath = process.env.JQ_VERIFY_DB;
+if (dbPath) {
+  const bulk = await createSession(5, 200);
+  using db = new Database(dbPath);
+  db.transaction(() => {
+    for (let i = 0; i < 201; i++) {
+      const suffix = String(i).padStart(4, "0");
+      const client = `msgbulkclnt${suffix}`;
+      db.query("INSERT INTO clients (id, first_name, last_name, status) VALUES (?, 'Bulk', 'Test', 'active')").run(client);
+      db.query("INSERT INTO bookings (id, session, client, status, source) VALUES (?, ?, ?, 'booked', 'admin')")
+        .run(`msgbulkbook${suffix}`, bulk.id, client);
+    }
+  })();
+  await call(manual(bulk), owner, "POST", draft, 400);
+  assert.equal((await sessionLogs(bulk, "manual")).length, 0);
+}
+console.log("Vista previa, permisos, límites y mensaje manual verificados.");

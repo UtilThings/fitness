@@ -1,7 +1,7 @@
 # 006 - [Endpoint] Vista previa, mensaje manual a una clase y envío de prueba
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 004, Feature 005 (contrato)
 - **Fase:** Fase 3: Hooks
 
@@ -24,12 +24,12 @@ Las rutas custom se registran con `routerAdd` en `api/src/hooks/*.ts` (compilan 
 
 ## Criterios de aceptación
 
-- [ ] `preview` devuelve el HTML escapado y lista las variables desconocidas sin enviar nada.
-- [ ] El mensaje manual llega solo a los inscritos de la clase indicada y se omite a clientes `inactive` (contados en `skipped`).
-- [ ] Cada destinatario del mensaje manual tiene un `message_logs` con `template_key = manual` y la `session`.
-- [ ] Reception y coach reciben `403` en `test`; sin sesión, `401`/`403` en todas.
-- [ ] Más de 200 destinatarios, clase inexistente o cuerpo vacío devuelven el error previsto.
-- [ ] `bun run build:ts` y `scripts/verify-api.sh` pasan en verde.
+- [x] `preview` devuelve el HTML escapado y lista las variables desconocidas sin enviar nada.
+- [x] El mensaje manual llega solo a los inscritos de la clase indicada y se omite a clientes `inactive` (contados en `skipped`).
+- [x] Cada destinatario del mensaje manual tiene un `message_logs` con `template_key = manual` y la `session`.
+- [x] Reception y coach reciben `403` en `test`; sin sesión, `401`/`403` en todas.
+- [x] Más de 200 destinatarios, clase inexistente o cuerpo vacío devuelven el error previsto.
+- [x] `bun run build:ts` y `scripts/verify-api.sh` pasan en verde.
 
 ## Referencias
 
@@ -43,3 +43,5 @@ Las rutas custom se registran con `routerAdd` en `api/src/hooks/*.ts` (compilan 
 
 ## Notas de implementación
 
+- `scripts/verify-api.sh` verifica respuestas de validación, permisos, SMTP sin configurar y el límite de 200. Con SMTP de captura se comprobó la entrega solo a inscritos elegibles y el envío de prueba a la cuenta owner.
+- Un mensaje manual tiene un intento por destinatario. Su texto se mantiene en memoria durante la solicitud y el historial guarda el resultado.
