@@ -1,7 +1,7 @@
 # 007 - [Componente] `ReportChart` con PrimeVue Chart
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 006 (contrato)
 - **Fase:** Fase 4: Interfaz
 
@@ -23,11 +23,11 @@ Un componente reutilizable pinta barras, líneas y anillos con el tema de PrimeV
 
 ## Criterios de aceptación
 
-- [ ] `chart.js` aparece en `package.json` y el `build` genera un chunk separado cargado solo desde la vista de reportes.
-- [ ] Con `labels = []` el componente muestra el estado vacío y no monta el gráfico.
-- [ ] `buildChartData` convierte 26800 centavos a 268 en dinero y 0.8333 a 83,3 en porcentaje.
-- [ ] El contenedor del gráfico tiene `role="img"` y `aria-label`.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` en `app/` pasan.
+- [x] `chart.js` aparece en `package.json` y el `build` genera un chunk separado cargado solo desde la vista de reportes.
+- [x] Con `labels = []` el componente muestra el estado vacío y no monta el gráfico.
+- [x] `buildChartData` convierte 26800 centavos a 268 en dinero y 0.8333 a 83,3 en porcentaje.
+- [x] El contenedor del gráfico tiene `role="img"` y `aria-label`.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` en `app/` pasan.
 
 ## Referencias
 
@@ -42,3 +42,4 @@ Un componente reutilizable pinta barras, líneas y anillos con el tema de PrimeV
 
 ## Notas de implementación
 
+Chart.js 4 se importa a través de PrimeVue. El manifiesto de una compilación con entrada de prueba confirmó los chunks dinámicos de ReportChart, PrimeVue Chart y chart.js/auto. verify-app.sh pasó completo. La importación desde la ruta real corresponde a la tarea 008.
