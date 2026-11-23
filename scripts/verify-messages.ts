@@ -79,3 +79,66 @@ const audit = "collections/audit_logs/records?" + new URLSearchParams({
 });
 assert.equal((await call<{ items: unknown[] }>(audit, owner)).items.length, 1);
 await call(`${templates}/${id}`, owner, "PATCH", { body });
+
+type Row = { id: string };
+type Booking = Row & { status: string };
+type Log = Row & { client: string; dedupe_key: string; template_key: string; status: string; next_retry_at: string };
+const sessions = "collections/class_sessions/records";
+const bookings = "collections/bookings/records";
+const { items: services } = await call<{ items: Row[] }>("collections/services/records", owner);
+const start = Date.now() + 12 * 3_600_000;
+
+const createSession = (extraHours: number, capacity: number) => call<Row>(sessions, owner, "POST", {
+  service: services[0]!.id, starts_at: new Date(start + extraHours * 3_600_000).toISOString(), capacity, duration_min: 60,
+});
+const createClient = (n: number) => call<Row>(clients, owner, "POST", {
+  first_name: "Prueba", last_name: `Correo ${n}`, email: `messages-${n}@example.test`, status: "active",
+});
+const reserve = (session: Row, customer: Row) => call<Booking>(bookings, owner, "POST", {
+  session: session.id, client: customer.id, override_note: "Prueba temporal de comunicaciones",
+});
+const sessionLogs = async ({ id }: Row, key: string) => (await call<{ items: Log[] }>(
+  logs + "?" + new URLSearchParams({ filter: `session = "${id}" && template_key = "${key}"` }), owner,
+)).items;
+
+const recipients = await Promise.all(Array.from({ length: 5 }, (_, n) => createClient(n)));
+const target = await createSession(0, 4);
+const reservations = [];
+for (const recipient of recipients) reservations.push(await reserve(target, recipient));
+assert.deepEqual(reservations.map(({ status }) => status), ["booked", "booked", "booked", "booked", "waitlisted"]);
+const confirmed = await sessionLogs(target, "booking_confirmed");
+assert.equal(confirmed.length, 4);
+assert(confirmed.every(({ status, next_retry_at }) => status === "failed" && next_retry_at));
+
+const wait = async (check: () => Promise<boolean>) => {
+  for (let attempt = 0; attempt < 50; attempt++) {
+    if (await check()) return;
+    await Bun.sleep(50);
+  }
+  assert.fail("El trabajo de comunicaciones no terminó");
+};
+await call("crons/class_reminders", root, "POST", undefined, 204);
+await wait(async () => (await sessionLogs(target, "class_reminder")).length === 4);
+await call("crons/class_reminders", root, "POST", undefined, 204);
+await call(`${sessions}/${target.id}`, owner, "PATCH", { starts_at: new Date(start + 3_600_000).toISOString() });
+assert.equal((await sessionLogs(target, "class_cancelled")).length, 5);
+await call(`${sessions}/${target.id}`, owner, "PATCH", { status: "cancelled", cancel_reason: "Cambio de agenda" });
+const cancellations = (await sessionLogs(target, "class_cancelled")).filter(({ dedupe_key }) => !dedupe_key.includes(":change:"));
+assert.equal(cancellations.length, 5);
+assert.equal(new Set(cancellations.map(({ client }) => client)).size, 5);
+const repeated = await fetch(`${base}/api/${sessions}/${target.id}`, {
+  method: "PATCH", headers: { Authorization: owner, "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "cancelled", cancel_reason: "Cambio de agenda" }),
+});
+assert([200, 400].includes(repeated.status));
+assert.equal((await sessionLogs(target, "class_cancelled")).length, 10);
+assert.equal((await sessionLogs(target, "class_reminder")).length, 4);
+
+const promotion = await createSession(2, 1);
+const booked = await reserve(promotion, recipients[0]!);
+const waiting = await reserve(promotion, recipients[1]!);
+assert.equal(waiting.status, "waitlisted");
+await call(`${bookings}/${booked.id}`, owner, "PATCH", { status: "cancelled", override_note: "Prueba de promoción" });
+assert.deepEqual((await sessionLogs(promotion, "waitlist_promoted")).map(({ client }) => client), [recipients[1]!.id]);
+assert.equal((await sessionLogs(promotion, "booking_confirmed")).length, 1);
+console.log("Confirmación, recordatorio, lista de espera, cambios y cancelación verificados.");

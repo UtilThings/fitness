@@ -1,7 +1,7 @@
 # 005 - [Hook] Disparadores de eventos y crons de avisos
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003, 004, Feature 009 (contrato), Feature 011 (contrato), Feature 013 (contrato), Feature 014 (contrato)
 - **Fase:** Fase 3: Hooks
 
@@ -23,13 +23,13 @@ Los seis mensajes operativos se envían automáticamente: confirmación de reser
 
 ## Criterios de aceptación
 
-- [ ] Crear una reserva `booked` produce un mensaje `booking_confirmed`; una reserva `waitlisted` no.
-- [ ] La promoción automática `waitlisted → booked` produce `waitlist_promoted` y no una segunda confirmación.
-- [ ] Cancelar una sesión con 4 reservas `booked` y 1 `waitlisted` genera 5 mensajes, un registro por destinatario, y no repite al guardar de nuevo la sesión cancelada.
-- [ ] El cron de recordatorios envía exactamente un recordatorio por reserva `booked` dentro de la ventana, aunque corra varias veces.
-- [ ] Los crons de cobro y renovación solo envían a las 09:00 locales y una vez por vencimiento/periodo.
-- [ ] Un fallo del correo no revierte ni bloquea la reserva ni la cancelación.
-- [ ] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan en verde.
+- [x] Crear una reserva `booked` produce un mensaje `booking_confirmed`; una reserva `waitlisted` no.
+- [x] La promoción automática `waitlisted → booked` produce `waitlist_promoted` y no una segunda confirmación.
+- [x] Cancelar una sesión con 4 reservas `booked` y 1 `waitlisted` genera 5 mensajes, un registro por destinatario, y no repite al guardar de nuevo la sesión cancelada.
+- [x] El cron de recordatorios envía exactamente un recordatorio por reserva `booked` dentro de la ventana, aunque corra varias veces.
+- [x] Los crons de cobro y renovación solo envían a las 09:00 locales y una vez por vencimiento/periodo.
+- [x] Un fallo del correo no revierte ni bloquea la reserva ni la cancelación.
+- [x] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan en verde.
 
 ## Referencias
 
@@ -45,3 +45,5 @@ Los seis mensajes operativos se envían automáticamente: confirmación de reser
 
 ## Notas de implementación
 
+- La cancelación parte de `class_sessions` y usa los eventos confirmados de la cascada de reservas para conservar los destinatarios exactos.
+- `scripts/verify-api.sh` valida confirmaciones, promoción, cambios, cancelación de los cinco inscritos y deduplicación del cron de recordatorios. Se verificaron cobro y renovación a las 09:00 locales con un reloj controlado, incluido el cambio de horario.
