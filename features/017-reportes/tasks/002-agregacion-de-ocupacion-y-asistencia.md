@@ -1,7 +1,7 @@
 # 002 - [Lib] Agregación de ocupación y asistencia
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, Feature 011 (contrato)
 - **Fase:** Fase 1: Lógica pura de agregación
 
@@ -23,11 +23,11 @@ Existen funciones puras y probadas que calculan la ocupación por clase y por se
 
 ## Criterios de aceptación
 
-- [ ] Para una sesión de capacidad 6 con 5 reservas `booked` y 1 `waitlisted`, `occupancy_rate` es 0,8333 y `waitlisted` es 1.
-- [ ] Una sesión `cancelled` no aparece en totales ni en `by_class`.
-- [ ] Con 0 asistidos y 0 no-show, `no_show_rate` y `attendance_rate` son 0, nunca `NaN`.
-- [ ] La suma de `by_service` coincide con `totals` en todos los casos de prueba.
-- [ ] `bun test` en `api/` pasa en verde.
+- [x] Para una sesión de capacidad 6 con 5 reservas `booked` y 1 `waitlisted`, `occupancy_rate` es 0,8333 y `waitlisted` es 1.
+- [x] Una sesión `cancelled` no aparece en totales ni en `by_class`.
+- [x] Con 0 asistidos y 0 no-show, `no_show_rate` y `attendance_rate` son 0, nunca `NaN`.
+- [x] La suma de `by_service` coincide con `totals` en todos los casos de prueba.
+- [x] `bun test` en `api/` pasa en verde.
 
 ## Referencias
 
@@ -41,3 +41,4 @@ Existen funciones puras y probadas que calculan la ocupación por clase y por se
 
 ## Notas de implementación
 
+Las reservas se indexan por sesión. Las tasas se calculan a partir de los conteos agregados y se redondean a cuatro decimales. bun test: 83 pruebas.
