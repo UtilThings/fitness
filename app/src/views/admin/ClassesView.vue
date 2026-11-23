@@ -6,10 +6,13 @@ import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
+import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PageHeader from '@/components/PageHeader.vue';
+import PrivateSessionDialog from '@/components/agenda/PrivateSessionDialog.vue';
+import SpecialSessionDialog from '@/components/agenda/SpecialSessionDialog.vue';
 import AvailabilityTag from '@/components/bookings/AvailabilityTag.vue';
 import BookingDialog from '@/components/bookings/BookingDialog.vue';
 import SessionRoster from '@/components/bookings/SessionRoster.vue';
@@ -38,9 +41,11 @@ import type { PbError } from '@/lib/pb-errors';
 import {
   filterSessions,
   groupByDay,
+  nextCalendarSlot,
   weekDays,
   weekStartFor,
   type ClassSession,
+  type SessionKind,
 } from '@/lib/schedule-week';
 
 const route = useRoute();
@@ -64,6 +69,13 @@ const rangeLabel = computed(() => {
     : formatDate(localToUtcIso(first, '12:00')) + ' – ' + end;
 });
 const service = ref('');
+const kind = ref<SessionKind | ''>('');
+const kindOptions = [
+  { label: 'Todos los tipos', value: '' },
+  { label: 'Regular', value: 'regular' },
+  { label: 'Especial', value: 'special' },
+  { label: 'Privada', value: 'private' },
+];
 const coach = computed({
   get: () => (typeof route.query.coach === 'string' ? route.query.coach : ''),
   set: (value: string) =>
@@ -102,25 +114,51 @@ const grouped = computed(() =>
     filterSessions(schedule.sessions.value, {
       service: service.value,
       coach: coach.value,
+      kind: kind.value,
     }),
   ),
 );
+const canCreatePrivate = computed(
+  () => canEdit.value || role.value === 'coach',
+);
+const creationCoach = computed(() =>
+  role.value === 'coach' ? (user.value?.id ?? '') : coach.value,
+);
+const slotOptions = computed(() => {
+  if (!canCreatePrivate.value) return new Map<string, string>();
+  const sessionsByDay = groupByDay(
+    filterSessions(schedule.sessions.value, { coach: creationCoach.value }),
+  );
+  return new Map(
+    days.value.flatMap((day) => {
+      const slot = nextCalendarSlot(
+        day,
+        sessionsByDay.get(day) ?? [],
+        now.value,
+      );
+      return slot ? [[day, slot]] : [];
+    }),
+  );
+});
+const selectedSlot = ref('');
+const privateOpen = ref(false);
+const specialOpen = ref(false);
+const creation = ref({ date: '', time: '' });
 const selected = ref<ClassSession | null>(null);
 const bookingOpen = ref(false);
 const rosterRefresh = ref(0);
 const availability = shallowRef(new Map<string, SessionAvailability>());
 const availabilityError = shallowRef<PbError>();
 let availabilityVersion = 0;
-const mode = ref<'move' | 'cancel' | 'new' | null>(null);
+const mode = ref<'move' | 'cancel' | null>(null);
 const busy = ref(false);
 const fields = ref<Record<string, string>>({});
 const draft = ref({
-  service: '',
+  title: '',
   coach: '',
   date: '',
   time: '',
-  duration_min: 60,
-  capacity: 1,
+  capacity: 1 as number | null,
   reason: '',
   notes: '',
 });
@@ -128,6 +166,7 @@ const draft = ref({
 watch(
   week,
   () => {
+    selectedSlot.value = '';
     availability.value = new Map();
     void reloadWeek();
   },
@@ -197,11 +236,10 @@ function openSession(session: ClassSession) {
   selected.value = session;
   const { date, time } = localParts(session.starts_at);
   draft.value = {
-    service: session.service,
+    title: session.title ?? '',
     coach: session.coach,
     date,
     time,
-    duration_min: session.duration_min,
     capacity: session.capacity,
     notes: session.notes,
     reason: '',
@@ -236,22 +274,45 @@ function closeSession() {
 }
 
 function openDialog(action: NonNullable<typeof mode.value>) {
-  if (action === 'new') {
-    draft.value = {
-      service: '',
-      coach: '',
-      date: week.value > today.value ? week.value : today.value,
-      time: '09:00',
-      duration_min: 60,
-      capacity: 1,
-      reason: '',
-      notes: '',
-    };
-  } else if (selected.value) {
-    openSession(selected.value);
-  }
-  fields.value = {};
+  if (selected.value) openSession(selected.value);
   mode.value = action;
+}
+
+function openCreation(type: 'special' | 'private', slot?: string) {
+  const defaultDate = week.value > today.value ? week.value : today.value;
+  creation.value = slot
+    ? localParts(slot)
+    : { date: defaultDate, time: '09:00' };
+  selectedSlot.value = '';
+  if (type === 'special') specialOpen.value = true;
+  else privateOpen.value = true;
+}
+
+function chooseSlot(slot: string) {
+  if (!canEdit.value) openCreation('private', slot);
+  else selectedSlot.value = selectedSlot.value === slot ? '' : slot;
+}
+
+function created(session: ClassSession) {
+  const date = localParts(session.starts_at).date;
+  if (service.value && service.value !== session.service) service.value = '';
+  if (coach.value && coach.value !== session.coach) coach.value = '';
+  if (kind.value && kind.value !== session.kind) kind.value = session.kind;
+  if (days.value.includes(date)) {
+    void reloadWeek();
+  } else {
+    const current = todayLocal();
+    const civil = (value: string) => Date.parse(value + 'T00:00:00Z');
+    changeWeek(
+      (civil(weekStartFor(date)) - civil(weekStartFor(current))) /
+        (7 * 86_400_000),
+    );
+  }
+  notify.success(
+    session.kind === 'special'
+      ? 'Clase especial creada'
+      : 'Sesión privada agendada',
+  );
 }
 
 async function run(operation: () => Promise<string>, close = true) {
@@ -276,14 +337,14 @@ async function run(operation: () => Promise<string>, close = true) {
 }
 
 function submit() {
-  const { reason, date, time, service, coach, duration_min, capacity } =
-    draft.value;
+  const { reason, date, time, coach } = draft.value;
   const session = selected.value;
-  if (mode.value !== 'new' && Array.from(reason.trim()).length < 3) {
+  if (!session) return;
+  if (Array.from(reason.trim()).length < 3) {
     fields.value = { reason: 'Escribe un motivo de al menos 3 caracteres.' };
     return;
   }
-  if (mode.value === 'cancel' && session) {
+  if (mode.value === 'cancel') {
     return run(async () => {
       await schedule.cancelSession(session.id, reason);
       return 'Sesión cancelada';
@@ -296,29 +357,33 @@ function submit() {
     fields.value = { starts_at: 'Indica una fecha y hora válidas.' };
     return;
   }
-  if (mode.value === 'move' && session) {
-    return run(async () => {
-      await schedule.moveSession(session.id, { startsAt, coach, reason });
-      return 'Sesión movida';
-    });
-  }
   return run(async () => {
-    await schedule.createSpecialSession({
-      service,
-      coach,
-      duration_min,
-      capacity,
-      starts_at: startsAt,
-    });
-    return 'Sesión especial creada';
+    await schedule.moveSession(session.id, { startsAt, coach, reason });
+    return 'Sesión movida';
   });
 }
 
 function saveDetails(session: ClassSession) {
+  const { title, capacity } = draft.value;
+  const updateCapacity =
+    session.kind === 'private' || session.kind === 'special';
+  if (session.kind === 'special' && !title.trim()) {
+    fields.value = { title: 'Escribe un título para la clase especial.' };
+    return;
+  }
+  if (
+    updateCapacity &&
+    (!capacity || !Number.isInteger(capacity) || capacity < 1)
+  ) {
+    fields.value = { capacity: 'Indica un cupo válido.' };
+    return;
+  }
   return run(async () => {
     await schedule.updateSession(session.id, {
       coach: draft.value.coach,
       notes: draft.value.notes,
+      ...(session.kind === 'special' && { title: title.trim() }),
+      ...(updateCapacity && capacity !== null && { capacity }),
     });
     return 'Sesión actualizada';
   });
@@ -339,9 +404,16 @@ function generate() {
       <template #actions>
         <Button
           v-if="canEdit"
-          label="Nueva sesión especial"
+          label="Nueva clase especial"
           icon="pi pi-plus"
-          @click="openDialog('new')"
+          @click="openCreation('special')"
+        />
+        <Button
+          v-if="canCreatePrivate"
+          label="Sesión privada"
+          severity="secondary"
+          outlined
+          @click="openCreation('private')"
         />
         <Button
           v-if="isOwner"
@@ -389,6 +461,13 @@ function generate() {
           v-model="coach"
           aria-label="Coach"
           :options="coachFilters"
+          option-label="label"
+          option-value="value"
+        />
+        <Select
+          v-model="kind"
+          aria-label="Tipo de sesión"
+          :options="kindOptions"
           option-label="label"
           option-value="value"
         />
@@ -448,6 +527,10 @@ function generate() {
           type="button"
           :data-session="session.id"
           class="grid gap-1 rounded-lg border border-surface bg-surface-0 p-3 text-left hover:border-primary dark:bg-surface-800"
+          :class="{
+            'border-l-4 border-l-violet-500': session.kind === 'special',
+            'border-l-4 border-l-sky-500': session.kind === 'private',
+          }"
           @click="openSession(session)"
         >
           <span
@@ -455,7 +538,7 @@ function generate() {
             class="grid font-medium"
           >
             {{ formatTime(session.starts_at, 'en-US') }}
-            <span>{{ serviceName(session) }}</span>
+            <span>{{ session.title || serviceName(session) }}</span>
           </span>
           <span
             class="text-sm"
@@ -466,6 +549,12 @@ function generate() {
             "
             >{{ coachName(session) }}</span
           >
+          <Tag
+            v-if="session.kind === 'special' || session.kind === 'private'"
+            :value="session.kind === 'special' ? 'Especial' : 'Privada'"
+            :severity="session.kind === 'special' ? 'secondary' : 'info'"
+            class="justify-self-start"
+          />
           <AvailabilityTag
             v-if="
               session.status === 'scheduled' && availability.has(session.id)
@@ -484,6 +573,41 @@ function generate() {
             >Completada</span
           >
         </button>
+        <div v-if="slotOptions.has(day)" class="grid gap-1">
+          <Button
+            :label="formatTime(slotOptions.get(day)!, 'en-US')"
+            icon="pi pi-plus"
+            size="small"
+            severity="secondary"
+            text
+            :aria-label="
+              'Agregar sesión ' +
+              formatDayLabel(day) +
+              ' a las ' +
+              formatTime(slotOptions.get(day)!, 'en-US')
+            "
+            :aria-expanded="
+              canEdit ? selectedSlot === slotOptions.get(day) : undefined
+            "
+            @click="chooseSlot(slotOptions.get(day)!)"
+          />
+          <div v-if="selectedSlot === slotOptions.get(day)" class="grid gap-1">
+            <Button
+              label="Nueva clase especial"
+              size="small"
+              severity="secondary"
+              outlined
+              @click="openCreation('special', slotOptions.get(day))"
+            />
+            <Button
+              label="Sesión privada"
+              size="small"
+              severity="secondary"
+              outlined
+              @click="openCreation('private', slotOptions.get(day))"
+            />
+          </div>
+        </div>
       </section>
     </div>
 
@@ -499,11 +623,16 @@ function generate() {
       "
     >
       <div v-if="selected" class="grid gap-4">
-        <h2 class="text-lg font-semibold">{{ serviceName(selected) }}</h2>
+        <h2 class="text-lg font-semibold">
+          {{ selected.title || serviceName(selected) }}
+        </h2>
         <p>
           {{ formatDate(selected.starts_at) }} ·
           {{ formatTime(selected.starts_at, 'en-US') }} ·
           {{ selected.duration_min }} min · Cupo {{ selected.capacity }}
+        </p>
+        <p v-if="selected.title" class="text-sm text-muted-color">
+          {{ serviceName(selected) }}
         </p>
         <p v-if="selected.status === 'cancelled'">
           Cancelada · {{ selected.cancel_reason }}
@@ -514,11 +643,42 @@ function generate() {
           class="grid gap-3"
           @submit.prevent="saveDetails(selected)"
         >
+          <CatalogField
+            v-if="selected.kind === 'special'"
+            id="detail-title"
+            label="Título"
+            :error="fields.title"
+          >
+            <InputText
+              id="detail-title"
+              v-model="draft.title"
+              maxlength="120"
+              fluid
+            />
+          </CatalogField>
+          <CatalogField
+            v-if="selected.kind !== 'regular'"
+            id="detail-capacity"
+            label="Cupo"
+            :error="fields.capacity"
+          >
+            <InputNumber
+              v-model="draft.capacity"
+              input-id="detail-capacity"
+              :min="1"
+              :max="selected.kind === 'private' ? 2 : undefined"
+              fluid
+            />
+          </CatalogField>
           <CatalogField id="detail-coach" label="Coach" :error="fields.coach">
             <Select
               v-model="draft.coach"
               input-id="detail-coach"
-              :options="coachOptions"
+              :options="
+                selected.kind === 'private'
+                  ? catalog.coachOptions.value
+                  : coachOptions
+              "
               option-label="label"
               option-value="value"
               :placeholder="coachName(selected)"
@@ -547,6 +707,7 @@ function generate() {
           class="flex flex-wrap gap-2"
         >
           <Button
+            v-if="selected.kind !== 'private'"
             label="Mover sesión"
             severity="secondary"
             outlined
@@ -582,17 +743,34 @@ function generate() {
       @booked="reserved"
     />
 
+    <SpecialSessionDialog
+      v-if="canEdit"
+      v-model="specialOpen"
+      :services="catalog.items.value"
+      :coaches="catalog.coachOptions.value"
+      :initial-date="creation.date"
+      :initial-time="creation.time"
+      :initial-coach="creationCoach"
+      @saved="created"
+    />
+    <PrivateSessionDialog
+      v-if="canCreatePrivate"
+      v-model="privateOpen"
+      :services="catalog.items.value"
+      :coaches="catalog.coachOptions.value"
+      :initial-date="creation.date"
+      :initial-time="creation.time"
+      :initial-coach="creationCoach"
+      :locked-coach="role === 'coach' ? user?.id : undefined"
+      :can-override="canEdit"
+      @saved="created"
+    />
+
     <Dialog
       :visible="!!mode"
       modal
       class="w-full max-w-lg"
-      :header="
-        mode === 'move'
-          ? 'Mover sesión'
-          : mode === 'new'
-            ? 'Nueva sesión especial'
-            : 'Cancelar sesión'
-      "
+      :header="mode === 'move' ? 'Mover sesión' : 'Cancelar sesión'"
       @update:visible="
         (visible) => {
           if (!visible) mode = null;
@@ -600,21 +778,6 @@ function generate() {
       "
     >
       <form v-if="mode" class="grid gap-4" @submit.prevent="submit">
-        <CatalogField
-          v-if="mode === 'new'"
-          id="session-service"
-          label="Servicio"
-          :error="fields.service"
-        >
-          <Select
-            v-model="draft.service"
-            input-id="session-service"
-            :options="services.filter((item) => item.active)"
-            option-label="label"
-            option-value="value"
-            placeholder="Selecciona un servicio"
-          />
-        </CatalogField>
         <template v-if="mode !== 'cancel'">
           <div class="grid grid-cols-2 gap-3">
             <CatalogField
@@ -639,39 +802,7 @@ function generate() {
             />
           </CatalogField>
         </template>
-        <div v-if="mode === 'new'" class="grid grid-cols-2 gap-3">
-          <CatalogField
-            id="session-duration"
-            label="Duración (minutos)"
-            :error="fields.duration_min"
-          >
-            <InputNumber
-              v-model="draft.duration_min"
-              input-id="session-duration"
-              :min="15"
-              :max="240"
-              fluid
-            />
-          </CatalogField>
-          <CatalogField
-            id="session-capacity"
-            label="Cupo"
-            :error="fields.capacity"
-          >
-            <InputNumber
-              v-model="draft.capacity"
-              input-id="session-capacity"
-              :min="1"
-              fluid
-            />
-          </CatalogField>
-        </div>
-        <CatalogField
-          v-else
-          id="session-reason"
-          label="Motivo"
-          :error="fields.reason"
-        >
+        <CatalogField id="session-reason" label="Motivo" :error="fields.reason">
           <Textarea
             id="session-reason"
             v-model="draft.reason"
@@ -690,7 +821,7 @@ function generate() {
           <Button
             type="submit"
             :label="
-              mode === 'cancel' ? 'Confirmar cancelación' : 'Guardar sesión'
+              mode === 'cancel' ? 'Confirmar cancelación' : 'Guardar cambio'
             "
             :severity="mode === 'cancel' ? 'danger' : undefined"
             :loading="busy"

@@ -1,5 +1,5 @@
 import type { Service } from '@/lib/catalog';
-import { addLocalDays, localParts } from '@/lib/datetime';
+import { addLocalDays, localParts, localToUtcIso } from '@/lib/datetime';
 import type { Admin, BaseRecord } from '@/types/pb';
 
 type ScheduleRecord = Pick<
@@ -27,12 +27,14 @@ export interface ClassTemplateInput extends ClassDetails {
 export interface ClassTemplate
   extends ScheduleRecord, ClassTemplateInput, ClassRelations {}
 
+export type SessionKind = 'regular' | 'special' | 'private';
+
 export interface ClassSession
   extends ScheduleRecord, ClassDetails, ClassRelations {
   template: string;
   starts_at: string;
   status: 'scheduled' | 'cancelled' | 'completed';
-  kind: 'regular' | 'special' | 'private';
+  kind: SessionKind;
   title?: string;
   cancel_reason: string;
   notes: string;
@@ -70,16 +72,52 @@ export function groupByDay<T extends Pick<ClassSession, 'starts_at'>>(
 }
 
 export function filterSessions<
-  T extends Pick<ClassSession, 'service' | 'coach'>,
+  T extends Pick<ClassSession, 'service' | 'coach'> &
+    Partial<Pick<ClassSession, 'kind'>>,
 >(
   sessions: readonly T[],
-  { service, coach }: { service?: string; coach?: string },
+  {
+    service,
+    coach,
+    kind,
+  }: { service?: string; coach?: string; kind?: SessionKind | '' },
 ): T[] {
   return sessions.filter(
     (session) =>
       (!service || session.service === service) &&
-      (!coach || session.coach === coach),
+      (!coach || session.coach === coach) &&
+      (!kind || (session.kind || 'regular') === kind),
   );
+}
+
+export function nextCalendarSlot(
+  day: string,
+  sessions: ClassSession[],
+  now: number,
+) {
+  const occupied = sessions
+    .filter(({ status }) => status !== 'cancelled')
+    .map((session) => {
+      const start = Date.parse(session.starts_at.replace(' ', 'T'));
+      return { start, end: start + session.duration_min * 60_000 };
+    });
+  const hour = 3_600_000;
+  const closing = Date.parse(localToUtcIso(addLocalDays(day, 1), '00:00'));
+  for (
+    let start = Date.parse(localToUtcIso(day, '09:00'));
+    start + hour <= closing;
+    start += hour / 2
+  ) {
+    if (
+      start > now &&
+      !occupied.some(
+        ({ start: from, end }) => from < start + hour && end > start,
+      )
+    ) {
+      return new Date(start).toISOString();
+    }
+  }
+  return undefined;
 }
 
 const weekdays = [

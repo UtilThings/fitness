@@ -433,3 +433,13 @@ const overridden = await call<Result>(privateRoute, reception, "POST", { ...roll
 assert.equal(overridden.bookings[1].override_note, overrides[partnerTwo.id].override_note);
 assert.equal(await count(collection("audit_logs"), `action = "custom" && record_id = "${overridden.session.id}"`), 1);
 console.log("Privadas verificadas: reservas atómicas, partner, cupos, duplicados, créditos y roles.");
+
+const event = await call<Session>(sessions, reception, "POST", {
+  ...fixture, kind: "special", title: "Clase especial de verificación", starts_at: pairInput.starts_at,
+});
+const beforeGeneration = await getSession(pair.session.id);
+const weekGeneration = await postGenerate({ from: date, weeks: 1 });
+assert.equal(weekGeneration.created + weekGeneration.skipped_existing + weekGeneration.skipped_blocked, 9);
+assert.equal((await postGenerate({ from: date, weeks: 1 })).created, 0);
+assert.deepEqual(await getSession(pair.session.id), beforeGeneration);
+assert.deepEqual(await getSession(event.id), event);

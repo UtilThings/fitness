@@ -1,7 +1,7 @@
 # 007 - [Vista] Alta de clases especiales y privadas desde el calendario de 009
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 005, 006
 - **Fase:** Fase 4: Interfaz
 
@@ -22,11 +22,11 @@ El calendario de 009 y su vista (nombre real por verificar en `app/src/views/adm
 
 ## Criterios de aceptación
 
-- [ ] Se crea una clase especial desde el calendario y aparece con su título e insignia.
-- [ ] Se crea una sesión privada desde un hueco con fecha/hora precargadas.
-- [ ] El filtro por tipo oculta y muestra sesiones correctamente.
-- [ ] La generación de sesiones por plantilla (009) no se ve alterada.
-- [ ] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
+- [x] Se crea una clase especial desde el calendario y aparece con su título e insignia.
+- [x] Se crea una sesión privada desde un hueco con fecha/hora precargadas.
+- [x] El filtro por tipo oculta y muestra sesiones correctamente.
+- [x] La generación de sesiones por plantilla (009) no se ve alterada.
+- [x] `bun run test`, `lint`, `format:check`, `typecheck` y `build` pasan.
 
 ## Referencias
 
@@ -39,4 +39,4 @@ El calendario de 009 y su vista (nombre real por verificar en `app/src/views/adm
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. -->
+Se integraron los diálogos en `ClassesView.vue`. Cada columna ofrece el próximo hueco de una hora desde las 09:00 locales, y el formulario permite ajustar esa hora. Las pruebas confirman los títulos, las insignias, la edición, el filtro y la creación con fecha y hora precargadas. PocketBase confirma que la generación semanal conserva ambos tipos de sesión.

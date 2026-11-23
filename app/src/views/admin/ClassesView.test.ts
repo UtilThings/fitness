@@ -14,6 +14,12 @@ const api = vi.hoisted(() => ({
   moveSession: vi.fn(),
   listAvailability: vi.fn(),
   listBySession: vi.fn(),
+  listSlots: vi.fn(),
+  createSpecial: vi.fn(),
+  createPrivate: vi.fn(),
+  privateEligibility: vi.fn(),
+  updateSession: vi.fn(),
+  generate: vi.fn(),
 }));
 const role = ref<Role>('owner');
 const sessions = ref<ClassSession[]>([]);
@@ -24,6 +30,15 @@ vi.mock('@/composables/useSchedule', () => ({
     loading: ref(false),
     error: ref(null),
   }),
+}));
+vi.mock('@/composables/useCoachAgenda', () => ({
+  useCoachAgenda: () => api,
+}));
+vi.mock('@/composables/useCoachAvailability', () => ({
+  useCoachAvailability: () => ({ list: api.listSlots }),
+}));
+vi.mock('@/composables/useMemberships', () => ({
+  useMemberships: () => ({ privateEligibility: api.privateEligibility }),
 }));
 vi.mock('@/composables/useSessionAvailability', () => ({
   useSessionAvailability: () => ({ list: api.listAvailability }),
@@ -49,6 +64,12 @@ vi.mock('@/composables/useServices', () => ({
     items: ref([
       { id: 'jump', name: 'Tropical Jump', active: true },
       { id: 'strength', name: 'Group Strength', active: true },
+      {
+        id: 'training',
+        name: 'Personal Training',
+        kind: 'personal',
+        active: true,
+      },
     ]),
     coachOptions: ref([
       { label: 'Coach JQ', value: 'jq' },
@@ -83,6 +104,8 @@ beforeEach(() => {
     { session: '2', availability: 'available', spots_left: 3 },
   ]);
   api.listBySession.mockResolvedValue([]);
+  api.listSlots.mockResolvedValue([]);
+  api.privateEligibility.mockResolvedValue({ allowed: true, partner: false });
   sessions.value = slots.map(([date, time], index) => ({
     id: String(index),
     collectionId: 'sessions',
@@ -122,11 +145,16 @@ async function render(query = '') {
           props: ['visible'],
           template: '<section v-if="visible"><slot /></section>',
         },
+        ClientPicker: {
+          props: ['label'],
+          emits: ['update:modelValue'],
+          template: `<button type="button" @click="$emit('update:modelValue', { id: 'client' })">{{ label }}</button>`,
+        },
         Select: {
-          props: ['options', 'modelValue'],
+          props: ['options', 'modelValue', 'optionLabel', 'optionValue'],
           emits: ['update:modelValue'],
           template:
-            '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><option v-for="option in options" :key="option.value" :value="option.value">{{ option.label }}</option></select>',
+            '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><option v-for="option in options" :key="option[optionValue]" :value="option[optionValue]">{{ option[optionLabel] }}</option></select>',
         },
       },
     },
@@ -235,7 +263,7 @@ it('hides session mutations from coaches', async () => {
   await wrapper.get('[data-session="0"]').trigger('click');
   for (const label of [
     'Generar sesiones',
-    'Nueva sesión especial',
+    'Nueva clase especial',
     'Cancelar sesión',
     'Mover sesión',
   ]) {
@@ -276,5 +304,132 @@ it('shows real availability and refreshes the roster and calendar after a bookin
     'Ana',
   );
   expect(api.listAvailability).toHaveBeenCalledTimes(2);
+  wrapper.unmount();
+});
+
+it('crea una especial con título e insignia, y permite editar sus detalles', async () => {
+  api.createSpecial.mockImplementation(async (input) => {
+    const session = {
+      ...sessions.value[0]!,
+      ...input,
+      id: 'event',
+      kind: 'special' as const,
+      template: '',
+    };
+    sessions.value.push(session);
+    return session;
+  });
+  const { wrapper, button } = await render();
+  await button('Nueva clase especial').trigger('click');
+  await wrapper
+    .get('form input[maxlength="120"]')
+    .setValue('Taller de movilidad');
+  await wrapper.get('form select').setValue('strength');
+  await wrapper.get('form input[type=date]').setValue('2026-11-06');
+  await wrapper.get('form input[type=time]').setValue('11:00');
+  await wrapper.get('form').trigger('submit');
+  await flushPromises();
+  expect(api.createSpecial).toHaveBeenCalledWith(
+    expect.objectContaining({
+      title: 'Taller de movilidad',
+      service: 'strength',
+      capacity: 1,
+      starts_at: '2026-11-06T16:00:00.000Z',
+    }),
+  );
+  const card = wrapper.get('[data-session="event"]');
+  expect(card.text()).toContain('Taller de movilidad');
+  expect(card.text()).toContain('Especial');
+  await card.trigger('click');
+  await wrapper.get('#detail-title').setValue('Movilidad en grupo');
+  await wrapper.get('aside form').trigger('submit');
+  await flushPromises();
+  expect(api.updateSession).toHaveBeenCalledWith(
+    'event',
+    expect.objectContaining({ title: 'Movilidad en grupo', capacity: 1 }),
+  );
+  wrapper.unmount();
+});
+
+it('agenda una privada desde el primer hueco libre del día', async () => {
+  api.createPrivate.mockImplementation(async (input) => {
+    const session = {
+      ...sessions.value[0]!,
+      ...input,
+      id: 'pt',
+      kind: 'private' as const,
+      template: '',
+    };
+    sessions.value.push(session);
+    return { session, bookings: [] };
+  });
+  const { wrapper } = await render('?coach=other');
+  const nowInView = wrapper.get('[data-day="2026-11-05"]');
+  await nowInView.get('button[aria-label^="Agregar sesión"]').trigger('click');
+  await nowInView
+    .findAll('button')
+    .find((button) => button.text() === 'Sesión privada')!
+    .trigger('click');
+  expect(
+    (wrapper.get('form input[type=date]').element as HTMLInputElement).value,
+  ).toBe('2026-11-05');
+  expect(
+    (wrapper.get('form input[type=time]').element as HTMLInputElement).value,
+  ).toBe('10:00');
+  await wrapper.findAll('form select')[1]!.setValue('training');
+  await wrapper
+    .findAll('form button')
+    .find((button) => button.text() === 'Primer cliente')!
+    .trigger('click');
+  await wrapper.get('form').trigger('submit');
+  await flushPromises();
+  expect(api.createPrivate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      service: 'training',
+      coach: 'other',
+      client_ids: ['client'],
+      starts_at: '2026-11-05T15:00:00.000Z',
+    }),
+  );
+  expect(wrapper.get('[data-session="pt"]').text()).toContain('Privada');
+  wrapper.unmount();
+});
+
+it('filtra por tipo y conserva el flujo de generación semanal', async () => {
+  sessions.value[0] = {
+    ...sessions.value[0]!,
+    kind: 'special',
+    title: 'Evento',
+    template: '',
+  };
+  sessions.value[1] = { ...sessions.value[1]!, kind: 'private', template: '' };
+  api.generate.mockResolvedValue({
+    created: 0,
+    skipped_existing: 9,
+    skipped_blocked: 0,
+  });
+  const { wrapper, button } = await render();
+  const filter = wrapper.get('select[aria-label="Tipo de sesión"]');
+  await filter.setValue('special');
+  expect(
+    wrapper
+      .findAll('[data-session]')
+      .map((card) => card.attributes('data-session')),
+  ).toEqual(['0']);
+  await filter.setValue('private');
+  expect(
+    wrapper
+      .findAll('[data-session]')
+      .map((card) => card.attributes('data-session')),
+  ).toEqual(['1']);
+  await filter.setValue('regular');
+  expect(wrapper.findAll('[data-session]')).toHaveLength(7);
+  await filter.setValue('');
+  expect(wrapper.findAll('[data-session]')).toHaveLength(9);
+  await button('Generar sesiones').trigger('click');
+  await flushPromises();
+  expect(api.generate).toHaveBeenCalledWith({ from: '2026-11-01' });
+  expect(wrapper.get('[data-session="0"]').text()).toContain('Especial');
+  expect(wrapper.get('[data-session="1"]').text()).toContain('Privada');
   wrapper.unmount();
 });
