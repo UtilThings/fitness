@@ -1,61 +1,61 @@
 ---
 import CtaBand from '@/components/CtaBand.astro';
 import PageHero from '@/components/PageHero.astro';
-import PricingCard from '@/components/PricingCard.astro';
+import PricingGrid from '@/components/PricingGrid.vue';
 import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import {
-  groupPlans,
-  jumpPlans,
-  personalOneOnOne,
-  personalPartner,
-} from '@/lib/data';
+import { getCatalog, type PlanGroup } from '@/lib/catalog';
 
-const sections = [
-  {
-    title: 'Personal Training — 1-on-1',
-    plans: personalOneOnOne,
-    cta: 'Inquire now',
-    to: '/contact',
-  },
-  {
-    title: 'Personal Training — Partner',
-    plans: personalPartner,
-    cta: 'Inquire now',
-    to: '/contact',
-  },
-  {
-    title: 'Group Strength',
-    plans: groupPlans,
-    cta: 'Book now',
-    to: '/schedule',
-  },
-  {
-    title: 'Tropical Jump',
-    plans: jumpPlans,
-    cta: 'Book now',
-    to: '/schedule',
-  },
-];
+const catalog = await getCatalog();
+const sections: { title: string; group: PlanGroup; cta: string; to: string }[] =
+  [
+    {
+      title: 'Personal Training — 1-on-1',
+      group: 'personalOneOnOne',
+      cta: 'Inquire now',
+      to: '/contact',
+    },
+    {
+      title: 'Personal Training — Partner',
+      group: 'personalPartner',
+      cta: 'Inquire now',
+      to: '/contact',
+    },
+    {
+      title: 'Group Strength',
+      group: 'groupPlans',
+      cta: 'Book now',
+      to: '/schedule',
+    },
+    {
+      title: 'Tropical Jump',
+      group: 'jumpPlans',
+      cta: 'Book now',
+      to: '/schedule',
+    },
+  ];
 ---
 
 <BaseLayout
   title="Pricing & Packages | JQ Fitness"
-  description="Personal training from $800, group strength from $200 per 4 weeks, Tropical Jump $15 per class."
+  description="Explore personal training packages, Group Strength memberships and Tropical Jump classes."
 >
   <PageHero
     eyebrow="Pricing & Packages"
     title="Invest in stronger."
     sub="Transparent pricing. Packages billed in 4-week blocks unless noted. Online coaching pricing shared after consultation."
   />
-  {sections.map(({ title, plans, cta, to }) => (
+  {sections.map(({ title, group, cta, to }) => (
     <Section class="!py-10">
       <h2 class="text-4xl">{title}</h2>
-      <div class="mt-6 grid gap-6 md:grid-cols-3">
-        {plans.map((plan) => (
-          <PricingCard {plan} {cta} {to} />
-        ))}
-      </div>
+      <PricingGrid
+        client:load
+        class="mt-6"
+        plans={catalog[group]}
+        {group}
+        {cta}
+        {to}
+      />
     </Section>
   ))}
   <CtaBand />
