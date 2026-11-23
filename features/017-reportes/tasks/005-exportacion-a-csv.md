@@ -1,7 +1,7 @@
 # 005 - [Lib] Exportación a CSV segura
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Feature 006 (contrato)
 - **Fase:** Fase 3: Exportación y cliente
 
@@ -22,11 +22,11 @@ Existe una utilidad de cliente que convierte tablas de reportes a CSV compatible
 
 ## Criterios de aceptación
 
-- [ ] La salida empieza con `\uFEFF` y usa `\r\n` entre filas.
-- [ ] `=HYPERLINK("http://x","a")` se exporta como `"'=HYPERLINK(""http://x"",""a"")"` (prefijo, entrecomillado y comillas duplicadas).
-- [ ] Un campo con coma y salto de línea queda en una sola celda al volver a analizarlo con un parser CSV de referencia en la prueba.
-- [ ] `csvFilename('revenue', '2026-11-01', '2026-11-30')` no contiene caracteres fuera de `[a-z0-9_.-]`.
-- [ ] `bun run test`, `lint`, `format:check` y `typecheck` en `app/` pasan.
+- [x] La salida empieza con `\uFEFF` y usa `\r\n` entre filas.
+- [x] `=HYPERLINK("http://x","a")` se exporta como `"'=HYPERLINK(""http://x"",""a"")"` (prefijo, entrecomillado y comillas duplicadas).
+- [x] Un campo con coma y salto de línea queda en una sola celda al volver a analizarlo con un parser CSV de referencia en la prueba.
+- [x] `csvFilename('revenue', '2026-11-01', '2026-11-30')` no contiene caracteres fuera de `[a-z0-9_.-]`.
+- [x] `bun run test`, `lint`, `format:check` y `typecheck` en `app/` pasan.
 
 ## Referencias
 
@@ -41,3 +41,4 @@ Existe una utilidad de cliente que convierte tablas de reportes a CSV compatible
 
 ## Notas de implementación
 
+Se reutilizó centsToDecimal para importes. La prueba relee el CSV con el parser csv de la biblioteca estándar de Python 3 y verifica el BOM y la neutralización. La suite de la app pasó con 288 pruebas, además de lint, formato y tipos.
