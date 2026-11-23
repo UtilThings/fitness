@@ -65,7 +65,7 @@ export function validateTemplate({ key, subject, body }: Template): TemplateProb
     }
     try {
       for (const name of extractVariables(text)) {
-        if (!isMessageKey(key) || !ALLOWED_VARIABLES[key].includes(name)) {
+        if (!isMessageKey(key) || !ALLOWED_VARIABLES[key].some((allowed) => allowed === name)) {
           problems.push({ field, message: `Variable no permitida: {{${name}}}.`, variable: name });
         }
       }
