@@ -59,7 +59,15 @@ function watchSession() {
 }
 
 function updateBusiness(record: Business) {
-  if (currentBusiness.value?.id === record.id) currentBusiness.value = record;
+  if (currentBusiness.value?.id !== record.id) return;
+  currentBusiness.value = record;
+  const admin = pb.authStore?.record as Admin | null | undefined;
+  if (admin?.business === record.id) {
+    pb.authStore.save(pb.authStore.token, {
+      ...admin,
+      expand: { ...admin.expand, business: record },
+    });
+  }
 }
 
 export function useBusiness() {

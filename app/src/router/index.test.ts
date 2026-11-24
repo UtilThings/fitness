@@ -112,6 +112,18 @@ describe('guard', () => {
     },
   );
 
+  it.each(['owner', 'coach', 'reception'] as const)(
+    'protege los ajustes del negocio para %s',
+    async (role) => {
+      state.valid = true;
+      state.role = role;
+      await router.push('/settings/business');
+      expect(router.currentRoute.value.name).toBe(
+        role === 'owner' ? 'business-settings' : 'forbidden',
+      );
+    },
+  );
+
   it('con sesión permite / y expulsa de /login', async () => {
     state.valid = true;
     await router.push('/');

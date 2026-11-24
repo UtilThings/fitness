@@ -1,7 +1,7 @@
 # 017 - [Web] Vista «Negocio»
 
 - **Prioridad:** 17
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 016
 - **Fase:** Fase 4: Admin multi-tenant
 
@@ -22,11 +22,11 @@ El owner edita desde el admin el nombre, logo, ciudad y contacto de su business.
 
 ## Criterios de aceptación
 
-- [ ] El owner cambia el nombre y el logo y el sidebar se actualiza sin recargar.
-- [ ] Coach y reception no ven la entrada ni acceden a la ruta.
-- [ ] Un archivo no imagen o de más de 2 MB se rechaza con mensaje claro.
-- [ ] Moneda, zona y prefijo no son editables.
-- [ ] `bun run lint`, `bun run test`, `bun run build` y `vue-tsc` pasan en verde.
+- [x] El owner cambia el nombre y el logo y el sidebar se actualiza sin recargar.
+- [x] Coach y reception no ven la entrada ni acceden a la ruta.
+- [x] Un archivo no imagen o de más de 2 MB se rechaza con mensaje claro.
+- [x] Moneda, zona y prefijo no son editables.
+- [x] `bun run lint`, `bun run test`, `bun run build` y `vue-tsc` pasan en verde.
 
 ## Fuera de alcance
 
@@ -39,4 +39,4 @@ El owner edita desde el admin el nombre, logo, ciudad y contacto de su business.
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+La vista guarda nombre, ciudad y contacto y admite cargar, sustituir y quitar el logo. El cambio actualiza el estado compartido de la marca. La prueba REST cargó un PNG, leyó sus bytes sin sesión y lo quitó. Las pruebas de vista cubren tipo y tamaño, y las guardas y el menú limitan el acceso al owner. `verify-app.sh` pasó con lint, formato, tipos, pruebas y build.

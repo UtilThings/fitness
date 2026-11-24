@@ -76,6 +76,12 @@ export const adminNav: NavGroup[] = [
         icon: 'pi pi-id-card',
         to: '/team',
       },
+      {
+        label: 'Negocio',
+        icon: 'pi pi-building',
+        to: '/settings/business',
+        roles: ['owner'],
+      },
       { label: 'Mi perfil', icon: 'pi pi-user', to: '/settings/profile' },
     ],
   },

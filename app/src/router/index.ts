@@ -193,6 +193,12 @@ const router = createRouter({
           meta: { title: 'Planes' },
         },
         {
+          path: 'settings/business',
+          name: 'business-settings',
+          component: () => import('@/views/settings/BusinessSettingsView.vue'),
+          meta: { title: 'Negocio', roles: ['owner'] },
+        },
+        {
           path: 'settings/profile',
           name: 'profile',
           component: () => import('@/views/admin/ProfileView.vue'),
