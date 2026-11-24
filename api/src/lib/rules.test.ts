@@ -48,3 +48,34 @@ test("admin migration uses the shared rule expressions", async () => {
   ).text();
   expect(auditMigration).toContain(`const ownerRule = '${RULE_OWNER}';`);
 });
+
+test("business migration scopes every existing role rule and preserves closed operations", async () => {
+  const { runInNewContext } = await import("node:vm");
+  const { TENANT_COLLECTIONS } = await import("./tenant");
+  const { RULE_BUSINESS_SELF, ruleBusiness } = await import("./rules");
+  const source = await Bun.file(
+    new URL("../../pb_migrations/1795266400_scoped_rules_by_business.js", import.meta.url),
+  ).text();
+  const original = { listRule: RULE_STAFF, viewRule: "", updateRule: ruleOwnerOrSelf(), deleteRule: null, createRule: RULE_OWNER };
+  const collections = new Map<string, typeof original>(TENANT_COLLECTIONS.map((name) => [name, { ...original }]));
+  const app = { findCollectionByNameOrId: (name: string) => {
+    expect(collections.has(name)).toBe(true);
+    return collections.get(name);
+  }, save: () => {} };
+  runInNewContext(source, { migrate: (up: Function, down: Function) => {
+    up(app);
+    for (const collection of collections.values()) {
+      expect(collection.listRule).toBe(ruleBusiness(original.listRule));
+      expect(collection.viewRule).toBe(ruleBusiness(original.viewRule));
+      expect(collection.updateRule).toBe(ruleBusiness(original.updateRule));
+      expect(collection.deleteRule).toBe(ruleBusiness(original.deleteRule));
+      expect(collection.createRule).toBe(original.createRule);
+    }
+    down(app);
+    for (const collection of collections.values()) expect(collection).toEqual(original);
+  } });
+  const businesses = await Bun.file(
+    new URL("../../pb_migrations/1795266000_created_businesses.js", import.meta.url),
+  ).text();
+  expect(businesses).toContain(RULE_BUSINESS_SELF);
+});

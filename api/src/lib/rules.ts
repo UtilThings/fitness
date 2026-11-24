@@ -49,3 +49,12 @@ export function ruleOwnerOrSelf(lockedFields: readonly string[] = []): string {
 
   return ruleOr(RULE_OWNER, selfRule);
 }
+
+export const RULE_BUSINESS = '@request.auth.business = business';
+export const RULE_BUSINESS_SELF = '@request.auth.business = id';
+
+export function ruleBusiness(rule: string): string;
+export function ruleBusiness(rule: null): null;
+export function ruleBusiness(rule: string | null): string | null {
+  return rule === null ? null : ruleAnd(rule, RULE_BUSINESS);
+}

@@ -1,7 +1,7 @@
 # 006 - [Seguridad] Reglas de API por business
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003, 004, 005
 - **Fase:** Fase 1: Fundamentos de datos y aislamiento
 
@@ -22,11 +22,11 @@ Ninguna colección de dominio puede listarse, leerse, editarse ni borrarse fuera
 
 ## Criterios de aceptación
 
-- [ ] Con datos en dos business, `GET /api/collections/<c>/records` devuelve solo el business propio y un id del otro responde `404`.
-- [ ] `PATCH`/`DELETE` sobre un registro ajeno responde `404`.
-- [ ] Las reglas de rol anteriores (owner/coach/reception) no cambian dentro del propio business.
-- [ ] Una prueba falla si una colección de `TENANT_COLLECTIONS` carece de la cláusula de business.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Con datos en dos business, `GET /api/collections/<c>/records` devuelve solo el business propio y un id del otro responde `404`.
+- [x] `PATCH`/`DELETE` sobre un registro ajeno responde `404`.
+- [x] Las reglas de rol anteriores (owner/coach/reception) no cambian dentro del propio business.
+- [x] Una prueba falla si una colección de `TENANT_COLLECTIONS` carece de la cláusula de business.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -40,4 +40,4 @@ Ninguna colección de dominio puede listarse, leerse, editarse ni borrarse fuera
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Se verificaron las reglas almacenadas de todas las colecciones y las reglas de owner, coach y reception en PocketBase con dos negocios. La lista devolvió registros propios y GET, PATCH y DELETE ajenos devolvieron 404. Las operaciones previamente reservadas al superusuario conservaron sus reglas nulas. Build de hooks y 103 pruebas en verde.
