@@ -1,7 +1,7 @@
 # 005 - [Migración] Campo `business` en mensajes y auditoría
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004
 - **Fase:** Fase 1: Fundamentos de datos y aislamiento
 
@@ -22,10 +22,10 @@
 
 ## Criterios de aceptación
 
-- [ ] Plantillas, logs y auditoría existentes quedan en el business por defecto.
-- [ ] Crear un business desde /_/ crea sus plantillas por defecto; repetir no duplica.
-- [ ] `TENANT_COLLECTIONS` coincide con todas las colecciones de dominio (prueba en verde).
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Plantillas, logs y auditoría existentes quedan en el business por defecto.
+- [x] Crear un business desde /_/ crea sus plantillas por defecto; repetir no duplica.
+- [x] `TENANT_COLLECTIONS` coincide con todas las colecciones de dominio (prueba en verde).
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -39,4 +39,4 @@
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+La migración se verificó con registros existentes en las tres colecciones. El alta via REST como superusuario, igual a la que usa `/_/`, sembró 12 plantillas en una transacción. La repetición del alta conservó ambos conjuntos sin duplicados. La prueba de `TENANT_COLLECTIONS` cubre las 18 relaciones y pasaron el build y las 102 pruebas.

@@ -26,3 +26,20 @@ onRecordEnrich((e) => {
   e.next();
   e.record?.hide("public_key_hash");
 }, "businesses");
+
+onRecordCreate((e) => {
+  const templates = e.app.findAllCollections().find((collection) => collection?.name === "message_templates");
+  if (!templates?.fields.getByName("business")) return e.next();
+
+  const { seedBusinessDefaults } = require(`${__hooks}/lib/business-defaults`) as typeof import("../lib/business-defaults");
+  const app = e.app;
+  try {
+    return app.runInTransaction((tx) => {
+      e.app = tx;
+      e.next();
+      seedBusinessDefaults(tx, e.record!.id);
+    });
+  } finally {
+    e.app = app;
+  }
+}, "businesses");
