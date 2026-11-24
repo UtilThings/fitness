@@ -4,7 +4,7 @@ import { canUseFirstClass, checkBookingEligibility, creditsToGrant, isFirstVisit
   requiresCredit, type CreditReason, type Eligibility } from "./credits";
 import { addDays, isEarlyCancellation, extendByPause, nextPeriod, periodBounds, shouldExpire } from "./membership-cycles";
 import { auditActor, inScheduleTransaction, pocketBaseDate, scheduleAudit } from "./schedule-store";
-import { tenantRecord } from "./tenant";
+import { tenantRecord, getBusinessTimezone } from "./tenant";
 import { startOfLocalDay, utcToLocal } from "./tz";
 
 type Context = { business: string; actor: string; today: string };
@@ -12,9 +12,7 @@ type Body = Record<string, unknown>;
 export type MembershipAction = "renew" | "pause" | "resume" | "cancel" | "adjust";
 type MovementOptions = { actor?: string; booking?: string; note?: string };
 
-export function membershipToday() {
-  return utcToLocal(new Date().toISOString()).date;
-}
+export { membershipToday } from "./membership-cycles";
 
 export function membershipError(status: number, code: string, message: string, clientId?: string) {
   return new ApiError(status, message, {
@@ -222,8 +220,8 @@ export function manageMembership(app: core.App, id: string, action: MembershipAc
 export type BookingEligibilityOptions = { now?: number; bookingId?: string; override?: boolean; firstVisit?: boolean };
 type Selection = Eligibility & { membership?: core.Record; freeClass?: boolean };
 
-export function sessionDate(session: core.Record) {
-  return utcToLocal(session.getString("starts_at").replace(" ", "T")).date;
+export function sessionDate(session: core.Record, timezone: string) {
+  return utcToLocal(session.getString("starts_at").replace(" ", "T"), timezone).date;
 }
 
 export function chargeable(app: core.App, session: core.Record) {
@@ -244,7 +242,7 @@ export function covers(membership: core.Record, date: string) {
 }
 
 function commitments(app: core.App, client: string, session: core.Record, membership: core.Record,
-  date: string, options: BookingEligibilityOptions) {
+  date: string, options: BookingEligibilityOptions, timezone: string) {
   const week = localWeekKey(date);
   const weekEnd = addDays(week, 7);
   const periodStart = membershipDate(membership, "current_period_start");
@@ -258,7 +256,7 @@ function commitments(app: core.App, client: string, session: core.Record, member
     " && (membership = {:membership} || (membership = '' && override_note = ''))" +
     " && status != 'cancelled'", "", 0, 0, {
     client, id: options.bookingId ?? "", service: session.getString("service"),
-    from: pocketBaseDate(startOfLocalDay(from)), to: pocketBaseDate(startOfLocalDay(to)),
+    from: pocketBaseDate(startOfLocalDay(from, timezone)), to: pocketBaseDate(startOfLocalDay(to, timezone)),
     membership: membership.id,
   });
   let committedBookings = 0;
@@ -267,7 +265,7 @@ function commitments(app: core.App, client: string, session: core.Record, member
     if (!booking) continue;
     const related = app.findRecordById("class_sessions", booking.getString("session"));
     const startsAt = Date.parse(related.getString("starts_at").replace(" ", "T"));
-    const localDate = sessionDate(related);
+    const localDate = sessionDate(related, timezone);
     if (localDate >= week && localDate < weekEnd) weekBookings++;
     if (booking.getString("status") === "booked" && startsAt > now && localDate >= periodStart && localDate <= periodEnd) {
       committedBookings++;
@@ -279,7 +277,8 @@ function commitments(app: core.App, client: string, session: core.Record, member
 export function selectBookingMembership(app: core.App, clientId: string, session: core.Record, options: BookingEligibilityOptions = {}): Selection {
   if (!chargeable(app, session)) return { allowed: true, code: "ok", available: null };
   const client = app.findRecordById("clients", clientId);
-  const date = sessionDate(session);
+  const timezone = getBusinessTimezone(app, session.getString("business"));
+  const date = sessionDate(session, timezone);
   const matching = matchingMemberships(app, clientId, session.getString("service"))
     .filter(({ plan }) => !options.firstVisit || isFirstVisit(plan));
   let rejected: Selection | undefined;
@@ -290,7 +289,7 @@ export function selectBookingMembership(app: core.App, clientId: string, session
     const attempt = {
       ...checkBookingEligibility({
         membership: { status: "active", credits_balance: record.getInt("credits_balance") },
-        plan, ...commitments(app, clientId, session, record, date, options),
+        plan, ...commitments(app, clientId, session, record, date, options, timezone),
       }),
       membership: record, freeClass,
     };

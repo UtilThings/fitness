@@ -73,3 +73,13 @@ export function prepareTenantUpdate(e: core.RecordRequestEvent) {
   }
   validateTenantReferences(e.app, record);
 }
+
+export function getBusinessTimezone(app: Pick<core.App, "findRecordsByFilter">, businessId: string, event?: core.RequestEvent) {
+  const key = "jq.business.timezone:" + businessId;
+  const cached = event?.get(key);
+  if (typeof cached === "string") return cached;
+  const timezone = getBusiness(app, businessId)?.getString("timezone");
+  if (!timezone) throw new BadRequestError("Indica un negocio con zona horaria.");
+  event?.set(key, timezone);
+  return timezone;
+}

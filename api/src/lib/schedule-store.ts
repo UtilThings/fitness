@@ -2,7 +2,7 @@
 
 import { blockRangeUtc, generateSessions, SESSION_WINDOW_WEEKS, sessionKey, type ScheduleBlockDates } from "./schedule-gen";
 import { addLocalDays, startOfLocalDay, utcToLocal } from "./tz";
-import { tenantRecord } from "./tenant";
+import { getBusinessTimezone, tenantRecord } from "./tenant";
 import { buildEntry } from "./audit";
 import { validateCancelReason } from "./session-rules";
 
@@ -57,7 +57,9 @@ export function scheduleAudit(app: core.App, collection: string, recordId: strin
 
 export function cancelBlockedSessions(app: core.App, block: core.Record) {
   const actor = block.getString("@pbInternalAuditActor");
-  const affected = scheduledInRange(app, blockRangeUtc(blockDates(block)), block.getString("business"));
+  const business = block.getString("business");
+  const timezone = getBusinessTimezone(app, business);
+  const affected = scheduledInRange(app, blockRangeUtc(blockDates(block), timezone), business);
   for (const session of affected) {
     session.set("status", "cancelled");
     session.set("cancel_reason", "Bloqueo: " + block.getString("title"));
@@ -76,7 +78,8 @@ export function persistGeneratedSessions(app: core.App, options: {
   actor?: string;
 }) {
   const { business } = options;
-  const from = options.from ?? utcToLocal(new Date().toISOString()).date;
+  const timezone = getBusinessTimezone(app, business);
+  const from = options.from ?? utcToLocal(new Date().toISOString(), timezone).date;
   const weeks = options.weeks ?? SESSION_WINDOW_WEEKS;
   const end = addLocalDays(from, weeks * 7);
   let created = 0;
@@ -107,9 +110,9 @@ export function persistGeneratedSessions(app: core.App, options: {
       .flatMap((record) => record ? [blockDates(record)] : []);
     const existingKeys = new Set(tx.findRecordsByFilter("class_sessions",
       "business = {:business} && template != '' && starts_at >= {:from} && starts_at < {:to}", "", 0, 0, {
-        business, from: pocketBaseDate(startOfLocalDay(from)), to: pocketBaseDate(startOfLocalDay(end)),
+        business, from: pocketBaseDate(startOfLocalDay(from, timezone)), to: pocketBaseDate(startOfLocalDay(end, timezone)),
       }).flatMap((record) => record ? [sessionKey(record.getString("template"), record.getString("starts_at"))] : []));
-    const result = generateSessions({ templates, services, blocks, from, weeks, existingKeys });
+    const result = generateSessions({ templates, services, blocks, from, weeks, existingKeys, timezone });
     skippedExisting = result.skippedExisting;
     skippedBlocked = result.skippedBlocked;
     const collection = tx.findCollectionByNameOrId("class_sessions");

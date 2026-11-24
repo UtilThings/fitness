@@ -2,6 +2,7 @@
 
 import { buildDueReport } from "./payments-due";
 import { addDays } from "./membership-cycles";
+import { getBusinessTimezone } from "./tenant";
 import { utcToLocal } from "./tz";
 
 function expand(app: core.App, records: core.Record[]) {
@@ -21,7 +22,7 @@ function related(record: core.Record) {
 }
 
 export function dueReport(app: core.App, days: number, business: string) {
-  const today = utcToLocal(new Date().toISOString()).date;
+  const today = utcToLocal(new Date().toISOString(), getBusinessTimezone(app, business)).date;
   const end = addDays(today, days + 1);
   // Also include future cycle charges to resolve the next-period flag.
   const payments = app.findRecordsByFilter("payments",

@@ -8,6 +8,7 @@ const slots = [
   [4, "09:00"], [4, "17:30"], [4, "19:00"],
 ] as const;
 const input = {
+  timezone: "America/New_York",
   templates: slots.map(([weekday, start_time], index) => ({
     id: String(index), service: index < 3 ? "jump" : "strength", weekday, start_time,
     duration_min: 60, capacity: index < 3 ? 12 : 6, coach: index === 0 ? "override" : "", active: true,
@@ -44,7 +45,7 @@ test("blocks both bounds and uses local midnights even on the fall transition", 
   for (const date of ["2026-10-26", "2026-10-31", "2026-11-02", "2026-11-03"]) {
     expect(dates).not.toContain(date);
   }
-  expect(blockRangeUtc({ date_from: "2026-11-01", date_to: "2026-11-01" }))
+  expect(blockRangeUtc({ date_from: "2026-11-01", date_to: "2026-11-01" }, input.timezone))
     .toEqual({ from: "2026-11-01T04:00:00.000Z", to: "2026-11-02T05:00:00.000Z" });
 });
 
@@ -53,4 +54,10 @@ test("ignores inactive templates and services", () => {
   const services = new Map(input.services);
   services.set("strength", { active: false, default_coach: "" });
   expect(generateSessions({ ...input, templates, services }).toCreate).toHaveLength(8);
+});
+
+test("generates Bogotá slots at the same civil time across the US clock change", () => {
+  const { toCreate } = generateSessions({ ...input, timezone: "America/Bogota" });
+  expect(toCreate.filter((slot) => slot.template === "0").slice(0, 2).map((slot) => slot.starts_at))
+    .toEqual(["2026-10-27T00:30:00.000Z", "2026-11-03T00:30:00.000Z"]);
 });

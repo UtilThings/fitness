@@ -7,6 +7,9 @@ routerAdd("POST", "/api/admin/sessions/generate", (e) => {
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   const { addLocalDays, startOfLocalDay } = require(`${__hooks}/lib/tz`) as typeof import("../lib/tz");
   const actor = requireScheduleRole(e, ["owner"]);
+  const { getBusinessTimezone } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  const business = e.auth!.getString("business");
+  const timezone = getBusinessTimezone(e.app, business, e);
   const { from, weeks } = e.requestInfo().body;
   if (weeks !== undefined && (typeof weeks !== "number" || !Number.isInteger(weeks) || weeks < 1 || weeks > 12)) {
     throw fieldError("weeks", "Indica entre 1 y 12 semanas.");
@@ -14,13 +17,13 @@ routerAdd("POST", "/api/admin/sessions/generate", (e) => {
   if (from !== undefined) {
     try {
       if (typeof from !== "string") throw new RangeError();
-      startOfLocalDay(addLocalDays(from, (Number(weeks) || 4) * 7));
+      startOfLocalDay(addLocalDays(from, (Number(weeks) || 4) * 7), timezone);
     } catch {
       throw fieldError("from", "Indica una fecha local válida en formato YYYY-MM-DD.");
     }
   }
   const result = inScheduleTransaction(e.app, (tx) => {
-    const generated = persistGeneratedSessions(tx, { weeks, from, actor, business: e.auth!.getString("business") });
+    const generated = persistGeneratedSessions(tx, { weeks, from, actor, business });
     const { created, skipped_existing, skipped_blocked } = generated;
     scheduleAudit(tx, "class_sessions", "", actor, "Sesiones generadas: " + created,
       { created, skipped_existing, skipped_blocked });
@@ -71,7 +74,7 @@ routerAdd("POST", "/api/admin/sessions/{id}/move", (e) => {
   const { isBlocked } = require(`${__hooks}/lib/schedule-gen`) as typeof import("../lib/schedule-gen");
   const { utcToLocal } = require(`${__hooks}/lib/tz`) as typeof import("../lib/tz");
   const actor = requireScheduleRole(e, ["owner", "reception"]);
-  const { tenantRecord } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  const { tenantRecord, getBusinessTimezone } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
   const business = e.auth!.getString("business");
   const id = e.request.pathValue("id");
   const body = e.requestInfo().body;
@@ -91,7 +94,7 @@ routerAdd("POST", "/api/admin/sessions/{id}/move", (e) => {
     const coach = body.coach === undefined ? original.getString("coach") : body.coach;
     if (typeof coach !== "string") throw fieldError("coach", "Selecciona un coach válido.");
     validateCoach(tx, coach, business);
-    const date = utcToLocal(startsAt).date;
+    const date = utcToLocal(startsAt, getBusinessTimezone(tx, business, e)).date;
     const blocks = tx.findRecordsByFilter("schedule_blocks", "business = {:business} && date_from <= {:date} && date_to >= {:date}",
       "", 0, 0, { business, date }).flatMap((block) => block ? [blockDates(block)] : []);
     const duration = original.getInt("duration_min");

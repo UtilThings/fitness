@@ -4,8 +4,9 @@ import { blockDates, fieldError, getRecord, pocketBaseDate, validateCoach } from
 import {
   toMinutes, validateAvailabilitySlots, validatePrivateSession, validateSpecialSession,
 } from "./scheduling";
-import { nyOffsetMinutes, utcToLocal } from "./tz";
+import { offsetMinutes, utcToLocal } from "./tz";
 import { covers, sessionDate } from "./memberships-service";
+import { getBusinessTimezone } from "./tenant";
 import { sessionBookings } from "./booking-store";
 
 const messages: Record<string, string> = {
@@ -82,8 +83,9 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
   }
   const minuteMs = 60_000;
   const endMs = startMs + durationMin * minuteMs;
-  const start = utcToLocal(new Date(startMs).toISOString());
-  const last = utcToLocal(new Date(endMs - 1).toISOString());
+  const timezone = getBusinessTimezone(app, record.getString("business"));
+  const start = utcToLocal(new Date(startMs).toISOString(), timezone);
+  const last = utcToLocal(new Date(endMs - 1).toISOString(), timezone);
   const checkSchedule = coach && record.getString("status") !== "completed";
   const sessions = checkSchedule ? app.findRecordsByFilter("class_sessions",
     "coach = {:coach} && status = 'scheduled' && starts_at > {:earliest} && starts_at < {:end}",
@@ -106,18 +108,27 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
   } else if (!checkSchedule) {
     if (![1, 2].includes(capacity)) throw schedulingError("invalid_capacity");
   } else {
-    const end = utcToLocal(new Date(endMs).toISOString());
+    const end = utcToLocal(new Date(endMs).toISOString(), timezone);
     const startMin = toMinutes(start.time) + (startMs % minuteMs) / minuteMs;
     const endMin = toMinutes(end.time) + (endMs % minuteMs) / minuteMs;
     const slots = coachSlots(app, coach, start.weekday);
-    // The fall DST transition repeats 01:00–02:00. Cover both sides within one slot.
-    const startOffset = nyOffsetMinutes(startMs);
-    const reachesRepeatedHour = startOffset > nyOffsetMinutes(endMs);
-    const occupiesRepeatedHour = startOffset > nyOffsetMinutes(endMs - 1);
+    const startOffset = offsetMinutes(startMs, timezone);
+    const reachesRepeatedHour = startOffset > offsetMinutes(endMs, timezone);
+    const occupiesRepeatedHour = startOffset > offsetMinutes(endMs - 1, timezone);
+    // Find the UTC minute of the backward change to cover both sides within a single slot.
+    let repeatedStart = startMin;
+    if (reachesRepeatedHour) {
+      for (let minute = Math.floor(startMs / minuteMs) + 1; minute * minuteMs <= endMs; minute++) {
+        if (offsetMinutes(minute * minuteMs, timezone) < startOffset) {
+          repeatedStart = toMinutes(utcToLocal(new Date(minute * minuteMs).toISOString(), timezone).time);
+          break;
+        }
+      }
+    }
     error = validatePrivateSession({
       ...input, weekday: start.weekday, slots: end.date === start.date ? slots : [],
-      startMin: occupiesRepeatedHour ? Math.min(startMin, 60) : startMin,
-      endMin: reachesRepeatedHour ? Math.max(endMin, 120) : endMin,
+      startMin: occupiesRepeatedHour ? Math.min(startMin, repeatedStart) : startMin,
+      endMin: reachesRepeatedHour ? Math.max(endMin, repeatedStart + 60) : endMin,
     });
   }
   if (error) throw schedulingError(error.code, error.conflictId);
@@ -125,7 +136,7 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
 
 
 export function hasPartnerMembership(app: core.App, client: string, session: core.Record) {
-  const date = sessionDate(session);
+  const date = sessionDate(session, getBusinessTimezone(app, session.getString("business")));
   return app.findRecordsByFilter("memberships",
     "client = {:client} && status = 'active' && plan.service = {:service} && plan.partner = true",
     "", 0, 0, { client, service: session.getString("service") })

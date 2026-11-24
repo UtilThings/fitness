@@ -21,7 +21,7 @@ onRecordCreateRequest((e) => {
   const { hasPartnerMembership, schedulingError } =
     require(`${__hooks}/lib/scheduling-store`) as typeof import("../lib/scheduling-store");
   const actor = requireBookingStaff(e);
-  const { prepareTenantCreate } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  const { prepareTenantCreate, getBusinessTimezone } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
   prepareTenantCreate(e);
   const requested = e.record!;
   const business = requested.getString("business");
@@ -52,7 +52,7 @@ onRecordCreateRequest((e) => {
       throw schedulingError("partner_required");
     }
     const entitlement = authorizeBooking(tx, client, session, {
-      actor, today: membershipToday(), bookingId: existing?.id, override: !!note, firstVisit: useFreeClass,
+      actor, today: membershipToday(getBusinessTimezone(tx, business, e)), bookingId: existing?.id, override: !!note, firstVisit: useFreeClass,
     });
 
     const next = decideBookingStatus(session.getInt("capacity"), records.map(bookingData));

@@ -1,7 +1,7 @@
 # 010 - [Módulo] Zona horaria en agenda, reservas, membresías y pagos
 
 - **Prioridad:** 10
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 007, 009
 - **Fase:** Fase 2: Zona horaria, moneda y mensajes por business
 
@@ -21,10 +21,10 @@ Consumidores directos de `tz.ts`: `schedule-gen.ts`, `schedule-store.ts`, `sched
 
 ## Criterios de aceptación
 
-- [ ] Un business en `America/Bogota` genera sesiones a la hora local configurada y un business en Nueva York sigue igual que antes.
-- [ ] Ninguno de estos módulos importa la zona por defecto.
-- [ ] Las pruebas existentes de estos módulos pasan sin cambiar sus valores esperados (Nueva York).
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Un business en `America/Bogota` genera sesiones a la hora local configurada y un business en Nueva York sigue igual que antes.
+- [x] Ninguno de estos módulos importa la zona por defecto.
+- [x] Las pruebas existentes de estos módulos pasan sin cambiar sus valores esperados (Nueva York).
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -37,4 +37,4 @@ Consumidores directos de `tz.ts`: `schedule-gen.ts`, `schedule-store.ts`, `sched
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Agenda, disponibilidad, clientes, coaching, reservas, membresías y pagos reciben la zona del negocio. Se cachea la zona en el contexto de petición cuando se necesita. En la instancia con dos negocios, la plantilla de las 10:00 generó 14:00 UTC en Nueva York y 15:00 UTC en Bogotá en junio. Se preservaron los resultados de Nueva York y se añadieron pruebas de disponibilidad y fecha de inicio en Bogotá. Build y 112 pruebas en verde.

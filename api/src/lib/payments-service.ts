@@ -4,7 +4,7 @@ import { chargeForPeriod } from "./payments-due";
 import { formatReceipt, localYear, nextSequence } from "./receipt-number";
 import { auditActor, inScheduleTransaction, scheduleAudit } from "./schedule-store";
 import { utcToLocal } from "./tz";
-import { tenantRecord } from "./tenant";
+import { getBusinessTimezone, tenantRecord } from "./tenant";
 import { requireMembershipRole } from "./memberships-service";
 
 type Body = Record<string, unknown>;
@@ -51,7 +51,7 @@ export function issueReceipt(tx: core.App, year: number, business: string) {
 }
 
 function paidFields(tx: core.App, { method, paidAt, note, business }: Settlement) {
-  const today = utcToLocal(new Date().toISOString()).date;
+  const today = utcToLocal(new Date().toISOString(), getBusinessTimezone(tx, business)).date;
   const date = dateField(paidAt) || today;
   if (date > today) throw new BadRequestError("La fecha de pago no puede ser futura.");
   return {

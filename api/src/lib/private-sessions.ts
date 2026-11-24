@@ -7,7 +7,7 @@ import { membershipToday, requireMembershipRole } from "./memberships-service";
 import { auditActor, fieldError, inScheduleTransaction, pocketBaseDate, scheduleAudit } from "./schedule-store";
 import { privateCapacity } from "./scheduling";
 import { hasPartnerMembership, schedulingError } from "./scheduling-store";
-import { tenantRecord } from "./tenant";
+import { getBusinessTimezone, tenantRecord } from "./tenant";
 import { validateMove } from "./session-rules";
 
 export function privateSessionDraft(app: core.App, body: Record<string, unknown>, business: string) {
@@ -85,7 +85,7 @@ export function createPrivateSession(e: core.RequestEvent) {
     tx.save(session);
     const collection = tx.findCollectionByNameOrId("bookings");
     const now = Date.now();
-    const today = membershipToday();
+    const today = membershipToday(getBusinessTimezone(tx, business, e));
     const bookings = clients.map((client) => {
       const decision = canBook({
         session: { starts_at: session.getString("starts_at"), status: session.getString("status") },
