@@ -1,7 +1,7 @@
 # 004 - [Migración] Campo `business` en clientes, reservas, membresías, pagos y coaching
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 003
 - **Fase:** Fase 1: Fundamentos de datos y aislamiento
 
@@ -22,11 +22,11 @@ Mismo patrón que 003. `clients(email)`, `receipt_sequences(year)` y `payments(r
 
 ## Criterios de aceptación
 
-- [ ] Todas las filas existentes quedan en el business por defecto; ninguna sin `business`.
-- [ ] El mismo email de cliente y el mismo número de recibo pueden existir en dos business y se rechazan dentro de uno.
-- [ ] `receipt_sequences` conserva los contadores actuales del business por defecto.
-- [ ] `down` revierte índices y campos sin perder datos.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Todas las filas existentes quedan en el business por defecto; ninguna sin `business`.
+- [x] El mismo email de cliente y el mismo número de recibo pueden existir en dos business y se rechazan dentro de uno.
+- [x] `receipt_sequences` conserva los contadores actuales del business por defecto.
+- [x] `down` revierte índices y campos sin perder datos.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -40,4 +40,4 @@ Mismo patrón que 003. `clients(email)`, `receipt_sequences(year)` y `payments(r
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+`migrate up` sobre las ocho colecciones con datos asignó el negocio existente y conservó el contador 42. Los índices de cliente, recibo y año aceptaron el mismo valor en otro negocio y rechazaron duplicados internos. `migrate down 1` retiró las relaciones sin borrar filas. Build de hooks y 102 pruebas en verde.
