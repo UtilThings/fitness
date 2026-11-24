@@ -20,6 +20,7 @@ export const paymentStatuses = {
 export type PaymentMethod = keyof typeof paymentMethods;
 export type PaymentStatus = keyof typeof paymentStatuses;
 export interface Payment extends Omit<BaseRecord, 'created'> {
+  currency?: string;
   client: string;
   membership: string;
   plan: string;

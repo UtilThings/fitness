@@ -55,7 +55,11 @@ describe('useAuth', () => {
     });
     const { login, isAuthenticated, user } = useAuth();
     await login('a@b.co', 'secreto123');
-    expect(mocks.authWithPassword).toHaveBeenCalledWith('a@b.co', 'secreto123');
+    expect(mocks.authWithPassword).toHaveBeenCalledWith(
+      'a@b.co',
+      'secreto123',
+      { expand: 'business' },
+    );
     expect(isAuthenticated.value).toBe(true);
     expect(user.value).toEqual({ email: 'a@b.co' });
   });

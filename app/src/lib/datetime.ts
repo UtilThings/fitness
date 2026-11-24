@@ -1,58 +1,67 @@
-export const BUSINESS_TZ = 'America/New_York';
+import { computed } from 'vue';
+import { businessTimezone } from './business-session';
 
 const HOUR_MS = 3_600_000;
 const displayDate = { dateStyle: 'medium' } as const;
 const displayTime = { timeStyle: 'short', hour12: true } as const;
 
-function businessFormatter(options: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat('es-US', {
-    timeZone: BUSINESS_TZ,
+function businessFormatter(
+  options: Intl.DateTimeFormatOptions,
+  locale = 'es-US',
+) {
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: businessTimezone.value,
     ...options,
   });
 }
 
-const dateFormatter = businessFormatter(displayDate);
-const timeFormatter = businessFormatter(displayTime);
-const englishTimeFormatter = new Intl.DateTimeFormat('en-US', {
-  ...displayTime,
-  timeZone: BUSINESS_TZ,
-});
-const dateTimeFormatter = businessFormatter({ ...displayDate, ...displayTime });
-const partsFormatter = new Intl.DateTimeFormat('en-US', {
-  timeZone: BUSINESS_TZ,
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hourCycle: 'h23',
-});
+const dateFormatter = computed(() => businessFormatter(displayDate));
+const timeFormatter = computed(() => businessFormatter(displayTime));
+const englishTimeFormatter = computed(() =>
+  businessFormatter(displayTime, 'en-US'),
+);
+const dateTimeFormatter = computed(() =>
+  businessFormatter({ ...displayDate, ...displayTime }),
+);
+const partsFormatter = computed(() =>
+  businessFormatter(
+    {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    },
+    'en-US',
+  ),
+);
 
 function utcDate(iso: string): Date {
   return new Date(iso.replace(' ', 'T'));
 }
 
 export function formatDate(iso: string): string {
-  return dateFormatter.format(utcDate(iso));
+  return dateFormatter.value.format(utcDate(iso));
 }
 
 export function formatTime(
   iso: string,
   locale: 'es-US' | 'en-US' = 'es-US',
 ): string {
-  return (locale === 'en-US' ? englishTimeFormatter : timeFormatter).format(
-    utcDate(iso),
-  );
+  return (
+    locale === 'en-US' ? englishTimeFormatter : timeFormatter
+  ).value.format(utcDate(iso));
 }
 
 export function formatDateTime(iso: string): string {
-  return dateTimeFormatter.format(utcDate(iso));
+  return dateTimeFormatter.value.format(utcDate(iso));
 }
 
 function instantParts(instant: Date | number) {
   const parts = Object.fromEntries(
-    partsFormatter
+    partsFormatter.value
       .formatToParts(instant)
       .map(({ type, value }) => [type, value]),
   );
@@ -120,14 +129,16 @@ export function addLocalDays(date: string, days: number): string {
   return civilDate.toISOString().slice(0, 10);
 }
 
-const dayFormatter = businessFormatter({
-  weekday: 'long',
-  day: 'numeric',
-  month: 'short',
-});
+const dayFormatter = computed(() =>
+  businessFormatter({
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+  }),
+);
 
 export function formatDayLabel(date: string): string {
-  return dayFormatter.format(utcDate(localToUtcIso(date, '12:00')));
+  return dayFormatter.value.format(utcDate(localToUtcIso(date, '12:00')));
 }
 
 export function localDateRangeToUtc(from: string, through: string) {

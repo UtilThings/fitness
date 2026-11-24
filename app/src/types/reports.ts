@@ -4,7 +4,7 @@ export type ReportPreset = '7d' | '30d' | 'this-month' | 'last-month';
 export type ReportDates = { from: string; to: string };
 
 type ReportRange = ReportDates & {
-  timezone: 'America/New_York';
+  timezone: string;
   start_utc: string;
   end_utc: string;
 };

@@ -1,4 +1,4 @@
-import { formatUsd } from '@/lib/money';
+import { formatMoney } from '@/lib/money';
 import type { Admin, BaseRecord } from '@/types/pb';
 
 export const kindLabel = {
@@ -65,7 +65,7 @@ export type Direction = 'up' | 'down';
 
 export function formatCents(cents: number): string {
   if (cents === 0) return 'Gratis';
-  const price = formatUsd(cents);
+  const price = formatMoney(cents);
   return cents % 100 === 0 ? price.slice(0, -3) : price;
 }
 

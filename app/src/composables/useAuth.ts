@@ -51,7 +51,9 @@ function can(permission: Permission) {
 }
 
 async function login(email: string, password: string) {
-  await pb.collection('admins').authWithPassword(email, password);
+  await pb
+    .collection('admins')
+    .authWithPassword(email, password, { expand: 'business' });
 }
 
 async function requestPasswordReset(email: string) {

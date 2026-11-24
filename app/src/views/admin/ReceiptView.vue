@@ -3,13 +3,13 @@ import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { ref, shallowRef, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
-import logo from '@/assets/jq-logo.png';
+import { useBusiness } from '@/composables/useBusiness';
+import { businessCurrency } from '@/lib/business-session';
 import {
   paymentMethods,
   usePayments,
   type Payment,
 } from '@/composables/usePayments';
-import { business } from '@/lib/business';
 import { fullName } from '@/lib/clients';
 import { formatCivilDate } from '@/lib/datetime';
 import { formatCents } from '@/lib/money';
@@ -18,6 +18,12 @@ import '@/styles/print.css';
 
 const route = useRoute();
 const api = usePayments();
+const {
+  business,
+  logoUrl,
+  loading: businessLoading,
+  error: businessError,
+} = useBusiness();
 const receipt = shallowRef<Payment>();
 const loading = ref(true);
 const error = ref('');
@@ -77,10 +83,13 @@ function printReceipt() {
         @click="printReceipt"
       />
     </nav>
-    <p v-if="loading" role="status">Cargando recibo…</p>
-    <Message v-else-if="error" severity="warn" :closable="false">{{
-      error
-    }}</Message>
+    <p v-if="loading || businessLoading" role="status">Cargando recibo…</p>
+    <Message
+      v-else-if="error || businessError"
+      severity="warn"
+      :closable="false"
+      >{{ error || 'No se pudo cargar el negocio.' }}</Message
+    >
     <article
       v-else-if="receipt"
       class="receipt-document grid gap-6 rounded-lg border border-surface-200 bg-surface-0 p-6 shadow-sm dark:border-surface-700 dark:bg-surface-900 sm:p-8"
@@ -89,10 +98,11 @@ function printReceipt() {
         class="flex items-start justify-between gap-4 border-b border-surface-200 pb-5 dark:border-surface-700"
       >
         <div>
-          <img :src="logo" alt="" class="mb-2 h-10 w-auto" />
-          <p class="font-semibold">{{ business.name }}</p>
-          <p>{{ business.city }}</p>
-          <p v-if="business.contact">{{ business.contact }}</p>
+          <img v-if="logoUrl" :src="logoUrl" alt="" class="mb-2 h-10 w-auto" />
+          <p class="font-semibold">{{ business?.name }}</p>
+          <p>{{ business?.city }}</p>
+          <p v-if="business?.phone">{{ business.phone }}</p>
+          <p v-if="business?.email">{{ business.email }}</p>
         </div>
         <div class="text-right">
           <h1 class="text-xl font-semibold">Recibo de pago</h1>
@@ -126,9 +136,11 @@ function printReceipt() {
           <dd>{{ receipt.method ? paymentMethods[receipt.method] : '—' }}</dd>
         </div>
         <div>
-          <dt class="text-sm font-medium">Monto (USD)</dt>
+          <dt class="text-sm font-medium">
+            Monto ({{ receipt.currency || businessCurrency }})
+          </dt>
           <dd class="text-xl font-semibold">
-            {{ formatCents(receipt.amount_cents) }}
+            {{ formatCents(receipt.amount_cents, receipt.currency) }}
           </dd>
         </div>
       </dl>

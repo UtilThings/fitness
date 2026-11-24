@@ -1,7 +1,7 @@
 # 016 - [Web] Composable `useBusiness` y marca dinámica del admin
 
 - **Prioridad:** 16
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 006, 007
 - **Fase:** Fase 4: Admin multi-tenant
 
@@ -24,12 +24,12 @@ El sidebar, el título del documento y el logo del admin muestran los del busine
 
 ## Criterios de aceptación
 
-- [ ] Dos usuarios de business distintos ven su propio nombre y logo en el sidebar.
-- [ ] El título del documento incluye el nombre del business.
-- [ ] La pantalla de login no muestra el nombre ni el logo de ningún business.
-- [ ] Los importes se formatean con la moneda del business y las fechas con su zona.
-- [ ] No queda `business.ts` ni `VITE_BUSINESS_CONTACT` en la app.
-- [ ] `bun run lint`, `bun run test`, `bun run build` y `vue-tsc` pasan en verde.
+- [x] Dos usuarios de business distintos ven su propio nombre y logo en el sidebar.
+- [x] El título del documento incluye el nombre del business.
+- [x] La pantalla de login no muestra el nombre ni el logo de ningún business.
+- [x] Los importes se formatean con la moneda del business y las fechas con su zona.
+- [x] No queda `business.ts` ni `VITE_BUSINESS_CONTACT` en la app.
+- [x] `bun run lint`, `bun run test`, `bun run build` y `vue-tsc` pasan en verde.
 
 ## Fuera de alcance
 
@@ -42,4 +42,4 @@ El sidebar, el título del documento y el logo del admin muestran los del busine
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+`useBusiness` carga el negocio del login expandido o restaura una sesión anterior, actualiza formatos y limpia la marca al salir. Las pruebas alternan dos negocios y comprueban logo, título, moneda y zona; también cubren respuesta tardía y marca neutral en login. Se retiró el logo incrustado y la variable de contacto; sin logo se muestran iniciales. `verify-app.sh` pasó con 315 pruebas, lint, formato, tipos y build.

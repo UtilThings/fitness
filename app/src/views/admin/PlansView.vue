@@ -29,6 +29,7 @@ import {
   type Plan,
   type PlanForm,
 } from '@/lib/catalog';
+import { businessCurrency } from '@/lib/business-session';
 import { centsToDecimal, parseUsdToCents } from '@/lib/money';
 import type { PbError } from '@/lib/pb-errors';
 
@@ -362,7 +363,7 @@ async function save() {
           <CatalogField
             id="plan-price"
             v-slot="{ describedBy }"
-            label="Precio (USD)"
+            :label="`Precio (${businessCurrency})`"
             :error="fields.price_cents"
           >
             <InputText

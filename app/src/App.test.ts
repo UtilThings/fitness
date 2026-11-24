@@ -79,6 +79,15 @@ it('renders the role-filtered admin menu and the restricted-route fallback', asy
       email: 'admin@example.test',
       role,
       active: true,
+      business: 'test-business',
+      expand: {
+        business: {
+          id: 'test-business',
+          name: 'Test Fitness',
+          currency: 'USD',
+          timezone: 'America/New_York',
+        },
+      },
     });
   }
 

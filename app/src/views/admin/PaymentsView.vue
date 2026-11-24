@@ -298,7 +298,7 @@ onMounted(() => void refreshDue());
       </Column>
       <Column header="Monto">
         <template #body="{ data }">{{
-          formatCents(data.amount_cents)
+          formatCents(data.amount_cents, data.currency)
         }}</template>
       </Column>
       <Column header="Método">

@@ -5,6 +5,7 @@ describe('parseEnv', () => {
   it('acepta una URL válida', () => {
     expect(parseEnv({ VITE_POCKETBASE_URL: 'http://127.0.0.1:8090' })).toEqual({
       pocketbaseUrl: 'http://127.0.0.1:8090',
+      appName: 'Admin',
       primevueLicense: undefined,
     });
   });
@@ -32,13 +33,12 @@ describe('parseEnv', () => {
     );
   });
 
-  it('recorta el contacto público de los recibos', () => {
+  it('permite configurar el nombre neutral del admin', () => {
     const base = { VITE_POCKETBASE_URL: 'http://127.0.0.1:8090' };
-    expect(parseEnv(base).businessContact).toBeUndefined();
+    expect(parseEnv(base).appName).toBe('Admin');
     expect(
-      parseEnv({ ...base, VITE_BUSINESS_CONTACT: ' contacto@example.test ' })
-        .businessContact,
-    ).toBe('contacto@example.test');
+      parseEnv({ ...base, VITE_APP_NAME: ' Administración ' }).appName,
+    ).toBe('Administración');
   });
 
   it('expone la licencia de PrimeVue solo si no está vacía', () => {
