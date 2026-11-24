@@ -13,14 +13,15 @@ run_step bun install --frozen-lockfile
 run_step bun run lint
 run_step bun run format:check
 run_step bun run check
-run_step bun run test
-run_step env PUBLIC_API_URL= bun run build
+site_url="${PUBLIC_SITE_URL:-https://fitness.example.test}"
+run_step env PUBLIC_SITE_URL="$site_url" PUBLIC_API_URL= PUBLIC_BUSINESS_KEY= bun run test
+run_step env PUBLIC_SITE_URL="$site_url" PUBLIC_API_URL= PUBLIC_BUSINESS_KEY= bun run build
 run_step bun run test:dist
 run_step bun run test:build:offline
 
 check_no_lovable() {
   local status=0
-  grep -rail 'lovable' dist || status=$?
+  rg -ail --hidden 'lovable' dist || status=$?
   case "$status" in
     1) return 0 ;;
     0)

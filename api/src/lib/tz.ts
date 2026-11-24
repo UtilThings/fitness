@@ -1,7 +1,7 @@
 const MINUTE_MS = 60_000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
 
-type Zone = { standard: number; rule?: "north-america" | "europe" };
+type Zone = { standard: number; rule?: "north-america" | "europe" | "vancouver" };
 const zones: Record<string, Zone> = {
   UTC: { standard: 0 },
   "America/New_York": { standard: -300, rule: "north-america" },
@@ -10,7 +10,7 @@ const zones: Record<string, Zone> = {
   "America/Los_Angeles": { standard: -480, rule: "north-america" },
   "America/Phoenix": { standard: -420 },
   "America/Toronto": { standard: -300, rule: "north-america" },
-  "America/Vancouver": { standard: -480, rule: "north-america" },
+  "America/Vancouver": { standard: -480, rule: "vancouver" },
   "America/Mexico_City": { standard: -360 },
   "America/Bogota": { standard: -300 },
   "America/Costa_Rica": { standard: -360 },
@@ -54,6 +54,9 @@ export function offsetMinutes(utcMs: number, timezone: string): number {
   const starts = rule === "europe"
     ? civilUtc(year, 2, lastSunday(year, 2), 1)
     : civilUtc(year, 2, sunday(year, 2, 2), 2) - standard * MINUTE_MS;
+  if (rule === "vancouver" && year >= 2026) {
+    return year > 2026 || utcMs >= starts ? daylight : standard;
+  }
   const ends = rule === "europe"
     ? civilUtc(year, 9, lastSunday(year, 9), 1)
     : civilUtc(year, 10, sunday(year, 10, 1), 2) - daylight * MINUTE_MS;

@@ -37,13 +37,13 @@ Los formularios de contacto y coaching usan validación nativa y muestran una co
 
 ## Catálogo y horario
 
-- Durante el build, `/pricing` y las páginas de Personal Training, Group Strength y Tropical Jump leen `GET /api/public/catalog`. Los planes y los horarios semanales de las páginas de servicios quedan en el HTML. Si falta la URL de la API o la consulta falla, el build usa los datos de `src/lib/data.ts`.
+- Durante el build, las páginas leen `GET /api/public/catalog` para el nombre y ciudad del negocio. Las páginas de precios y servicios incluyen los planes, su moneda y los horarios semanales en el HTML. Si falta la URL de la API, la clave es rechazada o la consulta falla, el build usa los datos de `src/lib/data.ts`.
 - Al hidratarse, `PricingGrid` vuelve a consultar el catálogo. Si falla la revalidación, conserva los precios incrustados en el build. Los cambios de precio se reflejan en el navegador cuando vence la caché de la respuesta.
-- `/schedule` consulta `GET /api/public/schedule?week=YYYY-MM-DD` al abrir o cambiar de semana. Las fechas están en la hora de Miramar y los cupos se calculan con las reservas de cada clase. Ante un error, el calendario avisa, permite reintentar y muestra los horarios base con «Consulta disponibilidad».
+- `/schedule` consulta `GET /api/public/schedule?week=YYYY-MM-DD` al abrir o cambiar de semana. Las fechas usan la zona del negocio y los cupos se calculan con las reservas de cada clase. Ante un error, el calendario avisa, permite reintentar y muestra los horarios base con «Consulta disponibilidad».
 
 Astro genera contenido apto para buscadores y Nginx sirve el HTML. Las islas actualizan los datos que cambian con frecuencia, por lo que el sitio puede seguir usando el despliegue estático. Reconstruye la imagen si cambian las páginas, el respaldo local, los horarios incrustados o las variables de build. Los precios que se muestran en el navegador se actualizan mediante la revalidación. Un nuevo build también actualiza los precios incrustados en el HTML.
 
-El contrato de las rutas y la configuración de CORS están en la [guía de la API](../api/README.md#catálogo-y-horario-públicos).
+Las peticiones al catálogo y al horario envían `X-Business-Key` y validan el contrato `version: 2`. Añade el origen del sitio en **Ajustes → Integración** del admin. Consulta la [guía de integración](../docs/multi-tenancy.md#conectar-un-sitio-y-rotar-la-clave).
 
 ## Estructura
 
@@ -67,17 +67,19 @@ Los snapshots y las imágenes de referencia viven en `features/002-web-replica-l
 
 ## Variables de entorno
 
-| Variable                | Uso                                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------------------ |
-| `PUBLIC_SITE_URL`       | URL absoluta del sitio. Obligatoria para compilar. En desarrollo usa `http://localhost:4321` si falta. |
-| `PUBLIC_API_URL`        | URL HTTP(S) base de PocketBase. Opcional. Un valor vacío activa el respaldo local.                     |
-| `PUBLIC_API_TIMEOUT_MS` | Tiempo de espera por solicitud, entero entre 500 y 15000 ms. Predeterminado: 4000.                     |
+| Variable                | Uso                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `PUBLIC_SITE_URL`       | URL absoluta del sitio. Obligatoria para compilar. En desarrollo usa `http://localhost:4321` si falta.       |
+| `PUBLIC_API_URL`        | URL HTTP(S) base de PocketBase. Opcional. Un valor vacío activa el respaldo local.                           |
+| `PUBLIC_BUSINESS_KEY`   | Clave pública del negocio. Obligatoria si se configura `PUBLIC_API_URL`. Visible en los archivos compilados. |
+| `PUBLIC_API_TIMEOUT_MS` | Tiempo de espera por solicitud, entero entre 500 y 15000 ms. Predeterminado: 4000.                           |
 
-Configura las variables en `web/.env` o en el entorno de compilación. Las tres variables son públicas. Docker las recibe como argumentos de build. En `web/deploy.json`, sustituye el valor vacío de `PUBLIC_API_URL` por la URL pública de PocketBase al configurar el despliegue.
+Configura las variables en `web/.env` o en el entorno de compilación. Estas variables son públicas y Docker las recibe como argumentos de build. Para conectar el sitio en el despliegue, establece tanto la URL de PocketBase como la clave pública del negocio en los argumentos del servicio web.
 
 ```bash
 docker build --build-arg PUBLIC_SITE_URL=https://fitness.example.com \
   --build-arg PUBLIC_API_URL=https://api.example.com \
+  --build-arg PUBLIC_BUSINESS_KEY="$PUBLIC_BUSINESS_KEY" \
   --build-arg PUBLIC_API_TIMEOUT_MS=4000 -t jq-fitness-web .
 ```
 
@@ -99,8 +101,8 @@ Ejecuta estos comandos desde `web/`.
 | `bun run test`               | Ejecuta las pruebas unitarias.                                                |
 | `bun run test:watch`         | Vuelve a ejecutar las pruebas al editar.                                      |
 | `bun run test:dist`          | Verifica las rutas compiladas. Ejecuta antes `PUBLIC_API_URL= bun run build`. |
-| `bun run test:build:offline` | Compila con una API inalcanzable y comprueba los precios de respaldo.         |
+| `bun run test:build:offline` | Compila con clave válida, clave rechazada y API inalcanzable.                 |
 
-Desde la raíz del repositorio, ejecuta `scripts/verify-web.sh` después de configurar el entorno. El script instala dependencias con el lockfile congelado, ejecuta lint, formato, tipos y pruebas unitarias. También verifica el HTML compilado sin URL de API y ejecuta un build separado con una API inalcanzable.
+Desde la raíz del repositorio, ejecuta `scripts/verify-web.sh` después de configurar el entorno. El script instala dependencias con el lockfile congelado, ejecuta lint, formato, tipos y pruebas unitarias. También verifica el HTML compilado sin URL de API y ejecuta builds separados con clave válida, clave rechazada y API inalcanzable.
 
-Para revisar el respaldo en el navegador, genera y sirve un build con `PUBLIC_API_URL=http://127.0.0.1:9`. Abre `/pricing` para ver los planes base y `/schedule` para ver el aviso y los horarios sin números de cupos. También puedes detener una instancia local de PocketBase después de compilar con ella para comprobar que la isla de precios conserva los planes iniciales.
+Para revisar el respaldo en el navegador, genera y sirve un build con `PUBLIC_API_URL=http://127.0.0.1:9` y cualquier valor no vacío en `PUBLIC_BUSINESS_KEY`. Abre `/pricing` para ver los planes base y `/schedule` para ver el aviso y los horarios sin números de cupos. También puedes detener una instancia local de PocketBase después de compilar con ella para comprobar que la isla de precios conserva los planes iniciales.

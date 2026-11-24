@@ -1,7 +1,7 @@
 # 021 - [Docs] Documentación y verificación
 
 - **Prioridad:** 21
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 017, 018, 020
 - **Fase:** Fase final: Verificación y cierre
 
@@ -22,10 +22,10 @@ La alta de un business, la integración de un sitio y las reglas de multi-tenanc
 
 ## Criterios de aceptación
 
-- [ ] `docs/multi-tenancy.md` permite a alguien nuevo dar de alta un business y conectar un sitio sin ayuda.
-- [ ] Los README no mencionan variables retiradas.
-- [ ] `scripts/verify-mvp.sh` termina en verde.
-- [ ] Todos los criterios del spec están marcados y verificados.
+- [x] `docs/multi-tenancy.md` permite a alguien nuevo dar de alta un business y conectar un sitio sin ayuda.
+- [x] Los README no mencionan variables retiradas.
+- [x] `scripts/verify-mvp.sh` termina en verde.
+- [x] Todos los criterios del spec están marcados y verificados.
 
 ## Fuera de alcance
 
@@ -38,4 +38,4 @@ La alta de un business, la integración de un sitio y las reglas de multi-tenanc
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Se documentaron el alta del negocio y su primer owner, la política de moneda y zona, la numeración y la integración pública. Los README reflejan las variables vigentes. `verify-mvp.sh` pasó API, admin y Astro, incluido el verificador de 19 colecciones y los builds con clave válida, rechazada y API caída. Una prueba adicional dio de alta un negocio en PocketBase, abrió su sesión, rotó su clave y compiló el sitio con su nombre y precios en COP. Se verificaron y marcaron los 11 criterios del spec.

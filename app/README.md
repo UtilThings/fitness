@@ -1,6 +1,6 @@
-# JQ Fitness app
+# Admin de negocios
 
-SPA de JQ Fitness con Vite, Vue 3, TypeScript, PrimeVue (tema Aura), Tailwind CSS v4 y el SDK de PocketBase.
+SPA de administración de negocios con Vite, Vue 3, TypeScript, PrimeVue (tema Aura), Tailwind CSS v4 y el SDK de PocketBase.
 
 ## Requisitos e instalación
 
@@ -22,7 +22,8 @@ Abre http://localhost:5173. Sin sesión, `/` redirige a `/login`.
 | Variable                | Obligatoria | Descripción                                                                   |
 | ----------------------- | ----------- | ----------------------------------------------------------------------------- |
 | `VITE_POCKETBASE_URL`   | Sí          | URL base de PocketBase, sin barra final (por defecto `http://127.0.0.1:8090`) |
-| `VITE_BUSINESS_CONTACT` | No          | Contacto público que figura en la cabecera de los recibos.                    |
+| `VITE_APP_NAME`         | No          | Nombre en el inicio de sesión. Usa `Admin` por defecto.                       |
+| `VITE_PRIMEVUE_LICENSE` | No          | Clave de licencia de PrimeVue.                                                |
 
 Solo `src/lib/env.ts` lee `import.meta.env`. Las variables `VITE_*` llegan al navegador: nunca pongas secretos en ellas.
 
@@ -52,7 +53,7 @@ src/
   router/       rutas, guard y safeRedirect
   styles/       main.css (Tailwind + tailwindcss-primeui)
   types/        tipos TypeScript de las colecciones
-  views/        vistas por área: auth/, admin/ y errores de navegación
+  views/        vistas por área: auth/, admin/, settings/ y errores de navegación
 ```
 
 ## Convenciones
@@ -68,8 +69,8 @@ src/
 
 Los layouts son rutas padre con `<RouterView />`; las vistas solo aportan su contenido.
 
-- `AuthLayout`: tarjeta centrada con el logo. Cada vista pone su título con `AuthHeading`. Rutas: `/login`, `/forgot-password`.
-- `AdminLayout`: barra lateral flotante (`Sidebar*` de PrimeVue 5), cabecera con el título de `route.meta.title` y menú de usuario. En escritorio se colapsa a iconos; por debajo de 768 px es un panel superpuesto. Protege todas sus hijas (`meta.requiresAuth`).
+- `AuthLayout`: tarjeta centrada con el nombre neutral de la app. Cada vista pone su título con `AuthHeading`. Rutas: `/login`, `/forgot-password`.
+- `AdminLayout`: barra lateral flotante (`Sidebar*` de PrimeVue 5) con nombre y logo del negocio, cabecera y menú de usuario. El título del documento incluye el nombre del negocio. En escritorio se colapsa a iconos; por debajo de 768 px es un panel superpuesto. Protege todas sus hijas (`meta.requiresAuth`).
 
 ### Agregar una vista de auth
 
@@ -122,7 +123,14 @@ Usa `total`, `page` y `perPage` para paginar con `setPage`. `setSort` y `search`
 
 Usa `StatusTag` para asociar cada estado a `{ label, severity }`. En el botón de borrado, llama a `useConfirmDelete().confirmDelete({ message, onConfirm })` y ejecuta `remove(id)` dentro de `onConfirm`. `create` y `update` devuelven el registro y `remove` devuelve la confirmación booleana del SDK. Las tres operaciones recargan la lista tras una escritura exitosa. En caso de rechazo, muestra `error.fields` junto a los campos y usa `useNotify()` para el aviso de éxito o error.
 
-Para mostrar fechas de PocketBase, usa `formatDateTime(iso)` de `datetime.ts`. Convierte la fecha y hora local de un formulario con `localToUtcIso(date, time)` antes de guardar. La zona del negocio es `America/New_York`. Guarda importes en centavos, muéstralos con `formatUsd(cents)` y valida la entrada con `parseUsdToCents(text)`, que devuelve `null` si es inválida.
+Para mostrar fechas de PocketBase, usa `formatDateTime(iso)` de `datetime.ts`. Convierte la fecha y hora local de un formulario con `localToUtcIso(date, time)` antes de guardar. La app usa la zona y moneda de `useBusiness`. Guarda importes en centavos, muéstralos con `formatMoney(cents)` y valida la entrada con `parseToCents(text)`, que devuelve `null` si es inválida.
+
+## Ajustes del negocio
+
+- **Negocio** (`/settings/business`) permite al owner editar nombre, logo, ciudad, teléfono y correo. La moneda, la zona horaria y el prefijo de recibos se consultan en solo lectura. Si falta un logo, el menú usa las iniciales.
+- **Integración** (`/settings/integration`) permite al owner guardar los orígenes permitidos y generar o rotar la clave de un sitio público. Copia la clave desde el diálogo y actualiza la configuración del sitio. Consulta la [guía de integración](../docs/multi-tenancy.md#conectar-un-sitio-y-rotar-la-clave).
+
+El login pide `expand=business`. `useBusiness` carga la marca de la sesión y la limpia al salir. Los avatares de equipo usan un token de archivo de PocketBase.
 
 ## Equipo y perfil
 
@@ -140,7 +148,7 @@ onMounted(loadCoaches);
 ## Catálogo
 
 - **Servicios** (`/services`) está en **Ajustes**. Desde allí se consultan los cupos, el coach por defecto y la política de cancelación. El owner puede crear, editar, mover y desactivar servicios. El cuadro de confirmación muestra cuántos planes activos se desactivarán también.
-- **Planes** (`/plans`) está en **Catálogo**. El filtro por servicio queda en la URL y las flechas cambian el orden dentro de ese servicio. El formulario recibe el precio en dólares, por ejemplo `1447.25`, y guarda `144725` centavos USD. Marcar **Primera clase** fija el precio en cero y la unidad en **Primera visita**.
+- **Planes** (`/plans`) está en **Catálogo**. El filtro por servicio queda en la URL y las flechas cambian el orden dentro de ese servicio. El formulario recibe el precio en la moneda del negocio, por ejemplo `1447.25`, y guarda `144725` centavos. Marcar **Primera clase** fija el precio en cero y la unidad en **Primera visita**.
 - **Coach** y **reception** tienen acceso de lectura. Cuando un registro tiene dependientes, el owner puede desactivarlo y conservar su historial.
 
 Ejecuta `scripts/verify-app.sh` desde la raíz para correr las pruebas de las vistas, los composables y las validaciones del catálogo junto con las demás comprobaciones de la app.
@@ -229,9 +237,9 @@ La entrega de planes, el portal del cliente, las fotos y las medidas de progreso
 
 - **Facturación → Pagos** (`/payments`) permite a owner y reception registrar un cobro, marcarlo como pagado, anularlo con motivo y abrir su recibo. La vista combina filtros de estado, método, cliente, fechas y **Solo vencidos**. El rango incluye ambos días y usa la fecha de pago cuando existe o el vencimiento para los demás cobros.
 - **Clientes → Pagos** muestra el historial del cliente y sus totales de pagos, pendientes y vencidos. **Registrar pago** abre el formulario con ese cliente seleccionado. **Ver en Pagos** aplica el filtro de cliente en el listado general.
-- **Recibo** (`/receipts/:id`) muestra el número, fecha, cliente, concepto, método, importe y la marca **ANULADO** cuando corresponde. **Imprimir** abre el diálogo del navegador con una hoja carta sin controles de navegación. Configura `VITE_BUSINESS_CONTACT` para imprimir el contacto público del negocio.
+- **Recibo** (`/receipts/:id`) muestra el número, fecha, cliente, concepto, método, importe y la marca **ANULADO** cuando corresponde. **Imprimir** abre el diálogo del navegador con una hoja carta sin controles de navegación. El recibo muestra la marca y el contacto configurados en Ajustes → Negocio.
 
-`usePayments` consulta la colección de pagos y usa rutas de servicio para registrar, liquidar y anular. `usePaymentsDue` consulta los vencimientos que usan Pagos y el dashboard. Los diálogos y estados compartidos viven en `src/components/payments/`. `src/lib/money.ts` formatea centavos USD y acepta coma o punto decimal en la captura.
+`usePayments` consulta la colección de pagos y usa rutas de servicio para registrar, liquidar y anular. `usePaymentsDue` consulta los vencimientos que usan Pagos y el dashboard. Los diálogos y estados compartidos viven en `src/components/payments/`. `src/lib/money.ts` formatea centavos en la moneda del negocio y acepta coma o punto decimal en la captura.
 
 ## Dashboard operativo
 
@@ -247,7 +255,7 @@ Un owner activo abre **Ajustes → Auditoría** (`/audit`). La vista consulta 25
 
 En **Análisis → Reportes**, el equipo activo puede consultar Ocupación, Asistencia y Retención. La pestaña Ingresos está disponible para owner. Si un coach o un usuario de recepción abre `/reports?tab=revenue`, la vista muestra un aviso y evita la petición de ingresos. La API aplica el mismo permiso.
 
-El rango se interpreta en hora de Miramar, Florida (`America/New_York`). Selecciona las fechas o un preset. Ocupación, Asistencia e Ingresos admiten el filtro de servicio. Ingresos y Retención permiten agrupar por día, semana o mes. Cada pestaña presenta totales, un gráfico y un selector de detalle. PrimeVue Chart y Chart.js se cargan de forma diferida al mostrar un gráfico en esta ruta.
+El rango se interpreta en la zona del negocio. Selecciona las fechas o un preset. Ocupación, Asistencia e Ingresos admiten el filtro de servicio. Ingresos y Retención permiten agrupar por día, semana o mes. Cada pestaña presenta totales, un gráfico y un selector de detalle. PrimeVue Chart y Chart.js se cargan de forma diferida al mostrar un gráfico en esta ruta.
 
 **Exportar CSV** descarga las columnas del detalle seleccionado y todas sus filas filtradas. El archivo usa BOM UTF-8, separadores de coma y finales de línea CRLF. Las comillas internas se duplican y los textos que podrían interpretarse como fórmulas se prefijan con un apóstrofo. Los importes se exportan en dólares decimales con punto.
 

@@ -1,6 +1,6 @@
 # Especificación: Multi-tenancy por `business`
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -53,7 +53,7 @@ Contrato que deja a las siguientes features: toda colección nueva debe llevar `
 | Operación | Quién |
 |-----------|-------|
 | `list` / `view` | Staff activo del propio business (`id = @request.auth.business`) |
-| `update` | Owner activo del propio business, solo campos de marca y contacto (ver modelo) |
+| `update` | Owner activo del propio business, campos de marca, contacto y orígenes (ver modelo) |
 | `create` / `delete` | Solo superusuario (`null`) |
 
 ### Rutas admin nuevas
@@ -150,7 +150,7 @@ El resto del cuerpo (`services`, `plans`, `weekly_times`; `sessions` en `schedul
 
 | Condición | Respuesta |
 |-----------|-----------|
-| Falta `X-Business-Key` o es inválida, o el business está inactivo | `401` `{ "message": "Clave de API inválida" }` (mismo mensaje y tiempo en ambos casos) |
+| Falta `X-Business-Key` o es inválida, o el business está inactivo | `401` `{ "message": "Clave de API inválida" }` (mismo cuerpo en todos los casos y comparación de hashes en tiempo constante) |
 | Origen no permitido por el business | Respuesta normal sin cabeceras CORS |
 | `week` mal formado o fuera de rango | `400`, igual que en 019 |
 | Error interno | `500` genérico |
@@ -209,7 +209,7 @@ Las demás unicidades (`plans(service, name)`, `class_templates(service, weekday
 ### Fase 1: Fundamentos de datos y aislamiento (Tareas 001-008)
 
 **001 - Verificación de PocketBase y decisiones técnicas**
-- Comprueba lo listado en la «Verificación obligatoria previa» y deja los hallazgos en la sección de notas de la tarea y en `docs/multi-tenancy.md` (borrador).
+- Comprueba el comportamiento de PocketBase 0.40.5 y deja los hallazgos en la sección de notas de la tarea y en `docs/multi-tenancy.md` (borrador).
 
 **002 - Colección `businesses` y business por defecto**
 - Migración que crea `businesses` y siembra el business por defecto con `STUDIO_NAME`/`STUDIO_PHONE` (o `JQ Fitness`), `America/New_York`, `USD`, `JQ`.
@@ -362,7 +362,7 @@ Las demás unicidades (`plans(service, name)`, `class_templates(service, weekday
 ### Seguridad
 - La clave completa no se guarda, no se registra y no se audita; `public_key_hash` es oculto y nunca sale en respuestas ni en `audit_logs`.
 - Comparación de hash en tiempo constante; respuesta `401` idéntica ante clave inexistente, rotada o business inactivo.
-- Los archivos del logo son públicos por diseño; ninguna otra colección usa campos `file` públicos.
+- Los logos de negocios son públicos. Los avatares del equipo requieren un token de archivo y acceso al registro de su negocio.
 - `allowed_origins` sin comodines; la API pública es de solo lectura y sin datos personales.
 - Los superusuarios acceden a todo; se documenta que nunca deben usarse desde la app.
 
@@ -385,17 +385,19 @@ Las demás unicidades (`plans(service, name)`, `class_templates(service, weekday
 
 ## Criterios de Aceptación
 
-- [ ] Existe `businesses` y todas las colecciones de dominio tienen `business` requerido; los datos actuales pertenecen al business por defecto sin pérdida.
-- [ ] Con dos business, ningún usuario lista, lee, edita ni borra registros del otro, en ninguna colección ni ruta `/api/admin/*`.
-- [ ] Un cuerpo con `business` ajeno al crear se ignora; cambiar `business` en una edición se rechaza; las relaciones cruzadas entre business se rechazan.
-- [ ] Las unicidades (`slug`, `email` de cliente, plantillas, recibos) son por business.
-- [ ] Horarios, reportes, dashboard, crons, recibos y mensajes usan la zona, moneda, prefijo y datos de contacto del business propio.
-- [ ] El sidebar, el título del documento y el logo del admin muestran los del business del usuario; el owner edita nombre, logo, ciudad y contacto; moneda, zona y prefijo son de solo lectura.
-- [ ] El owner genera/rota la clave pública (se muestra una sola vez) y configura orígenes; la clave anterior deja de funcionar.
-- [ ] `GET /api/public/catalog` y `/schedule` responden `401` sin clave o con clave inválida; con clave válida solo devuelven datos del business y CORS solo para sus orígenes.
-- [ ] `web/` funciona con `PUBLIC_BUSINESS_KEY` y conserva su respaldo estático si la API falla o la clave es inválida.
-- [ ] `docs/multi-tenancy.md` y `scripts/verify-tenancy.ts` existen y los scripts de verificación terminan en verde.
-- [ ] `bun run build:ts` y `bun test` (api), y `lint`, `typecheck`/`check`, `test` y `build` (app y web) terminan en verde.
+- [x] Existe `businesses` y todas las colecciones de dominio tienen `business` requerido; los datos actuales pertenecen al business por defecto sin pérdida.
+- [x] Con dos business, ningún usuario lista, lee, edita ni borra registros del otro, en ninguna colección ni ruta `/api/admin/*`.
+- [x] Un cuerpo con `business` ajeno al crear se ignora; cambiar `business` en una edición se rechaza; las relaciones cruzadas entre business se rechazan.
+- [x] Las unicidades (`slug`, `email` de cliente, plantillas, recibos) son por business.
+- [x] Horarios, reportes, dashboard, crons, recibos y mensajes usan la zona, moneda, prefijo y datos de contacto del business propio.
+- [x] El sidebar, el título del documento y el logo del admin muestran los del business del usuario; el owner edita nombre, logo, ciudad y contacto; moneda, zona y prefijo son de solo lectura.
+- [x] El owner genera/rota la clave pública (se muestra una sola vez) y configura orígenes; la clave anterior deja de funcionar.
+- [x] `GET /api/public/catalog` y `/schedule` responden `401` sin clave o con clave inválida; con clave válida solo devuelven datos del business y CORS solo para sus orígenes.
+- [x] `web/` funciona con `PUBLIC_BUSINESS_KEY` y conserva su respaldo estático si la API falla o la clave es inválida.
+- [x] `docs/multi-tenancy.md` y `scripts/verify-tenancy.ts` existen y los scripts de verificación terminan en verde.
+- [x] `bun run build:ts` y `bun test` (api), y `lint`, `typecheck`/`check`, `test` y `build` (app y web) terminan en verde.
+
+La verificación incluyó migraciones con datos anteriores, 19 colecciones con dos negocios, detección de una regla eliminada, rutas públicas y administrativas, crons y archivos protegidos. `scripts/verify-mvp.sh` terminó en verde para API, admin y Astro. Además, un build de Astro consumió PocketBase 0.40.5 con un negocio recién creado, su clave pública y precios en COP. Consulta el [procedimiento y la evidencia de configuración](../../docs/multi-tenancy.md).
 
 ---
 
