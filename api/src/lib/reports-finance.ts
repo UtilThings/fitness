@@ -1,5 +1,5 @@
 import { reportRate } from "./reports-attendance";
-import { bucketKey, listBuckets, localBucketKey, type GroupBy, type ReportRange } from "./reports-range";
+import { ReportRangeError, bucketKey, listBuckets, localBucketKey, type GroupBy, type ReportRange } from "./reports-range";
 
 export type ReportPlan = { id: string; name: string; service: string };
 export type ReportService = { id: string; name: string; slug: string };
@@ -8,6 +8,8 @@ export type ReportPayment = {
   status: string;
   amount_cents: number;
   paid_at: string;
+  paid_on?: string;
+  currency: string;
   // For unpaid payments, the local due date or local void date.
   reference_on?: string;
 };
@@ -20,7 +22,7 @@ function revenueCounts() {
 
 export function aggregateRevenue(
   payments: ReportPayment[], plans: ReportPlan[], services: ReportService[],
-  { service, range, groupBy }: PeriodOptions & { service?: string },
+  { service, range, groupBy, currency }: PeriodOptions & { service?: string; currency: string },
 ) {
   const planIndex = new Map(plans.map((plan) => [plan.id, plan]));
   const serviceIndex = new Map(services.map((entry) => [entry.id, entry]));
@@ -32,10 +34,10 @@ export function aggregateRevenue(
   const end = Date.parse(range.end_utc);
 
   for (const payment of payments) {
-    const { status, amount_cents, paid_at, reference_on } = payment;
+    const { status, amount_cents, paid_at, paid_on, reference_on } = payment;
     if (status === "paid") {
       const paidAt = Date.parse(paid_at);
-      if (!(paidAt >= start && paidAt < end)) continue;
+      if (paid_on ? paid_on < range.from || paid_on > range.to : !(paidAt >= start && paidAt < end)) continue;
     } else if (
       (status !== "pending" && status !== "void") || !reference_on || reference_on < range.from || reference_on > range.to
     ) {
@@ -45,6 +47,7 @@ export function aggregateRevenue(
     const plan = planIndex.get(payment.plan);
     const relatedService = plan && serviceIndex.get(plan.service);
     if (service && service !== relatedService?.slug) continue;
+    if (payment.currency !== currency) throw new ReportRangeError("El rango incluye pagos en otra moneda.");
     const planId = plan?.id ?? "";
     const slug = relatedService?.slug ?? "";
     const planRow = countsByPlan.get(planId) ?? { plan: planId, name: plan?.name ?? "Sin plan", ...revenueCounts() };
@@ -59,7 +62,7 @@ export function aggregateRevenue(
     countsByPlan.set(planId, planRow);
     countsByService.set(slug, serviceRow);
     if (status === "paid") {
-      const period = periods.get(bucketKey(paid_at, groupBy, range.timezone))!;
+      const period = periods.get(paid_on ? localBucketKey(paid_on, groupBy) : bucketKey(paid_at, groupBy, range.timezone))!;
       period.paid_cents += amount_cents;
       period.payments++;
     }

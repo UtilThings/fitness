@@ -4,7 +4,7 @@ import { chargeForPeriod } from "./payments-due";
 import { formatReceipt, localYear, nextSequence } from "./receipt-number";
 import { auditActor, inScheduleTransaction, scheduleAudit } from "./schedule-store";
 import { utcToLocal } from "./tz";
-import { getBusinessTimezone, tenantRecord } from "./tenant";
+import { getBusiness, getBusinessTimezone, tenantRecord } from "./tenant";
 import { requireMembershipRole } from "./memberships-service";
 
 type Body = Record<string, unknown>;
@@ -40,11 +40,11 @@ function methodField(value: unknown, required: boolean) {
   return method;
 }
 
-export function issueReceipt(tx: core.App, year: number, business: string) {
+export function issueReceipt(tx: core.App, year: number, business: string, prefix: string) {
   const [existing] = tx.findRecordsByFilter("receipt_sequences", "business = {:business} && year = {:year}", "", 1, 0, { business, year });
   const sequence = existing ?? new Record(tx.findCollectionByNameOrId("receipt_sequences"), { business, year });
   const next = nextSequence(sequence.getInt("last_seq"));
-  const number = formatReceipt(year, next);
+  const number = formatReceipt(prefix, year, next);
   sequence.set("last_seq", next);
   tx.save(sequence);
   return number;
@@ -57,7 +57,7 @@ function paidFields(tx: core.App, { method, paidAt, note, business }: Settlement
   return {
     status: "paid", method: methodField(method, true), paid_at: date,
     ...(note !== undefined && { note: textField(note) }),
-    receipt_number: issueReceipt(tx, localYear(date), business),
+    receipt_number: issueReceipt(tx, localYear(date), business, getBusiness(tx, business)!.getString("receipt_prefix")),
   };
 }
 
@@ -100,7 +100,7 @@ export function createPayment(app: core.App, body: Body, recordedBy: string, bus
     }
 
     const payment = new Record(tx.findCollectionByNameOrId("payments"), {
-      business, client, membership, plan: plan || related?.getString("plan") || "", amount_cents, status, due_on, note,
+      business, currency: getBusiness(tx, business)!.getString("currency"), client, membership, plan: plan || related?.getString("plan") || "", amount_cents, status, due_on, note,
       method: methodField(body.method, status === "paid"), recorded_by: recordedBy,
     });
     if (status === "paid") payment.load(paidFields(tx, { method: body.method, paidAt: body.paid_at, recordedBy, business }));
@@ -166,7 +166,8 @@ export function ensurePendingCharge(app: core.App, membership: core.Record) {
     if (!actor) return; // Legacy records and system updates can have no staff actor.
 
     const payment = new Record(tx.findCollectionByNameOrId("payments"), {
-      ...charge, business: membership.getString("business"), client: membership.getString("client"), membership: membershipId,
+      ...charge, business: membership.getString("business"),
+      currency: getBusiness(tx, membership.getString("business"))!.getString("currency"), client: membership.getString("client"), membership: membershipId,
       plan: planId, recorded_by: actor, status: "pending",
     });
     auditActor(payment, actor);

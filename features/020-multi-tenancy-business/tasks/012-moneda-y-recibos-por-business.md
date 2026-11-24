@@ -1,7 +1,7 @@
 # 012 - [Módulo] Moneda y recibos por business
 
 - **Prioridad:** 12
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 007, 010, 011
 - **Fase:** Fase 2: Zona horaria, moneda y mensajes por business
 
@@ -22,10 +22,10 @@ Los recibos usan el prefijo y la secuencia del business, y los importes se expon
 
 ## Criterios de aceptación
 
-- [ ] Dos business emiten el recibo n.º 1 de su año sin colisión y con su propio prefijo.
-- [ ] Los recibos existentes siguen validando y no cambian.
-- [ ] Las respuestas de pagos y reportes incluyen `currency`.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Dos business emiten el recibo n.º 1 de su año sin colisión y con su propio prefijo.
+- [x] Los recibos existentes siguen validando y no cambian.
+- [x] Las respuestas de pagos y reportes incluyen `currency`.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -38,4 +38,4 @@ Los recibos usan el prefijo y la secuencia del business, y los importes se expon
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+La instancia local emitió `JQ-2026-000001` y `NF-2026-000001` usando secuencias independientes. Los pagos y reportes devolvieron USD y COP respectivamente, y el reporte del día incluyó el pago registrado en esa fecha. Se guardó la moneda en pagos y se rellenó la de las filas históricas sin modificar sus números de recibo. La agregación rechaza monedas distintas a la del reporte. Build y 118 pruebas en verde.

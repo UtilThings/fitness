@@ -5,7 +5,7 @@ import { aggregateAttendance, aggregateOccupancy } from "./reports-attendance";
 import { aggregateRetention, aggregateRevenue, type ReportPlan } from "./reports-finance";
 import { parseRange, rangeDays, ReportRangeError, utcToLocalParts } from "./reports-range";
 import { pocketBaseDate } from "./schedule-store";
-import { getBusinessTimezone } from "./tenant";
+import { getBusiness } from "./tenant";
 import { addLocalDays } from "./tz";
 
 type Kind = "occupancy" | "attendance" | "revenue" | "retention";
@@ -34,7 +34,9 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
 
   const query = e.request.url.query();
   const business = e.auth!.getString("business");
-  const timezone = getBusinessTimezone(e.app, business, e);
+  const settings = getBusiness(e.app, business)!;
+  const timezone = settings.getString("timezone");
+  const currency = settings.getString("currency");
   const range = parseRange(query.get("from"), query.get("to"), timezone);
   const groupBy = query.has("group_by") ? query.get("group_by") : "month";
   if (groupBy !== "day" && groupBy !== "week" && groupBy !== "month") {
@@ -55,7 +57,7 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
   const end = pocketBaseDate(range.end_utc);
   const dateFrom = range.from + " 00:00:00.000Z";
   const dateEnd = addLocalDays(range.to, 1) + " 00:00:00.000Z";
-  const opts = { range, service, groupBy, timezone } as const;
+  const opts = { range, service, groupBy, timezone, currency } as const;
 
   if (kind === "occupancy" || kind === "attendance") {
     const params = selected ? { business, start, end, service: selected.id } : { business, start, end };
@@ -76,14 +78,14 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
       session: record.getString("session"), status: record.getString("status"),
     })) : [];
     return {
-      range,
+      range, currency,
       ...(kind === "occupancy" ? aggregateOccupancy(sessions, bookings, opts) : aggregateAttendance(sessions, bookings, { service, timezone })),
     };
   }
 
   if (kind === "revenue") {
     const entries = records(app, "payments",
-      "(status = 'paid' && paid_at >= {:start} && paid_at < {:end}) || " +
+      "(status = 'paid' && ((paid_at >= {:start} && paid_at < {:end}) || (paid_at >= {:dateFrom} && paid_at < {:dateEnd}))) || " +
       "((status = 'pending' || status = 'void') && due_on >= {:dateFrom} && due_on < {:dateEnd}) || " +
       "(status = 'void' && due_on = '' && voided_at >= {:start} && voided_at < {:end})",
       { business, start, end, dateFrom, dateEnd });
@@ -101,14 +103,17 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
           });
         }
       }
+      const paidAt = isoField(record, "paid_at");
+      // The payments route stores a chosen civil date at UTC midnight.
+      const paidOn = paidAt.endsWith("T00:00:00.000Z") ? paidAt.slice(0, 10) : undefined;
       const voidedAt = isoField(record, "voided_at");
       const reference_on = record.getString("due_on").slice(0, 10) || (voidedAt ? utcToLocalParts(voidedAt, timezone).date : "");
       return {
         plan: record.getString("plan"), status: record.getString("status"),
-        paid_at: isoField(record, "paid_at"), amount_cents: record.getInt("amount_cents"), reference_on,
+        paid_at: paidAt, paid_on: paidOn, currency: record.getString("currency"), amount_cents: record.getInt("amount_cents"), reference_on,
       };
     });
-    return { range, ...aggregateRevenue(payments, [...plans.values()], [...services.values()], opts) };
+    return { range, currency, ...aggregateRevenue(payments, [...plans.values()], [...services.values()], opts) };
   }
 
   const entries = records(app, "memberships",
@@ -124,7 +129,7 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
       starts_on: record.getString("starts_on").slice(0, 10), ended_on: record.getString("ended_on").slice(0, 10),
     };
   });
-  return { range, ...aggregateRetention(memberships, [...plans.values()], opts) };
+  return { range, currency, ...aggregateRetention(memberships, [...plans.values()], opts) };
 }
 
 function planData(plan: core.Record): ReportPlan {
