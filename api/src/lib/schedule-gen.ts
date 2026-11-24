@@ -38,8 +38,8 @@ export function isBlocked(date: string, blocks: readonly ScheduleBlockDates[]): 
   return blocks.some((block) => block.date_from <= date && date <= block.date_to);
 }
 
-export function blockRangeUtc(block: ScheduleBlockDates): { from: string; to: string } {
-  return { from: startOfLocalDay(block.date_from), to: startOfLocalDay(addLocalDays(block.date_to, 1)) };
+export function blockRangeUtc(block: ScheduleBlockDates, timezone: string): { from: string; to: string } {
+  return { from: startOfLocalDay(block.date_from, timezone), to: startOfLocalDay(addLocalDays(block.date_to, 1), timezone) };
 }
 
 export function sessionKey(template: string, startsAt: string): string {
@@ -47,6 +47,7 @@ export function sessionKey(template: string, startsAt: string): string {
 }
 
 export function generateSessions(input: {
+  timezone: string;
   templates: readonly Template[];
   services: ReadonlyMap<string, Service>;
   blocks: readonly ScheduleBlockDates[];
@@ -54,7 +55,7 @@ export function generateSessions(input: {
   weeks: number;
   existingKeys: ReadonlySet<string>;
 }) {
-  const { templates, services, blocks, from, weeks, existingKeys } = input;
+  const { templates, services, blocks, from, weeks, existingKeys, timezone } = input;
   const toCreate: GeneratedSession[] = [];
   let skippedExisting = 0;
   let skippedBlocked = 0;
@@ -69,7 +70,7 @@ export function generateSessions(input: {
         skippedBlocked++;
         continue;
       }
-      const starts_at = localToUtc(date, template.start_time);
+      const starts_at = localToUtc(date, template.start_time, timezone);
       if (existingKeys.has(sessionKey(template.id, starts_at))) {
         skippedExisting++;
         continue;

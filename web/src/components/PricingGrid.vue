@@ -1,22 +1,29 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { getCatalog, type PlanGroup } from '@/lib/catalog';
-import { formatPrice, type Plan } from '@/lib/data';
+import { fallbackBusiness, formatPrice, type Plan } from '@/lib/data';
 import { env } from '@/lib/env';
 import { useLang } from '@/lib/use-lang';
 
 const props = withDefaults(
   defineProps<{
     plans: Plan[];
+    currency?: string;
     group: PlanGroup;
     cta?: string;
     to?: string;
     featuredIndex?: number;
   }>(),
-  { cta: 'Inquire now', to: '/contact', featuredIndex: -1 },
+  {
+    cta: 'Inquire now',
+    to: '/contact',
+    featuredIndex: -1,
+    currency: fallbackBusiness.currency,
+  },
 );
 
 const plans = ref(props.plans);
+const currency = ref(props.currency);
 const updating = ref(false);
 const { lang } = useLang();
 
@@ -24,7 +31,10 @@ onMounted(async () => {
   if (!env.PUBLIC_API_URL) return;
   updating.value = true;
   const catalog = await getCatalog();
-  if (catalog.source === 'api') plans.value = catalog[props.group];
+  if (catalog.source === 'api') {
+    plans.value = catalog[props.group];
+    currency.value = catalog.business.currency;
+  }
   updating.value = false;
 });
 </script>
@@ -44,7 +54,7 @@ onMounted(async () => {
       >
       <h3 class="text-2xl">{{ plan.name }}</h3>
       <p class="mt-4 font-display text-5xl text-primary">
-        {{ formatPrice(plan.price) }}
+        {{ formatPrice(plan.price, currency) }}
       </p>
       <p class="text-sm text-muted-foreground">{{ plan.unit }}</p>
       <ul class="my-6 space-y-2 text-sm">

@@ -36,26 +36,26 @@ export function reminderTargets<T extends Booking>(sessions: readonly Session[],
     .map((booking) => ({ ...booking, dedupeKey: `class_reminder:${booking.id}` }));
 }
 
-export function isSendHour(now: Date): boolean {
-  return utcToLocal(now.toISOString()).time.startsWith("09:");
+export function isSendHour(now: Date, timezone: string): boolean {
+  return utcToLocal(now.toISOString(), timezone).time.startsWith("09:");
 }
 
-export function noticeDate(now: Date, daysBefore: number): string {
-  return addLocalDays(utcToLocal(now.toISOString()).date, daysBefore);
+export function noticeDate(now: Date, daysBefore: number, timezone: string): string {
+  return addLocalDays(utcToLocal(now.toISOString(), timezone).date, daysBefore);
 }
 
 export function dueNotices<T extends { id: string; status: string; due_on: string }>(
-  payments: readonly T[], now: Date, daysBefore: number,
+  payments: readonly T[], now: Date, daysBefore: number, timezone: string,
 ) {
-  const date = noticeDate(now, daysBefore);
+  const date = noticeDate(now, daysBefore, timezone);
   return payments.filter((payment) => payment.status === "pending" && payment.due_on.slice(0, 10) === date)
     .map((payment) => ({ ...payment, dedupeKey: `payment_due:${payment.id}:${date}` }));
 }
 
 export function renewalNotices<T extends { id: string; status: string; current_period_end: string }>(
-  memberships: readonly T[], now: Date, daysBefore: number,
+  memberships: readonly T[], now: Date, daysBefore: number, timezone: string,
 ) {
-  const date = noticeDate(now, daysBefore);
+  const date = noticeDate(now, daysBefore, timezone);
   return memberships.filter((membership) => membership.status === "active" && membership.current_period_end.slice(0, 10) === date)
     .map((membership) => ({ ...membership, dedupeKey: `membership_renewal:${membership.id}:${date}` }));
 }

@@ -1,6 +1,6 @@
 export interface AppEnv {
   pocketbaseUrl: string;
-  businessContact?: string;
+  appName: string;
   /** Clave de licencia de PrimeVue 5 (opcional; sin ella PrimeVue muestra un aviso). */
   primevueLicense?: string;
 }
@@ -24,12 +24,10 @@ export function parseEnv(raw: Partial<Record<string, unknown>>): AppEnv {
     typeof raw.VITE_PRIMEVUE_LICENSE === 'string'
       ? raw.VITE_PRIMEVUE_LICENSE.trim()
       : '';
-  const contact =
-    typeof raw.VITE_BUSINESS_CONTACT === 'string'
-      ? raw.VITE_BUSINESS_CONTACT.trim()
-      : '';
+  const appName =
+    typeof raw.VITE_APP_NAME === 'string' ? raw.VITE_APP_NAME.trim() : '';
   return {
-    ...(contact && { businessContact: contact }),
+    appName: appName || 'Admin',
     pocketbaseUrl: url.trim().replace(/\/+$/, ''),
     primevueLicense: license || undefined,
   };

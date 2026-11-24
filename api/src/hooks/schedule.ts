@@ -62,10 +62,12 @@ onRecordValidate((e) => {
 onRecordValidate((e) => {
   const { blockDates, fieldError } = require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   const { startOfLocalDay } = require(`${__hooks}/lib/tz`) as typeof import("../lib/tz");
+  const { getBusinessTimezone } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  const timezone = getBusinessTimezone(e.app, e.record!.getString("business"));
   const block = blockDates(e.record!);
   for (const field of ["date_from", "date_to"] as const) {
     try {
-      startOfLocalDay(block[field]);
+      startOfLocalDay(block[field], timezone);
     } catch {
       throw fieldError(field, "Indica una fecha válida.");
     }
@@ -92,7 +94,7 @@ function saveScheduleInTransaction(e: core.RecordEvent) {
       if (name === "schedule_blocks") cancelBlockedSessions(tx, record);
       if (activate) {
         persistGeneratedSessions(tx, {
-          template: record.id, actor: record.getString("@pbInternalAuditActor"),
+          business: record.getString("business"), template: record.id, actor: record.getString("@pbInternalAuditActor"),
         });
       }
     });

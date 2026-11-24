@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { pb } from '@/lib/pocketbase';
+import { useAdminAvatar } from '@/composables/useAdminAvatar';
 import type { Admin } from '@/types/pb';
 
 const props = withDefaults(
@@ -31,11 +31,7 @@ const imageTypes = [
 ];
 const error = ref('');
 const failed = ref(false);
-const image = computed(() =>
-  props.member.avatar
-    ? pb.files.getURL(props.member, props.member.avatar, { thumb: '64x64' })
-    : '',
-);
+const image = useAdminAvatar(() => props.member, '64x64');
 const initials = computed(() => {
   const name =
     props.member.name?.trim() || props.member.email?.split('@')[0] || '?';

@@ -29,9 +29,18 @@ export interface PublicService {
   }[];
 }
 
+export interface PublicBusiness {
+  name: string;
+  city: string;
+  logo_url: string;
+  currency: string;
+  timezone: string;
+}
+
 export interface PublicCatalog {
-  version: 1;
-  currency: 'USD';
+  version: 2;
+  business: PublicBusiness;
+  currency: string;
   services: PublicService[];
 }
 
@@ -46,8 +55,9 @@ export interface PublicSession {
 }
 
 export interface PublicSchedule {
-  version: 1;
-  timezone: 'America/New_York';
+  version: 2;
+  business: PublicBusiness;
+  timezone: string;
   week_start: string;
   week_end: string;
   sessions: PublicSession[];
@@ -92,7 +102,27 @@ const oneOf = (options: readonly string[]) => (value: unknown) =>
   typeof value === 'string' && options.includes(value);
 const arrayOf = (check: (item: unknown) => boolean) => (value: unknown) =>
   Array.isArray(value) && value.every(check);
-const version = (value: unknown) => value === 1;
+const version = (value: unknown) => value === 2;
+const currency = oneOf(['USD', 'EUR', 'MXN', 'COP', 'CRC', 'GBP']);
+function timezone(value: unknown) {
+  if (typeof value !== 'string' || !value) return false;
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+const isPublicBusiness = (value: unknown) =>
+  hasFields<PublicBusiness>(value, {
+    name: (name) => typeof name === 'string' && name.trim().length > 0,
+    city: text,
+    logo_url: (url) =>
+      typeof url === 'string' &&
+      (url === '' || (/^https?:\/\//.test(url) && URL.canParse(url))),
+    timezone,
+    currency,
+  });
 const serviceIdentity = { slug: text, name: text };
 const planFields = {
   name: text,
@@ -108,44 +138,50 @@ const planFields = {
 const weeklyTimeFields = { weekday, time, coach_name: text, capacity: count };
 
 export function isPublicCatalog(value: unknown): value is PublicCatalog {
-  return hasFields<PublicCatalog>(value, {
-    version,
-    currency: (item) => item === 'USD',
-    services: arrayOf((service) =>
-      hasFields<PublicService>(service, {
-        ...serviceIdentity,
-        kind: oneOf(SERVICE_KINDS),
-        plans: arrayOf((plan) => hasFields<PublicPlan>(plan, planFields)),
-        weekly_times: arrayOf((slot) =>
-          hasFields<PublicService['weekly_times'][number]>(
-            slot,
-            weeklyTimeFields,
+  return (
+    hasFields<PublicCatalog>(value, {
+      version,
+      business: isPublicBusiness,
+      currency,
+      services: arrayOf((service) =>
+        hasFields<PublicService>(service, {
+          ...serviceIdentity,
+          kind: oneOf(SERVICE_KINDS),
+          plans: arrayOf((plan) => hasFields<PublicPlan>(plan, planFields)),
+          weekly_times: arrayOf((slot) =>
+            hasFields<PublicService['weekly_times'][number]>(
+              slot,
+              weeklyTimeFields,
+            ),
           ),
-        ),
-      }),
-    ),
-  });
+        }),
+      ),
+    }) && value.currency === value.business.currency
+  );
 }
 
 export function isPublicSchedule(value: unknown): value is PublicSchedule {
-  return hasFields<PublicSchedule>(value, {
-    version,
-    timezone: (item) => item === 'America/New_York',
-    week_start: date,
-    week_end: date,
-    sessions: arrayOf((session) =>
-      hasFields<PublicSession>(session, {
-        local_date: date,
-        local_time: time,
-        service: (item) =>
-          hasFields<PublicSession['service']>(item, serviceIdentity),
-        coach_name: text,
-        capacity: count,
-        spots_left: count,
-        status: oneOf(AVAILABILITY),
-      }),
-    ),
-  });
+  return (
+    hasFields<PublicSchedule>(value, {
+      version,
+      business: isPublicBusiness,
+      timezone,
+      week_start: date,
+      week_end: date,
+      sessions: arrayOf((session) =>
+        hasFields<PublicSession>(session, {
+          local_date: date,
+          local_time: time,
+          service: (item) =>
+            hasFields<PublicSession['service']>(item, serviceIdentity),
+          coach_name: text,
+          capacity: count,
+          spots_left: count,
+          status: oneOf(AVAILABILITY),
+        }),
+      ),
+    }) && value.timezone === value.business.timezone
+  );
 }
 
 export class ApiError extends Error {
@@ -160,7 +196,8 @@ async function fetchPublic<T>(
   validate: (value: unknown) => value is T,
   signal?: AbortSignal,
 ): Promise<{ payload: T; headers: Headers }> {
-  if (!env.PUBLIC_API_URL) throw new ApiError('PUBLIC_API_URL is missing.');
+  if (!env.PUBLIC_API_URL || !env.PUBLIC_BUSINESS_KEY)
+    throw new ApiError('Public API integration is not configured.');
 
   const controller = new AbortController();
   const abort = () => controller.abort(signal?.reason);
@@ -173,6 +210,7 @@ async function fetchPublic<T>(
   try {
     const response = await fetch(`${env.PUBLIC_API_URL}/api/public/${path}`, {
       credentials: 'omit',
+      headers: { 'X-Business-Key': env.PUBLIC_BUSINESS_KEY },
       signal: controller.signal,
     });
     if (!response.ok)

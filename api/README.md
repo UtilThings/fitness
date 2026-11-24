@@ -21,27 +21,29 @@ bun run build:ts  # Regenera pb_hooks/ y excluye los tests
 bun test         # Ejecuta las pruebas de las librerías
 ```
 
-Desde la raíz, ejecuta `scripts/verify-api.sh`. Instala dependencias con el lockfile, compila y ejecuta las pruebas. Si existe `api/pb`, arranca PocketBase en localhost con datos temporales. Comprueba los permisos, la auditoría y el catálogo antes y después de reiniciar la instancia.
+Desde la raíz, ejecuta `scripts/verify-api.sh`. Instala dependencias con el lockfile, compila y ejecuta las pruebas. Si existe `api/pb`, arranca PocketBase en localhost con datos temporales. Comprueba permisos, auditoría, catálogo, crons y aislamiento entre dos negocios antes y después del reinicio.
 
 ## Roles y reglas
 
 `src/lib/rules.ts` define `RULE_STAFF` para admins activos y `RULE_OWNER` para quienes además tienen el rol `owner`. Usa `ruleAnd` y `ruleOr` para combinar cláusulas, `ruleRoles` para limitar el acceso a roles concretos y `ruleOwnerOrSelf` para permitir que cada admin edite su propio registro con campos protegidos.
 
-Las migraciones guardan las reglas como literales. Genera las expresiones con los compositores y copia el resultado en la migración. Las pruebas comprueban que las reglas de `admins` y `audit_logs` coincidan con la librería.
+Las migraciones guardan las reglas como literales. Combina los roles con `ruleBusiness` para limitar lista, lectura, actualización y borrado a `@request.auth.business = business`. El servidor asigna esa relación al crear y valida las referencias al guardar. Registra las colecciones nuevas y sus relaciones en `TENANT_COLLECTIONS` y `TENANT_REFERENCES`.
 
-En una base nueva, un superusuario de PocketBase puede crear el primer admin desde `/_/`. Asígnale explícitamente `role = owner` y `active = true`. La colección `_superusers` administra la instancia y sus privilegios son independientes de los roles de la aplicación.
+En una base nueva, un superusuario de PocketBase crea el negocio y el primer admin desde `/_/`. Al admin asígnale el negocio, `role = owner` y `active = true`. La colección `_superusers` administra la instancia y sus privilegios son independientes de los roles de la aplicación.
 
-La colección heredada `users` tiene el alta pública cerrada. Su regla de autenticación conserva el acceso mediante credenciales de las cuentas existentes. La app y las rutas staff usan `admins`.
+La colección heredada `users` tiene el alta pública cerrada. Su regla de autenticación conserva el acceso mediante credenciales de las cuentas existentes. La app y las rutas staff usan `admins`. El [procedimiento de alta](../docs/multi-tenancy.md#dar-de-alta-un-negocio) describe la configuración inicial.
 
 ## Equipo: reglas y `ADMIN_REFERENCES`
 
+Cada admin pertenece a un negocio. Los controles de último owner y referencias se aplican dentro de ese negocio. El correo de acceso sigue siendo único en toda la colección `admins`.
+
 El API permite crear integrantes a los owners activos. Cada integrante puede editar su propio perfil y cambiar su contraseña con la actual. Una actualización o baja debe conservar al menos un owner activo. Cada integrante conserva su estado activo al editar su propia cuenta. Si el registro es actor de una entrada de auditoría u otra relación declarada, el borrado responde `409` y la app ofrece desactivarlo. Un admin inactivo queda excluido del inicio de sesión.
 
-Cuando una feature agregue una relación a `admins`, añade en el mismo cambio su colección y campo a `ADMIN_REFERENCES` en `src/lib/team-guards.ts`. La asignación `services.default_coach` ya está registrada. El hook comprueba las colecciones que ya existen y conserva los registros que tengan referencias.
+Cuando una feature agregue una relación a `admins`, registra su colección y campo en `TENANT_REFERENCES`. `ADMIN_REFERENCES` se deriva de ese mapa. La asignación `services.default_coach` ya está registrada. El hook comprueba las colecciones que ya existen y conserva los registros que tengan referencias.
 
 ## Auditoría
 
-Añade el nombre de una colección a `AUDITED_COLLECTIONS` en `src/lib/audit-config.ts` y recompila. El hook registra altas, cambios y bajas confirmados. Para las operaciones CRUD de la API, toma el actor de la sesión de `admins`. Las escrituras del sistema tienen actor vacío. Las reglas dan acceso de lectura a los owners activos. Los superusuarios también pueden consultar la auditoría en el panel de PocketBase. Las escrituras están reservadas al código del servidor, incluso cuando la petición HTTP proviene de un superusuario.
+Añade el nombre de una colección a `AUDITED_COLLECTIONS` en `src/lib/audit-config.ts` y recompila. El hook registra altas, cambios y bajas confirmados. Para las operaciones CRUD de la API, toma el actor de la sesión de `admins`. Las escrituras del sistema tienen actor vacío. Las reglas dan acceso de lectura a los owners activos del negocio auditado. Los superusuarios también pueden consultar la auditoría en el panel de PocketBase. Las escrituras están reservadas al código del servidor, incluso cuando la petición HTTP proviene de un superusuario.
 
 Mantén los nuevos campos sensibles en `SENSITIVE_FIELDS`. Los diffs también excluyen variantes de campos de contraseña, campos sensibles anidados y las marcas de tiempo automáticas del registro. Los cambios de contraseña se registran con la marca `credentials_changed`. Una edición sin cambios auditables no crea una fila.
 
@@ -53,7 +55,7 @@ Para consultar los registros, usa `GET /api/collections/audit_logs/records` con 
 
 | Campo | Contenido |
 | --- | --- |
-| `generated_at`, `timezone` | Instante de generación en UTC y zona `America/New_York` |
+| `generated_at`, `timezone` | Instante de generación en UTC y zona del negocio |
 | `today` | Fecha local `date`, medianoche inicial `start_utc` y medianoche siguiente exclusiva `end_utc`, calculadas por separado para los días de 23 y 25 horas |
 | `counts` | `active_clients`, `sessions_today`, `bookings_today`, `waitlisted_today`, `sessions_without_coach` y `sessions_without_bookings` |
 | `sessions_today` | Sesiones programadas o completadas del día, ordenadas por inicio, con servicio, coach, duración, cupo, ocupación, espera y disponibilidad |
@@ -64,17 +66,17 @@ Para consultar los registros, usa `GET /api/collections/audit_logs/records` con 
 
 ## Catálogo
 
-`services` guarda el tipo, cupo, coach por defecto, antelación de cancelación y estado de cada servicio. `plans` guarda precios en centavos USD, unidades de cobro, sesiones y compromiso. Los admins activos de los tres roles pueden consultar ambas colecciones. El rol `owner` puede crearlas, editarlas, reordenarlas y eliminarlas desde la app.
+`services` guarda el tipo, cupo, coach por defecto, antelación de cancelación y estado de cada servicio. `plans` guarda precios en centavos de la moneda del negocio, unidades de cobro, sesiones y compromiso. Los admins activos de los tres roles pueden consultar ambas colecciones. El rol `owner` puede crearlas, editarlas, reordenarlas y eliminarlas desde la app.
 
 En desarrollo, `bun run dev` compila antes de iniciar PocketBase. Para arrancar directamente con `./pb serve`, ejecuta primero `bun run build:ts`. La migración del catálogo usa `CATALOG_SEED` de `src/lib/catalog.ts` para inicializar cinco servicios y diez planes. Conserva los registros existentes, incluidos los precios editados. Online Coaching empieza sin planes. Mantén los datos de esta migración como referencia histórica y usa una nueva migración para futuras altas automáticas.
 
-Los hooks permiten un solo plan de primera clase, con precio cero y unidad `first_visit`. Los demás planes requieren un precio positivo. Al desactivar un servicio, PocketBase desactiva sus planes en la misma transacción y registra el cambio en `audit_logs`. Para volver a ofrecer un plan, activa el servicio y después activa el plan. Si hay dependientes, la API devuelve 400 y recomienda desactivar el registro. Los controles se aplican a las escrituras de la API y del panel `/_/`. Usa `/services` y `/plans` para editar el catálogo con las credenciales habituales de owner.
+Los hooks permiten un solo plan de primera clase por negocio, con precio cero y unidad `first_visit`. Los demás planes requieren un precio positivo. Al desactivar un servicio, PocketBase desactiva sus planes en la misma transacción y registra el cambio en `audit_logs`. Para volver a ofrecer un plan, activa el servicio y después activa el plan. Si hay dependientes, la API devuelve 400 y recomienda desactivar el registro. Los controles se aplican a las escrituras de la API y del panel `/_/`. Usa `/services` y `/plans` para editar el catálogo con las credenciales habituales de owner.
 
 ## Goja y fechas
 
 PocketBase 0.40.5 ejecuta los hooks en Goja. El runtime tiene `Date.UTC`, `toISOString` y métodos `getUTC*`. `Intl` no está disponible y `getTimezoneOffset` depende del entorno del servidor. Los callbacks se ejecutan en contextos aislados. Carga las librerías con ``require(`${__hooks}/lib/archivo`)`` dentro del callback y mantén la lógica pura en `src/lib/`.
 
-`src/lib/tz.ts` aplica las reglas actuales de horario de verano de `America/New_York`. Usa `localToUtc("2026-03-08", "09:00")` para guardar las horas en UTC y `utcToLocal(isoUtc)` para obtener el día y la hora local. `localWeekday` acepta una fecha local o un instante ISO UTC. `addLocalDays` opera en días civiles y `startOfLocalDay` devuelve la medianoche local como ISO UTC. Una hora inexistente en marzo se desplaza una hora hacia delante. En noviembre, una hora ambigua se interpreta como su primera ocurrencia.
+`src/lib/tz.ts` calcula las zonas IANA admitidas en Goja. Usa `localToUtc("2026-03-08", "09:00", timezone)` para guardar las horas en UTC y `utcToLocal(isoUtc, timezone)` para obtener el día y la hora local. `localWeekday` acepta una fecha civil o un instante ISO UTC con su zona. `addLocalDays` opera en días civiles y `startOfLocalDay(date, timezone)` devuelve el instante UTC correspondiente a la medianoche local.
 
 ## Migraciones
 
@@ -86,7 +88,7 @@ Usa `pb_migrations/<timestamp>_<verbo>_<objeto>.js` con un timestamp en segundos
 - `class_sessions` contiene sesiones concretas. El índice parcial de `(template, starts_at)` conserva una sola sesión por franja, incluso si se cancela. Las sesiones `special` y `private` pueden quedar sin plantilla. El personal puede consultar sesiones y owner o reception pueden editarlas. Desde la API de staff, las sesiones se cancelan para conservar el historial.
 - `schedule_blocks` contiene rangos inclusivos para todos los servicios. Owner administra los bloqueos y las plantillas. Guardar un bloqueo cancela las sesiones programadas del rango con motivo `Bloqueo: <título>`. Quitar el bloqueo conserva las cancelaciones.
 
-`starts_at` representa un instante UTC. PocketBase devuelve fechas con espacio como separador y sufijo `Z`. Las rutas reciben ISO UTC con `T` y `Z` para movimientos. `start_time` es `HH:mm` de Miramar (`America/New_York`). `date_from`, `date_to` y el parámetro `from` son fechas locales `YYYY-MM-DD`.
+`starts_at` representa un instante UTC. PocketBase devuelve fechas con espacio como separador y sufijo `Z`. Las rutas reciben ISO UTC con `T` y `Z` para movimientos. `start_time` es `HH:mm` en la zona del negocio. `date_from`, `date_to` y el parámetro `from` son fechas locales `YYYY-MM-DD`.
 
 El servidor aplica las reglas de cambio de hora de EE. UU. vigentes desde 2007. En marzo adelanta una hora inexistente por el salto. En noviembre usa la primera ocurrencia de una hora repetida. El cron `jq_generate_sessions` corre diariamente a las 07:00 UTC y genera cuatro semanas desde hoy en Miramar. Puede ejecutarse desde Ajustes → Crons en PocketBase. [Cron de PocketBase](https://pocketbase.io/docs/js-jobs-scheduling/)
 
@@ -141,7 +143,7 @@ Para una especial, owner o reception guarda en `class_sessions` con `kind = spec
 
 La colección `clients` se usa mediante la API estándar de PocketBase. Los admins activos pueden listar, consultar, crear y editar. Solo un `owner` activo puede eliminar o cambiar `free_class_used` por HTTP. Los hooks de reservas pueden marcarla mediante `app.save`, que ejecuta los hooks de modelo y omite los hooks de petición.
 
-El email es opcional. Se guarda en minúsculas y el índice parcial exige unicidad cuando hay un valor. Se aceptan teléfonos compartidos y se guardan en E.164, con `+1` por defecto para números estadounidenses sin prefijo. El estado inicial es `active` y, si se omite `joined_on`, se usa el inicio del día en `America/New_York`. Desde `inactive` se puede volver a `active` antes de pasar a `paused`.
+El email es opcional. Se guarda en minúsculas y el índice parcial exige unicidad cuando hay un valor. Se aceptan teléfonos compartidos y se guardan en E.164, con `+1` por defecto para números estadounidenses sin prefijo. El estado inicial es `active` y, si se omite `joined_on`, se usa el inicio del día del negocio. Desde `inactive` se puede volver a `active` antes de pasar a `paused`.
 
 ### Evaluación inicial
 
@@ -220,7 +222,7 @@ Todas las rutas de la tabla tienen el prefijo `/api/admin/memberships`. Owner y 
 | `GET /eligibility?client=&session=` | Devuelve `{ allowed, code, available }`. `available` vale `null` cuando no hay un límite de créditos aplicable. |
 | `POST /run-daily` | Solo owner. Devuelve el total de créditos expirados y la cantidad de membresías vencidas en `{ expiredCredits, expiredMemberships }`. |
 
-Cada periodo abarca 28 días inclusivos en la fecha civil de Miramar (`America/New_York`). Renovar dentro de la gracia abre el periodo siguiente al cierre anterior. Si la membresía venció o se agotó la gracia, el periodo empieza el día de la renovación y `ended_on` se vacía. El compromiso se copia del plan al asignarlo. `periods_paid` cuenta los periodos otorgados y `auto_renew` empieza en `false`.
+Cada periodo abarca 28 días inclusivos en la fecha civil en la zona del negocio. Renovar dentro de la gracia abre el periodo siguiente al cierre anterior. Si la membresía venció o se agotó la gracia, el periodo empieza el día de la renovación y `ended_on` se vacía. El compromiso se copia del plan al asignarlo. `periods_paid` cuenta los periodos otorgados y `auto_renew` empieza en `false`.
 
 Un plan de cuatro semanas otorga `sessions` créditos por periodo. Con cero sesiones es ilimitado y conserva el límite semanal si tiene `per_week`. La semana local empieza el lunes. Una clase suelta otorga un crédito por compra. Un plan de primera visita otorga un solo crédito por cliente y no se renueva.
 
@@ -250,7 +252,7 @@ La entrega de planes de entrenamiento y nutrición, el portal del cliente, las f
 
 ## Pagos y recibos
 
-`payments` conserva cobros manuales y de membresía en centavos USD. Los admins activos con rol `owner` o `reception` pueden consultar los registros de `payments` y usar las rutas de cobro. Las escrituras directas por la API de registros quedan cerradas, incluso para superusuarios. El historial conserva las referencias al cliente, a quien registró el cobro y a quien lo anuló.
+`payments` conserva cobros manuales y de membresía en centavos de la moneda del negocio. Los admins activos con rol `owner` o `reception` pueden consultar los registros de `payments` y usar las rutas de cobro. Las escrituras directas por la API de registros quedan cerradas, incluso para superusuarios. El historial conserva las referencias al cliente, a quien registró el cobro y a quien lo anuló.
 
 | Ruta | Operación |
 | --- | --- |
@@ -261,7 +263,7 @@ La entrega de planes de entrenamiento y nutrición, el portal del cliente, las f
 
 Los métodos son `cash`, `zelle`, `card` y `other`. Las fechas de cobro y vencimiento son días civiles en formato `YYYY-MM-DD` de Miramar. Si se omite `paid_at`, se usa la fecha local actual. Los datos inválidos devuelven `400`, los roles sin acceso `403`, los registros inexistentes `404` y las transiciones incompatibles `409`.
 
-`receipt_sequences` mantiene un contador por año de `paid_at`. El servicio incrementa el contador, guarda el pago con `JQ-AAAA-NNNNNN` y registra la operación de auditoría en la misma transacción. Un fallo revierte el incremento. Un cobro pendiente recibe número al pagarse. Un recibo anulado sigue visible con su número original.
+`receipt_sequences` mantiene un contador por negocio y año de `paid_at`. El servicio incrementa el contador, guarda el pago con `PREFIJO-AAAA-NNNNNN` y registra la operación de auditoría en la misma transacción. Un fallo revierte el incremento. Un cobro pendiente recibe número al pagarse. Un recibo anulado sigue visible con su número original.
 
 Al asignar o renovar una membresía, el hook usa el precio del plan y el inicio del periodo para generar un pendiente con un `period_index` único entre cobros vigentes. Los planes por clase generan un único cobro y los planes gratuitos quedan excluidos. Si el cobro se anula, un guardado posterior de la membresía por staff puede reponerlo. La generación automática se atribuye al integrante que guardó la membresía. Las membresías históricas se pueden cobrar manualmente.
 
@@ -284,7 +286,7 @@ Las rutas de solo lectura devuelven datos agregados y no incluyen nombres, corre
 | `/api/admin/reports/revenue` | Sí | — | — | `totals`, `by_plan`, `by_service`, `by_period` |
 | `/api/admin/reports/retention` | Sí | Sí | Sí | `totals`, `by_plan`, `by_period` |
 
-- `from` y `to` son fechas inclusivas en formato `YYYY-MM-DD`. El máximo es de 366 días. `range` devuelve `from`, `to`, `timezone` (`America/New_York`), `start_utc` y `end_utc`. El primer límite UTC es inclusivo y el segundo corresponde a la medianoche local posterior a `to`, excluida. El cálculo respeta el horario de verano.
+- `from` y `to` son fechas inclusivas en formato `YYYY-MM-DD`. El máximo es de 366 días. `range` devuelve `from`, `to`, `timezone` del negocio, `start_utc` y `end_utc`. El primer límite UTC es inclusivo y el segundo corresponde a la medianoche local posterior a `to`, excluida. El cálculo respeta el horario de verano.
 - `service` acepta un slug existente y es opcional en ocupación, asistencia e ingresos.
 - `group_by` admite `day`, `week` y `month` en ingresos y retención. Por defecto usa `month`. Una semana comienza el domingo y se identifica por esa fecha. La agrupación diaria admite hasta 92 días. Los periodos sin altas, bajas o cobros aparecen con cero en esos campos. El saldo de membresías se arrastra al periodo siguiente.
 - La API devuelve `400` ante parámetros inválidos, `401` si falta sesión y `403` si el rol o el estado del registro impiden el acceso.
@@ -293,7 +295,7 @@ Las rutas de solo lectura devuelven datos agregados y no incluyen nombres, corre
 
 **Asistencia.** `no_show_rate` y `attendance_rate` dividen las inasistencias y las asistencias, respectivamente, entre `attended + no_show`. Los conteos muestran por separado las reservas pendientes de asistencia y las cancelaciones ordinarias y tardías. Ambas tasas devuelven 0 si el denominador es 0. La tasa de ocupación aplica la misma regla.
 
-**Ingresos.** Los importes son centavos enteros de USD. `paid_cents` usa `paid_at`. `pending_cents` y `void_cents` usan la fecha local de vencimiento. Si un pago anulado carece de vencimiento, usa su fecha local de anulación. Los pagos sin plan se agrupan en «Sin plan». `by_period` incluye solo importes y conteos de pagos cobrados.
+**Ingresos.** Los importes son centavos enteros de la moneda del negocio. El reporte expone `currency` y rechaza importes en otra moneda. `paid_cents` usa `paid_at`. `pending_cents` y `void_cents` usan la fecha local de vencimiento. Si un pago anulado carece de vencimiento, usa su fecha local de anulación. Los pagos sin plan se agrupan en «Sin plan». `by_period` incluye solo importes y conteos de pagos cobrados.
 
 **Retención.** Las altas se fechan por `starts_on` y las bajas de membresías canceladas o expiradas por `ended_on`. Las pausas se incluyen en el saldo. `churn_rate = churned / active_start` y `retention_rate = 1 - churn_rate`. Si `active_start` es 0, las tasas son 0 y 1, respectivamente.
 
@@ -303,19 +305,19 @@ Las rutas de solo lectura devuelven datos agregados y no incluyen nombres, corre
 
 Las comunicaciones cubren reservas, clases, cobros y renovaciones. No incluyen marketing, boletines ni seguimiento comercial.
 
+La [guía de envío de correos](../docs/envio-de-correos.md) describe la configuración SMTP, los datos por negocio, las pruebas y el diagnóstico de fallos.
+
 ### Configurar el correo
 
-En el panel de PocketBase, abre **Ajustes → Correo**, habilita SMTP y guarda el servidor, puerto, credenciales y remitente del estudio. Envía una prueba como owner con `POST /api/admin/messages/test` y el cuerpo `{"key":"booking_confirmed","locale":"es"}`. PocketBase entrega la prueba al correo del owner autenticado.
+En el panel de PocketBase, abre **Ajustes → Correo**, habilita SMTP y guarda el servidor, puerto, credenciales y dirección de envío. Los mensajes usan el nombre del negocio como remitente visible y su correo de contacto como dirección de respuesta, si es válido. Envía una prueba como owner con `POST /api/admin/messages/test` y el cuerpo `{"key":"booking_confirmed","locale":"es"}`. PocketBase entrega la prueba al correo del owner autenticado.
 
 | Variable del proceso de PocketBase | Valor por defecto | Uso |
 | --- | --- | --- |
 | `MESSAGES_REMINDER_HOURS` | `24` | Anticipación del recordatorio de clase, en horas |
 | `MESSAGES_DUE_DAYS_BEFORE` | `3` | Días de anticipación del aviso de cobro |
 | `MESSAGES_RENEWAL_DAYS_BEFORE` | `5` | Días de anticipación del aviso de renovación |
-| `STUDIO_NAME` | `JQ Fitness` | Nombre disponible en las plantillas |
-| `STUDIO_PHONE` | Vacío | Teléfono disponible en las plantillas |
 
-El cron de recordatorios corre cada 15 minutos. Los avisos de cobro y renovación corren cada hora y envían a las 09:00 de Miramar, Florida (`America/New_York`). Para limitar el uso de las rutas, habilita el limitador de PocketBase en Ajustes y añade reglas para `POST /api/admin/messages/` o para cada ruta.
+El cron de recordatorios corre cada 15 minutos. Los avisos de cobro y renovación corren cada hora y envían a las 09:00 locales de cada negocio activo. Para limitar el uso de las rutas, habilita el limitador de PocketBase en Ajustes y añade reglas para `POST /api/admin/messages/` o para cada ruta.
 
 ### Plantillas e historial
 
@@ -329,7 +331,7 @@ Las seis plantillas se inicializan activas en español e inglés. `clients.local
 | `membership_renewal` | `plan_name`, `period_end`, `amount` |
 | `manual` | `client_first_name`, `studio_name`, `class_name`, `class_date`, `class_time` |
 
-Las seis plantillas automáticas también admiten `client_first_name`, `studio_name` y `studio_phone`. Usa la sintaxis `{{nombre}}` en texto plano. La API valida las variables y genera HTML escapado. Los importes se muestran en dólares estadounidenses y las fechas de clase usan la hora de Miramar.
+Las seis plantillas automáticas también admiten `client_first_name`, `studio_name` y `studio_phone`. Usa la sintaxis `{{nombre}}` en texto plano. La API valida las variables y genera HTML escapado. Los importes usan la moneda del negocio y las fechas de clase usan su zona horaria.
 
 Los clientes activos y en pausa pueden recibir correo si su dirección es válida. Los clientes inactivos o sin dirección válida se omiten. El motor registra el resultado, intentos y un error genérico en `message_logs`. Ante un fallo automático, programa los reintentos a los 5 y 30 minutos después del intento previo. El cron revisa la cola cada diez minutos y el máximo es de tres intentos totales. Al reintentar se verifica que el aviso siga vigente y se reconstruye el contexto a partir de la sesión o del vencimiento. La clave de deduplicación protege frente a ejecuciones concurrentes y crons repetidos. Si el proceso muere después de que SMTP acepta el correo y antes de registrar el resultado, SMTP y SQLite no pueden confirmar el envío en una transacción común.
 
@@ -341,25 +343,20 @@ Para añadir SMS en el futuro, implementa `MessageChannel` y registra el canal e
 
 ## Catálogo y horario públicos
 
-Las dos rutas consultan PocketBase en modo lectura y están disponibles para visitantes sin cuenta. El JSON tiene `version: 1` y se construye con los campos del [contrato público](../features/019-catalogo-publico-en-web/spec.md#contrato-http).
+Las dos rutas son de solo lectura y exigen la cabecera `X-Business-Key`. El JSON tiene `version: 2` y expone el objeto público `business` con nombre, ciudad, logo, moneda y zona. El owner genera y rota la clave en **Ajustes → Integración** o con `POST /api/admin/business/public-key`. La respuesta de rotación muestra la clave completa una vez.
 
 | Ruta GET | Contenido |
 | --- | --- |
-| `/api/public/catalog` | Moneda `USD`, servicios y planes activos ordenados, precios en centavos y horarios semanales recurrentes. |
-| `/api/public/schedule?week=YYYY-MM-DD` | Domingo y sábado de la semana, sesiones públicas programadas, hora de Miramar (`America/New_York`), capacidad, cupos y estado. |
+| `/api/public/catalog` | Servicios y planes activos del negocio, moneda, precios en centavos y horarios semanales. |
+| `/api/public/schedule?week=YYYY-MM-DD` | Sesiones públicas programadas, horas locales, capacidad, cupos y estado. |
 
-La fecha `week` se convierte al domingo de su semana. Cuando falta o apunta al pasado, se usa la semana actual de Miramar. Una fecha inválida o una semana posterior al límite devuelve `400`. Un error interno devuelve `500` con un mensaje genérico. Los cupos se calculan descontando reservas `booked`, `attended` y `no_show`. El estado es `full` con cero cupos, `almost` con uno o dos y `available` con tres o más. Solo se publican sesiones `regular` y `special` programadas de servicios activos. Los nombres de coach se toman del campo de exhibición de los integrantes asignados. Las respuestas omiten identificadores de registros, clientes y reservas.
+`week` se convierte al domingo de su semana. Una fecha omitida o anterior usa la semana actual. Las fechas inválidas y semanas fuera de rango devuelven `400`. Las claves ausentes, inválidas, rotadas o de un negocio inactivo devuelven `401` con el mismo mensaje. Las respuestas omiten identificadores de registros y datos privados.
 
 | Variable del proceso de PocketBase | Valor por defecto | Uso |
 | --- | --- | --- |
-| `PUBLIC_SITE_ORIGINS` | Vacío | Lista de orígenes HTTP(S) exactos separados por comas, sin barra final. |
-| `PUBLIC_SCHEDULE_MAX_WEEKS` | `8` | Máximo de semanas futuras, entero entre 0 y 365. El sitio lo recibe en `X-Public-Schedule-Max-Weeks`. |
-| `PUBLIC_CATALOG_CACHE_SECONDS` | `30` | TTL en memoria del catálogo y del resultado de cada semana, entero entre 0 y 365. Cero desactiva la caché interna. |
+| `PUBLIC_SCHEDULE_MAX_WEEKS` | `8` | Máximo de semanas futuras. La API lo devuelve en `X-Public-Schedule-Max-Weeks`. |
+| `PUBLIC_CATALOG_CACHE_SECONDS` | `30` | TTL de la caché interna por negocio y semana. Cero desactiva la caché. |
 
-Por ejemplo, inicia PocketBase con `PUBLIC_SITE_ORIGINS=https://fitness.juicyquisine.com ./pb serve` después de compilar los hooks. Si el sitio corre en desarrollo, añade `http://localhost:4321` a la lista. PocketBase 0.40.5 permite sustituir su middleware global de CORS en las dos rutas públicas. El parámetro `--origins` sigue controlando los demás endpoints, así que incluye allí los orígenes que necesitan la API administrativa de acuerdo con el despliegue. Mantén la configuración del proxy coherente con estas listas. Las rutas públicas devuelven `Vary: Origin` y permiten leer las respuestas desde los orígenes de `PUBLIC_SITE_ORIGINS`.
+Configura los orígenes de cada sitio desde **Ajustes → Integración**. El preflight permite la cabecera de clave para orígenes registrados en alguna integración activa. El GET aplica CORS al negocio de la clave. El parámetro `--origins` de PocketBase sigue controlando otros endpoints. Consulta los [pasos para conectar un sitio](../docs/multi-tenancy.md#conectar-un-sitio-y-rotar-la-clave) y el [contrato HTTP](../features/020-multi-tenancy-business/spec.md#contrato).
 
-La cabecera de caché en respuestas exitosas es `Cache-Control: public, max-age=60, stale-while-revalidate=300`. La caché en memoria comparte el catálogo entre visitantes y utiliza el domingo local como clave para cada semana consultada.
-
-En el panel de PocketBase, abre **Ajustes → Aplicación**, habilita el limitador de solicitudes y añade una regla con la etiqueta `/api/public/`. La barra final aplica la regla al prefijo de ambas rutas. Configura la cantidad de peticiones y la ventana según el tráfico previsto. [Configuración del limitador de PocketBase](https://pocketbase.io/docs/going-to-production/#enable-rate-limiter)
-
-`scripts/verify-api.sh` comprueba ambos contratos HTTP, lista de orígenes, campos públicos, conteos de reservas, caché y errores en una instancia temporal. El [sitio web](../web/README.md#catálogo-y-horario) documenta los builds y el respaldo.
+`scripts/verify-api.sh` comprueba ambas rutas con claves y orígenes distintos, rotación, campos públicos, cupos, caché y códigos de error. La [guía de Astro](../web/README.md#catálogo-y-horario) documenta la configuración de build y el respaldo.

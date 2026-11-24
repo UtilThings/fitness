@@ -16,6 +16,7 @@ import {
 } from '@/composables/usePayments';
 import { fullName, type Client } from '@/lib/clients';
 import { todayLocal } from '@/lib/datetime';
+import { businessCurrency } from '@/lib/business-session';
 import { formatCents, parseToCents } from '@/lib/money';
 import type { PbError } from '@/lib/pb-errors';
 
@@ -124,14 +125,17 @@ async function submit() {
             ? fullName(payment.expand.client)
             : payment.client
         }}
-        · {{ formatCents(payment.amount_cents) }}
+        · {{ formatCents(payment.amount_cents, payment.currency) }}
       </p>
       <template v-else>
         <ClientPicker
           v-model="selectedClient"
           :disabled="saving || !!props.client"
         />
-        <CatalogField :id="id + '-amount'" label="Monto (USD)">
+        <CatalogField
+          :id="id + '-amount'"
+          :label="`Monto (${businessCurrency})`"
+        >
           <InputText
             :id="id + '-amount'"
             v-model="amount"

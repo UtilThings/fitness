@@ -3,17 +3,16 @@
 import { canUseFirstClass, checkBookingEligibility, creditsToGrant, isFirstVisit, localWeekKey,
   requiresCredit, type CreditReason, type Eligibility } from "./credits";
 import { addDays, isEarlyCancellation, extendByPause, nextPeriod, periodBounds, shouldExpire } from "./membership-cycles";
-import { auditActor, getRecord, inScheduleTransaction, pocketBaseDate, scheduleAudit } from "./schedule-store";
+import { auditActor, inScheduleTransaction, pocketBaseDate, scheduleAudit } from "./schedule-store";
+import { tenantRecord, getBusinessTimezone } from "./tenant";
 import { startOfLocalDay, utcToLocal } from "./tz";
 
-type Context = { actor: string; today: string };
+type Context = { business: string; actor: string; today: string };
 type Body = Record<string, unknown>;
 export type MembershipAction = "renew" | "pause" | "resume" | "cancel" | "adjust";
 type MovementOptions = { actor?: string; booking?: string; note?: string };
 
-export function membershipToday() {
-  return utcToLocal(new Date().toISOString()).date;
-}
+export { membershipToday } from "./membership-cycles";
 
 export function membershipError(status: number, code: string, message: string, clientId?: string) {
   return new ApiError(status, message, {
@@ -67,7 +66,7 @@ export function recordMovement(app: core.App, membership: core.Record, delta: nu
   }
   return inScheduleTransaction(app, (tx) => {
     const movement = new Record(tx.findCollectionByNameOrId("credit_movements"), {
-      membership: membership.id, booking, delta, reason, note, created_by: actor,
+      business: membership.getString("business"), membership: membership.id, booking, delta, reason, note, created_by: actor,
     });
     auditActor(movement, actor);
     tx.save(movement);
@@ -98,7 +97,7 @@ function grant(app: core.App, membership: core.Record, plan: core.Record, actor:
   return amount ? recordMovement(app, membership, amount, "grant", { actor }) : null;
 }
 
-export function assign(app: core.App, body: Body, { actor, today }: Context) {
+export function assign(app: core.App, body: Body, { business, actor, today }: Context) {
   const clientId = requiredText(body.client, "client", "Selecciona un cliente.");
   const planId = requiredText(body.plan, "plan", "Selecciona un plan.");
   const notes = optionalNotes(body.notes);
@@ -111,8 +110,8 @@ export function assign(app: core.App, body: Body, { actor, today }: Context) {
     throw membershipError(400, "starts_on", "Indica una fecha válida en formato YYYY-MM-DD.");
   }
   return inScheduleTransaction(app, (tx) => {
-    const client = getRecord(tx, "clients", clientId);
-    const plan = getRecord(tx, "plans", planId);
+    const client = tenantRecord(tx, "clients", clientId, business);
+    const plan = tenantRecord(tx, "plans", planId, business);
     if (!client || !plan) throw membershipError(404, "not_found", "Cliente o plan no encontrado.");
     if (!plan.getBool("active")) throw membershipError(409, "inactive_plan", "El plan está inactivo.");
     if (liveDuplicate(tx, clientId, planId)) throw membershipError(409, "duplicate_plan", "El cliente ya tiene este plan activo o pausado.");
@@ -124,7 +123,7 @@ export function assign(app: core.App, body: Body, { actor, today }: Context) {
       }
     }
     const membership = new Record(tx.findCollectionByNameOrId("memberships"), {
-      client: clientId, plan: planId, status: "active", starts_on: start,
+      business, client: clientId, plan: planId, status: "active", starts_on: start,
       current_period_start: bounds.start, current_period_end: bounds.end, periods_paid: 1,
       commitment_periods_total: plan.getInt("commitment_periods"), notes,
     });
@@ -206,7 +205,7 @@ const actions = { renew, pause, resume, cancel, adjust };
 
 export function manageMembership(app: core.App, id: string, action: MembershipAction, body: Body, context: Context) {
   return inScheduleTransaction(app, (tx) => {
-    const membership = getRecord(tx, "memberships", id);
+    const membership = tenantRecord(tx, "memberships", id, context.business);
     if (!membership) throw membershipError(404, "not_found", "Membresía no encontrada.");
     const result = actions[action](tx, membership, body, context);
     const movement = "movement" in result ? result.movement : null;
@@ -221,8 +220,8 @@ export function manageMembership(app: core.App, id: string, action: MembershipAc
 export type BookingEligibilityOptions = { now?: number; bookingId?: string; override?: boolean; firstVisit?: boolean };
 type Selection = Eligibility & { membership?: core.Record; freeClass?: boolean };
 
-export function sessionDate(session: core.Record) {
-  return utcToLocal(session.getString("starts_at").replace(" ", "T")).date;
+export function sessionDate(session: core.Record, timezone: string) {
+  return utcToLocal(session.getString("starts_at").replace(" ", "T"), timezone).date;
 }
 
 export function chargeable(app: core.App, session: core.Record) {
@@ -243,7 +242,7 @@ export function covers(membership: core.Record, date: string) {
 }
 
 function commitments(app: core.App, client: string, session: core.Record, membership: core.Record,
-  date: string, options: BookingEligibilityOptions) {
+  date: string, options: BookingEligibilityOptions, timezone: string) {
   const week = localWeekKey(date);
   const weekEnd = addDays(week, 7);
   const periodStart = membershipDate(membership, "current_period_start");
@@ -257,7 +256,7 @@ function commitments(app: core.App, client: string, session: core.Record, member
     " && (membership = {:membership} || (membership = '' && override_note = ''))" +
     " && status != 'cancelled'", "", 0, 0, {
     client, id: options.bookingId ?? "", service: session.getString("service"),
-    from: pocketBaseDate(startOfLocalDay(from)), to: pocketBaseDate(startOfLocalDay(to)),
+    from: pocketBaseDate(startOfLocalDay(from, timezone)), to: pocketBaseDate(startOfLocalDay(to, timezone)),
     membership: membership.id,
   });
   let committedBookings = 0;
@@ -266,7 +265,7 @@ function commitments(app: core.App, client: string, session: core.Record, member
     if (!booking) continue;
     const related = app.findRecordById("class_sessions", booking.getString("session"));
     const startsAt = Date.parse(related.getString("starts_at").replace(" ", "T"));
-    const localDate = sessionDate(related);
+    const localDate = sessionDate(related, timezone);
     if (localDate >= week && localDate < weekEnd) weekBookings++;
     if (booking.getString("status") === "booked" && startsAt > now && localDate >= periodStart && localDate <= periodEnd) {
       committedBookings++;
@@ -278,7 +277,8 @@ function commitments(app: core.App, client: string, session: core.Record, member
 export function selectBookingMembership(app: core.App, clientId: string, session: core.Record, options: BookingEligibilityOptions = {}): Selection {
   if (!chargeable(app, session)) return { allowed: true, code: "ok", available: null };
   const client = app.findRecordById("clients", clientId);
-  const date = sessionDate(session);
+  const timezone = getBusinessTimezone(app, session.getString("business"));
+  const date = sessionDate(session, timezone);
   const matching = matchingMemberships(app, clientId, session.getString("service"))
     .filter(({ plan }) => !options.firstVisit || isFirstVisit(plan));
   let rejected: Selection | undefined;
@@ -289,7 +289,7 @@ export function selectBookingMembership(app: core.App, clientId: string, session
     const attempt = {
       ...checkBookingEligibility({
         membership: { status: "active", credits_balance: record.getInt("credits_balance") },
-        plan, ...commitments(app, clientId, session, record, date, options),
+        plan, ...commitments(app, clientId, session, record, date, options, timezone),
       }),
       membership: record, freeClass,
     };
@@ -312,12 +312,12 @@ export function checkEligibility(app: core.App, clientId: string, session: core.
 }
 
 
-export function runDaily(app: Pick<core.App, "runInTransaction">, today: string, actor = "") {
+export function runDaily(app: Pick<core.App, "runInTransaction">, business: string, today: string, actor = "") {
   return inScheduleTransaction(app, (tx) => {
     let expiredCredits = 0;
     let expiredMemberships = 0;
     const due = tx.findRecordsByFilter("memberships",
-      "status = 'active' && current_period_end < {:today}", "current_period_end,id", 0, 0, { today });
+      "business = {:business} && status = 'active' && current_period_end < {:today}", "current_period_end,id", 0, 0, { business, today });
     for (const membership of due) {
       if (!membership) continue;
       const movement = expirePeriodCredits(tx, membership, actor);

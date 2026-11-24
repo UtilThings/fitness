@@ -36,31 +36,21 @@ onRecordAfterUpdateSuccess((e) => {
 }, "class_sessions");
 
 cronAdd("class_reminders", "*/15 * * * *", () => {
-  try {
-    const { sendReminders } =
-      require(`${__hooks}/lib/message-triggers`) as typeof import("../lib/message-triggers");
-    sendReminders($app);
-  } catch {
-    $app.logger().error("No se pudieron consultar los recordatorios de clase.");
-  }
+  const { sendReminders } = require(`${__hooks}/lib/message-triggers`) as typeof import("../lib/message-triggers");
+  const { forEachActiveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  forEachActiveBusiness($app, "class_reminders", (business) => sendReminders($app, business.id));
 });
 
 cronAdd("payment_due_notices", "0 * * * *", () => {
-  try {
-    const { sendDatedNotices } =
-      require(`${__hooks}/lib/message-triggers`) as typeof import("../lib/message-triggers");
-    sendDatedNotices($app, "payment_due");
-  } catch {
-    $app.logger().error("No se pudieron consultar los avisos de cobro.");
-  }
+  const { sendDatedNotices } = require(`${__hooks}/lib/message-triggers`) as typeof import("../lib/message-triggers");
+  const { forEachActiveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  forEachActiveBusiness($app, "payment_due_notices", (business) =>
+    sendDatedNotices($app, "payment_due", business.id, business.getString("timezone")));
 });
 
 cronAdd("renewal_notices", "0 * * * *", () => {
-  try {
-    const { sendDatedNotices } =
-      require(`${__hooks}/lib/message-triggers`) as typeof import("../lib/message-triggers");
-    sendDatedNotices($app, "membership_renewal");
-  } catch {
-    $app.logger().error("No se pudieron consultar los avisos de renovación.");
-  }
+  const { sendDatedNotices } = require(`${__hooks}/lib/message-triggers`) as typeof import("../lib/message-triggers");
+  const { forEachActiveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  forEachActiveBusiness($app, "renewal_notices", (business) =>
+    sendDatedNotices($app, "membership_renewal", business.id, business.getString("timezone")));
 });

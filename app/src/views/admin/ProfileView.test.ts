@@ -99,6 +99,7 @@ it('cambia la contraseña y renueva la sesión con la nueva', async () => {
   expect(mocks.authWithPassword).toHaveBeenCalledWith(
     mocks.member.email,
     'NuevaClave123',
+    { expand: 'business' },
   );
   expect(mocks.authWithPassword).toHaveBeenCalledAfter(mocks.update);
   expect(mocks.authStore.token).toBe('new-token');

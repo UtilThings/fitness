@@ -40,11 +40,11 @@ routerAdd(
       const changes = updates.map(({ id, previous, sort }) => {
         const [record] = txApp.findRecordsByFilter(
           collection,
-          "id = {:id}",
+          "id = {:id} && business = {:business}",
           "",
           1,
           0,
-          { id },
+          { id, business: owner.getString("business") },
         );
         if (!record || record.getInt("sort") !== previous) {
           throw new ApiError(

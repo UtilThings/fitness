@@ -1,4 +1,5 @@
 import { computed, shallowRef } from 'vue';
+import { useAdminAvatar } from '@/composables/useAdminAvatar';
 import { roleCan, type Permission } from '@/lib/permissions';
 import { pb } from '@/lib/pocketbase';
 import { ROLES, type Admin } from '@/types/pb';
@@ -35,14 +36,10 @@ const isActive = computed(
   () => user.value !== null && user.value.active !== false,
 );
 
-/** URL del avatar de admins si hay un archivo. */
-const avatarUrl = computed(() => {
-  const record = user.value;
-  const file = record?.avatar;
-  return record && typeof file === 'string' && file
-    ? pb.files.getURL(record, file, { thumb: '100x100' })
-    : undefined;
-});
+const avatarUrl = useAdminAvatar(
+  () => (isAuthenticated.value ? user.value : null),
+  '100x100',
+);
 
 function can(permission: Permission) {
   return (
@@ -51,7 +48,9 @@ function can(permission: Permission) {
 }
 
 async function login(email: string, password: string) {
-  await pb.collection('admins').authWithPassword(email, password);
+  await pb
+    .collection('admins')
+    .authWithPassword(email, password, { expand: 'business' });
 }
 
 async function requestPasswordReset(email: string) {

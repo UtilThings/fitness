@@ -29,7 +29,7 @@ routerAdd("GET", "/api/admin/payments/due", e => {
   };
   const days = readInt("days", 7, 60);
   const limit = readInt("limit", 50, 500);
-  const report = dueReport(e.app, days);
+  const report = dueReport(e.app, days, e.auth!.getString("business"));
   return e.json(200, {
     ...report,
     overdue: report.overdue.slice(0, limit),

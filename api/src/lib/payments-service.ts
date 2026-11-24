@@ -2,12 +2,13 @@
 
 import { chargeForPeriod } from "./payments-due";
 import { formatReceipt, localYear, nextSequence } from "./receipt-number";
-import { auditActor, getRecord, inScheduleTransaction, scheduleAudit } from "./schedule-store";
+import { auditActor, inScheduleTransaction, scheduleAudit } from "./schedule-store";
 import { utcToLocal } from "./tz";
+import { getBusiness, getBusinessTimezone, tenantRecord } from "./tenant";
 import { requireMembershipRole } from "./memberships-service";
 
 type Body = Record<string, unknown>;
-type Settlement = { method: unknown; paidAt?: unknown; recordedBy: string; note?: unknown };
+type Settlement = { business: string; method: unknown; paidAt?: unknown; recordedBy: string; note?: unknown };
 
 export function requirePaymentRole(event: core.RequestEvent) {
   return requireMembershipRole(event, ["owner", "reception"]);
@@ -39,29 +40,29 @@ function methodField(value: unknown, required: boolean) {
   return method;
 }
 
-export function issueReceipt(tx: core.App, year: number) {
-  const [existing] = tx.findRecordsByFilter("receipt_sequences", "year = {:year}", "", 1, 0, { year });
-  const sequence = existing ?? new Record(tx.findCollectionByNameOrId("receipt_sequences"), { year });
+export function issueReceipt(tx: core.App, year: number, business: string, prefix: string) {
+  const [existing] = tx.findRecordsByFilter("receipt_sequences", "business = {:business} && year = {:year}", "", 1, 0, { business, year });
+  const sequence = existing ?? new Record(tx.findCollectionByNameOrId("receipt_sequences"), { business, year });
   const next = nextSequence(sequence.getInt("last_seq"));
-  const number = formatReceipt(year, next);
+  const number = formatReceipt(prefix, year, next);
   sequence.set("last_seq", next);
   tx.save(sequence);
   return number;
 }
 
-function paidFields(tx: core.App, { method, paidAt, note }: Settlement) {
-  const today = utcToLocal(new Date().toISOString()).date;
+function paidFields(tx: core.App, { method, paidAt, note, business }: Settlement) {
+  const today = utcToLocal(new Date().toISOString(), getBusinessTimezone(tx, business)).date;
   const date = dateField(paidAt) || today;
   if (date > today) throw new BadRequestError("La fecha de pago no puede ser futura.");
   return {
     status: "paid", method: methodField(method, true), paid_at: date,
     ...(note !== undefined && { note: textField(note) }),
-    receipt_number: issueReceipt(tx, localYear(date)),
+    receipt_number: issueReceipt(tx, localYear(date), business, getBusiness(tx, business)!.getString("receipt_prefix")),
   };
 }
 
-function paymentRecord(tx: core.App, id: string) {
-  const payment = getRecord(tx, "payments", id);
+function paymentRecord(tx: core.App, id: string, business: string) {
+  const payment = tenantRecord(tx, "payments", id, business);
   if (!payment) throw new NotFoundError("Pago no encontrado.");
   return payment;
 }
@@ -70,7 +71,7 @@ function paymentConflict(message: string) {
   return new ApiError(409, message);
 }
 
-export function createPayment(app: core.App, body: Body, recordedBy: string) {
+export function createPayment(app: core.App, body: Body, recordedBy: string, business: string) {
   const { status, amount_cents } = body;
   if (status !== "paid" && status !== "pending") throw new BadRequestError("Selecciona un estado de pago válido.");
   if (typeof amount_cents !== "number" || !Number.isSafeInteger(amount_cents) || amount_cents <= 0) {
@@ -85,9 +86,10 @@ export function createPayment(app: core.App, body: Body, recordedBy: string) {
   if (status === "pending" && !due_on) throw new BadRequestError("Indica la fecha de vencimiento.");
 
   return inScheduleTransaction(app, tx => {
-    const related = membership ? getRecord(tx, "memberships", membership) : null;
-    if (!getRecord(tx, "clients", client) || (plan && !getRecord(tx, "plans", plan)) || (membership && !related)) {
-      throw new NotFoundError("Cliente, plan o membresía no encontrado.");
+    const related = membership ? tenantRecord(tx, "memberships", membership, business) : null;
+    if (!tenantRecord(tx, "clients", client, business)) throw new NotFoundError("Cliente no encontrado.");
+    if ((plan && !tenantRecord(tx, "plans", plan, business)) || (membership && !related)) {
+      throw new BadRequestError("Selecciona registros válidos del mismo negocio.");
     }
     if (related && (related.getString("client") !== client || (plan && related.getString("plan") !== plan))) {
       throw new BadRequestError("La membresía debe corresponder al cliente y al plan.");
@@ -98,10 +100,10 @@ export function createPayment(app: core.App, body: Body, recordedBy: string) {
     }
 
     const payment = new Record(tx.findCollectionByNameOrId("payments"), {
-      client, membership, plan: plan || related?.getString("plan") || "", amount_cents, status, due_on, note,
+      business, currency: getBusiness(tx, business)!.getString("currency"), client, membership, plan: plan || related?.getString("plan") || "", amount_cents, status, due_on, note,
       method: methodField(body.method, status === "paid"), recorded_by: recordedBy,
     });
-    if (status === "paid") payment.load(paidFields(tx, { method: body.method, paidAt: body.paid_at, recordedBy }));
+    if (status === "paid") payment.load(paidFields(tx, { method: body.method, paidAt: body.paid_at, recordedBy, business }));
     auditActor(payment, recordedBy);
     tx.save(payment);
     scheduleAudit(tx, "payments", payment.id, recordedBy, status === "paid" ? "Pago registrado" : "Cobro pendiente registrado", {});
@@ -111,7 +113,7 @@ export function createPayment(app: core.App, body: Body, recordedBy: string) {
 
 export function settlePayment(app: core.App, id: string, details: Settlement) {
   return inScheduleTransaction(app, tx => {
-    const payment = paymentRecord(tx, id);
+    const payment = paymentRecord(tx, id, details.business);
     if (payment.getString("status") !== "pending") throw paymentConflict("Solo se puede pagar un cobro pendiente.");
     payment.load(paidFields(tx, details));
     auditActor(payment, details.recordedBy);
@@ -121,9 +123,9 @@ export function settlePayment(app: core.App, id: string, details: Settlement) {
   });
 }
 
-export function voidPayment(app: core.App, id: string, { reason, by }: { reason: unknown; by: string }) {
+export function voidPayment(app: core.App, id: string, { reason, by, business }: { reason: unknown; by: string; business: string }) {
   return inScheduleTransaction(app, tx => {
-    const payment = paymentRecord(tx, id);
+    const payment = paymentRecord(tx, id, business);
     if (payment.getString("status") === "void") throw paymentConflict("El pago ya está anulado.");
     const why = textField(reason);
     if (!why) throw new BadRequestError("Indica el motivo de la anulación.");
@@ -164,7 +166,8 @@ export function ensurePendingCharge(app: core.App, membership: core.Record) {
     if (!actor) return; // Legacy records and system updates can have no staff actor.
 
     const payment = new Record(tx.findCollectionByNameOrId("payments"), {
-      ...charge, client: membership.getString("client"), membership: membershipId,
+      ...charge, business: membership.getString("business"),
+      currency: getBusiness(tx, membership.getString("business"))!.getString("currency"), client: membership.getString("client"), membership: membershipId,
       plan: planId, recorded_by: actor, status: "pending",
     });
     auditActor(payment, actor);

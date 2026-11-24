@@ -16,16 +16,19 @@ const benefits = [
   ['8–16 week programs', 'Structured phases with a clear finish line.'],
   ['Progress monitoring', 'Regular check-ins and adjustments.'],
 ];
+import { getCatalog } from '@/lib/catalog';
+const { business } = await getCatalog();
 ---
 
 <BaseLayout
-  title="Online Coaching Programs | JQ Fitness"
+  business={business}
+  title={`Online Coaching Programs | ${business.name}`}
   description="Personalized 8–16 week online coaching with training plans, nutrition guidance and progress monitoring."
 >
   <PageHero
     eyebrow="Online Coaching"
     title="Coaching anywhere."
-    sub="Get JQ Fitness programming and accountability wherever you are. Start with a free consultation."
+    sub={`Get ${business.name} programming and accountability wherever you are. Start with a free consultation.`}
   />
   <Section class="grid gap-10 lg:grid-cols-2">
     <div class="grid gap-4 sm:grid-cols-2">

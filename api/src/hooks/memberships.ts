@@ -3,20 +3,24 @@
 routerAdd("POST", "/api/admin/memberships/assign", (e) => {
   const { assign, membershipToday, requireMembershipRole } =
     require(`${__hooks}/lib/memberships-service`) as typeof import("../lib/memberships-service");
+  const { getBusinessTimezone } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
   const actor = requireMembershipRole(e, ["owner", "reception"]);
-  return e.json(200, assign(e.app, e.requestInfo().body, { actor, today: membershipToday() }));
+  const business = e.auth!.getString("business");
+  return e.json(200, assign(e.app, e.requestInfo().body, { business, actor, today: membershipToday(getBusinessTimezone(e.app, business, e)) }));
 });
 
 routerAdd("POST", "/api/admin/memberships/{id}/{action}", (e) => {
   const { manageMembership, membershipToday, requireMembershipRole } =
     require(`${__hooks}/lib/memberships-service`) as typeof import("../lib/memberships-service");
+  const { getBusinessTimezone } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
   const actor = requireMembershipRole(e, ["owner", "reception"]);
+  const business = e.auth!.getString("business");
   const action = e.request!.pathValue("action");
   if (action !== "renew" && action !== "pause" && action !== "resume" && action !== "cancel" && action !== "adjust") {
     throw new NotFoundError("Acción de membresía no encontrada.");
   }
   return e.json(200, manageMembership(e.app, e.request!.pathValue("id"), action, e.requestInfo().body,
-    { actor, today: membershipToday() }));
+    { business, actor, today: membershipToday(getBusinessTimezone(e.app, business, e)) }));
 });
 
 onRecordValidate((e) => {

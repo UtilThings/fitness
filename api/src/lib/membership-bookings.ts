@@ -4,6 +4,7 @@ import { canUseFirstClass, computeBalance, creditsToApply, creditsToGrant, isFir
 import { assign, chargeable, covers, matchingMemberships, membershipError, planData, recordMovement,
   selectBookingMembership, sessionDate, type BookingEligibilityOptions } from "./memberships-service";
 import { getRecord } from "./schedule-store";
+import { getBusinessTimezone } from "./tenant";
 import { setFreeClassUsed } from "./booking-store";
 
 const eligibilityMessages: Record<EligibilityCode, string> = {
@@ -28,7 +29,7 @@ export function authorizeBooking(app: core.App, client: core.Record, session: co
       firstVisitUsed.length ? [planData(plan)] : [])) {
       throw membershipError(400, "first_class_used", "El cliente no puede usar una primera clase en este servicio.");
     }
-    assign(app, { client: client.id, plan: plan.id }, options);
+    assign(app, { client: client.id, plan: plan.id }, { ...options, business: client.getString("business") });
     selection = selectBookingMembership(app, client.id, session, { ...options, override: false });
   }
   if (!selection.allowed) {
@@ -64,7 +65,7 @@ export function reconcileBooking(app: core.App, booking: core.Record) {
     }
     if (!target && !booking.getBool("free_class")) {
       target = matchingMemberships(app, client, session.getString("service"))
-        .find(({ record }) => record.getString("status") === "active" && covers(record, sessionDate(session)))?.record;
+        .find(({ record }) => record.getString("status") === "active" && covers(record, sessionDate(session, getBusinessTimezone(app, session.getString("business")))))?.record;
     }
     if (target) {
       const plan = planData(app.findRecordById("plans", target.getString("plan")));

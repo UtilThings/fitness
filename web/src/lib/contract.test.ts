@@ -3,7 +3,7 @@ import { expect, it } from 'vitest';
 import { isPublicCatalog, isPublicSchedule } from './api';
 
 const spec = readFileSync(
-  '../features/019-catalogo-publico-en-web/spec.md',
+  '../features/020-multi-tenancy-business/spec.md',
   'utf8',
 );
 const examples = [...spec.matchAll(/```json\n([\s\S]*?)\n```/g)].map(

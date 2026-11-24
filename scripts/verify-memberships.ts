@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { Database } from "bun:sqlite";
 import { addDays, nextPeriod, periodBounds } from "../api/src/lib/membership-cycles";
-import { utcToLocal } from "../api/src/lib/tz";
+import { utcToLocal as toBusinessLocal } from "../api/src/lib/tz";
+const utcToLocal = (value: string) => toBusinessLocal(value, "America/New_York");
 
 const base = process.argv[2];
 const password = process.env.JQ_VERIFY_PASSWORD;
+const business = process.env.JQ_VERIFY_BUSINESS!;
 assert(base && password, "Ejecuta scripts/verify-api.sh");
 
 type Row = { id: string };
@@ -39,6 +41,7 @@ const client = await call<Row>(records("clients"), owner, "POST", {
 });
 const memberships = records("memberships");
 const seed = {
+  business,
   client: client.id, plan: plans[0].id, status: "active",
   starts_on: today, current_period_start: today, current_period_end: today,
 };
@@ -126,7 +129,7 @@ assert.match(cancelled.membership.notes, /anticipada/);
 await action("renew", {}, 409);
 
 const expired = await call<Membership>(memberships, root, "POST", {
-  ...assignBody, status: "expired", starts_on: addDays(today, -40),
+  business,  ...assignBody, status: "expired", starts_on: addDays(today, -40),
   current_period_start: addDays(today, -40), current_period_end: addDays(today, -13), ended_on: addDays(today, -5),
 });
 const reactivated = await action("renew", {}, 200, owner, expired.id);

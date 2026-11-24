@@ -29,19 +29,20 @@ onRecordDelete((e) => {
 routerAdd("GET", "/api/admin/memberships/eligibility", (e) => {
   const { checkEligibility, membershipError, requireMembershipRole } =
     require(`${__hooks}/lib/memberships-service`) as typeof import("../lib/memberships-service");
-  const { getRecord } = require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
+  const { tenantRecord } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
   requireMembershipRole(e, ["owner", "reception", "coach"]);
   const query = e.request!.url!.query();
-  const client = getRecord(e.app, "clients", query.get("client"));
+  const business = e.auth!.getString("business");
+  const client = tenantRecord(e.app, "clients", query.get("client"), business);
   const sessionId = query.get("session");
   if (!sessionId && query.get("service") && query.get("starts_at")) {
     if (!client) throw membershipError(404, "not_found", "Cliente no encontrado.");
     const { privateSessionDraft } = require(`${__hooks}/lib/private-sessions`) as typeof import("../lib/private-sessions");
     const { hasPartnerMembership } = require(`${__hooks}/lib/scheduling-store`) as typeof import("../lib/scheduling-store");
-    const draft = privateSessionDraft(e.app, { service: query.get("service"), starts_at: query.get("starts_at") });
+    const draft = privateSessionDraft(e.app, { service: query.get("service"), starts_at: query.get("starts_at") }, business);
     return e.json(200, { ...checkEligibility(e.app, client.id, draft), partner: hasPartnerMembership(e.app, client.id, draft) });
   }
-  const session = getRecord(e.app, "class_sessions", sessionId);
+  const session = tenantRecord(e.app, "class_sessions", sessionId, business);
   if (!client || !session) throw membershipError(404, "not_found", "Cliente o sesión no encontrado.");
   return e.json(200, checkEligibility(e.app, client.id, session));
 });

@@ -13,17 +13,20 @@ const values = [
     'Smart programming and accountability that actually works.',
   ],
 ];
+import { getCatalog } from '@/lib/catalog';
+const { business } = await getCatalog();
 ---
 
 <BaseLayout
-  title="About JQ Fitness | Miramar Boutique Studio"
-  description="A community-driven boutique fitness studio in Miramar, Florida focused on real results."
+  business={business}
+  title={`About ${business.name} | ${business.city.split(',')[0]} Boutique Studio`}
+  description={`A community-driven boutique fitness studio in ${business.city} focused on real results.`}
 >
   <PageHero
     eyebrow="About"
     title="Built on community."
     img={group}
-    sub="JQ Fitness is a boutique studio in Miramar, Florida where coaching is personal, classes stay small, and every client is part of the team."
+    sub={`${business.name} is a boutique studio in ${business.city} where coaching is personal, classes stay small, and every client is part of the team.`}
   />
   <Section class="grid gap-6 md:grid-cols-3">
     {values.map(([title, sub]) => (

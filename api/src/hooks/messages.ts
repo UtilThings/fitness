@@ -27,12 +27,9 @@ onRecordCreateRequest(validateMessageTemplate, "message_templates");
 onRecordUpdateRequest(validateMessageTemplate, "message_templates");
 
 cronAdd("retry_failed_messages", "*/10 * * * *", () => {
-  try {
-    const { retryFailedMessages } = require(`${__hooks}/lib/message-send`) as typeof import("../lib/message-send");
-    retryFailedMessages($app);
-  } catch {
-    $app.logger().error("No se pudo consultar la cola de mensajes.");
-  }
+  const { retryFailedMessages } = require(`${__hooks}/lib/message-send`) as typeof import("../lib/message-send");
+  const { forEachActiveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  forEachActiveBusiness($app, "retry_failed_messages", (business) => retryFailedMessages($app, business.id));
 });
 
 function blockMessageLogWrites() {

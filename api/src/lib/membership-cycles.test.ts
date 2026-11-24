@@ -36,3 +36,10 @@ test("día 7 de gracia sigue activo y la pausa desplaza el cierre", () => {
   expect(extendByPause("2026-02-01", "2026-01-20", "2026-01-20")).toBe("2026-02-01");
   expect(extendByPause("2026-02-01", "2026-01-20", "2026-01-30")).toBe("2026-02-11");
 });
+
+test("starts a membership period on the business date", async () => {
+  const { membershipToday } = await import("./membership-cycles");
+  const instant = new Date("2026-06-02T04:30:00Z");
+  expect(membershipToday("America/Bogota", instant)).toBe("2026-06-01");
+  expect(membershipToday("America/New_York", instant)).toBe("2026-06-02");
+});

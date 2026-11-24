@@ -1,9 +1,13 @@
-import { addLocalDays } from "./tz";
+import { addLocalDays, utcToLocal } from "./tz";
 
 const DAY_MS = 86_400_000;
 export const PERIOD_DAYS = 28;
 export const GRACE_DAYS = 7;
 export const addDays = addLocalDays;
+
+export function membershipToday(timezone: string, instant = new Date()) {
+  return utcToLocal(instant.toISOString(), timezone).date;
+}
 
 export function diffDays(a: string, b: string): number {
   return (Date.parse(a) - Date.parse(b)) / DAY_MS;

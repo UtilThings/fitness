@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { Database } from "bun:sqlite";
 import { addDays } from "../api/src/lib/membership-cycles";
-import { utcToLocal } from "../api/src/lib/tz";
+import { utcToLocal as toBusinessLocal } from "../api/src/lib/tz";
+const utcToLocal = (value: string) => toBusinessLocal(value, "America/New_York");
 
 const base = process.argv[2];
 const password = process.env.JQ_VERIFY_PASSWORD;

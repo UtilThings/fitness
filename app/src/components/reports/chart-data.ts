@@ -1,4 +1,5 @@
 import type { ChartData, ChartOptions } from 'chart.js';
+import { businessCurrency } from '@/lib/business-session';
 
 export type ReportChartType = 'bar' | 'line' | 'doughnut';
 export type ValueFormat = 'number' | 'percent' | 'money';
@@ -42,7 +43,7 @@ export function formatChartValue(value: number, format: ValueFormat): string {
   if (format === 'money') {
     return new Intl.NumberFormat('es-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: businessCurrency.value,
     }).format(value);
   }
   if (format === 'percent') {

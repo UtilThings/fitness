@@ -8,7 +8,7 @@ import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getCatalog } from '@/lib/catalog';
 
-const { personalOneOnOne, personalPartner } = await getCatalog();
+const { personalOneOnOne, personalPartner, business } = await getCatalog();
 
 const policies = [
   'Each session is 60 minutes; packages run in 4-week blocks.',
@@ -26,7 +26,8 @@ const included = [
 ---
 
 <BaseLayout
-  title="Personal Training | JQ Fitness Miramar"
+  business={business}
+  title={`Personal Training | ${business.name} ${business.city.split(',')[0]}`}
   description="One-on-one and partner personal training packages in 4-week blocks."
 >
   <PageHero
@@ -42,6 +43,7 @@ const included = [
       class="mt-8"
       group="personalOneOnOne"
       plans={personalOneOnOne}
+      currency={business.currency}
       featuredIndex={1}
       cta="Request a schedule"
     />
@@ -51,6 +53,7 @@ const included = [
       class="mt-8"
       group="personalPartner"
       plans={personalPartner}
+      currency={business.currency}
       cta="Request a schedule"
     />
     <div class="mt-12 grid gap-6 md:grid-cols-2">

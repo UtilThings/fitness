@@ -1,7 +1,19 @@
-const usd = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-});
+import { businessCurrency } from './business-session';
+
+const formatters = new Map<string, Intl.NumberFormat>();
+function moneyFormatter(currency: string) {
+  let formatter = formatters.get(currency);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    formatters.set(currency, formatter);
+  }
+  return formatter;
+}
 const maxCents = BigInt(Number.MAX_SAFE_INTEGER);
 
 function splitCents(cents: number) {
@@ -16,10 +28,13 @@ function splitCents(cents: number) {
   };
 }
 
-export function formatUsd(cents: number): string {
+export function formatMoney(
+  cents: number,
+  currency = businessCurrency.value,
+): string {
   const { dollars, fraction } = splitCents(cents);
   const value = cents < 0 ? (dollars === 0n ? -0 : -dollars) : dollars;
-  return usd
+  return moneyFormatter(currency)
     .formatToParts(value)
     .map((part) => (part.type === 'fraction' ? fraction : part.value))
     .join('');
@@ -42,7 +57,8 @@ export function parseUsdToCents(text: string): number | null {
   return cents <= maxCents ? Number(cents) : null;
 }
 
-export const formatCents = formatUsd;
+export const formatCents = formatMoney;
+export const formatUsd = (cents: number) => formatMoney(cents, 'USD');
 
 export function parseToCents(text: string): number | null {
   let amount = text.trim().replace(/^\$\s*/, '');

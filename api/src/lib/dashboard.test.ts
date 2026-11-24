@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import {
-  buildAttention, buildCounts, DASHBOARD_TIMEZONE, localDayBoundsUtc, summarizeSessions,
+  buildAttention, buildCounts, localDayBoundsUtc, summarizeSessions,
   type DashboardBooking, type DashboardSession,
 } from "./dashboard";
 
 function bounds(now: string) {
-  return localDayBoundsUtc(new Date(now), DASHBOARD_TIMEZONE);
+  return localDayBoundsUtc(new Date(now), "America/New_York");
 }
 
 describe("día del dashboard en Nueva York", () => {
@@ -70,4 +70,10 @@ test("solo genera alertas en la ventana programada y solo booked evita no_bookin
     new Date("2026-11-21T18:00:00Z"), 1);
   expect(attention.map(({ session_id, reason }) => [session_id, reason]))
     .toEqual([["no-coach", "no_coach"], ["no-bookings", "no_bookings"]]);
+});
+
+test("dashboard day starts at the business midnight", () => {
+  expect(localDayBoundsUtc(new Date("2026-06-02T04:30:00Z"), "America/Bogota")).toEqual({
+    date: "2026-06-01", startUtc: "2026-06-01T05:00:00.000Z", endUtc: "2026-06-02T05:00:00.000Z",
+  });
 });

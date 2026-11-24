@@ -71,3 +71,10 @@ test("chooses a name, title, email, or id for summaries", () => {
   expect(buildSummary("delete", "admins", { email: "ana@example.test" })).toBe("delete admins: ana@example.test");
   expect(buildSummary("delete", "admins", { id: "admin-1" })).toBe("delete admins: admin-1");
 });
+
+test("uses the audited business even when the actor belongs to another business", async () => {
+  const { auditBusiness } = await import("./audit");
+  expect(auditBusiness("business-a", "business-b")).toBe("business-a");
+  expect(auditBusiness("", "business-b")).toBe("business-b");
+  expect(auditBusiness("", "business-a", "business-b")).toBe("business-b");
+});

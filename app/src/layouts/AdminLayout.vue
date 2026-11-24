@@ -20,7 +20,8 @@ import SidebarSpacer from 'primevue/sidebarspacer';
 import SidebarTrigger from 'primevue/sidebartrigger';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import logo from '@/assets/jq-logo.png';
+import { useBusiness } from '@/composables/useBusiness';
+import { env } from '@/lib/env';
 import { useAuth } from '@/composables/useAuth';
 import { useMediaQuery } from '@/composables/useMediaQuery';
 import { visibleNav } from '@/layouts/admin-nav';
@@ -28,6 +29,30 @@ import { visibleNav } from '@/layouts/admin-nav';
 const route = useRoute();
 const router = useRouter();
 const { user, role, avatarUrl, logout } = useAuth();
+const {
+  business,
+  logoUrl,
+  loading: businessLoading,
+  error: businessError,
+} = useBusiness();
+const brandName = computed(() => business.value?.name || env.appName);
+const brandInitials = computed(() =>
+  brandName.value
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase(),
+);
+const logoFailed = ref(false);
+watch(logoUrl, () => (logoFailed.value = false));
+watch(
+  [() => route.meta.title, brandName],
+  ([title, name]) => {
+    document.title = title ? `${title} · ${name}` : name;
+  },
+  { immediate: true },
+);
 const nav = computed(() => visibleNav(role.value));
 const avatarFailed = ref(false);
 watch(avatarUrl, () => (avatarFailed.value = false));
@@ -90,8 +115,23 @@ const userMenu = computed(() => [
         <SidebarPanel>
           <SidebarHeader>
             <div class="flex items-center gap-2 px-2 py-1">
-              <img :src="logo" alt="" class="h-7 w-auto shrink-0" />
-              <span class="truncate font-semibold">JQ Fitness</span>
+              <div
+                v-if="businessLoading"
+                class="h-7 w-28 animate-pulse rounded bg-surface-200 dark:bg-surface-700"
+                role="status"
+                aria-label="Cargando negocio"
+              ></div>
+              <template v-else>
+                <img
+                  v-if="logoUrl && !logoFailed"
+                  :src="logoUrl"
+                  alt=""
+                  class="h-7 w-auto shrink-0"
+                  @error="logoFailed = true"
+                />
+                <Avatar v-else :label="brandInitials" class="shrink-0" />
+                <span class="truncate font-semibold">{{ brandName }}</span>
+              </template>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -169,7 +209,8 @@ const userMenu = computed(() => [
         <span class="text-sm font-medium">{{ route.meta.title }}</span>
       </header>
       <div class="p-4">
-        <RouterView />
+        <p v-if="businessError" role="alert">No se pudo cargar el negocio.</p>
+        <RouterView v-else-if="!businessLoading" />
       </div>
     </SidebarMain>
   </SidebarLayout>

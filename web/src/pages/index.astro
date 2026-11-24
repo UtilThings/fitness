@@ -45,23 +45,26 @@ const stats = [
   ['1:1', 'Personal coaching'],
   ['7', 'Weekly group classes'],
 ];
+import { getCatalog } from '@/lib/catalog';
+const { business } = await getCatalog();
 ---
 
 <BaseLayout
-  title="JQ Fitness — Stronger Every Day | Miramar, FL"
-  description="Personal training, small-group strength and Tropical Jump classes in Miramar, Florida. Book your class today."
+  business={business}
+  title={`${business.name} — Stronger Every Day | ${business.city}`}
+  description={`Personal training, small-group strength and Tropical Jump classes in ${business.city}. Book your class today.`}
 >
   <section class="relative -mt-16 flex min-h-[92vh] items-end overflow-hidden">
     <Image
       src={hero}
-      alt="Athlete training with a kettlebell at JQ Fitness"
+      alt={`Athlete training with a kettlebell at ${business.name}`}
       loading="eager"
       fetchpriority="high"
       class="absolute inset-0 h-full w-full object-cover object-center"
     />
     <div class="absolute inset-0 hero-fade"></div>
     <div class="relative mx-auto w-full max-w-7xl px-5 pb-20">
-      <p class="eyebrow">Miramar · Florida</p>
+      <p class="eyebrow">{business.city}</p>
       <h1 class="mt-4 text-6xl sm:text-8xl lg:text-[9rem]">
         <T k="heroTitle" />
       </h1>

@@ -3,6 +3,7 @@ import { CATALOG_SEED } from "../api/src/lib/catalog";
 
 const [base, phase] = process.argv.slice(2);
 const password = process.env.JQ_VERIFY_PASSWORD;
+const business = process.env.JQ_VERIFY_BUSINESS!;
 assert(
   base && password && ["seed", "restart"].includes(phase),
   "Ejecuta scripts/verify-api.sh",
@@ -113,7 +114,7 @@ for (const role of roles) {
       method: "POST",
       token: root.token,
       body: {
-        email,
+        business, email,
         password,
         passwordConfirm: password,
         name: role,
@@ -332,7 +333,7 @@ if (phase === "seed") {
     method: "POST",
     token: root.token,
     body: {
-      client: member.id,
+      business, client: member.id,
       plan: single.id,
       status: "expired",
       starts_on: "2026-01-05",

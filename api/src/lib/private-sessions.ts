@@ -4,15 +4,16 @@ import { canBook } from "./booking-rules";
 import { bookingError, bookingRelation } from "./booking-store";
 import { authorizeBooking } from "./membership-bookings";
 import { membershipToday, requireMembershipRole } from "./memberships-service";
-import { auditActor, fieldError, getRecord, inScheduleTransaction, pocketBaseDate, scheduleAudit } from "./schedule-store";
+import { auditActor, fieldError, inScheduleTransaction, pocketBaseDate, scheduleAudit } from "./schedule-store";
 import { privateCapacity } from "./scheduling";
 import { hasPartnerMembership, schedulingError } from "./scheduling-store";
+import { getBusinessTimezone, tenantRecord } from "./tenant";
 import { validateMove } from "./session-rules";
 
-export function privateSessionDraft(app: core.App, body: Record<string, unknown>) {
+export function privateSessionDraft(app: core.App, body: Record<string, unknown>, business: string) {
   const { coach, service, starts_at, duration_min } = body;
   if (typeof service !== "string" || !service) throw fieldError("service", "Selecciona un servicio personal.");
-  const offering = getRecord(app, "services", service);
+  const offering = tenantRecord(app, "services", service, business);
   if (!offering?.getBool("active") || offering.getString("kind") !== "personal") {
     throw fieldError("service", "Selecciona un servicio personal activo.");
   }
@@ -23,7 +24,7 @@ export function privateSessionDraft(app: core.App, body: Record<string, unknown>
     throw fieldError("duration_min", "Indica una duración de 15 a 240 minutos.");
   }
   return new Record(app.findCollectionByNameOrId("class_sessions"), {
-    coach, service, starts_at, duration_min, status: "scheduled", kind: "private", capacity: 1,
+    business, coach, service, starts_at, duration_min, status: "scheduled", kind: "private", capacity: 1,
   });
 }
 
@@ -59,7 +60,8 @@ export function createPrivateSession(e: core.RequestEvent) {
   if (exceptions.size) requireMembershipRole(e, ["owner", "reception"]);
 
   return inScheduleTransaction(e.app, (tx) => {
-    const session = privateSessionDraft(tx, body);
+    const business = e.auth!.getString("business");
+    const session = privateSessionDraft(tx, body, business);
     if (body.duration_min === undefined) throw fieldError("duration_min", "Indica la duración de la sesión.");
     const duplicate = tx.findRecordsByFilter("class_sessions",
       "coach = {:coach} && service = {:service} && starts_at = {:starts} && kind = 'private' && status = 'scheduled'",
@@ -71,7 +73,7 @@ export function createPrivateSession(e: core.RequestEvent) {
         code: new ValidationError("duplicate_session", "Ya existe una sesión privada en ese horario."),
       });
     }
-    const clients = clientIds.map((id) => bookingRelation(tx, "clients", id, "client_ids"));
+    const clients = clientIds.map((id) => bookingRelation(tx, "clients", id, "client_ids", business));
     const partnerCount = clients.filter((client) => hasPartnerMembership(tx, client.id, session)).length;
     const seats = privateCapacity({ clientCount: clients.length, partnerCount, capacity: capacity as number | undefined });
     if (typeof seats !== "number") throw schedulingError(seats.code);
@@ -83,7 +85,7 @@ export function createPrivateSession(e: core.RequestEvent) {
     tx.save(session);
     const collection = tx.findCollectionByNameOrId("bookings");
     const now = Date.now();
-    const today = membershipToday();
+    const today = membershipToday(getBusinessTimezone(tx, business, e));
     const bookings = clients.map((client) => {
       const decision = canBook({
         session: { starts_at: session.getString("starts_at"), status: session.getString("status") },
@@ -93,7 +95,7 @@ export function createPrivateSession(e: core.RequestEvent) {
       const note = exceptions.get(client.id) ?? "";
       const entitlement = authorizeBooking(tx, client, session, { actor, today, now, override: !!note, reportClient: true });
       const booking = new Record(collection, {
-        session: session.id, client: client.id, status: "booked", source: "admin", override_note: note,
+        business, session: session.id, client: client.id, status: "booked", source: "admin", override_note: note,
         membership: entitlement.membership?.id ?? "", free_class: entitlement.freeClass ?? false,
       });
       auditActor(booking, actor);

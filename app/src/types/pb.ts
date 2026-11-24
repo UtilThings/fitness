@@ -15,7 +15,25 @@ export interface BaseRecord {
   updated?: string; // Las colecciones de solo escritura inicial pueden omitirlo.
 }
 
+export interface Business extends BaseRecord {
+  name: string;
+  slug: string;
+  logo: string;
+  city: string;
+  phone: string;
+  email: string;
+  currency: string;
+  timezone: string;
+  receipt_prefix: string;
+  active: boolean;
+  allowed_origins: readonly string[] | null;
+  public_key_prefix: string;
+  public_key_rotated_at: string;
+}
+
 export interface Admin extends BaseRecord {
+  business?: string;
+  expand?: { business?: Business };
   name: string;
   avatar: string;
   email: string;

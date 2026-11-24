@@ -27,6 +27,17 @@ vi.mock('@/lib/pocketbase', () => ({
 vi.mock('@/composables/useClients', () => ({
   useClients: () => ({ get: api.client }),
 }));
+vi.mock('@/composables/useBusiness', async () => {
+  const { ref } = await import('vue');
+  return {
+    useBusiness: () => ({
+      business: ref(null),
+      logoUrl: ref(),
+      loading: ref(false),
+      error: ref(false),
+    }),
+  };
+});
 vi.mock('@/composables/useNotify', () => ({
   useNotify: () => ({ success: api.success }),
 }));

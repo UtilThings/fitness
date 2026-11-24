@@ -1,18 +1,21 @@
-import { classTemplates, type ClassTemplate } from './data';
+import { classTemplates, fallbackBusiness, type ClassTemplate } from './data';
 
 export type ServiceFilter = 'All' | ClassTemplate['service'];
 
 export const MAX_SCHEDULE_WEEKS = 8;
 
-const businessCalendar = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'America/New_York',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
-
 // Keep civil dates at UTC midnight so formatting and day arithmetic use the same date in any browser.
-export function weekStart(today: Date, offset: number): Date {
+export function weekStart(
+  today: Date,
+  offset: number,
+  timeZone = fallbackBusiness.timezone,
+): Date {
+  const businessCalendar = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
   const parts = Object.fromEntries(
     businessCalendar
       .formatToParts(today)

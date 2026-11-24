@@ -1,4 +1,4 @@
-import { fetchCatalog, type PublicService } from './api';
+import { fetchCatalog, type PublicBusiness, type PublicService } from './api';
 import * as staticData from './data';
 import type { ClassTemplate, Plan } from './data';
 
@@ -13,11 +13,13 @@ export type PlanGroup = keyof typeof SERVICE_SLUGS;
 
 export interface Catalog extends Record<PlanGroup, Plan[]> {
   source: 'api' | 'static';
+  business: PublicBusiness;
   classTemplates: ClassTemplate[];
 }
 
 const fallback: Catalog = {
   source: 'static',
+  business: staticData.fallbackBusiness,
   personalOneOnOne: staticData.personalOneOnOne,
   personalPartner: staticData.personalPartner,
   groupPlans: staticData.groupPlans,
@@ -111,12 +113,16 @@ let pendingCatalog: Promise<Catalog> | undefined;
 export function getCatalog(): Promise<Catalog> {
   // Islands mounting together share the request. The next visit still revalidates.
   pendingCatalog ??= fetchCatalog()
-    .then(({ services }): Catalog => {
+    .then(({ services, business }): Catalog => {
       const bySlug = new Map(
         services.map((service) => [service.slug, service]),
       );
       return {
         source: 'api',
+        business: {
+          ...business,
+          city: business.city || staticData.fallbackBusiness.city,
+        },
         personalOneOnOne: toPlans(bySlug.get(SERVICE_SLUGS.personalOneOnOne)),
         personalPartner: toPlans(bySlug.get(SERVICE_SLUGS.personalPartner)),
         groupPlans: toPlans(bySlug.get(SERVICE_SLUGS.groupPlans)),

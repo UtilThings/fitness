@@ -1,5 +1,6 @@
 /// <reference path="../../pb_data/types.d.ts" />
 
+import { getBusinessTimezone, resolveBusiness } from "./tenant";
 import * as clients from "./clients";
 import { startOfLocalDay, utcToLocal } from "./tz";
 
@@ -46,7 +47,10 @@ export function validateClientRequest(e: core.RecordRequestEvent, before: core.R
   if (phone.ok) record.set("phone", phone.value);
   record.set("assessment", assessment.value);
   if (!record.getString("joined_on")) {
-    record.set("joined_on", startOfLocalDay(utcToLocal(new Date().toISOString()).date).replace("T", " "));
+    const business = e.hasSuperuserAuth() ? record.getString("business") : resolveBusiness(e.auth);
+    const timezone = getBusinessTimezone(e.app, business, e);
+    const today = utcToLocal(new Date().toISOString(), timezone).date;
+    record.set("joined_on", startOfLocalDay(today, timezone).replace("T", " "));
   }
 
   return e.next();

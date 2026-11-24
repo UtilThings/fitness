@@ -19,8 +19,8 @@ stop_pocketbase() {
 
 start_pocketbase() {
   local attempt
-  MESSAGES_REMINDER_HOURS=24 MESSAGES_DUE_DAYS_BEFORE=3 MESSAGES_RENEWAL_DAYS_BEFORE=5 STUDIO_NAME="JQ Fitness" \
-    PUBLIC_SITE_ORIGINS="https://fitness.example.test" PUBLIC_SCHEDULE_MAX_WEEKS=8 PUBLIC_CATALOG_CACHE_SECONDS=30 \
+  MESSAGES_REMINDER_HOURS=24 MESSAGES_DUE_DAYS_BEFORE=3 MESSAGES_RENEWAL_DAYS_BEFORE=5 \
+    PUBLIC_SCHEDULE_MAX_WEEKS=8 PUBLIC_CATALOG_CACHE_SECONDS=30 \
     ./pb serve --dev --dir "$work_dir/data" --http "127.0.0.1:$port" \
     --migrationsDir "$PWD/pb_migrations" --hooksDir "$work_dir/hooks" --hooksWatch=false --automigrate=false \
     >"$work_dir/pocketbase.log" 2>&1 &
@@ -69,8 +69,12 @@ smoke_test() {
 routerAdd("POST", "/api/verify/messages/daily", (e) => {
   const { sendDatedNotices } = require(`${__hooks}/lib/message-triggers`);
   const { instant } = e.requestInfo().body;
-  sendDatedNotices(e.app, "payment_due", new Date(instant));
-  sendDatedNotices(e.app, "membership_renewal", new Date(instant));
+  const { forEachActiveBusiness } = require(`${__hooks}/lib/tenant`);
+  forEachActiveBusiness(e.app, "verify_message_clock", (business) => {
+    const timezone = business.getString("timezone");
+    sendDatedNotices(e.app, "payment_due", business.id, timezone, new Date(instant));
+    sendDatedNotices(e.app, "membership_renewal", business.id, timezone, new Date(instant));
+  });
   return e.json(200, {});
 }, $apis.requireSuperuserAuth());
 JS
@@ -152,6 +156,12 @@ JS
   ./pb migrate up "${coaching_migration_flags[@]}"
   check_coaching_collections 2
   ./pb migrate up --dir "$work_dir/data" --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks"
+  export JQ_VERIFY_BUSINESS
+  JQ_VERIFY_BUSINESS="$(bun -e '
+    import { Database } from "bun:sqlite";
+    const db = new Database(process.argv[1], { readonly: true });
+    console.log(db.query("SELECT id FROM businesses WHERE slug = ?").get("jq-fitness").id);
+  ' "$work_dir/data/data.db")"
   start_pocketbase
 
   code="$(curl --noproxy '*' --silent --show-error --max-time 5 --output "$work_dir/response.json" \
@@ -196,7 +206,8 @@ JS
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-coaching.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-reports.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-messages.ts "$base_url"
-  bun ../scripts/verify-public.ts "$base_url" "$work_dir/data/data.db" "$work_dir/pocketbase.log"
+  JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-public.ts "$base_url" "$work_dir/data/data.db" "$work_dir/pocketbase.log"
+  JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-tenancy.ts "$base_url" "$work_dir/data/data.db"
 }
 
 run_step bun install --frozen-lockfile

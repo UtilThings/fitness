@@ -1,5 +1,5 @@
 import type { CsvColumn } from '@/lib/csv';
-import { formatUsd } from '@/lib/money';
+import { formatMoney } from '@/lib/money';
 import type { ReportKind, ReportResponse } from '@/types/reports';
 import type { ChartSeries, ReportChartType, ValueFormat } from './chart-data';
 
@@ -99,7 +99,7 @@ export function displayReportCell(
   if (value === undefined || value === '') return '—';
   if (typeof value === 'string') return value;
   if (column.percent) return percentFormat.format(value);
-  if (column.type === 'money') return formatUsd(value);
+  if (column.type === 'money') return formatMoney(value);
   return numberFormat.format(value);
 }
 

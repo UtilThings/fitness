@@ -9,12 +9,14 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
-# Las variables PUBLIC_* se incrustan en el HTML al compilar.
+# Las variables PUBLIC_* son visibles en los archivos compilados.
 ARG PUBLIC_SITE_URL
 ARG PUBLIC_API_URL
+ARG PUBLIC_BUSINESS_KEY
 ARG PUBLIC_API_TIMEOUT_MS=4000
 ENV PUBLIC_SITE_URL=$PUBLIC_SITE_URL \
     PUBLIC_API_URL=$PUBLIC_API_URL \
+    PUBLIC_BUSINESS_KEY=$PUBLIC_BUSINESS_KEY \
     PUBLIC_API_TIMEOUT_MS=$PUBLIC_API_TIMEOUT_MS
 RUN test -n "$PUBLIC_SITE_URL" || (echo "Falta --build-arg PUBLIC_SITE_URL" >&2; exit 1)
 RUN bun run build

@@ -2,6 +2,8 @@
 import logo from '@/assets/jq-logo.png';
 import Footer from '@/components/Footer.astro';
 import Header from '@/components/Header.vue';
+import { getCatalog } from '@/lib/catalog';
+import type { PublicBusiness } from '@/lib/api';
 import { env } from '@/lib/env';
 import '@/styles/global.css';
 
@@ -10,14 +12,17 @@ interface Props {
   description: string;
   canonical?: URL;
   bare?: boolean;
+  business?: PublicBusiness;
 }
 
 const {
   title,
   description,
   bare = false,
+  business = bare ? undefined : (await getCatalog()).business,
   canonical = new URL(Astro.url.pathname, env.PUBLIC_SITE_URL),
 } = Astro.props;
+const logoSrc = business?.logo_url || logo.src;
 ---
 
 <!doctype html>
@@ -42,12 +47,13 @@ const {
         <Header
           client:load
           currentPath={Astro.url.pathname}
-          logoSrc={logo.src}
+          logoSrc={logoSrc}
+          businessName={business?.name}
         />
         <main class="min-h-screen">
           <slot />
         </main>
-        <Footer />
+        {business && <Footer business={business} logoSrc={logoSrc} />}
       </>
     )}
     <script>

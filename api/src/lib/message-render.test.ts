@@ -30,7 +30,16 @@ test("valida campos, longitudes, variables y saltos del asunto renderizado", () 
 
 test("formatea fecha local bilingüe e importes en dólares", () => {
   const instant = "2026-11-21 14:00:00.000Z";
-  expect(`${formatDate(instant, "es")}, ${formatTime(instant)}`).toBe("sáb 21 nov, 9:00 AM");
-  expect(`${formatDate(instant, "en")}, ${formatTime(instant)}`).toBe("Sat, Nov 21, 9:00 AM");
-  expect(formatMoneyCents(26800)).toBe("$268.00");
+  expect(`${formatDate(instant, "es", "America/New_York")}, ${formatTime(instant, "America/New_York")}`).toBe("sáb 21 nov, 9:00 AM");
+  expect(`${formatDate(instant, "en", "America/New_York")}, ${formatTime(instant, "America/New_York")}`).toBe("Sat, Nov 21, 9:00 AM");
+  expect(formatMoneyCents(26800, "USD")).toBe("$268.00");
+});
+
+test("renders the brand and contact of the supplied business", async () => {
+  const { businessVariables } = await import("./message-context");
+  const template = { key: "booking_confirmed", subject: "{{studio_name}}", body: "Contacto {{studio_phone}}" };
+  const a = renderTemplate(template, businessVariables({ name: "JQ Fitness", phone: "111" }));
+  const b = renderTemplate(template, businessVariables({ name: "Negocio B", phone: "222" }));
+  expect([a.subject, a.body, b.subject, b.body]).toEqual(["JQ Fitness", "Contacto 111", "Negocio B", "Contacto 222"]);
+  expect(formatMoneyCents(26800, "COP")).toBe("COP 268.00");
 });

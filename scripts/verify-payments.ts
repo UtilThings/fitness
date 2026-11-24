@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { Database } from "bun:sqlite";
 import { addDays } from "../api/src/lib/membership-cycles";
-import { utcToLocal } from "../api/src/lib/tz";
+import { utcToLocal as toBusinessLocal } from "../api/src/lib/tz";
+const utcToLocal = (value: string) => toBusinessLocal(value, "America/New_York");
 
 const base = process.argv[2];
 const password = process.env.JQ_VERIFY_PASSWORD;
+const business = process.env.JQ_VERIFY_BUSINESS!;
 assert(base && password, "Ejecuta scripts/verify-api.sh");
 
 type Row = { id: string };
@@ -39,7 +41,7 @@ const indexClient = await call<Row>(records("clients"), owner, "POST", {
   first_name: "Pagos", last_name: "Índices", status: "active",
 });
 const membership = await call<Row>(records("memberships"), root, "POST", {
-  client: indexClient.id, plan: plan.id, status: "active", starts_on: "2026-01-01",
+  business, client: indexClient.id, plan: plan.id, status: "active", starts_on: "2026-01-01",
   current_period_start: "2026-01-01", current_period_end: "2026-01-28",
 });
 
@@ -49,24 +51,24 @@ assert(database);
 const db = new Database(database);
 const seed = { client: client.id, recorded_by: admin.id, amount_cents: 100, status: "pending" };
 const insert = db.query(`INSERT INTO payments
-  (id, client, membership, period_index, recorded_by, amount_cents, status, receipt_number)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+  (business, currency, id, client, membership, period_index, recorded_by, amount_cents, status, receipt_number)
+  VALUES (?, 'USD', ?, ?, ?, ?, ?, ?, ?, ?)`);
 const receiptNumber = "JQ-2020-000001";
 db.run("BEGIN");
 try {
   const standalone = [client.id, "", 0, admin.id, 100] as const;
   const cycle = [indexClient.id, membership.id, 1, admin.id, 100] as const;
-  insert.run("index_payment01", ...standalone, "pending", "");
-  insert.run("index_payment02", ...standalone, "pending", "");
-  insert.run("index_payment03", ...standalone, "paid", receiptNumber);
-  assert.throws(() => insert.run("index_payment04", ...standalone, "paid", receiptNumber),
-    /UNIQUE constraint failed: payments.receipt_number/);
+  insert.run(business, "index_payment01", ...standalone, "pending", "");
+  insert.run(business, "index_payment02", ...standalone, "pending", "");
+  insert.run(business, "index_payment03", ...standalone, "paid", receiptNumber);
+  assert.throws(() => insert.run(business, "index_payment04", ...standalone, "paid", receiptNumber),
+    /UNIQUE constraint failed: payments.business, payments.receipt_number/);
 
-  insert.run("index_payment05", ...cycle, "pending", "");
-  assert.throws(() => insert.run("index_payment06", ...cycle, "pending", ""),
+  insert.run(business, "index_payment05", ...cycle, "pending", "");
+  assert.throws(() => insert.run(business, "index_payment06", ...cycle, "pending", ""),
     /UNIQUE constraint failed: payments.membership, payments.period_index/);
   db.run("UPDATE payments SET status = 'void' WHERE id = ?", ["index_payment05"]);
-  insert.run("index_payment06", ...cycle, "pending", "");
+  insert.run(business, "index_payment06", ...cycle, "pending", "");
 } finally {
   db.run("ROLLBACK");
 }

@@ -7,6 +7,9 @@ routerAdd("POST", "/api/admin/sessions/generate", (e) => {
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   const { addLocalDays, startOfLocalDay } = require(`${__hooks}/lib/tz`) as typeof import("../lib/tz");
   const actor = requireScheduleRole(e, ["owner"]);
+  const { getBusinessTimezone } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  const business = e.auth!.getString("business");
+  const timezone = getBusinessTimezone(e.app, business, e);
   const { from, weeks } = e.requestInfo().body;
   if (weeks !== undefined && (typeof weeks !== "number" || !Number.isInteger(weeks) || weeks < 1 || weeks > 12)) {
     throw fieldError("weeks", "Indica entre 1 y 12 semanas.");
@@ -14,13 +17,13 @@ routerAdd("POST", "/api/admin/sessions/generate", (e) => {
   if (from !== undefined) {
     try {
       if (typeof from !== "string") throw new RangeError();
-      startOfLocalDay(addLocalDays(from, (Number(weeks) || 4) * 7));
+      startOfLocalDay(addLocalDays(from, (Number(weeks) || 4) * 7), timezone);
     } catch {
       throw fieldError("from", "Indica una fecha local válida en formato YYYY-MM-DD.");
     }
   }
   const result = inScheduleTransaction(e.app, (tx) => {
-    const generated = persistGeneratedSessions(tx, { weeks, from, actor });
+    const generated = persistGeneratedSessions(tx, { weeks, from, actor, business });
     const { created, skipped_existing, skipped_blocked } = generated;
     scheduleAudit(tx, "class_sessions", "", actor, "Sesiones generadas: " + created,
       { created, skipped_existing, skipped_blocked });
@@ -32,21 +35,26 @@ routerAdd("POST", "/api/admin/sessions/generate", (e) => {
 cronAdd("jq_generate_sessions", "0 7 * * *", () => {
   const { persistGeneratedSessions, scheduleAudit } =
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
-  $app.runInTransaction((tx) => {
-    const { created, skipped_existing, skipped_blocked } = persistGeneratedSessions(tx);
-    scheduleAudit(tx, "class_sessions", "", "", "Sesiones generadas por cron: " + created,
-      { created, skipped_existing, skipped_blocked });
+  const { forEachActiveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  forEachActiveBusiness($app, "jq_generate_sessions", (business) => {
+    $app.runInTransaction((tx) => {
+      const { created, skipped_existing, skipped_blocked } = persistGeneratedSessions(tx, { business: business.id });
+      scheduleAudit(tx, "class_sessions", "", "", "Sesiones generadas por cron: " + created,
+        { created, skipped_existing, skipped_blocked }, business.id);
+    });
   });
 });
 
 routerAdd("POST", "/api/admin/sessions/{id}/cancel", (e) => {
-  const { auditActor, getRecord, getReason, requireScheduleRole, scheduleAudit, inScheduleTransaction } =
+  const { auditActor, getReason, requireScheduleRole, scheduleAudit, inScheduleTransaction } =
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   const actor = requireScheduleRole(e, ["owner", "reception"]);
+  const { tenantRecord } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  const business = e.auth!.getString("business");
   const id = e.request.pathValue("id");
   const reason = getReason(e.requestInfo().body.reason);
   const session = inScheduleTransaction(e.app, (tx) => {
-    const record = getRecord(tx, "class_sessions", id);
+    const record = tenantRecord(tx, "class_sessions", id, business);
     if (!record) throw new NotFoundError("Sesión no encontrada.");
     if (record.getString("status") !== "scheduled") throw new BadRequestError("La sesión no se puede cancelar.");
     record.set("status", "cancelled");
@@ -60,12 +68,14 @@ routerAdd("POST", "/api/admin/sessions/{id}/cancel", (e) => {
 }, $apis.requireAuth("admins"));
 
 routerAdd("POST", "/api/admin/sessions/{id}/move", (e) => {
-  const { auditActor, blockDates, fieldError, getRecord, getReason, hasCoachConflict, requireScheduleRole,
+  const { auditActor, blockDates, fieldError, getReason, hasCoachConflict, requireScheduleRole,
     scheduleAudit, validateCoach, inScheduleTransaction } = require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   const { validateMove } = require(`${__hooks}/lib/session-rules`) as typeof import("../lib/session-rules");
   const { isBlocked } = require(`${__hooks}/lib/schedule-gen`) as typeof import("../lib/schedule-gen");
   const { utcToLocal } = require(`${__hooks}/lib/tz`) as typeof import("../lib/tz");
   const actor = requireScheduleRole(e, ["owner", "reception"]);
+  const { tenantRecord, getBusinessTimezone } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  const business = e.auth!.getString("business");
   const id = e.request.pathValue("id");
   const body = e.requestInfo().body;
   const reason = getReason(body.reason);
@@ -75,7 +85,7 @@ routerAdd("POST", "/api/admin/sessions/{id}/move", (e) => {
   if (invalid) throw fieldError("starts_at", invalid);
 
   const result = inScheduleTransaction(e.app, (tx) => {
-    const original = getRecord(tx, "class_sessions", id);
+    const original = tenantRecord(tx, "class_sessions", id, business);
     if (!original) throw new NotFoundError("Sesión no encontrada.");
     if (original.getString("status") !== "scheduled") throw new BadRequestError("La sesión no se puede cancelar.");
     if (original.getString("kind") === "private") {
@@ -83,10 +93,10 @@ routerAdd("POST", "/api/admin/sessions/{id}/move", (e) => {
     }
     const coach = body.coach === undefined ? original.getString("coach") : body.coach;
     if (typeof coach !== "string") throw fieldError("coach", "Selecciona un coach válido.");
-    validateCoach(tx, coach);
-    const date = utcToLocal(startsAt).date;
-    const blocks = tx.findRecordsByFilter("schedule_blocks", "date_from <= {:date} && date_to >= {:date}",
-      "", 0, 0, { date }).flatMap((block) => block ? [blockDates(block)] : []);
+    validateCoach(tx, coach, business);
+    const date = utcToLocal(startsAt, getBusinessTimezone(tx, business, e)).date;
+    const blocks = tx.findRecordsByFilter("schedule_blocks", "business = {:business} && date_from <= {:date} && date_to >= {:date}",
+      "", 0, 0, { business, date }).flatMap((block) => block ? [blockDates(block)] : []);
     const duration = original.getInt("duration_min");
     const blocked = isBlocked(date, blocks);
     const conflict = hasCoachConflict(tx, id, coach, startsAt, duration);
@@ -99,7 +109,7 @@ routerAdd("POST", "/api/admin/sessions/{id}/move", (e) => {
     tx.save(original);
 
     const created = new Record(original.collection(), {
-      service: original.getString("service"), starts_at: startsAt, duration_min: duration,
+      business, service: original.getString("service"), starts_at: startsAt, duration_min: duration,
       capacity: original.getInt("capacity"), coach, kind: "special", status: "scheduled",
       title: original.getString("title") || Array.from(
         tx.findRecordById("services", original.getString("service")).getString("name"),
@@ -115,9 +125,11 @@ routerAdd("POST", "/api/admin/sessions/{id}/move", (e) => {
 }, $apis.requireAuth("admins"));
 
 routerAdd("POST", "/api/admin/class-templates/{id}/assign-coach", (e) => {
-  const { auditActor, fieldError, getRecord, pocketBaseDate, requireScheduleRole, scheduleAudit, inScheduleTransaction, validateCoach } =
+  const { auditActor, fieldError, pocketBaseDate, requireScheduleRole, scheduleAudit, inScheduleTransaction, validateCoach } =
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   const actor = requireScheduleRole(e, ["owner"]);
+  const { tenantRecord } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  const business = e.auth!.getString("business");
   const id = e.request.pathValue("id");
   const { coach, apply_to_future } = e.requestInfo().body;
   if (typeof coach !== "string") throw fieldError("coach", "Selecciona un coach válido.");
@@ -125,9 +137,9 @@ routerAdd("POST", "/api/admin/class-templates/{id}/assign-coach", (e) => {
     throw fieldError("apply_to_future", "Indica si quieres actualizar las sesiones futuras.");
   }
   const result = inScheduleTransaction(e.app, (tx) => {
-    const template = getRecord(tx, "class_templates", id);
+    const template = tenantRecord(tx, "class_templates", id, business);
     if (!template) throw new NotFoundError("Plantilla no encontrada.");
-    validateCoach(tx, coach);
+    validateCoach(tx, coach, business);
     template.set("coach", coach);
     auditActor(template, actor);
     tx.save(template);

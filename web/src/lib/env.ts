@@ -1,6 +1,9 @@
 type PublicEnv = Pick<
   ImportMetaEnv,
-  'PUBLIC_SITE_URL' | 'PUBLIC_API_URL' | 'PUBLIC_API_TIMEOUT_MS'
+  | 'PUBLIC_SITE_URL'
+  | 'PUBLIC_API_URL'
+  | 'PUBLIC_BUSINESS_KEY'
+  | 'PUBLIC_API_TIMEOUT_MS'
 >;
 
 function validateUrl(value: string, name: keyof PublicEnv): string {
@@ -18,6 +21,7 @@ export function parseEnv(raw: PublicEnv) {
   }
 
   const apiUrl = raw.PUBLIC_API_URL?.trim();
+  const key = raw.PUBLIC_BUSINESS_KEY?.trim();
   const timeout = raw.PUBLIC_API_TIMEOUT_MS?.trim();
   const timeoutMs = Number(timeout || '4000');
   if (
@@ -33,11 +37,19 @@ export function parseEnv(raw: PublicEnv) {
     throw new Error('PUBLIC_API_URL debe ser una URL absoluta HTTP o HTTPS.');
   }
 
+  const validatedApiUrl = apiUrl
+    ? validateUrl(apiUrl, 'PUBLIC_API_URL').replace(/\/+$/, '')
+    : undefined;
+  if (validatedApiUrl && !key) {
+    throw new Error(
+      'PUBLIC_BUSINESS_KEY es obligatoria cuando PUBLIC_API_URL está definida.',
+    );
+  }
+
   return {
     PUBLIC_SITE_URL: validateUrl(siteUrl, 'PUBLIC_SITE_URL'),
-    PUBLIC_API_URL: apiUrl
-      ? validateUrl(apiUrl, 'PUBLIC_API_URL').replace(/\/+$/, '')
-      : undefined,
+    PUBLIC_API_URL: validatedApiUrl,
+    PUBLIC_BUSINESS_KEY: key || undefined,
     PUBLIC_API_TIMEOUT_MS: timeoutMs,
   };
 }
@@ -47,5 +59,6 @@ export const env = parseEnv({
     import.meta.env.PUBLIC_SITE_URL ??
     (import.meta.env.DEV ? 'http://localhost:4321' : undefined),
   PUBLIC_API_URL: import.meta.env.PUBLIC_API_URL,
+  PUBLIC_BUSINESS_KEY: import.meta.env.PUBLIC_BUSINESS_KEY,
   PUBLIC_API_TIMEOUT_MS: import.meta.env.PUBLIC_API_TIMEOUT_MS,
 });
