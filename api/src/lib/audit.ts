@@ -101,3 +101,7 @@ export function buildEntry({
     diff,
   };
 }
+
+export function auditBusiness(recordBusiness: string, actorBusiness: string, businessRecordId = "") {
+  return businessRecordId || recordBusiness || actorBusiness;
+}

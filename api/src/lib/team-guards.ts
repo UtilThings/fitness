@@ -1,13 +1,13 @@
-export const ADMIN_REFERENCES: { collection: string; field: string }[] = [
-  { collection: "audit_logs", field: "actor" },
-  { collection: "services", field: "default_coach" },
-  { collection: "coach_availability", field: "coach" },
-  { collection: "bookings", field: "marked_by" },
-  { collection: "payments", field: "recorded_by" },
-  { collection: "payments", field: "voided_by" },
-  { collection: "coaching_programs", field: "coach" },
-  { collection: "coaching_checkins", field: "created_by" },
-];
+/// <reference path="../../pb_data/types.d.ts" />
+
+import { TENANT_REFERENCES } from "./tenant";
+
+export const ADMIN_REFERENCES = Object.entries(TENANT_REFERENCES).flatMap(([collection, fields]) =>
+  Object.entries(fields).filter(([, target]) => target === "admins").map(([field]) => ({ collection, field })));
+
+export function countActiveOwners(app: Pick<core.App, "countRecords">, business: string) {
+  return app.countRecords("admins", $dbx.hashExp({ business, role: "owner", active: true }));
+}
 
 interface AdminState {
   id: string;

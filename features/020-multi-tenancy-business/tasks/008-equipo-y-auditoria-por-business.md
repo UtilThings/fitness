@@ -1,7 +1,7 @@
 # 008 - [Hook] Equipo y auditoría por business
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 007
 - **Fase:** Fase 1: Fundamentos de datos y aislamiento
 
@@ -22,10 +22,10 @@ Las reglas de equipo y la auditoría se aplican dentro de cada business.
 
 ## Criterios de aceptación
 
-- [ ] Se puede desactivar al único owner de un business solo si hay otro owner activo en ese mismo business; los owners de otro business no cuentan.
-- [ ] Un owner de A no lista ni lee `audit_logs` de B.
-- [ ] Cada entrada nueva de `audit_logs` tiene `business`.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Se puede desactivar al único owner de un business solo si hay otro owner activo en ese mismo business; los owners de otro business no cuentan.
+- [x] Un owner de A no lista ni lee `audit_logs` de B.
+- [x] Cada entrada nueva de `audit_logs` tiene `business`.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -38,4 +38,4 @@ Las reglas de equipo y la auditoría se aplican dentro de cada business.
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+La instancia local confirmó que un owner de otro negocio no permite desactivar al último owner propio y que un segundo owner del mismo negocio sí puede desactivar al primero. Los dos listados de auditoría devolvieron entradas con su propio negocio y la lectura ajena devolvió 404. Las referencias de equipo derivan del mapa de relaciones de tenant. Build y 106 pruebas en verde.

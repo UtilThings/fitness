@@ -35,6 +35,8 @@ La colección heredada `users` tiene el alta pública cerrada. Su regla de auten
 
 ## Equipo: reglas y `ADMIN_REFERENCES`
 
+Cada admin pertenece a un negocio. Los controles de último owner y referencias se aplican dentro de ese negocio. El correo de acceso sigue siendo único en toda la colección `admins`.
+
 El API permite crear integrantes a los owners activos. Cada integrante puede editar su propio perfil y cambiar su contraseña con la actual. Una actualización o baja debe conservar al menos un owner activo. Cada integrante conserva su estado activo al editar su propia cuenta. Si el registro es actor de una entrada de auditoría u otra relación declarada, el borrado responde `409` y la app ofrece desactivarlo. Un admin inactivo queda excluido del inicio de sesión.
 
 Cuando una feature agregue una relación a `admins`, añade en el mismo cambio su colección y campo a `ADMIN_REFERENCES` en `src/lib/team-guards.ts`. La asignación `services.default_coach` ya está registrada. El hook comprueba las colecciones que ya existen y conserva los registros que tengan referencias.

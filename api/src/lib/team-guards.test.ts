@@ -49,3 +49,23 @@ describe("canDeleteAdmin", () => {
     expect(canDeleteAdmin({ referencesCount: 0, isLastOwner: false, isSelf: false })).toBeNull();
   });
 });
+
+test("counts active owners only in the affected business", async () => {
+  const { countActiveOwners } = await import("./team-guards");
+  const owners = [{ business: "a", role: "owner", active: true }, { business: "b", role: "owner", active: true }];
+  const previous = Object.getOwnPropertyDescriptor(globalThis, "$dbx");
+  Object.defineProperty(globalThis, "$dbx", { configurable: true, value: { hashExp: (value: object) => value } });
+  try {
+    const app = {
+      countRecords: (_collection: string, filters: object) =>
+        owners.filter((owner) => Object.entries(filters).every(([key, value]) => owner[key as keyof typeof owner] === value)).length,
+    } as unknown as Pick<core.App, "countRecords">;
+    expect(countActiveOwners(app, "a")).toBe(1);
+    owners.push({ business: "a", role: "owner", active: true });
+    expect(countActiveOwners(app, "a")).toBe(2);
+    expect(countActiveOwners(app, "b")).toBe(1);
+  } finally {
+    if (previous) Object.defineProperty(globalThis, "$dbx", previous);
+    else Reflect.deleteProperty(globalThis, "$dbx");
+  }
+});

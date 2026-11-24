@@ -35,7 +35,7 @@ routerUse((request) => {
 });
 
 onRecordUpdateRequest((e) => {
-  const { checkAdminChange } = require(`${__hooks}/lib/team-guards`) as typeof import("../lib/team-guards");
+  const { checkAdminChange, countActiveOwners } = require(`${__hooks}/lib/team-guards`) as typeof import("../lib/team-guards");
   const record = e.record!;
   const original = record.original();
   const after = { id: record.id, role: record.getString("role"), active: record.getBool("active") };
@@ -48,9 +48,10 @@ onRecordUpdateRequest((e) => {
       e.app = txApp;
       const current = txApp.findRecordById("admins", record.id);
       const before = { id: current.id, role: current.getString("role"), active: current.getBool("active") };
+      const business = current.getString("business");
       if (actorId) {
         const actor = txApp.findRecordById("admins", actorId);
-        if (!actor.getBool("active") || (actorId !== record.id && actor.getString("role") !== "owner")) {
+        if (!actor.getBool("active") || actor.getString("business") !== business || (actorId !== record.id && actor.getString("role") !== "owner")) {
           throw new ForbiddenError("No tienes permiso para editar este integrante");
         }
       }
@@ -59,7 +60,7 @@ onRecordUpdateRequest((e) => {
       }
       if (after.role === before.role && after.active === before.active) return e.next();
 
-      const activeOwners = txApp.countRecords("admins", $dbx.hashExp({ role: "owner", active: true }));
+      const activeOwners = countActiveOwners(txApp, business);
       const error = checkAdminChange({ before, after, actorId, activeOwners });
       if (error) throw new BadRequestError(error.message);
       if (actorId === record.id && before.role !== after.role) {
@@ -73,18 +74,19 @@ onRecordUpdateRequest((e) => {
 }, "admins");
 
 onRecordDeleteRequest((e) => {
-  const { ADMIN_REFERENCES, canDeleteAdmin } = require(`${__hooks}/lib/team-guards`) as typeof import("../lib/team-guards");
+  const { ADMIN_REFERENCES, canDeleteAdmin, countActiveOwners } = require(`${__hooks}/lib/team-guards`) as typeof import("../lib/team-guards");
   const app = e.app;
   try {
     app.runInTransaction((txApp) => {
       e.app = txApp;
       const record = txApp.findRecordById("admins", e.record!.id);
+      const business = record.getString("business");
       const isLastOwner = record.getBool("active") && record.getString("role") === "owner"
-        && txApp.countRecords("admins", $dbx.hashExp({ role: "owner", active: true })) <= 1;
+        && countActiveOwners(txApp, business) <= 1;
       const actorId = e.auth?.collection().name === "admins" ? e.auth.id : undefined;
       if (actorId) {
         const actor = txApp.findRecordById("admins", actorId);
-        if (!actor.getBool("active") || actor.getString("role") !== "owner") {
+        if (!actor.getBool("active") || actor.getString("business") !== business || actor.getString("role") !== "owner") {
           throw new ForbiddenError("No tienes permiso para eliminar integrantes");
         }
       }
@@ -97,7 +99,7 @@ onRecordDeleteRequest((e) => {
         } catch {
           continue;
         }
-        referencesCount += txApp.countRecords(related, $dbx.hashExp({ [field]: record.id }));
+        referencesCount += txApp.countRecords(related, $dbx.hashExp({ business, [field]: record.id }));
       }
       const error = canDeleteAdmin({ referencesCount, isLastOwner, isSelf });
       if (error) throw new ApiError(error.status, error.message, {});

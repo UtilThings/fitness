@@ -27,7 +27,7 @@ function writeAuditLog(e: core.RecordEvent) {
   try {
     const { isAudited } = require(`${__hooks}/lib/audit-config`) as typeof import("../lib/audit-config");
     if (isAudited(collection) && (action === "create" || action === "update" || action === "delete")) {
-      const { buildEntry } = require(`${__hooks}/lib/audit`) as typeof import("../lib/audit");
+      const { buildEntry, auditBusiness } = require(`${__hooks}/lib/audit`) as typeof import("../lib/audit");
       const before = action === "update" ? record.original() : record;
       const snapshot = (row: core.Record) => {
         const fields = row.publicExport();
@@ -38,11 +38,16 @@ function writeAuditLog(e: core.RecordEvent) {
         }
         return fields;
       };
+      const { tenantRecord } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+      const actorId = record.getString("@pbInternalAuditActor");
+      const actor = actorId && e.app.findRecordsByFilter("admins", "id = {:id}", "", 1, 0, { id: actorId })[0];
+      const business = auditBusiness(record.getString("business"), actor ? actor.getString("business") : "",
+        collection === "businesses" ? record.id : "");
       const data = buildEntry({
         action,
         collection,
         recordId: record.id,
-        actorId: record.getString("@pbInternalAuditActor"),
+        actorId: tenantRecord(e.app, "admins", actorId, business)?.id,
         credentialsChanged: collection === "admins" && action === "update"
           && record.getString("password:hash") !== before.getString("password:hash"),
         before: action === "create" ? undefined : snapshot(before),
@@ -52,7 +57,7 @@ function writeAuditLog(e: core.RecordEvent) {
       if (data) {
         // Pass JSON text to the PocketBase field so nested changes survive goja conversion.
         e.app.save(new Record(e.app.findCollectionByNameOrId("audit_logs"), {
-          ...data, business: collection === "businesses" ? record.id : record.getString("business"),
+          ...data, business,
           diff: JSON.stringify(data.diff),
         }));
       }
