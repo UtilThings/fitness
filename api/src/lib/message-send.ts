@@ -1,4 +1,5 @@
-import { relatedRecord, serviceContext } from "./message-context";
+import { businessVariables, getBusinessContext, messageDedupeKey, messageEventKey, serviceContext } from "./message-context";
+import { tenantRecord } from "./tenant";
 import { isEligible, MAX_ATTEMPTS, nextRetry, resolveLocale } from "./message-policy";
 import { renderTemplate, type Locale, type MessageKey, type ServiceKey, type Template, type Variables } from "./message-render";
 
@@ -14,16 +15,18 @@ export interface MessageChannel {
 }
 
 // To add SMS, register a channel implementation and extend the log's channel select.
-function channels(app: MessageApp): Record<string, MessageChannel> {
+function channels(app: MessageApp, business: string): Record<string, MessageChannel> {
   return {
     email: {
       name: "email",
       send({ to, subject, body, html }) {
         const { smtp, meta } = app.settings();
         if (!smtp.enabled || !smtp.host || !meta.senderAddress) throw new Error("SMTP disabled");
+        const contact = getBusinessContext(app, business);
         const message = new MailerMessage({
-          from: { address: meta.senderAddress, name: meta.senderName },
+          from: { address: meta.senderAddress, name: contact.name },
           to: [{ address: to }],
+          ...(contact.email && isEligible({ status: "active", email: contact.email }) && { headers: { "Reply-To": contact.email } }),
           subject,
           text: body,
           html,
@@ -34,19 +37,18 @@ function channels(app: MessageApp): Record<string, MessageChannel> {
   };
 }
 
-export function sendTestMessage(app: MessageApp, recipient: string, template: Template, vars: Variables) {
-  channels(app).email!.send({ to: recipient, ...renderTemplate(template, vars) });
+export function sendTestMessage(app: MessageApp, recipient: string, template: Template, vars: Variables, business: string) {
+  channels(app, business).email!.send({ to: recipient, ...renderTemplate(template, vars) });
 }
 
 function clientDetails(client: core.Record) {
   return { status: client.getString("status"), email: client.getString("email"), locale: client.getString("locale") };
 }
 
-export function clientVariables(client: core.Record): Variables {
+export function clientVariables(app: MessageApp, client: core.Record): Variables {
   return {
     client_first_name: client.getString("first_name"),
-    studio_name: $os.getenv("STUDIO_NAME").trim() || "JQ Fitness",
-    studio_phone: $os.getenv("STUDIO_PHONE").trim(),
+    ...businessVariables(getBusinessContext(app, client.getString("business"))),
   };
 }
 
@@ -71,10 +73,14 @@ function sqlDate(date: Date): string {
 function firstClaim(app: MessageApp, options: BaseOptions & { key: MessageKey }, now: Date): core.Record | undefined {
   let claimed: core.Record | undefined;
   app.runInTransaction((tx) => {
-    const dedupeKey = options.dedupeKey ?? "";
-    if (dedupeKey && tx.findRecordsByFilter("message_logs", "dedupe_key = {:key}", "", 1, 0, { key: dedupeKey }).length) return;
+    const business = options.client.getString("business");
+    const legacy = options.dedupeKey ?? "";
+    const dedupeKey = messageDedupeKey(business, legacy);
+    if (dedupeKey && tx.findRecordsByFilter("message_logs",
+      "business = {:business} && (dedupe_key = {:key} || dedupe_key = {:legacy})", "", 1, 0,
+      { business, key: dedupeKey, legacy }).length) return;
     const log = new Record(tx.findCollectionByNameOrId("message_logs"), {
-      business: options.client.getString("business"),
+      business,
       client: options.client.id,
       session: options.session ?? "",
       template_key: options.key,
@@ -104,7 +110,7 @@ function deliver(app: MessageApp, log: core.Record, client: core.Record, templat
   }
   if (rendered) {
     try {
-      channels(app).email!.send({ to: client.getString("email"), ...rendered });
+      channels(app, client.getString("business")).email!.send({ to: client.getString("email"), ...rendered });
       result = "sent";
     } catch {
       error = "No se pudo enviar por SMTP.";
@@ -126,7 +132,7 @@ export function sendServiceMessage(app: MessageApp, options: ServiceOptions): Re
     const log = firstClaim(app, options, new Date());
     if (!log) return "skipped";
     return deliver(app, log, options.client, template, () => ({
-      ...clientVariables(options.client),
+      ...clientVariables(app, options.client),
       ...(typeof options.context === "function" ? options.context(template.locale) : options.context),
     }));
   } catch {
@@ -142,7 +148,7 @@ export function sendManualMessage(app: MessageApp, options: BaseOptions & { temp
     const log = firstClaim(app, { ...options, key: "manual" }, new Date());
     if (!log) return "skipped";
     return deliver(app, log, options.client, options.template, () => ({
-      ...clientVariables(options.client),
+      ...clientVariables(app, options.client),
       ...(typeof options.context === "function" ? options.context(options.locale ?? resolveLocale(details)) : options.context),
     }));
   } catch {
@@ -178,14 +184,15 @@ export function retryFailedMessages(app: MessageApp, business: string, now = new
     if (!candidate) continue;
     try {
       const key = candidate.getString("template_key") as ServiceKey;
-      const client = app.findRecordById("clients", candidate.getString("client"));
+      const client = tenantRecord(app, "clients", candidate.getString("client"), business);
+      if (!client) continue;
       const details = clientDetails(client);
-      const session = relatedRecord(app, "class_sessions", candidate.getString("session"));
+      const session = tenantRecord(app, "class_sessions", candidate.getString("session"), business);
       const template = activeTemplate(app, key, resolveLocale(details), client.getString("business"));
-      const dedupeKey = candidate.getString("dedupe_key");
+      const dedupeKey = messageEventKey(business, candidate.getString("dedupe_key"));
       const [event, source, change] = dedupeKey.split(":");
       const bookingNotice = key === "booking_confirmed" || key === "waitlist_promoted" || key === "class_reminder";
-      const booking = bookingNotice && source && event === key ? relatedRecord(app, "bookings", source) : undefined;
+      const booking = bookingNotice && source && event === key ? tenantRecord(app, "bookings", source, business) : undefined;
       const obsolete = (bookingNotice && session && session.getString("status") !== "scheduled") ||
         (bookingNotice && event === key && booking?.getString("status") !== "booked") ||
         (key === "class_cancelled" && change === "change" && session?.getString("status") !== "scheduled") ||
@@ -194,7 +201,7 @@ export function retryFailedMessages(app: MessageApp, business: string, now = new
       const eligible = isEligible(details, key);
       const log = claimRetry(app, candidate.id, now, eligible && !!template && !!context);
       if (log && template && context) {
-        deliver(app, log, client, template, () => ({ ...clientVariables(client), ...context(template.locale) }));
+        deliver(app, log, client, template, () => ({ ...clientVariables(app, client), ...context(template.locale) }));
       }
     } catch {
       app.logger().error("No se pudo reintentar el mensaje.", "message_log", candidate.id);

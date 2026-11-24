@@ -60,3 +60,11 @@ test("due notices run at 09:00 in each business timezone", () => {
   expect(isSendHour(instant, "America/Bogota")).toBe(true);
   expect(isSendHour(instant, "America/New_York")).toBe(false);
 });
+
+test("message deduplication separates businesses and recognizes old event keys", async () => {
+  const { messageDedupeKey, messageEventKey } = await import("./message-context");
+  const event = "payment_due:payment:2026-10-01";
+  expect(messageDedupeKey("business-a", event)).not.toBe(messageDedupeKey("business-b", event));
+  expect(messageEventKey("business-a", messageDedupeKey("business-a", event))).toBe(event);
+  expect(messageEventKey("business-a", event)).toBe(event);
+});

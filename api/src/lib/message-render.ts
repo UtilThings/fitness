@@ -122,6 +122,7 @@ export function formatTime(instant: string, timezone: string): string {
   return `${hours % 12 || 12}:${minute} ${hours < 12 ? "AM" : "PM"}`;
 }
 
-export function formatMoneyCents(cents: number): string {
-  return `${cents < 0 ? "-" : ""}$${(Math.abs(cents) / 100).toFixed(2)}`;
+export function formatMoneyCents(cents: number, currency: string): string {
+  const prefix = currency === "USD" ? "$" : currency + " ";
+  return `${cents < 0 ? "-" : ""}${prefix}${(Math.abs(cents) / 100).toFixed(2)}`;
 }

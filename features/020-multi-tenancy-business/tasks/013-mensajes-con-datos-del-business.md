@@ -1,7 +1,7 @@
 # 013 - [Módulo] Mensajes con datos del business
 
 - **Prioridad:** 13
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 007
 - **Fase:** Fase 2: Zona horaria, moneda y mensajes por business
 
@@ -22,10 +22,10 @@ Los mensajes del servicio usan nombre, teléfono y remitente del business del de
 
 ## Criterios de aceptación
 
-- [ ] Un mensaje de A muestra el nombre y teléfono de A; uno de B, los de B.
-- [ ] Las plantillas editadas en A no afectan a B.
-- [ ] Ninguna referencia a `STUDIO_NAME`/`STUDIO_PHONE` fuera de la migración 002 y su documentación.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Un mensaje de A muestra el nombre y teléfono de A; uno de B, los de B.
+- [x] Las plantillas editadas en A no afectan a B.
+- [x] Ninguna referencia a `STUDIO_NAME`/`STUDIO_PHONE` fuera de la migración 002 y su documentación.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -38,4 +38,4 @@ Los mensajes del servicio usan nombre, teléfono y remitente del business del de
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Vistas previas y mensajes toman nombre, teléfono, moneda y zona del negocio. El nombre visible del remitente y Reply-To salen del negocio; la dirección de envío sigue siendo la del transporte SMTP. En la instancia local se verificaron dos nombres y teléfonos y que editar una plantilla no afecta al otro negocio. Las claves de deduplicación incluyen negocio y se respetan los registros anteriores. Build y 120 pruebas en verde.

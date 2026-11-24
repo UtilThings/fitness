@@ -19,7 +19,7 @@ stop_pocketbase() {
 
 start_pocketbase() {
   local attempt
-  MESSAGES_REMINDER_HOURS=24 MESSAGES_DUE_DAYS_BEFORE=3 MESSAGES_RENEWAL_DAYS_BEFORE=5 STUDIO_NAME="JQ Fitness" \
+  MESSAGES_REMINDER_HOURS=24 MESSAGES_DUE_DAYS_BEFORE=3 MESSAGES_RENEWAL_DAYS_BEFORE=5 \
     PUBLIC_SITE_ORIGINS="https://fitness.example.test" PUBLIC_SCHEDULE_MAX_WEEKS=8 PUBLIC_CATALOG_CACHE_SECONDS=30 \
     ./pb serve --dev --dir "$work_dir/data" --http "127.0.0.1:$port" \
     --migrationsDir "$PWD/pb_migrations" --hooksDir "$work_dir/hooks" --hooksWatch=false --automigrate=false \
@@ -69,8 +69,12 @@ smoke_test() {
 routerAdd("POST", "/api/verify/messages/daily", (e) => {
   const { sendDatedNotices } = require(`${__hooks}/lib/message-triggers`);
   const { instant } = e.requestInfo().body;
-  sendDatedNotices(e.app, "payment_due", new Date(instant));
-  sendDatedNotices(e.app, "membership_renewal", new Date(instant));
+  const { forEachActiveBusiness } = require(`${__hooks}/lib/tenant`);
+  forEachActiveBusiness(e.app, "verify_message_clock", (business) => {
+    const timezone = business.getString("timezone");
+    sendDatedNotices(e.app, "payment_due", business.id, timezone, new Date(instant));
+    sendDatedNotices(e.app, "membership_renewal", business.id, timezone, new Date(instant));
+  });
   return e.json(200, {});
 }, $apis.requireSuperuserAuth());
 JS

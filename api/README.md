@@ -307,15 +307,13 @@ Las comunicaciones cubren reservas, clases, cobros y renovaciones. No incluyen m
 
 ### Configurar el correo
 
-En el panel de PocketBase, abre **Ajustes → Correo**, habilita SMTP y guarda el servidor, puerto, credenciales y remitente del estudio. Envía una prueba como owner con `POST /api/admin/messages/test` y el cuerpo `{"key":"booking_confirmed","locale":"es"}`. PocketBase entrega la prueba al correo del owner autenticado.
+En el panel de PocketBase, abre **Ajustes → Correo**, habilita SMTP y guarda el servidor, puerto, credenciales y dirección de envío. Los mensajes usan el nombre del negocio como remitente visible y su correo de contacto como dirección de respuesta, si es válido. Envía una prueba como owner con `POST /api/admin/messages/test` y el cuerpo `{"key":"booking_confirmed","locale":"es"}`. PocketBase entrega la prueba al correo del owner autenticado.
 
 | Variable del proceso de PocketBase | Valor por defecto | Uso |
 | --- | --- | --- |
 | `MESSAGES_REMINDER_HOURS` | `24` | Anticipación del recordatorio de clase, en horas |
 | `MESSAGES_DUE_DAYS_BEFORE` | `3` | Días de anticipación del aviso de cobro |
 | `MESSAGES_RENEWAL_DAYS_BEFORE` | `5` | Días de anticipación del aviso de renovación |
-| `STUDIO_NAME` | `JQ Fitness` | Nombre disponible en las plantillas |
-| `STUDIO_PHONE` | Vacío | Teléfono disponible en las plantillas |
 
 El cron de recordatorios corre cada 15 minutos. Los avisos de cobro y renovación corren cada hora y envían a las 09:00 de Miramar, Florida (`America/New_York`). Para limitar el uso de las rutas, habilita el limitador de PocketBase en Ajustes y añade reglas para `POST /api/admin/messages/` o para cada ruta.
 
