@@ -1,7 +1,7 @@
 # 011 - [Módulo] Zona horaria en reportes, dashboard, mensajes y crons por business
 
 - **Prioridad:** 11
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 007, 009, 010
 - **Fase:** Fase 2: Zona horaria, moneda y mensajes por business
 
@@ -22,11 +22,11 @@ Reportes, dashboard, mensajes y crons calculan por business y con su zona; los c
 
 ## Criterios de aceptación
 
-- [ ] El dashboard y los reportes de un business no incluyen datos de otro.
-- [ ] «Hoy» y los rangos de reportes se calculan en la zona del business.
-- [ ] Un cron procesa cada business activo con su zona; un business inactivo se omite.
-- [ ] No queda ninguna referencia a `DEFAULT_TIMEZONE`.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] El dashboard y los reportes de un business no incluyen datos de otro.
+- [x] «Hoy» y los rangos de reportes se calculan en la zona del business.
+- [x] Un cron procesa cada business activo con su zona; un business inactivo se omite.
+- [x] No queda ninguna referencia a `DEFAULT_TIMEZONE`.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -39,4 +39,4 @@ Reportes, dashboard, mensajes y crons calculan por business y con su zona; los c
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Dashboard y los cuatro reportes se probaron por REST con dos negocios; los conteos, servicios y zonas correspondieron al negocio autenticado. Las pruebas incluyen límites de día en Bogotá, avisos a las 09:00 locales y continuación del cron después del fallo de un negocio. El iterador omite negocios inactivos. Se retiró `DEFAULT_TIMEZONE`; la API pública v1 se acotó temporalmente al negocio inicial hasta 015. Build y 116 pruebas en verde.

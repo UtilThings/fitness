@@ -3,8 +3,9 @@
 cronAdd("memberships_daily", "0 9 * * *", () => {
   const { membershipToday, runDaily } =
     require(`${__hooks}/lib/memberships-service`) as typeof import("../lib/memberships-service");
-  const { activeBusinesses } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
-  for (const business of activeBusinesses($app)) runDaily($app, business.id, membershipToday(business.getString("timezone")));
+  const { forEachActiveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  forEachActiveBusiness($app, "memberships_daily", (business) =>
+    runDaily($app, business.id, membershipToday(business.getString("timezone"))));
 });
 
 routerAdd("POST", "/api/admin/memberships/run-daily", (e) => {

@@ -108,16 +108,16 @@ const CALENDAR = {
   en: { days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] },
 };
 
-export function formatDate(date: string, locale: Locale): string {
-  const local = date.length === 10 ? date : utcToLocal(date.replace(" ", "T")).date;
+export function formatDate(date: string, locale: Locale, timezone: string): string {
+  const local = date.length === 10 ? date : utcToLocal(date.replace(" ", "T"), timezone).date;
   const [day, month] = [Number(local.slice(8, 10)), Number(local.slice(5, 7))];
   const names = CALENDAR[locale];
   const weekday = names.days[localWeekday(local)];
   return locale === "es" ? `${weekday} ${day} ${names.months[month - 1]}` : `${weekday}, ${names.months[month - 1]} ${day}`;
 }
 
-export function formatTime(instant: string): string {
-  const [hour, minute] = utcToLocal(instant.replace(" ", "T")).time.split(":");
+export function formatTime(instant: string, timezone: string): string {
+  const [hour, minute] = utcToLocal(instant.replace(" ", "T"), timezone).time.split(":");
   const hours = Number(hour);
   return `${hours % 12 || 12}:${minute} ${hours < 12 ? "AM" : "PM"}`;
 }

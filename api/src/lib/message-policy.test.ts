@@ -39,18 +39,24 @@ test("usa fechas civiles y genera claves estables por vencimiento y periodo", ()
     { id: "two", status: "pending", due_on: "2026-03-07" },
     { id: "three", status: "paid", due_on: "2026-03-11" },
   ];
-  const notices = dueNotices(payments, now, 3);
+  const notices = dueNotices(payments, now, 3, "America/New_York");
   expect(notices.map(({ dedupeKey }) => dedupeKey)).toEqual(["payment_due:one:2026-03-11"]);
-  expect(dueNotices(payments, now, 3)).toEqual(notices);
+  expect(dueNotices(payments, now, 3, "America/New_York")).toEqual(notices);
   const membership = { id: "one", status: "active", current_period_end: "2026-03-13" };
-  expect(renewalNotices([membership], now, 5)[0]?.dedupeKey).toBe("membership_renewal:one:2026-03-13");
-  expect(renewalNotices([{ ...membership, current_period_end: "2026-03-14" }], now, 6)[0]?.dedupeKey)
+  expect(renewalNotices([membership], now, 5, "America/New_York")[0]?.dedupeKey).toBe("membership_renewal:one:2026-03-13");
+  expect(renewalNotices([{ ...membership, current_period_end: "2026-03-14" }], now, 6, "America/New_York")[0]?.dedupeKey)
     .toBe("membership_renewal:one:2026-03-14");
 });
 
 test("las 09:00 locales se mantienen en los dos cambios de horario", () => {
-  expect(isSendHour(now)).toBe(true);
-  expect(isSendHour(new Date("2026-03-08T12:59:59Z"))).toBe(false);
-  expect(isSendHour(new Date("2026-11-01T14:59:59Z"))).toBe(true);
-  expect(isSendHour(new Date("2026-11-01T15:00:00Z"))).toBe(false);
+  expect(isSendHour(now, "America/New_York")).toBe(true);
+  expect(isSendHour(new Date("2026-03-08T12:59:59Z"), "America/New_York")).toBe(false);
+  expect(isSendHour(new Date("2026-11-01T14:59:59Z"), "America/New_York")).toBe(true);
+  expect(isSendHour(new Date("2026-11-01T15:00:00Z"), "America/New_York")).toBe(false);
+});
+
+test("due notices run at 09:00 in each business timezone", () => {
+  const instant = new Date("2026-06-02T14:00:00Z");
+  expect(isSendHour(instant, "America/Bogota")).toBe(true);
+  expect(isSendHour(instant, "America/New_York")).toBe(false);
 });

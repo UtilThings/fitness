@@ -1,6 +1,5 @@
 const MINUTE_MS = 60_000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
-export const DEFAULT_TIMEZONE = "America/New_York";
 
 type Zone = { standard: number; rule?: "north-america" | "europe" };
 const zones: Record<string, Zone> = {
@@ -62,7 +61,7 @@ export function offsetMinutes(utcMs: number, timezone: string): number {
 }
 
 export function nyOffsetMinutes(utcMs: number): number {
-  return offsetMinutes(utcMs, DEFAULT_TIMEZONE);
+  return offsetMinutes(utcMs, "America/New_York");
 }
 
 function dateMs(date: string): number {
@@ -78,7 +77,7 @@ function dateMs(date: string): number {
   return value;
 }
 
-export function localToUtc(date: string, time: string, timezone = DEFAULT_TIMEZONE): string {
+export function localToUtc(date: string, time: string, timezone: string): string {
   const parts = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time);
   if (!parts) {
     throw new RangeError("Expected a local time in HH:mm format");
@@ -96,18 +95,17 @@ export function localToUtc(date: string, time: string, timezone = DEFAULT_TIMEZO
   return new Date(utcMs).toISOString();
 }
 
-export function utcToLocal(isoUtc: string, timezone = DEFAULT_TIMEZONE): { date: string; time: string; weekday: number } {
+export function utcToLocal(isoUtc: string, timezone: string): { date: string; time: string; weekday: number } {
   const utcMs = Date.parse(isoUtc);
   const local = new Date(utcMs + offsetMinutes(utcMs, timezone) * MINUTE_MS);
   const [date, time] = local.toISOString().split("T");
   return { date, time: time.slice(0, 5), weekday: local.getUTCDay() };
 }
 
-export function localWeekday(dateOrIsoUtc: string, timezone = DEFAULT_TIMEZONE): number {
-  if (dateOrIsoUtc.includes("T")) {
-    return utcToLocal(dateOrIsoUtc, timezone).weekday;
-  }
-  return new Date(dateMs(dateOrIsoUtc)).getUTCDay();
+export function localWeekday(date: string, timezone?: string): number {
+  if (!date.includes("T")) return new Date(dateMs(date)).getUTCDay();
+  if (!timezone) throw new RangeError("A timezone is required for UTC instants");
+  return utcToLocal(date, timezone).weekday;
 }
 
 export function addLocalDays(date: string, days: number): string {
@@ -117,10 +115,10 @@ export function addLocalDays(date: string, days: number): string {
   return new Date(dateMs(date) + days * DAY_MS).toISOString().split("T")[0];
 }
 
-export function startOfLocalDay(date: string, timezone = DEFAULT_TIMEZONE): string {
+export function startOfLocalDay(date: string, timezone: string): string {
   return localToUtc(date, "00:00", timezone);
 }
 
-export function localDateToUtcRange(date: string, timezone = DEFAULT_TIMEZONE): { from: string; to: string } {
+export function localDateToUtcRange(date: string, timezone: string): { from: string; to: string } {
   return { from: startOfLocalDay(date, timezone), to: startOfLocalDay(addLocalDays(date, 1), timezone) };
 }

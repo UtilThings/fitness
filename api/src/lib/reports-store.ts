@@ -5,13 +5,14 @@ import { aggregateAttendance, aggregateOccupancy } from "./reports-attendance";
 import { aggregateRetention, aggregateRevenue, type ReportPlan } from "./reports-finance";
 import { parseRange, rangeDays, ReportRangeError, utcToLocalParts } from "./reports-range";
 import { pocketBaseDate } from "./schedule-store";
+import { getBusinessTimezone } from "./tenant";
 import { addLocalDays } from "./tz";
 
 type Kind = "occupancy" | "attendance" | "revenue" | "retention";
 
-function records(app: core.App, collection: string, filter: string, params: dbx.Params) {
+function records(app: core.App, collection: string, filter: string, params: dbx.Params & { business: string }) {
   // A limit of zero applies only the SQL filter, with no implicit page cap.
-  return app.findRecordsByFilter(collection, filter, "", 0, 0, params)
+  return app.findRecordsByFilter(collection, `business = {:business} && (${filter})`, "", 0, 0, params)
     .filter((record): record is core.Record => !!record);
 }
 
@@ -32,7 +33,9 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
   }
 
   const query = e.request.url.query();
-  const range = parseRange(query.get("from"), query.get("to"));
+  const business = e.auth!.getString("business");
+  const timezone = getBusinessTimezone(e.app, business, e);
+  const range = parseRange(query.get("from"), query.get("to"), timezone);
   const groupBy = query.has("group_by") ? query.get("group_by") : "month";
   if (groupBy !== "day" && groupBy !== "week" && groupBy !== "month") {
     throw new ReportRangeError("La agrupación debe ser day, week o month.");
@@ -45,17 +48,17 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
   const service = kind !== "retention" && query.has("service") ? query.get("service") : undefined;
   const selected = service === undefined
     ? undefined
-    : app.findRecordsByFilter("services", "slug = {:slug}", "", 1, 0, { slug: service })[0];
+    : app.findRecordsByFilter("services", "business = {:business} && slug = {:slug}", "", 1, 0, { business, slug: service })[0];
   if (service !== undefined && !selected) throw new ReportRangeError("El servicio indicado no existe.");
 
   const start = pocketBaseDate(range.start_utc);
   const end = pocketBaseDate(range.end_utc);
   const dateFrom = range.from + " 00:00:00.000Z";
   const dateEnd = addLocalDays(range.to, 1) + " 00:00:00.000Z";
-  const opts = { range, service, groupBy } as const;
+  const opts = { range, service, groupBy, timezone } as const;
 
   if (kind === "occupancy" || kind === "attendance") {
-    const params = selected ? { start, end, service: selected.id } : { start, end };
+    const params = selected ? { business, start, end, service: selected.id } : { business, start, end };
     const filter = (prefix: string) =>
       `${prefix}starts_at >= {:start} && ${prefix}starts_at < {:end} && ${prefix}status != 'cancelled'` +
       (selected ? ` && ${prefix}service = {:service}` : "");
@@ -74,7 +77,7 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
     })) : [];
     return {
       range,
-      ...(kind === "occupancy" ? aggregateOccupancy(sessions, bookings, opts) : aggregateAttendance(sessions, bookings, { service })),
+      ...(kind === "occupancy" ? aggregateOccupancy(sessions, bookings, opts) : aggregateAttendance(sessions, bookings, { service, timezone })),
     };
   }
 
@@ -83,7 +86,7 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
       "(status = 'paid' && paid_at >= {:start} && paid_at < {:end}) || " +
       "((status = 'pending' || status = 'void') && due_on >= {:dateFrom} && due_on < {:dateEnd}) || " +
       "(status = 'void' && due_on = '' && voided_at >= {:start} && voided_at < {:end})",
-      { start, end, dateFrom, dateEnd });
+      { business, start, end, dateFrom, dateEnd });
     expand(app, entries, ["plan.service"]);
     const services = new Map<string, { id: string; name: string; slug: string }>();
     const plans = new Map<string, ReportPlan>();
@@ -99,7 +102,7 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
         }
       }
       const voidedAt = isoField(record, "voided_at");
-      const reference_on = record.getString("due_on").slice(0, 10) || (voidedAt ? utcToLocalParts(voidedAt).date : "");
+      const reference_on = record.getString("due_on").slice(0, 10) || (voidedAt ? utcToLocalParts(voidedAt, timezone).date : "");
       return {
         plan: record.getString("plan"), status: record.getString("status"),
         paid_at: isoField(record, "paid_at"), amount_cents: record.getInt("amount_cents"), reference_on,
@@ -110,7 +113,7 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
 
   const entries = records(app, "memberships",
     "starts_on < {:dateEnd} && (status = 'active' || status = 'paused' || ended_on = '' || ended_on >= {:dateFrom})",
-    { dateFrom, dateEnd });
+    { business, dateFrom, dateEnd });
   expand(app, entries, ["plan"]);
   const plans = new Map<string, ReportPlan>();
   const memberships = entries.map((record) => {

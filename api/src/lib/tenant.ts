@@ -83,3 +83,17 @@ export function getBusinessTimezone(app: Pick<core.App, "findRecordsByFilter">, 
   event?.set(key, timezone);
   return timezone;
 }
+
+export function forEachActiveBusiness(
+  app: Pick<core.App, "findRecordsByFilter" | "logger">,
+  job: string,
+  run: (business: core.Record) => void,
+) {
+  for (const business of activeBusinesses(app)) {
+    try {
+      run(business);
+    } catch (error) {
+      app.logger().error("Falló la operación del negocio.", "job", job, "business", business.id, "error", String(error));
+    }
+  }
+}

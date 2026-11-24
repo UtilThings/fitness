@@ -40,7 +40,7 @@ function compareName(a: { name: string }, b: { name: string }) {
   return a.name.localeCompare(b.name);
 }
 
-export function aggregateOccupancy(sessions: ReportSession[], bookings: ReportBooking[], opts: ServiceFilter = {}) {
+export function aggregateOccupancy(sessions: ReportSession[], bookings: ReportBooking[], opts: ServiceFilter & { timezone: string }) {
   const totals = occupancyCounts();
   const services = new Map<string, ReturnType<typeof occupancyCounts> & { name: string; service: string }>();
   const byClass = sessionsWithBookings(sessions, bookings, opts).map(({ session, statuses }) => {
@@ -53,7 +53,7 @@ export function aggregateOccupancy(sessions: ReportSession[], bookings: ReportBo
       count.booked += booked;
     }
     services.set(service, row);
-    const { date, time } = utcToLocalParts(starts_at);
+    const { date, time } = utcToLocalParts(starts_at, opts.timezone);
     return {
       session_id: id, starts_at, local_date: date, local_time: time, service, coach_name, capacity, booked,
       waitlisted: statuses.filter((status) => status === "waitlisted").length,
@@ -80,14 +80,14 @@ function attendanceRates<T extends AttendanceCounts>(row: T) {
 export function aggregateAttendance(
   sessions: ReportSession[],
   bookings: ReportBooking[],
-  opts: ServiceFilter & { groupBy?: GroupBy } = {},
+  opts: ServiceFilter & { timezone: string; groupBy?: GroupBy },
 ) {
   const totals = attendanceCounts();
   const services = new Map<string, AttendanceCounts & { name: string; service: string }>();
   const days = new Map<string, AttendanceCounts & { day: string }>();
   for (const { session, statuses } of sessionsWithBookings(sessions, bookings, opts)) {
     const { service, name, starts_at } = session;
-    const day = bucketKey(starts_at, opts.groupBy ?? "day");
+    const day = bucketKey(starts_at, opts.groupBy ?? "day", opts.timezone);
     const serviceRow = services.get(service) ?? { service, name, ...attendanceCounts() };
     const dayRow = days.get(day) ?? { day, ...attendanceCounts() };
     for (const status of statuses) {

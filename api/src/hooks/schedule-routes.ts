@@ -35,14 +35,14 @@ routerAdd("POST", "/api/admin/sessions/generate", (e) => {
 cronAdd("jq_generate_sessions", "0 7 * * *", () => {
   const { persistGeneratedSessions, scheduleAudit } =
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
-  const { activeBusinesses } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
-  for (const business of activeBusinesses($app)) {
+  const { forEachActiveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  forEachActiveBusiness($app, "jq_generate_sessions", (business) => {
     $app.runInTransaction((tx) => {
       const { created, skipped_existing, skipped_blocked } = persistGeneratedSessions(tx, { business: business.id });
       scheduleAudit(tx, "class_sessions", "", "", "Sesiones generadas por cron: " + created,
         { created, skipped_existing, skipped_blocked }, business.id);
     });
-  }
+  });
 });
 
 routerAdd("POST", "/api/admin/sessions/{id}/cancel", (e) => {

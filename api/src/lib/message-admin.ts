@@ -1,6 +1,7 @@
 import { classVariables, relatedRecord } from "./message-context";
 import { isMessageKey, renderTemplate, validateTemplate, type Locale, type Template, type Variables } from "./message-render";
 import { sendManualMessage, sendTestMessage } from "./message-send";
+import { tenantRecord } from "./tenant";
 import { requireBookingStaff } from "./booking-store";
 
 function readLocale(value: unknown): Locale | undefined {
@@ -58,7 +59,7 @@ export function messageClass(e: core.RequestEvent) {
   const problems = validateTemplate(template);
   if (problems.length) return problemsResponse(e, problems);
 
-  const session = relatedRecord(e.app, "class_sessions", e.request?.pathValue("sessionId") ?? "");
+  const session = tenantRecord(e.app, "class_sessions", e.request?.pathValue("sessionId") ?? "", e.auth!.getString("business"));
   if (!session) throw new NotFoundError("No se encontró la clase.");
   if (session.getString("status") !== "scheduled" || Date.parse(session.getString("starts_at").replace(" ", "T")) <= Date.now()) {
     throw new BadRequestError("Selecciona una clase próxima y programada.");
@@ -99,8 +100,8 @@ export function testMessage(e: core.RequestEvent) {
     throw new BadRequestError("Selecciona una plantilla operativa.");
   }
   if (body.subject === undefined && body.body === undefined) {
-    const [saved] = e.app.findRecordsByFilter("message_templates", "key = {:key} && locale = {:locale}", "", 1, 0, {
-      key: template.key, locale,
+    const [saved] = e.app.findRecordsByFilter("message_templates", "business = {:business} && key = {:key} && locale = {:locale}", "", 1, 0, {
+      business: e.auth!.getString("business"), key: template.key, locale,
     });
     if (!saved) throw new NotFoundError("No se encontró la plantilla.");
     template = { key: template.key, subject: saved.getString("subject"), body: saved.getString("body") };

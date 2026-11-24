@@ -28,3 +28,24 @@ test("compares tenant ownership and rejects an absent business", async () => {
   expect(resolveBusiness(row("a", "_superusers"))).toBe("");
   expect(resolveBusiness(row("a", "admins", false))).toBe("");
 });
+
+test("runs each active business independently and logs an isolated failure", async () => {
+  const { forEachActiveBusiness } = await import("./tenant");
+  const businesses = [{ id: "a", active: true }, { id: "b", active: true }, { id: "c", active: false }];
+  const logged: unknown[][] = [];
+  const app = {
+    findRecordsByFilter: (collection: string, rule: string) => {
+      expect([collection, rule]).toEqual(["businesses", "active = true"]);
+      return businesses.filter(({ active }) => active);
+    },
+    logger: () => ({ error: (...args: unknown[]) => logged.push(args) }),
+  } as unknown as Pick<core.App, "findRecordsByFilter" | "logger">;
+  const ran: string[] = [];
+  forEachActiveBusiness(app, "test", ({ id }) => {
+    ran.push(id);
+    if (id === "a") throw new Error("failure");
+  });
+  expect(ran).toEqual(["a", "b"]);
+  expect(logged).toHaveLength(1);
+  expect(logged[0]).toContain("a");
+});

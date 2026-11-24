@@ -35,7 +35,7 @@ test("catalog returns exactly the public fields of active services, plans, and t
   ], [
     plan, { ...plan, name: "First", sort: 0 }, { ...plan, active: false },
     { ...plan, service: "inactive" },
-  ], [template, { ...template, active: false }], coaches);
+  ], [template, { ...template, active: false }], coaches, "America/New_York");
   const expectedPlan = {
     name: plan.name, price_cents: 26000, billing_unit: "per_4_weeks", sessions: 8, per_week: 2,
     commitment_periods: 0, is_first_class: false, partner: false, note: "",
@@ -58,7 +58,7 @@ test("schedule excludes private, cancelled and inactive services and returns exa
     const sessions = [session, { ...session, kind: "private" }, { ...session, status: "cancelled" },
       { ...session, service: "inactive" }, { ...session, starts_at: `${date} 01:00:00.000Z` }];
     const result = buildSchedule(date, sessions, new Map([[session.id, 9]]),
-      [service, { ...service, id: "inactive", active: false }], coaches);
+      [service, { ...service, id: "inactive", active: false }], coaches, "America/New_York");
     expect(result).toEqual({
       version: 1, timezone: "America/New_York", week_start: date,
       week_end: date === "2026-03-08" ? "2026-03-14" : "2026-11-07",

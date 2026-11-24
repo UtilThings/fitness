@@ -1,7 +1,6 @@
 import { availabilityOf, occupiedSeats, type BookingLike } from "./booking-rules";
 import { localDateToUtcRange, utcToLocal } from "./tz";
 
-export const DASHBOARD_TIMEZONE = "America/New_York";
 const DAY_MS = 86_400_000;
 
 export interface DashboardSession {
@@ -25,9 +24,8 @@ interface Attention {
 }
 
 export function localDayBoundsUtc(now: Date, timeZone: string) {
-  if (timeZone !== DASHBOARD_TIMEZONE) throw new RangeError("Unsupported dashboard timezone");
-  const { date } = utcToLocal(now.toISOString());
-  const { from, to } = localDateToUtcRange(date);
+  const { date } = utcToLocal(now.toISOString(), timeZone);
+  const { from, to } = localDateToUtcRange(date, timeZone);
   return { date, startUtc: from, endUtc: to };
 }
 

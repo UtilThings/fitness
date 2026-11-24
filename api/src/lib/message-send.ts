@@ -170,10 +170,10 @@ function claimRetry(app: MessageApp, id: string, now: Date, retryable: boolean) 
   return claimed;
 }
 
-export function retryFailedMessages(app: MessageApp, now = new Date()) {
+export function retryFailedMessages(app: MessageApp, business: string, now = new Date()) {
   const queue = app.findRecordsByFilter("message_logs",
-    "status = 'failed' && next_retry_at != '' && next_retry_at <= {:now} && attempts < {:max}",
-    "next_retry_at,id", 0, 0, { now: sqlDate(now), max: MAX_ATTEMPTS });
+    "business = {:business} && status = 'failed' && next_retry_at != '' && next_retry_at <= {:now} && attempts < {:max}",
+    "next_retry_at,id", 0, 0, { business, now: sqlDate(now), max: MAX_ATTEMPTS });
   for (const candidate of queue) {
     if (!candidate) continue;
     try {
@@ -190,7 +190,7 @@ export function retryFailedMessages(app: MessageApp, now = new Date()) {
         (bookingNotice && event === key && booking?.getString("status") !== "booked") ||
         (key === "class_cancelled" && change === "change" && session?.getString("status") !== "scheduled") ||
         (key === "class_reminder" && session && Date.parse(session.getString("starts_at").replace(" ", "T")) <= now.getTime());
-      const context = obsolete ? undefined : serviceContext(app, key, session, dedupeKey);
+      const context = obsolete ? undefined : serviceContext(app, key, session, dedupeKey, business);
       const eligible = isEligible(details, key);
       const log = claimRetry(app, candidate.id, now, eligible && !!template && !!context);
       if (log && template && context) {

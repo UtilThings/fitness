@@ -59,7 +59,7 @@ export function aggregateRevenue(
     countsByPlan.set(planId, planRow);
     countsByService.set(slug, serviceRow);
     if (status === "paid") {
-      const period = periods.get(bucketKey(paid_at, groupBy))!;
+      const period = periods.get(bucketKey(paid_at, groupBy, range.timezone))!;
       period.paid_cents += amount_cents;
       period.payments++;
     }

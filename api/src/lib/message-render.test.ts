@@ -30,7 +30,7 @@ test("valida campos, longitudes, variables y saltos del asunto renderizado", () 
 
 test("formatea fecha local bilingüe e importes en dólares", () => {
   const instant = "2026-11-21 14:00:00.000Z";
-  expect(`${formatDate(instant, "es")}, ${formatTime(instant)}`).toBe("sáb 21 nov, 9:00 AM");
-  expect(`${formatDate(instant, "en")}, ${formatTime(instant)}`).toBe("Sat, Nov 21, 9:00 AM");
+  expect(`${formatDate(instant, "es", "America/New_York")}, ${formatTime(instant, "America/New_York")}`).toBe("sáb 21 nov, 9:00 AM");
+  expect(`${formatDate(instant, "en", "America/New_York")}, ${formatTime(instant, "America/New_York")}`).toBe("Sat, Nov 21, 9:00 AM");
   expect(formatMoneyCents(26800)).toBe("$268.00");
 });

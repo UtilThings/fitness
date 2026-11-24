@@ -27,39 +27,40 @@ export function setPublicCors(e: core.RequestEvent) {
   }
 }
 
-function activeServices(app: core.App): PublicServiceInput[] {
-  return app.findRecordsByFilter("services", "active = true", "sort,id", 0, 0).map((row) => ({
+function activeServices(app: core.App, business: string): PublicServiceInput[] {
+  return app.findRecordsByFilter("services", "business = {:business} && active = true", "sort,id", 0, 0, { business }).map((row) => ({
     id: row!.id, active: true, sort: row!.getInt("sort"), slug: row!.getString("slug"),
     name: row!.getString("name"), kind: row!.getString("kind") as PublicServiceInput["kind"],
   }));
 }
 
-function coachNames(app: core.App) {
-  const coaches = app.findRecordsByFilter("admins", "active = true && (role = 'owner' || role = 'coach')", "", 0, 0);
+function coachNames(app: core.App, business: string) {
+  const coaches = app.findRecordsByFilter("admins", "business = {:business} && active = true && (role = 'owner' || role = 'coach')", "", 0, 0, { business });
   return new Map(coaches.map((row) => [row!.id, row!.getString("name")]));
 }
 
-function catalog(app: core.App) {
-  const plans = app.findRecordsByFilter("plans", "active = true", "sort,id", 0, 0).map((row) => ({
+function catalog(app: core.App, business: string) {
+  const plans = app.findRecordsByFilter("plans", "business = {:business} && active = true", "sort,id", 0, 0, { business }).map((row) => ({
     service: row!.getString("service"), active: true, sort: row!.getInt("sort"), name: row!.getString("name"),
     price_cents: row!.getInt("price_cents"), billing_unit: row!.getString("billing_unit") as PublicPlanInput["billing_unit"],
     sessions: row!.getInt("sessions"), per_week: row!.getInt("per_week"), commitment_periods: row!.getInt("commitment_periods"),
     is_first_class: row!.getBool("is_first_class"), partner: row!.getBool("partner"), note: row!.getString("note"),
   }));
-  const templates = app.findRecordsByFilter("class_templates", "active = true", "weekday,start_time,id", 0, 0).map((row) => ({
+  const templates = app.findRecordsByFilter("class_templates", "business = {:business} && active = true", "weekday,start_time,id", 0, 0, { business }).map((row) => ({
     service: row!.getString("service"), active: true, weekday: row!.getInt("weekday"), start_time: row!.getString("start_time"),
     coach: row!.getString("coach"), capacity: row!.getInt("capacity"),
   }));
-  return buildCatalog(activeServices(app), plans, templates, coachNames(app));
+  return buildCatalog(activeServices(app, business), plans, templates, coachNames(app, business));
 }
 
-function schedule(app: core.App, week: string) {
+function schedule(app: core.App, week: string, business: string, timezone: string) {
   const params = {
-    from: pocketBaseDate(startOfLocalDay(week)),
-    to: pocketBaseDate(startOfLocalDay(addLocalDays(week, 7))),
+    business,
+    from: pocketBaseDate(startOfLocalDay(week, timezone)),
+    to: pocketBaseDate(startOfLocalDay(addLocalDays(week, 7), timezone)),
   };
   const sessions = app.findRecordsByFilter("class_sessions",
-    "status = 'scheduled' && (kind = 'regular' || kind = 'special') && service.active = true && starts_at >= {:from} && starts_at < {:to}",
+    "business = {:business} && status = 'scheduled' && (kind = 'regular' || kind = 'special') && service.active = true && starts_at >= {:from} && starts_at < {:to}",
     "starts_at,id", 0, 0, params).map((row) => ({
     id: row!.id, service: row!.getString("service"), coach: row!.getString("coach"), starts_at: row!.getString("starts_at"),
     capacity: row!.getInt("capacity"), kind: row!.getString("kind"), status: row!.getString("status"),
@@ -71,12 +72,13 @@ function schedule(app: core.App, week: string) {
       FROM bookings AS b JOIN class_sessions AS s ON s.id = b.session
       JOIN services AS svc ON svc.id = s.service
       WHERE b.status IN ('booked', 'attended', 'no_show') AND s.status = 'scheduled'
+        AND b.business = {:business} AND s.business = {:business} AND svc.business = {:business}
         AND s.kind IN ('regular', 'special') AND svc.active = true
         AND s.starts_at >= {:from} AND s.starts_at < {:to}
       GROUP BY b.session`).bind(params).all(counts);
   }
   return buildSchedule(week, sessions, new Map(counts.map(({ session, occupied }) => [session, occupied])),
-    activeServices(app), coachNames(app));
+    activeServices(app, business), coachNames(app, business), timezone);
 }
 
 function cachedResponse(e: core.RequestEvent, key: string, load: () => unknown) {
@@ -104,7 +106,8 @@ function publicError(e: core.RequestEvent, error: unknown) {
 
 export function servePublicCatalog(e: core.RequestEvent) {
   try {
-    return cachedResponse(e, "catalog", () => catalog(e.app));
+    const business = e.app.findFirstRecordByData("businesses", "slug", "jq-fitness");
+    return cachedResponse(e, "catalog", () => catalog(e.app, business.id));
   } catch (error) {
     return publicError(e, error);
   }
@@ -113,13 +116,15 @@ export function servePublicCatalog(e: core.RequestEvent) {
 export function servePublicSchedule(e: core.RequestEvent) {
   try {
     const query = e.request.url.query();
-    const today = utcToLocal(new Date().toISOString()).date;
+    const business = e.app.findFirstRecordByData("businesses", "slug", "jq-fitness");
+    const timezone = business.getString("timezone");
+    const today = utcToLocal(new Date().toISOString(), timezone).date;
     const maxWeeks = setting("PUBLIC_SCHEDULE_MAX_WEEKS", PUBLIC_SCHEDULE_MAX_WEEKS);
     const week = normalizeWeek(query.has("week") ? query.get("week") : undefined, today, maxWeeks);
     const header = e.response.header();
     header.set("X-Public-Schedule-Max-Weeks", String(maxWeeks));
     header.set("Access-Control-Expose-Headers", "X-Public-Schedule-Max-Weeks");
-    return cachedResponse(e, `schedule:${week}`, () => schedule(e.app, week));
+    return cachedResponse(e, `schedule:${week}`, () => schedule(e.app, week, business.id, timezone));
   } catch (error) {
     return publicError(e, error);
   }

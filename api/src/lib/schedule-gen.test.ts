@@ -41,7 +41,7 @@ test("blocks both bounds and uses local midnights even on the fall transition", 
   ];
   const { toCreate, skippedBlocked } = generateSessions({ ...input, blocks });
   expect(skippedBlocked).toBe(6);
-  const dates = toCreate.map((slot) => utcToLocal(slot.starts_at).date);
+  const dates = toCreate.map((slot) => utcToLocal(slot.starts_at, input.timezone).date);
   for (const date of ["2026-10-26", "2026-10-31", "2026-11-02", "2026-11-03"]) {
     expect(dates).not.toContain(date);
   }

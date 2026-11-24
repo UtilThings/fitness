@@ -4,7 +4,7 @@ import { parseRange } from "./reports-range";
 
 const plans = [{ id: "p", name: "Fuerza mensual", service: "s" }];
 const services = [{ id: "s", name: "Fuerza", slug: "strength" }];
-const options = { range: parseRange("2026-10-01", "2027-01-31"), groupBy: "month" } as const;
+const options = { range: parseRange("2026-10-01", "2027-01-31", "America/New_York"), groupBy: "month" } as const;
 const paid = (amount_cents: number, paid_at: string, plan = "p"): ReportPayment =>
   ({ plan, status: "paid", paid_at, amount_cents });
 

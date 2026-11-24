@@ -72,18 +72,19 @@ export function buildSchedule(
   bookingCounts: ReadonlyMap<string, number>,
   services: readonly PublicServiceInput[],
   coaches: ReadonlyMap<string, string>,
+  timezone: string,
 ) {
   const weekEnd = addLocalDays(weekStart, 6);
   const activeServices = new Map(services.filter((service) => service.active).map((service) => [service.id, service]));
   return {
     version: 1,
-    timezone: "America/New_York",
+    timezone,
     week_start: weekStart,
     week_end: weekEnd,
     sessions: [...sessions].sort((a, b) => a.starts_at.localeCompare(b.starts_at)).flatMap((session) => {
       const service = activeServices.get(session.service);
       if (!service || session.status !== "scheduled" || !["regular", "special"].includes(session.kind)) return [];
-      const local = utcToLocal(session.starts_at.replace(" ", "T"));
+      const local = utcToLocal(session.starts_at.replace(" ", "T"), timezone);
       if (local.date < weekStart || local.date > weekEnd) return [];
       const spots_left = Math.max(0, session.capacity - (bookingCounts.get(session.id) ?? 0));
       return [{

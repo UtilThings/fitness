@@ -16,7 +16,7 @@ test("counts reserved spots and waitlist separately and excludes cancelled sessi
     (status) => ({ session: "a", status }),
   );
   bookings.push({ session: "cancelled", status: "booked" });
-  const result = aggregateOccupancy(sessions, bookings);
+  const result = aggregateOccupancy(sessions, bookings, { timezone: "America/New_York" });
   expect(result.totals).toEqual({ sessions: 2, capacity: 6, booked: 5, occupancy_rate: 0.8333 });
   expect(result.by_class.map(({ session_id }) => session_id)).toEqual(["a", "b"]);
   expect(result.by_class[0]).toMatchObject({ waitlisted: 1, occupancy_rate: 0.8333 });
@@ -24,8 +24,8 @@ test("counts reserved spots and waitlist separately and excludes cancelled sessi
   for (const key of ["sessions", "capacity", "booked"] as const) {
     expect(result.by_service.reduce((sum, row) => sum + row[key], 0)).toBe(result.totals[key]);
   }
-  expect(aggregateOccupancy(sessions, bookings, { service: "jump" }).totals.booked).toBe(0);
-  expect(aggregateOccupancy([], []).by_class).toEqual([]);
+  expect(aggregateOccupancy(sessions, bookings, { service: "jump", timezone: "America/New_York" }).totals.booked).toBe(0);
+  expect(aggregateOccupancy([], [], { timezone: "America/New_York" }).by_class).toEqual([]);
 });
 
 test("uses local days and excludes cancellations and waitlist from the concluded denominator", () => {
@@ -36,7 +36,7 @@ test("uses local days and excludes cancellations and waitlist from the concluded
     { session: "b", status: "booked" },
     { session: "cancelled", status: "no_show" },
   ];
-  const result = aggregateAttendance(sessions, bookings);
+  const result = aggregateAttendance(sessions, bookings, { timezone: "America/New_York" });
   expect(result.totals).toEqual({
     booked: 2, attended: 2, no_show: 1, late_cancelled: 1, cancelled: 1,
     no_show_rate: 0.3333, attendance_rate: 0.6667,
@@ -46,8 +46,8 @@ test("uses local days and excludes cancellations and waitlist from the concluded
     expect(result.by_service.reduce((sum, row) => sum + row[key], 0)).toBe(result.totals[key]);
   }
   for (const totals of [
-    aggregateAttendance([], []).totals,
-    aggregateAttendance(sessions, bookings, { service: "jump" }).totals,
+    aggregateAttendance([], [], { timezone: "America/New_York" }).totals,
+    aggregateAttendance(sessions, bookings, { service: "jump", timezone: "America/New_York" }).totals,
   ]) {
     expect(totals).toMatchObject({ no_show_rate: 0, attendance_rate: 0, no_show: 0 });
   }
