@@ -20,7 +20,7 @@ stop_pocketbase() {
 start_pocketbase() {
   local attempt
   MESSAGES_REMINDER_HOURS=24 MESSAGES_DUE_DAYS_BEFORE=3 MESSAGES_RENEWAL_DAYS_BEFORE=5 \
-    PUBLIC_SITE_ORIGINS="https://fitness.example.test" PUBLIC_SCHEDULE_MAX_WEEKS=8 PUBLIC_CATALOG_CACHE_SECONDS=30 \
+    PUBLIC_SCHEDULE_MAX_WEEKS=8 PUBLIC_CATALOG_CACHE_SECONDS=30 \
     ./pb serve --dev --dir "$work_dir/data" --http "127.0.0.1:$port" \
     --migrationsDir "$PWD/pb_migrations" --hooksDir "$work_dir/hooks" --hooksWatch=false --automigrate=false \
     >"$work_dir/pocketbase.log" 2>&1 &
@@ -156,6 +156,12 @@ JS
   ./pb migrate up "${coaching_migration_flags[@]}"
   check_coaching_collections 2
   ./pb migrate up --dir "$work_dir/data" --migrationsDir "$PWD/pb_migrations" --hooksDir "$PWD/pb_hooks"
+  export JQ_VERIFY_BUSINESS
+  JQ_VERIFY_BUSINESS="$(bun -e '
+    import { Database } from "bun:sqlite";
+    const db = new Database(process.argv[1], { readonly: true });
+    console.log(db.query("SELECT id FROM businesses WHERE slug = ?").get("jq-fitness").id);
+  ' "$work_dir/data/data.db")"
   start_pocketbase
 
   code="$(curl --noproxy '*' --silent --show-error --max-time 5 --output "$work_dir/response.json" \
@@ -200,7 +206,7 @@ JS
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-coaching.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-reports.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-messages.ts "$base_url"
-  bun ../scripts/verify-public.ts "$base_url" "$work_dir/data/data.db" "$work_dir/pocketbase.log"
+  JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-public.ts "$base_url" "$work_dir/data/data.db" "$work_dir/pocketbase.log"
 }
 
 run_step bun install --frozen-lockfile

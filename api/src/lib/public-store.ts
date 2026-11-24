@@ -2,13 +2,13 @@
 
 import {
   buildCatalog, buildSchedule, normalizeWeek, PublicQueryError, PUBLIC_SCHEDULE_MAX_WEEKS,
-  type PublicPlanInput, type PublicServiceInput,
+  type PublicBusiness, type PublicPlanInput, type PublicServiceInput,
 } from "./public-catalog";
 import { addLocalDays, startOfLocalDay, utcToLocal } from "./tz";
+import { parseKey, verifyKey } from "./business-key";
 import { pocketBaseDate } from "./schedule-store";
 
-const CACHE_PREFIX = "public:v1:";
-const CACHE_CONTROL = "public, max-age=60, stale-while-revalidate=300";
+const CACHE_PREFIX = "public:v2:";
 
 function setting(name: string, fallback: number): number {
   const raw = $os.getenv(name).trim();
@@ -16,15 +16,56 @@ function setting(name: string, fallback: number): number {
   return /^\d+$/.test(raw) && Number.isSafeInteger(number) && number <= 365 ? number : fallback;
 }
 
-export function setPublicCors(e: core.RequestEvent) {
+function publicBusiness(e: core.RequestEvent, record: core.Record): PublicBusiness {
+  const logo = record.getString("logo");
+  const base = e.app.settings().meta.appURL.replace(/\/$/, "");
+  const logo_url = logo ? `${base}/api/files/${record.collection().id}/${record.id}/${encodeURIComponent(logo)}` : "";
+  return {
+    name: record.getString("name"), city: record.getString("city"), logo_url,
+    currency: record.getString("currency"), timezone: record.getString("timezone"),
+  };
+}
+
+export function publicPreflight(e: core.RequestEvent) {
   const header = e.response.header();
   header.add("Vary", "Origin");
   const origin = e.request.header.get("Origin");
-  const origins = $os.getenv("PUBLIC_SITE_ORIGINS").split(",").map((value) => value.trim());
-  if (/^https?:\/\/[^/*?\s]+$/.test(origin) && origins.includes(origin)) {
-    header.set("Access-Control-Allow-Origin", origin);
-    if (e.request.method === "OPTIONS") header.set("Access-Control-Allow-Methods", "GET, HEAD");
+  if (origin) {
+    // Browsers send the header name, not its value, on preflight. The GET checks the keyed business.
+    const allowed = arrayOf(new DynamicModel({ allowed: 0 }));
+    e.app.db().newQuery(`
+      SELECT 1 AS allowed FROM businesses AS b, json_each(b.allowed_origins) AS o
+      WHERE b.active = true AND b.public_key_prefix != '' AND o.value = {:origin} LIMIT 1
+    `).bind({ origin }).all(allowed);
+    if (allowed.length) {
+      header.set("Access-Control-Allow-Origin", origin);
+      header.set("Access-Control-Allow-Methods", "GET, HEAD");
+      header.set("Access-Control-Allow-Headers", "X-Business-Key");
+    }
   }
+  return e.noContent(204);
+}
+
+function withPublicBusiness(e: core.RequestEvent, load: (record: core.Record) => void) {
+  const header = e.response.header();
+  header.add("Vary", "Origin, X-Business-Key");
+  const key = e.request.header.get("X-Business-Key");
+  const prefix = parseKey(key)?.prefix ?? "!!!!!!!!";
+  const record = e.app.findRecordsByFilter("businesses", "public_key_prefix = {:prefix}", "", 1, 0, { prefix })[0];
+  const matches = verifyKey(key, record?.getString("public_key_hash") ?? "");
+  if (!matches || !record?.getBool("active")) {
+    header.set("Cache-Control", "no-store");
+    return e.json(401, { message: "Clave de API inválida" });
+  }
+
+  const origin = e.request.header.get("Origin");
+  const stored = record.getString("allowed_origins");
+  const allowed: unknown = stored ? JSON.parse(stored) : null;
+  if (origin && Array.isArray(allowed) && allowed.includes(origin)) {
+    header.set("Access-Control-Allow-Origin", origin);
+    header.set("Access-Control-Expose-Headers", "X-Public-Schedule-Max-Weeks");
+  }
+  return load(record);
 }
 
 function activeServices(app: core.App, business: string): PublicServiceInput[] {
@@ -39,7 +80,7 @@ function coachNames(app: core.App, business: string) {
   return new Map(coaches.map((row) => [row!.id, row!.getString("name")]));
 }
 
-function catalog(app: core.App, business: string) {
+function catalog(app: core.App, business: string, details: PublicBusiness) {
   const plans = app.findRecordsByFilter("plans", "business = {:business} && active = true", "sort,id", 0, 0, { business }).map((row) => ({
     service: row!.getString("service"), active: true, sort: row!.getInt("sort"), name: row!.getString("name"),
     price_cents: row!.getInt("price_cents"), billing_unit: row!.getString("billing_unit") as PublicPlanInput["billing_unit"],
@@ -50,10 +91,11 @@ function catalog(app: core.App, business: string) {
     service: row!.getString("service"), active: true, weekday: row!.getInt("weekday"), start_time: row!.getString("start_time"),
     coach: row!.getString("coach"), capacity: row!.getInt("capacity"),
   }));
-  return buildCatalog(activeServices(app, business), plans, templates, coachNames(app, business));
+  return buildCatalog(activeServices(app, business), plans, templates, coachNames(app, business), details);
 }
 
-function schedule(app: core.App, week: string, business: string, timezone: string) {
+function schedule(app: core.App, week: string, business: string, details: PublicBusiness) {
+  const { timezone } = details;
   const params = {
     business,
     from: pocketBaseDate(startOfLocalDay(week, timezone)),
@@ -78,7 +120,7 @@ function schedule(app: core.App, week: string, business: string, timezone: strin
       GROUP BY b.session`).bind(params).all(counts);
   }
   return buildSchedule(week, sessions, new Map(counts.map(({ session, occupied }) => [session, occupied])),
-    activeServices(app, business), coachNames(app, business), timezone);
+    activeServices(app, business), coachNames(app, business), details);
 }
 
 function cachedResponse(e: core.RequestEvent, key: string, load: () => unknown) {
@@ -94,7 +136,7 @@ function cachedResponse(e: core.RequestEvent, key: string, load: () => unknown) 
     body = JSON.stringify(load());
     if (seconds) store.set(cacheKey, { expires: Date.now() + seconds * 1000, body });
   }
-  e.response.header().set("Cache-Control", CACHE_CONTROL);
+  e.response.header().set("Cache-Control", "no-store");
   return e.json(200, JSON.parse(body));
 }
 
@@ -106,8 +148,8 @@ function publicError(e: core.RequestEvent, error: unknown) {
 
 export function servePublicCatalog(e: core.RequestEvent) {
   try {
-    const business = e.app.findFirstRecordByData("businesses", "slug", "jq-fitness");
-    return cachedResponse(e, "catalog", () => catalog(e.app, business.id));
+    return withPublicBusiness(e, (business) => cachedResponse(e, `${business.id}:catalog`,
+      () => catalog(e.app, business.id, publicBusiness(e, business))));
   } catch (error) {
     return publicError(e, error);
   }
@@ -115,16 +157,15 @@ export function servePublicCatalog(e: core.RequestEvent) {
 
 export function servePublicSchedule(e: core.RequestEvent) {
   try {
-    const query = e.request.url.query();
-    const business = e.app.findFirstRecordByData("businesses", "slug", "jq-fitness");
-    const timezone = business.getString("timezone");
-    const today = utcToLocal(new Date().toISOString(), timezone).date;
-    const maxWeeks = setting("PUBLIC_SCHEDULE_MAX_WEEKS", PUBLIC_SCHEDULE_MAX_WEEKS);
-    const week = normalizeWeek(query.has("week") ? query.get("week") : undefined, today, maxWeeks);
-    const header = e.response.header();
-    header.set("X-Public-Schedule-Max-Weeks", String(maxWeeks));
-    header.set("Access-Control-Expose-Headers", "X-Public-Schedule-Max-Weeks");
-    return cachedResponse(e, `schedule:${week}`, () => schedule(e.app, week, business.id, timezone));
+    return withPublicBusiness(e, (business) => {
+      const query = e.request.url.query();
+      const details = publicBusiness(e, business);
+      const today = utcToLocal(new Date().toISOString(), details.timezone).date;
+      const maxWeeks = setting("PUBLIC_SCHEDULE_MAX_WEEKS", PUBLIC_SCHEDULE_MAX_WEEKS);
+      const week = normalizeWeek(query.has("week") ? query.get("week") : undefined, today, maxWeeks);
+      e.response.header().set("X-Public-Schedule-Max-Weeks", String(maxWeeks));
+      return cachedResponse(e, `${business.id}:schedule:${week}`, () => schedule(e.app, week, business.id, details));
+    });
   } catch (error) {
     return publicError(e, error);
   }

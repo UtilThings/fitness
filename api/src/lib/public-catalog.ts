@@ -19,6 +19,8 @@ export function normalizeWeek(input: string | undefined, today: string, maxWeeks
   }
 }
 
+export type PublicBusiness = { name: string; city: string; logo_url: string; currency: string; timezone: string };
+
 type Ordered = { active: boolean; sort: number };
 export type PublicServiceInput = Ordered & Pick<ServiceInput, "slug" | "kind" | "name"> & { id: string };
 export type PublicPlanInput = Ordered & Omit<PlanInput, "active" | "sort"> & { service: string };
@@ -34,13 +36,15 @@ export function buildCatalog(
   plans: readonly PublicPlanInput[],
   templates: readonly PublicTemplateInput[],
   coaches: ReadonlyMap<string, string>,
+  business: PublicBusiness,
 ) {
   const activePlans = plans.filter((plan) => plan.active).sort((a, b) => a.sort - b.sort);
   const activeTemplates = templates.filter((template) => template.active)
     .sort((a, b) => a.weekday - b.weekday || a.start_time.localeCompare(b.start_time));
   return {
-    version: 1,
-    currency: "USD",
+    version: 2,
+    business,
+    currency: business.currency,
     services: services.filter((service) => service.active).sort((a, b) => a.sort - b.sort).map((service) => ({
       slug: service.slug,
       kind: service.kind,
@@ -72,19 +76,20 @@ export function buildSchedule(
   bookingCounts: ReadonlyMap<string, number>,
   services: readonly PublicServiceInput[],
   coaches: ReadonlyMap<string, string>,
-  timezone: string,
+  business: PublicBusiness,
 ) {
   const weekEnd = addLocalDays(weekStart, 6);
   const activeServices = new Map(services.filter((service) => service.active).map((service) => [service.id, service]));
   return {
-    version: 1,
-    timezone,
+    version: 2,
+    business,
+    timezone: business.timezone,
     week_start: weekStart,
     week_end: weekEnd,
     sessions: [...sessions].sort((a, b) => a.starts_at.localeCompare(b.starts_at)).flatMap((session) => {
       const service = activeServices.get(session.service);
       if (!service || session.status !== "scheduled" || !["regular", "special"].includes(session.kind)) return [];
-      const local = utcToLocal(session.starts_at.replace(" ", "T"), timezone);
+      const local = utcToLocal(session.starts_at.replace(" ", "T"), business.timezone);
       if (local.date < weekStart || local.date > weekEnd) return [];
       const spots_left = Math.max(0, session.capacity - (bookingCounts.get(session.id) ?? 0));
       return [{

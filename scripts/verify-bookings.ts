@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
-import { addLocalDays, localToUtc, utcToLocal } from "../api/src/lib/tz";
+import { addLocalDays, localToUtc as fromBusinessLocal, utcToLocal as toBusinessLocal } from "../api/src/lib/tz";
+const utcToLocal = (value: string) => toBusinessLocal(value, "America/New_York");
+const localToUtc = (date: string, time: string) => fromBusinessLocal(date, time, "America/New_York");
 
 const base = process.argv[2];
 const password = process.env.JQ_VERIFY_PASSWORD;
+const business = process.env.JQ_VERIFY_BUSINESS!;
 assert(base && password, "Ejecuta scripts/verify-api.sh");
 
 type Body = Record<string, unknown>;
@@ -55,7 +58,7 @@ await call("collections/users/records", "", "POST", {}, 403);
 console.log("Reglas efectivas de las colecciones del MVP verificadas.");
 async function createAdmin(role: "owner" | "coach" | "reception") {
   const email = `bookings-${role}@example.test`;
-  await call(records("admins"), root, "POST", { email, name: role, role, active: true, password, passwordConfirm: password });
+  await call(records("admins"), root, "POST", { business, email, name: role, role, active: true, password, passwordConfirm: password });
   return auth("admins", email);
 }
 const owner = await createAdmin("owner");

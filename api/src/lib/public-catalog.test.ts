@@ -9,6 +9,7 @@ const plan = {
   active: true, sort: 5, notes: "Internal", email: "internal@example.test",
 } as const;
 const template = { service: service.id, coach: "coach", active: true, weekday: 2, start_time: "09:00", capacity: 6 };
+const business = { name: "JQ Fitness", city: "", logo_url: "", currency: "USD", timezone: "America/New_York" };
 const coaches = new Map([["coach", "Coach JQ"]]);
 
 test("normalizes Sunday, Saturday, and year boundaries and clamps old weeks", () => {
@@ -35,13 +36,13 @@ test("catalog returns exactly the public fields of active services, plans, and t
   ], [
     plan, { ...plan, name: "First", sort: 0 }, { ...plan, active: false },
     { ...plan, service: "inactive" },
-  ], [template, { ...template, active: false }], coaches, "America/New_York");
+  ], [template, { ...template, active: false }], coaches, business);
   const expectedPlan = {
     name: plan.name, price_cents: 26000, billing_unit: "per_4_weeks", sessions: 8, per_week: 2,
     commitment_periods: 0, is_first_class: false, partner: false, note: "",
   };
   expect(result).toEqual({
-    version: 1, currency: "USD", services: [
+    version: 2, business, currency: "USD", services: [
       { slug: "first", kind: "group", name: service.name, plans: [], weekly_times: [] },
       { slug: service.slug, kind: "group", name: service.name, plans: [{ ...expectedPlan, name: "First" }, expectedPlan],
         weekly_times: [{ weekday: 2, time: "09:00", coach_name: "Coach JQ", capacity: 6 }] },
@@ -58,9 +59,9 @@ test("schedule excludes private, cancelled and inactive services and returns exa
     const sessions = [session, { ...session, kind: "private" }, { ...session, status: "cancelled" },
       { ...session, service: "inactive" }, { ...session, starts_at: `${date} 01:00:00.000Z` }];
     const result = buildSchedule(date, sessions, new Map([[session.id, 9]]),
-      [service, { ...service, id: "inactive", active: false }], coaches, "America/New_York");
+      [service, { ...service, id: "inactive", active: false }], coaches, business);
     expect(result).toEqual({
-      version: 1, timezone: "America/New_York", week_start: date,
+      version: 2, business, timezone: "America/New_York", week_start: date,
       week_end: date === "2026-03-08" ? "2026-03-14" : "2026-11-07",
       sessions: [{
         local_date: date, local_time: "09:00", service: { slug: service.slug, name: service.name },
@@ -68,4 +69,13 @@ test("schedule excludes private, cancelled and inactive services and returns exa
       }],
     });
   }
+});
+
+test("schedule uses the public business timezone", () => {
+  const local = { ...business, name: "Bogotá", currency: "COP", timezone: "America/Bogota" };
+  const session = { id: "session", service: service.id, coach: "", capacity: 6, kind: "regular", status: "scheduled",
+    starts_at: "2026-11-01T05:00:00Z" };
+  const schedule = buildSchedule("2026-11-01", [session], new Map(), [service], coaches, local);
+  expect(schedule.business).toEqual(local);
+  expect(schedule.sessions[0]?.local_time).toBe("00:00");
 });

@@ -3,6 +3,7 @@ import { Database } from "bun:sqlite";
 
 const base = process.argv[2];
 const password = process.env.JQ_VERIFY_PASSWORD;
+const business = process.env.JQ_VERIFY_BUSINESS!;
 const dbPath = process.env.JQ_VERIFY_DB;
 assert(base && password && dbPath, "Ejecuta scripts/verify-api.sh");
 
@@ -43,25 +44,25 @@ const existingMemberships = db.query<{ count: number }, []>(
   "AND (status IN ('active', 'paused') OR ended_on = '')",
 ).get()!.count;
 db.transaction(() => {
-  db.run("INSERT INTO clients (id, first_name, last_name, email, phone, status) VALUES (?, ?, ?, ?, ?, 'active')",
-    ["verifyreport001", "ReportePrivado", "ReportePrivado", "secret@example.test", "9182736450"]);
+  db.run("INSERT INTO clients (business, id, first_name, last_name, email, phone, status) VALUES (?, ?, ?, ?, ?, ?, 'active')",
+    [business, "verifyreport001", "ReportePrivado", "ReportePrivado", "secret@example.test", "9182736450"]);
   for (const [id, startsAt] of [
     ["reportssession1", "2040-03-11 05:00:00.000Z"],
     ["reportssession2", "2040-03-12 04:00:00.000Z"],
   ]) {
-    db.run("INSERT INTO class_sessions (id, service, coach, starts_at, duration_min, capacity, status, kind) VALUES (?, ?, ?, ?, 60, 6, 'completed', 'regular')",
-      [id, plan.service, admin.id, startsAt]);
-    db.run("INSERT INTO bookings (session, client, status) VALUES (?, ?, 'attended')", [id, "verifyreport001"]);
+    db.run("INSERT INTO class_sessions (business, id, service, coach, starts_at, duration_min, capacity, status, kind) VALUES (?, ?, ?, ?, ?, 60, 6, 'completed', 'regular')",
+      [business, id, plan.service, admin.id, startsAt]);
+    db.run("INSERT INTO bookings (business, session, client, status) VALUES (?, ?, ?, 'attended')", [business, id, "verifyreport001"]);
   }
   db.run(
-    "INSERT INTO memberships (id, client, plan, status, starts_on, ended_on, current_period_start, current_period_end) VALUES (?, ?, ?, 'expired', ?, ?, ?, ?)",
-    ["reportmember001", "verifyreport001", plan.id, "2040-03-01 00:00:00.000Z", "2040-03-11 00:00:00.000Z",
+    "INSERT INTO memberships (business, id, client, plan, status, starts_on, ended_on, current_period_start, current_period_end) VALUES (?, ?, ?, ?, 'expired', ?, ?, ?, ?)",
+    [business, "reportmember001", "verifyreport001", plan.id, "2040-03-01 00:00:00.000Z", "2040-03-11 00:00:00.000Z",
       "2040-03-01 00:00:00.000Z", "2040-03-10 00:00:00.000Z"],
   );
-  db.run("INSERT INTO payments (client, plan, status, amount_cents, recorded_by, paid_at) VALUES (?, ?, 'paid', 8000, ?, ?)",
-    ["verifyreport001", plan.id, admin.id, "2040-03-12 03:59:59.999Z"]);
-  db.run("INSERT INTO payments (client, plan, status, amount_cents, recorded_by, due_on) VALUES (?, ?, 'pending', 500, ?, ?)",
-    ["verifyreport001", plan.id, admin.id, "2040-03-11 00:00:00.000Z"]);
+  db.run("INSERT INTO payments (business, currency, client, plan, status, amount_cents, recorded_by, paid_at) VALUES (?, 'USD', ?, ?, 'paid', 8000, ?, ?)",
+    [business, "verifyreport001", plan.id, admin.id, "2040-03-12 03:59:59.999Z"]);
+  db.run("INSERT INTO payments (business, currency, client, plan, status, amount_cents, recorded_by, due_on) VALUES (?, 'USD', ?, ?, 'pending', 500, ?, ?)",
+    [business, "verifyreport001", plan.id, admin.id, "2040-03-11 00:00:00.000Z"]);
 })();
 db.close();
 

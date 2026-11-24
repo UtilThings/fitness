@@ -4,6 +4,7 @@ import { startSmtpCapture, type CapturedMail } from "./verify-smtp-capture";
 
 const [base] = process.argv.slice(2);
 const password = process.env.JQ_VERIFY_PASSWORD;
+const business = process.env.JQ_VERIFY_BUSINESS!;
 const dbPath = process.env.JQ_VERIFY_DB;
 assert(base && password && dbPath, "Ejecuta scripts/verify-api.sh");
 using db = new Database(dbPath);
@@ -63,10 +64,10 @@ const client = await call<{ id: string; locale: string }>(clients, owner, "POST"
 assert.equal(client.locale, "es");
 const firstLogId = "sample000000001";
 const addLog = db.query(
-  "INSERT INTO message_logs (id, client, template_key, channel, status, attempts, dedupe_key) VALUES (?, ?, ?, 'email', 'sent', 1, ?)",
+  "INSERT INTO message_logs (business, id, client, template_key, channel, status, attempts, dedupe_key) VALUES (?, ?, ?, ?, 'email', 'sent', 1, ?)",
 );
-addLog.run(firstLogId, client.id, key, "verify-message-dedupe");
-assert.throws(() => addLog.run("sample000000002", client.id, key, "verify-message-dedupe"), /UNIQUE constraint failed/);
+addLog.run(business, firstLogId, client.id, key, "verify-message-dedupe");
+assert.throws(() => addLog.run(business, "sample000000002", client.id, key, "verify-message-dedupe"), /UNIQUE constraint failed/);
 await call(logs, root, "POST", { client: client.id, template_key: key, channel: "email", status: "sent", attempts: 1 }, 403);
 await call(`${logs}/${firstLogId}`, root, "PATCH", { error: "Cambio externo" }, 403);
 await call(`${logs}/${firstLogId}`, root, "DELETE", undefined, 403);
@@ -177,9 +178,9 @@ assert.deepEqual((await sessionLogs(manualTarget, "manual")).map(({ client }) =>
     for (let i = 0; i < 201; i++) {
       const suffix = String(i).padStart(4, "0");
       const client = `msgbulkclnt${suffix}`;
-      db.query("INSERT INTO clients (id, first_name, last_name, status) VALUES (?, 'Bulk', 'Test', 'active')").run(client);
-      db.query("INSERT INTO bookings (id, session, client, status, source) VALUES (?, ?, ?, 'booked', 'admin')")
-        .run(`msgbulkbook${suffix}`, bulk.id, client);
+      db.query("INSERT INTO clients (business, id, first_name, last_name, status) VALUES (?, ?, 'Bulk', 'Test', 'active')").run(business, client);
+      db.query("INSERT INTO bookings (business, id, session, client, status, source) VALUES (?, ?, ?, ?, 'booked', 'admin')")
+        .run(business, `msgbulkbook${suffix}`, bulk.id, client);
     }
   })();
   await call(manual(bulk), owner, "POST", draft, 400);
@@ -269,8 +270,8 @@ async function verifySmtp() {
     const excluded = await createSession(7, 3);
     for (const recipient of [inactive, withoutEmail]) {
       // La prueba crea una reserva interna en un estado que la API pública rechazaría.
-      db.query("INSERT INTO bookings (id, session, client, status, source) VALUES (?, ?, ?, 'booked', 'admin')")
-        .run(recipient === inactive ? "msginactive0001" : "msgnoemail00001", excluded.id, recipient.id);
+      db.query("INSERT INTO bookings (business, id, session, client, status, source) VALUES (?, ?, ?, ?, 'booked', 'admin')")
+        .run(business, recipient === inactive ? "msginactive0001" : "msgnoemail00001", excluded.id, recipient.id);
     }
     await call("crons/class_reminders", root, "POST", undefined, 204);
     assert.deepEqual(await call(manual(excluded), owner, "POST", draft), { sent: 0, failed: 0, skipped: 2 });
@@ -281,10 +282,10 @@ async function verifySmtp() {
     const [plan] = db.query<{ id: string }, []>("SELECT id FROM plans ORDER BY id").all();
     const [admin] = db.query<{ id: string }, []>("SELECT id FROM admins WHERE role = 'owner'").all();
     assert(plan && admin);
-    db.query("INSERT INTO payments (id, client, plan, amount_cents, status, due_on, recorded_by) VALUES (?, ?, ?, 26800, 'pending', ?, ?)")
-      .run("msgdueverify001", en.id, plan.id, "2026-03-11 00:00:00.000Z", admin.id);
-    db.query("INSERT INTO memberships (id, client, plan, status, starts_on, current_period_start, current_period_end) VALUES (?, ?, ?, 'active', ?, ?, ?)")
-      .run("msgendverify001", en.id, plan.id, "2026-02-13 00:00:00.000Z", "2026-02-13 00:00:00.000Z", "2026-03-13 05:00:00.000Z");
+    db.query("INSERT INTO payments (business, currency, id, client, plan, amount_cents, status, due_on, recorded_by) VALUES (?, 'USD', ?, ?, ?, 26800, 'pending', ?, ?)")
+      .run(business, "msgdueverify001", en.id, plan.id, "2026-03-11 00:00:00.000Z", admin.id);
+    db.query("INSERT INTO memberships (business, id, client, plan, status, starts_on, current_period_start, current_period_end) VALUES (?, ?, ?, ?, 'active', ?, ?, ?)")
+      .run(business, "msgendverify001", en.id, plan.id, "2026-02-13 00:00:00.000Z", "2026-02-13 00:00:00.000Z", "2026-03-13 05:00:00.000Z");
     const beforeDaily = mailFor("en").length;
     for (const [instant, count] of [["2026-03-08T12:59:59Z", 0], ["2026-03-08T13:00:00Z", 2], ["2026-03-08T13:45:00Z", 2]] as const) {
       await call("verify/messages/daily", root, "POST", { instant });

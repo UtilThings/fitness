@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
-import { addLocalDays, localToUtc, utcToLocal } from "../api/src/lib/tz";
+import { addLocalDays, localToUtc as fromBusinessLocal, utcToLocal as toBusinessLocal } from "../api/src/lib/tz";
+const utcToLocal = (value: string) => toBusinessLocal(value, "America/New_York");
+const localToUtc = (date: string, time: string) => fromBusinessLocal(date, time, "America/New_York");
 
 const base = process.argv[2];
 const password = process.env.JQ_VERIFY_PASSWORD;
+const business = process.env.JQ_VERIFY_BUSINESS!;
 assert(base && password, "Ejecuta scripts/verify-api.sh");
 
 type Json = Record<string, unknown>;
@@ -73,7 +76,7 @@ async function staff(role: string, suffix = role) {
     root,
     "POST",
     {
-      email,
+      business, email,
       role,
       name: role,
       active: true,
