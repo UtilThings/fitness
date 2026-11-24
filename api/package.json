@@ -4,8 +4,9 @@
   "scripts": {
     "test": "bun test",
     "build:ts": "bun run src/build.ts",
-    "watch:ts": "bun run src/watch.ts",
-    "serve:pb": "./pb serve --dev",
+    "watch:ts": "bun --env-file=.env run src/watch.ts",
+    "serve:pb": "bun --env-file=.env run serve:pb:process",
+    "serve:pb:process": "./pb serve --dev",
     "dev": "bun run build:ts && concurrently -k \"bun run watch:ts --skip-initial\" \"bun run serve:pb\""
   },
   "devDependencies": {
