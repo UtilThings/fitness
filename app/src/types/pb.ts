@@ -26,7 +26,7 @@ export interface Business extends BaseRecord {
   timezone: string;
   receipt_prefix: string;
   active: boolean;
-  allowed_origins: string[] | null;
+  allowed_origins: readonly string[] | null;
   public_key_prefix: string;
   public_key_rotated_at: string;
 }

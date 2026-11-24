@@ -1,7 +1,7 @@
 # 018 - [Web] Vista «Integración»: clave pública y orígenes
 
 - **Prioridad:** 18
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 014, 016
 - **Fase:** Fase 4: Admin multi-tenant
 
@@ -23,11 +23,11 @@ La ruta `POST /api/admin/business/public-key` (014) devuelve la clave una sola v
 
 ## Criterios de aceptación
 
-- [ ] Rotar muestra la clave una vez; al cerrar el diálogo no hay forma de recuperarla en la interfaz.
-- [ ] Coach y reception no acceden.
-- [ ] Un origen con `*`, sin protocolo o duplicado se rechaza con mensaje claro.
-- [ ] La clave no se guarda en `localStorage`, estado global ni logs de consola.
-- [ ] `bun run lint`, `bun run test`, `bun run build` y `vue-tsc` pasan en verde.
+- [x] Rotar muestra la clave una vez; al cerrar el diálogo no hay forma de recuperarla en la interfaz.
+- [x] Coach y reception no acceden.
+- [x] Un origen con `*`, sin protocolo o duplicado se rechaza con mensaje claro.
+- [x] La clave no se guarda en `localStorage`, estado global ni logs de consola.
+- [x] `bun run lint`, `bun run test`, `bun run build` y `vue-tsc` pasan en verde.
 
 ## Fuera de alcance
 
@@ -40,4 +40,4 @@ La ruta `POST /api/admin/business/public-key` (014) devuelve la clave una sola v
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Integración muestra solo el prefijo y la fecha en la vista principal. La clave nueva vive en el diálogo, con confirmación, copia y limpieza al cerrar o desmontar. Las pruebas cubren el ciclo, permisos de owner, errores del servidor y orígenes inválidos o repetidos. La verificación completa de la app pasó.

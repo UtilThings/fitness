@@ -31,6 +31,7 @@ describe('adminNav', () => {
           '/audit',
           '/team',
           '/settings/business',
+          '/settings/integration',
           '/settings/profile',
         ],
       ],
@@ -96,8 +97,11 @@ describe('adminNav', () => {
     const paths = (role: Parameters<typeof visibleNav>[0]) =>
       visibleNav(role).flatMap(({ items }) => items.map(({ to }) => to));
     expect(paths('owner')).toContain('/settings/business');
+    expect(paths('owner')).toContain('/settings/integration');
     expect(paths('coach')).not.toContain('/settings/business');
+    expect(paths('coach')).not.toContain('/settings/integration');
     expect(paths('reception')).not.toContain('/settings/business');
+    expect(paths('reception')).not.toContain('/settings/integration');
     expect(paths('owner')).toContain('/audit');
     expect(paths('coach')).not.toContain('/audit');
     expect(paths('reception')).not.toContain('/audit');
