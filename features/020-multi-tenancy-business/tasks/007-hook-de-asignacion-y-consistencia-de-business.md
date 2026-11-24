@@ -1,7 +1,7 @@
 # 007 - [Hook] Asignación y consistencia de `business`
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 006
 - **Fase:** Fase 1: Fundamentos de datos y aislamiento
 
@@ -23,12 +23,12 @@ Las reglas (006) protegen lectura y edición, pero la creación depende del cuer
 
 ## Criterios de aceptación
 
-- [ ] Crear un registro con `business` de otro business en el cuerpo lo deja en el business del usuario.
-- [ ] Editar `business` de un registro → `400`.
-- [ ] Una reserva con cliente de otro business, o un pago con membresía de otro business → `400`.
-- [ ] Un admin de un business inactivo no puede iniciar sesión.
-- [ ] Las sesiones generadas desde plantillas y los registros creados por crons heredan el business correcto.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Crear un registro con `business` de otro business en el cuerpo lo deja en el business del usuario.
+- [x] Editar `business` de un registro → `400`.
+- [x] Una reserva con cliente de otro business, o un pago con membresía de otro business → `400`.
+- [x] Un admin de un business inactivo no puede iniciar sesión.
+- [x] Las sesiones generadas desde plantillas y los registros creados por crons heredan el business correcto.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -41,4 +41,4 @@ Las reglas (006) protegen lectura y edición, pero la creación depende del cuer
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Prueba REST en dos negocios: el servidor ignoró el negocio enviado en alta, rechazó traslado y vínculos cruzados en reservas y pagos (400), y bloqueó login y sesión previa tras desactivar el negocio. Las sesiones generadas, cargos por ciclo y movimientos de expiración conservaron el negocio; la ejecución manual del otro negocio no los tocó. Validación en petición y en modelo. Build y 104 pruebas en verde.

@@ -92,7 +92,7 @@ function saveScheduleInTransaction(e: core.RecordEvent) {
       if (name === "schedule_blocks") cancelBlockedSessions(tx, record);
       if (activate) {
         persistGeneratedSessions(tx, {
-          template: record.id, actor: record.getString("@pbInternalAuditActor"),
+          business: record.getString("business"), template: record.id, actor: record.getString("@pbInternalAuditActor"),
         });
       }
     });

@@ -28,7 +28,7 @@ export function authorizeBooking(app: core.App, client: core.Record, session: co
       firstVisitUsed.length ? [planData(plan)] : [])) {
       throw membershipError(400, "first_class_used", "El cliente no puede usar una primera clase en este servicio.");
     }
-    assign(app, { client: client.id, plan: plan.id }, options);
+    assign(app, { client: client.id, plan: plan.id }, { ...options, business: client.getString("business") });
     selection = selectBookingMembership(app, client.id, session, { ...options, override: false });
   }
   if (!selection.allowed) {

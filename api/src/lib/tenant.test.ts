@@ -14,3 +14,17 @@ test("tenant collections match the business relation migrations", () => {
     });
   expect([...TENANT_COLLECTIONS].sort()).toEqual(collections.sort());
 });
+
+test("compares tenant ownership and rejects an absent business", async () => {
+  const { assertSameBusiness, resolveBusiness } = await import("./tenant");
+  const row = (business: string, name = "admins", active = true) => ({
+    getString: () => business, collection: () => ({ name }), getBool: () => active,
+  }) as unknown as core.Record;
+  expect(assertSameBusiness(row("a"), row("a"))).toBe(true);
+  expect(assertSameBusiness(row("a"), row("b"))).toBe(false);
+  expect(assertSameBusiness(row(""), row(""))).toBe(false);
+  expect(assertSameBusiness(row("a"))).toBe(false);
+  expect(resolveBusiness(row("a"))).toBe("a");
+  expect(resolveBusiness(row("a", "_superusers"))).toBe("");
+  expect(resolveBusiness(row("a", "admins", false))).toBe("");
+});

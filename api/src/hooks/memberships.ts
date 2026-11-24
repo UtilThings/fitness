@@ -4,7 +4,7 @@ routerAdd("POST", "/api/admin/memberships/assign", (e) => {
   const { assign, membershipToday, requireMembershipRole } =
     require(`${__hooks}/lib/memberships-service`) as typeof import("../lib/memberships-service");
   const actor = requireMembershipRole(e, ["owner", "reception"]);
-  return e.json(200, assign(e.app, e.requestInfo().body, { actor, today: membershipToday() }));
+  return e.json(200, assign(e.app, e.requestInfo().body, { business: e.auth!.getString("business"), actor, today: membershipToday() }));
 });
 
 routerAdd("POST", "/api/admin/memberships/{id}/{action}", (e) => {
@@ -16,7 +16,7 @@ routerAdd("POST", "/api/admin/memberships/{id}/{action}", (e) => {
     throw new NotFoundError("Acción de membresía no encontrada.");
   }
   return e.json(200, manageMembership(e.app, e.request!.pathValue("id"), action, e.requestInfo().body,
-    { actor, today: membershipToday() }));
+    { business: e.auth!.getString("business"), actor, today: membershipToday() }));
 });
 
 onRecordValidate((e) => {

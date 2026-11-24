@@ -120,13 +120,14 @@ onRecordValidate(
       }
 
       if (record.getBool("is_first_class")) {
+        const business = record.getString("business");
         const conflicts = e.app.findRecordsByFilter(
           "plans",
-          "is_first_class = true && id != {:id}",
+          "is_first_class = true && id != {:id}" + (business ? " && business = {:business}" : ""),
           "",
           1,
           0,
-          { id: record.id },
+          { id: record.id, business },
         );
         if (
           findFirstClassConflict(
@@ -176,6 +177,7 @@ onRecordAfterUpdateSuccess((e) => {
         e.app.save(
           new Record(e.app.findCollectionByNameOrId("audit_logs"), {
             ...data,
+            business: record.getString("business"),
             summary: `Planes desactivados al desactivar ${record.getString("name")}: ${count}`,
           }),
         );

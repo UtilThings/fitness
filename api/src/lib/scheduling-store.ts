@@ -95,7 +95,7 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
       startMs: Date.parse(other.getString("starts_at").replace(" ", "T")), durationMin: other.getInt("duration_min"),
     }] : []) : [];
   const blocks = checkSchedule ? app.findRecordsByFilter("schedule_blocks",
-    "date_from <= {:last} && date_to >= {:first}", "date_from,id", 0, 0, { first: start.date, last: last.date })
+    "business = {:business} && date_from <= {:last} && date_to >= {:first}", "date_from,id", 0, 0, { business: record.getString("business"), first: start.date, last: last.date })
     .flatMap((block) => block ? [{ id: block.id, ...blockDates(block) }] : []) : [];
 
   const input = { coach, capacity, startMs, durationMin, sessions, blocks, localDate: start.date,

@@ -21,7 +21,10 @@ onRecordCreateRequest((e) => {
   const { hasPartnerMembership, schedulingError } =
     require(`${__hooks}/lib/scheduling-store`) as typeof import("../lib/scheduling-store");
   const actor = requireBookingStaff(e);
+  const { prepareTenantCreate } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  prepareTenantCreate(e);
   const requested = e.record!;
+  const business = requested.getString("business");
   const { authorizeBooking } =
     require(`${__hooks}/lib/membership-bookings`) as typeof import("../lib/membership-bookings");
   const { membershipToday, requireMembershipRole } =
@@ -53,7 +56,7 @@ onRecordCreateRequest((e) => {
     });
 
     const next = decideBookingStatus(session.getInt("capacity"), records.map(bookingData));
-    const booking = existing ?? new Record(requested.collection(), { session: session.id, client: client.id });
+    const booking = existing ?? new Record(requested.collection(), { business, session: session.id, client: client.id });
     booking.load({
       status: next.status,
       waitlist_position: next.status === "waitlisted" ? next.position : 0,
@@ -84,6 +87,8 @@ onRecordUpdateRequest((e) => {
     require(`${__hooks}/lib/memberships-service`) as typeof import("../lib/memberships-service");
   const actor = requireBookingStaff(e);
   const body = e.requestInfo().body;
+  const { prepareTenantUpdate } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  prepareTenantUpdate(e);
   const status = body.status;
   if (status !== "cancelled" && status !== "attended" && status !== "no_show") {
     throw bookingError("status", "Selecciona una transición de reserva permitida.");

@@ -1,6 +1,7 @@
 /// <reference path="../../pb_data/types.d.ts" />
 
 import { auditActor, getRecord } from "./schedule-store";
+import { tenantRecord, type TenantCollection } from "./tenant";
 import { pickPromotion, renumberWaitlist, shouldRestoreFreeClass, type BookingLike, type BookingStatus } from "./booking-rules";
 
 export function requireBookingStaff(e: core.RequestEvent): string {
@@ -29,8 +30,8 @@ export function sessionBookings(app: core.App, session: string) {
     .filter((record): record is core.Record => !!record);
 }
 
-export function bookingRelation(app: core.App, collection: string, id: string, field: string) {
-  const record = getRecord(app, collection, id);
+export function bookingRelation(app: core.App, collection: TenantCollection, id: string, field: string, business?: string) {
+  const record = business === undefined ? getRecord(app, collection, id) : tenantRecord(app, collection, id, business);
   if (!record) throw bookingError(field, "Selecciona un registro válido.");
   return record;
 }

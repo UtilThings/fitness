@@ -50,9 +50,9 @@ export function clientVariables(client: core.Record): Variables {
   };
 }
 
-function activeTemplate(app: MessageApp, key: ServiceKey, locale: Locale) {
+function activeTemplate(app: MessageApp, key: ServiceKey, locale: Locale, business: string) {
   const find = (language: Locale) =>
-    app.findRecordsByFilter("message_templates", "key = {:key} && locale = {:locale}", "", 1, 0, { key, locale: language })[0];
+    app.findRecordsByFilter("message_templates", "business = {:business} && key = {:key} && locale = {:locale}", "", 1, 0, { business, key, locale: language })[0];
   const record = find(locale) ?? find(locale === "es" ? "en" : "es");
   if (!record?.getBool("active")) return;
   return { key, locale: resolveLocale({ locale: record.getString("locale") }), subject: record.getString("subject"), body: record.getString("body") };
@@ -74,6 +74,7 @@ function firstClaim(app: MessageApp, options: BaseOptions & { key: MessageKey },
     const dedupeKey = options.dedupeKey ?? "";
     if (dedupeKey && tx.findRecordsByFilter("message_logs", "dedupe_key = {:key}", "", 1, 0, { key: dedupeKey }).length) return;
     const log = new Record(tx.findCollectionByNameOrId("message_logs"), {
+      business: options.client.getString("business"),
       client: options.client.id,
       session: options.session ?? "",
       template_key: options.key,
@@ -120,7 +121,7 @@ export function sendServiceMessage(app: MessageApp, options: ServiceOptions): Re
   try {
     const details = clientDetails(options.client);
     if (!isEligible(details, options.key)) return "skipped";
-    const template = activeTemplate(app, options.key, resolveLocale(details));
+    const template = activeTemplate(app, options.key, resolveLocale(details), options.client.getString("business"));
     if (!template) return "skipped";
     const log = firstClaim(app, options, new Date());
     if (!log) return "skipped";
@@ -180,7 +181,7 @@ export function retryFailedMessages(app: MessageApp, now = new Date()) {
       const client = app.findRecordById("clients", candidate.getString("client"));
       const details = clientDetails(client);
       const session = relatedRecord(app, "class_sessions", candidate.getString("session"));
-      const template = activeTemplate(app, key, resolveLocale(details));
+      const template = activeTemplate(app, key, resolveLocale(details), client.getString("business"));
       const dedupeKey = candidate.getString("dedupe_key");
       const [event, source, change] = dedupeKey.split(":");
       const bookingNotice = key === "booking_confirmed" || key === "waitlist_promoted" || key === "class_reminder";

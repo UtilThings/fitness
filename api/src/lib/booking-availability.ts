@@ -47,9 +47,9 @@ export function singleSessionAvailability(app: core.App, session: core.Record) {
   return summarize(session, sessionBookings(app, session.id).map(bookingData), service.getInt("cancellation_hours"));
 }
 
-export function rangeAvailability(app: core.App, from: string, to: string) {
+export function rangeAvailability(app: core.App, from: string, to: string, business: string) {
   const range = availabilityRange(from, to);
-  const sessions = scheduledInRange(app, range);
+  const sessions = scheduledInRange(app, range, business);
   if (!sessions.length) return [];
   const reservations = app.findRecordsByFilter("bookings",
     "session.status = 'scheduled' && session.starts_at >= {:from} && session.starts_at < {:to} && (status = 'booked' || status = 'attended' || status = 'no_show' || status = 'waitlisted')",

@@ -52,7 +52,8 @@ function writeAuditLog(e: core.RecordEvent) {
       if (data) {
         // Pass JSON text to the PocketBase field so nested changes survive goja conversion.
         e.app.save(new Record(e.app.findCollectionByNameOrId("audit_logs"), {
-          ...data, diff: JSON.stringify(data.diff),
+          ...data, business: collection === "businesses" ? record.id : record.getString("business"),
+          diff: JSON.stringify(data.diff),
         }));
       }
     }

@@ -20,15 +20,15 @@ function related(record: core.Record) {
   };
 }
 
-export function dueReport(app: core.App, days: number) {
+export function dueReport(app: core.App, days: number, business: string) {
   const today = utcToLocal(new Date().toISOString()).date;
   const end = addDays(today, days + 1);
   // Also include future cycle charges to resolve the next-period flag.
   const payments = app.findRecordsByFilter("payments",
-    "status = 'pending' && ((due_on != '' && due_on < {:end}) || membership != '')", "", 0, 0, { end })
+    "business = {:business} && status = 'pending' && ((due_on != '' && due_on < {:end}) || membership != '')", "", 0, 0, { business, end })
     .filter((record): record is core.Record => !!record);
   const memberships = app.findRecordsByFilter("memberships",
-    "status = 'active' && current_period_end < {:end}", "", 0, 0, { end })
+    "business = {:business} && status = 'active' && current_period_end < {:end}", "", 0, 0, { business, end })
     .filter((record): record is core.Record => !!record);
   expand(app, payments);
   expand(app, memberships);
