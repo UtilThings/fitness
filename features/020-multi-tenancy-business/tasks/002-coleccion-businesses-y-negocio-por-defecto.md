@@ -1,7 +1,7 @@
 # 002 - [Migración] Colección `businesses` y business por defecto
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 1: Fundamentos de datos y aislamiento
 
@@ -23,11 +23,11 @@ Ninguna colección de tenant existe. La última migración es `1795265103_seeded
 
 ## Criterios de aceptación
 
-- [ ] Tras migrar una base vacía y una con datos hay exactamente un business por defecto; un segundo arranque no lo duplica.
-- [ ] Un owner no puede crear ni borrar business; solo edita los campos permitidos del suyo (el resto se rechaza).
-- [ ] `timezone` inválida y orígenes con `*` se rechazan con `400`.
-- [ ] `public_key_hash` no aparece en respuestas de la API ni en el diff de auditoría.
-- [ ] `bun run build:ts` y `bun test` pasan en verde; `down` revierte la migración.
+- [x] Tras migrar una base vacía y una con datos hay exactamente un business por defecto; un segundo arranque no lo duplica.
+- [x] Un owner no puede crear ni borrar business; solo edita los campos permitidos del suyo (el resto se rechaza).
+- [x] `timezone` inválida y orígenes con `*` se rechazan con `400`.
+- [x] `public_key_hash` no aparece en respuestas de la API ni en el diff de auditoría.
+- [x] `bun run build:ts` y `bun test` pasan en verde; `down` revierte la migración.
 
 ## Fuera de alcance
 
@@ -43,4 +43,4 @@ Ninguna colección de tenant existe. La última migración es `1795265103_seeded
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Migraciones `1795266000` y `1795266001` probadas con `migrate up`, `down 2` y dos ejecuciones consecutivas de `up`. Quedó un único `jq-fitness`. La prueba REST local agregó temporalmente la relación de `admins` que se entregará en 003. Verificó edición propia, rechazo de alta y baja por owner, 404 ajeno, 400 en campos bloqueados, zona y orígenes inválidos y ausencia del hash en respuestas y auditoría. `bun run build:ts` y `bun test` pasaron (101 pruebas).

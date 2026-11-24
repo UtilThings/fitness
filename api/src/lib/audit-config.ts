@@ -1,8 +1,8 @@
 export const AUDITED_COLLECTIONS: readonly string[] = [
   "admins", "services", "plans", "class_templates", "class_sessions", "schedule_blocks", "clients", "bookings",
-  "memberships", "credit_movements", "payments", "coach_availability", "coaching_programs", "coaching_checkins", "message_templates",
+  "memberships", "credit_movements", "payments", "coach_availability", "coaching_programs", "coaching_checkins", "message_templates", "businesses",
 ];
-export const SENSITIVE_FIELDS = ["password", "passwordHash", "tokenKey"];
+export const SENSITIVE_FIELDS = ["password", "passwordHash", "tokenKey", "public_key_hash"];
 export const IGNORED_FIELDS: readonly string[] = ["created", "updated"];
 
 export function isAudited(name: string): boolean {
