@@ -2,6 +2,13 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Window } from 'happy-dom';
 import { beforeAll, describe, expect, it } from 'vitest';
+import {
+  formatPrice,
+  groupPlans,
+  jumpPlans,
+  personalOneOnOne,
+  personalPartner,
+} from '../../src/lib/data';
 
 const dist = resolve('dist');
 const routes = [
@@ -134,5 +141,43 @@ describe('shared page components in the build', () => {
     expect(pricing.querySelector('main')?.textContent).not.toContain(
       'Most popular',
     );
+  });
+});
+
+describe('build without PUBLIC_API_URL', () => {
+  const cases = [
+    [
+      'pricing',
+      [...personalOneOnOne, ...personalPartner, ...groupPlans, ...jumpPlans],
+    ],
+    ['personal-training', [...personalOneOnOne, ...personalPartner]],
+    ['group-strength-training', groupPlans],
+    ['tropical-jump', jumpPlans],
+  ] as const;
+
+  it.each(cases)(
+    '/%s includes the fallback prices in static HTML',
+    (route, plans) => {
+      const cards = [
+        ...page(route).document.querySelectorAll(
+          'main astro-island .card-surface',
+        ),
+      ];
+      const prices = cards.flatMap((card) => {
+        const price = card.querySelector('p.text-5xl');
+        return price ? [price.textContent.trim()] : [];
+      });
+      expect(prices).toEqual(plans.map((plan) => formatPrice(plan.price)));
+    },
+  );
+
+  it('ships the schedule as a client-only island', () => {
+    const island = page('schedule').document.querySelector(
+      'main astro-island[client="only"]',
+    );
+    expect(island?.getAttribute('component-url')).toMatch(
+      /ScheduleBoard\..+\.js$/,
+    );
+    expect(island?.querySelector('.card-surface')).toBeNull();
   });
 });

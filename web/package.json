@@ -17,7 +17,8 @@
     "check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:dist": "vitest run --config vitest.dist.config.ts"
+    "test:dist": "vitest run --config vitest.dist.config.ts",
+    "test:build:offline": "bun tests/dist/build-offline.ts"
   },
   "dependencies": {
     "@astrojs/vue": "^7.1.6",

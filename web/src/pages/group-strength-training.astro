@@ -3,14 +3,36 @@ import group from '@/assets/group.jpg';
 import CtaBand from '@/components/CtaBand.astro';
 import PageHero from '@/components/PageHero.astro';
 import PolicyCard from '@/components/PolicyCard.astro';
-import PricingCard from '@/components/PricingCard.astro';
+import PricingGrid from '@/components/PricingGrid.vue';
 import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { classTemplates, groupPlans } from '@/lib/data';
+import { getCatalog } from '@/lib/catalog';
 
-const times = classTemplates
-  .filter(({ day, service }) => day === 2 && service === 'Group Strength')
-  .map(({ time }) => time);
+const { classTemplates, groupPlans } = await getCatalog();
+const days = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
+const timesByDay = new Map<number, string[]>();
+for (const { day, time, service } of classTemplates) {
+  if (service === 'Group Strength') {
+    const times = timesByDay.get(day) ?? [];
+    times.push(time);
+    timesByDay.set(day, times);
+  }
+}
+const daysByTimes = new Map<string, { days: string[]; times: string[] }>();
+for (const [day, times] of timesByDay) {
+  const key = times.join(',');
+  const entry = daysByTimes.get(key) ?? { days: [], times };
+  entry.days.push(days[day]);
+  daysByTimes.set(key, entry);
+}
 const policies = [
   'Classes are 60 minutes, capped at 6 participants.',
   '8-class packs expire after 4 weeks.',
@@ -21,7 +43,7 @@ const policies = [
 
 <BaseLayout
   title="Group Strength Training | JQ Fitness"
-  description="Small-group strength classes, max 6 people. Tuesdays & Thursdays at 9:00 AM, 5:30 PM and 7:00 PM."
+  description="Explore small-group strength training, class packages and the weekly schedule in Miramar."
 >
   <PageHero
     eyebrow="Group Strength"
@@ -30,15 +52,14 @@ const policies = [
     sub="Coached strength training with a maximum of 6 people per class — the attention of personal training with the energy of a team."
   />
   <Section>
-    <div class="grid gap-6 md:grid-cols-3">
-      {groupPlans.map((plan, index) => (
-        <PricingCard
-          {plan}
-          featured={index === 0}
-          cta="Book a class"
-          to="/schedule"
-        />
-      ))}
+    <PricingGrid
+      client:load
+      group="groupPlans"
+      plans={groupPlans}
+      featuredIndex={0}
+      cta="Book a class"
+      to="/schedule"
+    >
       <div class="card-surface flex flex-col p-7">
         <h3 class="text-2xl">Drop-in &amp; Intro</h3>
         <p class="mt-4 text-muted-foreground">
@@ -49,18 +70,22 @@ const policies = [
           Ask about intro
         </a>
       </div>
-    </div>
+    </PricingGrid>
     <div class="mt-12 grid gap-6 md:grid-cols-2">
       <div class="card-surface p-7">
         <p class="eyebrow mb-4">Weekly schedule</p>
-        <p class="font-display text-3xl uppercase">Tuesday &amp; Thursday</p>
-        <div class="mt-4 flex flex-wrap gap-3">
-          {times.map((time) => (
-            <span class="rounded-full border border-primary px-4 py-2 font-bold text-primary">
-              {time}
-            </span>
-          ))}
-        </div>
+        {[...daysByTimes.values()].map(({ days, times }, index) => (
+          <div class:list={[{ 'mt-6': index > 0 }]}>
+            <p class="font-display text-3xl uppercase">{days.join(' & ')}</p>
+            <div class="mt-4 flex flex-wrap gap-3">
+              {times.map((time) => (
+                <span class="rounded-full border border-primary px-4 py-2 font-bold text-primary">
+                  {time}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
       <PolicyCard items={policies} />
     </div>

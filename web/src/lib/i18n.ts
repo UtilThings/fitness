@@ -31,6 +31,13 @@ const en = {
   available: 'Available',
   reserve: 'Reserve',
   waitlist: 'Join waitlist',
+  loading: 'Loading classes…',
+  loadError: 'The live schedule couldn’t be loaded.',
+  retry: 'Try again',
+  noClasses: 'No classes to show this week.',
+  checkAvailability: 'Check availability',
+  fallbackNotice:
+    'Showing the regular weekly schedule. Contact us to check availability.',
 };
 
 export type Key = keyof typeof en;
@@ -64,6 +71,13 @@ const es: Record<Key, string> = {
   available: 'Disponible',
   reserve: 'Reservar',
   waitlist: 'Lista de espera',
+  loading: 'Cargando clases…',
+  loadError: 'No se pudo cargar el horario en vivo.',
+  retry: 'Reintentar',
+  noClasses: 'No hay clases para mostrar esta semana.',
+  checkAvailability: 'Consulta disponibilidad',
+  fallbackNotice:
+    'Mostramos el horario semanal habitual. Contáctanos para consultar disponibilidad.',
 };
 
 export const dictionary = { en, es };

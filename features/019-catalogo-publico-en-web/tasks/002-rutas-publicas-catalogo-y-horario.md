@@ -1,7 +1,7 @@
 # 002 - [Endpoint] Rutas públicas `catalog` y `schedule` con caché y CORS
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 1: API pública
 
@@ -23,12 +23,12 @@ Las rutas custom se registran con `routerAdd` en `api/src/hooks/*.ts` y compilan
 
 ## Criterios de aceptación
 
-- [ ] Ambas rutas responden `200` sin autenticación con exactamente el formato del spec.
-- [ ] Las sesiones `private` y canceladas no aparecen; los cupos coinciden con las reservas reales.
-- [ ] `Access-Control-Allow-Origin` solo se envía para orígenes de `PUBLIC_SITE_ORIGINS`, y nunca `*`.
-- [ ] Dos peticiones seguidas dentro de 30 s no repiten las consultas (comprobable con el registro de consultas en modo `--dev`).
-- [ ] `week` inválido o fuera de rango → `400`; errores internos → `500` sin detalle.
-- [ ] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan en verde.
+- [x] Ambas rutas responden `200` sin autenticación con exactamente el formato del spec.
+- [x] Las sesiones `private` y canceladas no aparecen; los cupos coinciden con las reservas reales.
+- [x] `Access-Control-Allow-Origin` solo se envía para orígenes de `PUBLIC_SITE_ORIGINS`, y nunca `*`.
+- [x] Dos peticiones seguidas dentro de 30 s no repiten las consultas (comprobable con el registro de consultas en modo `--dev`).
+- [x] `week` inválido o fuera de rango → `400`; errores internos → `500` sin detalle.
+- [x] `bun run build:ts`, `bun test` y `scripts/verify-api.sh` pasan en verde.
 
 ## Referencias
 
@@ -44,3 +44,4 @@ Las rutas custom se registran con `routerAdd` en `api/src/hooks/*.ts` y compilan
 
 ## Notas de implementación
 
+- PocketBase 0.40.5 permite reemplazar el middleware pbCors por ruta mediante su ID. La verificación HTTP comprobó el CORS con la configuración global por defecto, el conteo agrupado, el caché sin consultas repetidas y el 500 genérico con una base temporal.

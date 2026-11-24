@@ -8,9 +8,8 @@ import {
   translate,
 } from './i18n';
 
-it('has the same 26 keys in both languages', () => {
+it('has the same translation keys in both languages', () => {
   const keys = Object.keys(dictionary.en).sort();
-  expect(keys).toHaveLength(26);
   expect(Object.keys(dictionary.es).sort()).toEqual(keys);
   expect(translate('es', 'book')).toBe('Reserva tu clase');
 });

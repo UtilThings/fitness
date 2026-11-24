@@ -1,7 +1,7 @@
 # 005 - [Componente] Precios y planes con build y revalidación en cliente
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004
 - **Fase:** Fase 3: Componentes y páginas
 
@@ -23,11 +23,11 @@ Las páginas de precios y de servicios muestran planes y horarios reales de la A
 
 ## Criterios de aceptación
 
-- [ ] `bun run build` con la API disponible genera `dist/pricing/index.html` con los precios de la API; sin API (o sin `PUBLIC_API_URL`) genera los de `data.ts` y no falla.
-- [ ] En el navegador, un precio cambiado en la API después del build se refleja en `/pricing` sin reconstruir.
-- [ ] Las páginas de grupo y jump muestran sus horarios desde el catálogo.
-- [ ] El aspecto de las tarjetas es idéntico al actual (mismas clases y estructura).
-- [ ] `bun run lint`, `format:check`, `check` y `test` en `web/` pasan.
+- [x] `bun run build` con la API disponible genera `dist/pricing/index.html` con los precios de la API; sin API (o sin `PUBLIC_API_URL`) genera los de `data.ts` y no falla.
+- [x] En el navegador, un precio cambiado en la API después del build se refleja en `/pricing` sin reconstruir.
+- [x] Las páginas de grupo y jump muestran sus horarios desde el catálogo.
+- [x] El aspecto de las tarjetas es idéntico al actual (mismas clases y estructura).
+- [x] `bun run lint`, `format:check`, `check` y `test` en `web/` pasan.
 
 ## Referencias
 
@@ -43,3 +43,4 @@ Las páginas de precios y de servicios muestran planes y horarios reales de la A
 
 ## Notas de implementación
 
+- Edge confirmó el precio inicial de PocketBase, horarios de grupo y jump, alineación de tarjetas tras hidratar y un cambio de precio en /pricing sin otro build. Los builds con API disponible, ausente e inalcanzable pasaron, junto con 53 pruebas de web.

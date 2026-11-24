@@ -1,7 +1,7 @@
 # 006 - [Componente] Horario y disponibilidad real en `ScheduleBoard`
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004
 - **Fase:** Fase 3: Componentes y páginas
 
@@ -24,12 +24,12 @@
 
 ## Criterios de aceptación
 
-- [ ] La semana mostrada y las fechas de las tarjetas coinciden con la hora de Miramar, FL aunque el navegador esté en otra zona.
-- [ ] Los cupos y el estado de cada tarjeta provienen de la API; `full` muestra «Join waitlist» y mantiene el enlace a `/contact`.
-- [ ] Cambiar de semana pide la semana nueva y descarta la respuesta anterior si llega tarde.
-- [ ] Con la API caída se ven las clases base sin números de cupos y con el aviso; no queda código de cupos simulados.
-- [ ] Los textos nuevos existen en español e inglés.
-- [ ] `bun run lint`, `format:check`, `check` y `test` en `web/` pasan.
+- [x] La semana mostrada y las fechas de las tarjetas coinciden con la hora de Miramar, FL aunque el navegador esté en otra zona.
+- [x] Los cupos y el estado de cada tarjeta provienen de la API; `full` muestra «Join waitlist» y mantiene el enlace a `/contact`.
+- [x] Cambiar de semana pide la semana nueva y descarta la respuesta anterior si llega tarde.
+- [x] Con la API caída se ven las clases base sin números de cupos y con el aviso; no queda código de cupos simulados.
+- [x] Los textos nuevos existen en español e inglés.
+- [x] `bun run lint`, `format:check`, `check` y `test` en `web/` pasan.
 
 ## Referencias
 
@@ -43,3 +43,4 @@
 
 ## Notas de implementación
 
+- Calendario y tarjetas usan fechas civiles de Miramar. El navegador lee el máximo configurado en X-Public-Schedule-Max-Weeks y usa ocho semanas mientras no recibe el encabezado. Pasaron 58 pruebas de web con TZ=Pacific/Auckland y el verificador de PocketBase.

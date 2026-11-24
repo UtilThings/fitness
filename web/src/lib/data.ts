@@ -109,5 +109,6 @@ export function availability(
 }
 
 export function formatPrice(price: number): string {
-  return price === 0 ? 'FREE' : `$${price.toLocaleString('en-US')}`;
+  if (price === 0) return 'FREE';
+  return `$${price.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(price) ? 0 : 2 })}`;
 }

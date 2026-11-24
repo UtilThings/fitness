@@ -11,7 +11,8 @@
       "dockerfile": "Dockerfile",
       "default": true,
       "args": {
-        "PUBLIC_SITE_URL": "https://fitness.juicyquisine.com"
+        "PUBLIC_SITE_URL": "https://fitness.juicyquisine.com",
+        "PUBLIC_API_URL": ""
       },
       "deployment_key": "zKiBRf0wH5y9c9zOTYLNq"
     }

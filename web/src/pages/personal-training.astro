@@ -3,10 +3,12 @@ import personal from '@/assets/personal.jpg';
 import CtaBand from '@/components/CtaBand.astro';
 import PageHero from '@/components/PageHero.astro';
 import PolicyCard from '@/components/PolicyCard.astro';
-import PricingCard from '@/components/PricingCard.astro';
+import PricingGrid from '@/components/PricingGrid.vue';
 import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { personalOneOnOne, personalPartner } from '@/lib/data';
+import { getCatalog } from '@/lib/catalog';
+
+const { personalOneOnOne, personalPartner } = await getCatalog();
 
 const policies = [
   'Each session is 60 minutes; packages run in 4-week blocks.',
@@ -25,7 +27,7 @@ const included = [
 
 <BaseLayout
   title="Personal Training | JQ Fitness Miramar"
-  description="One-on-one and partner personal training packages in 4-week blocks, from $800."
+  description="One-on-one and partner personal training packages in 4-week blocks."
 >
   <PageHero
     eyebrow="Personal Training"
@@ -35,17 +37,22 @@ const included = [
   />
   <Section>
     <h2 class="text-4xl md:text-5xl">One-on-one</h2>
-    <div class="mt-8 grid gap-6 md:grid-cols-3">
-      {personalOneOnOne.map((plan, index) => (
-        <PricingCard {plan} featured={index === 1} cta="Request a schedule" />
-      ))}
-    </div>
+    <PricingGrid
+      client:load
+      class="mt-8"
+      group="personalOneOnOne"
+      plans={personalOneOnOne}
+      featuredIndex={1}
+      cta="Request a schedule"
+    />
     <h2 class="mt-16 text-4xl md:text-5xl">Partner training</h2>
-    <div class="mt-8 grid gap-6 md:grid-cols-3">
-      {personalPartner.map((plan) => (
-        <PricingCard {plan} cta="Request a schedule" />
-      ))}
-    </div>
+    <PricingGrid
+      client:load
+      class="mt-8"
+      group="personalPartner"
+      plans={personalPartner}
+      cta="Request a schedule"
+    />
     <div class="mt-12 grid gap-6 md:grid-cols-2">
       <PolicyCard items={policies} />
       <PolicyCard title="What's included" items={included} />

@@ -1,7 +1,7 @@
 # 004 - [Lib] Cliente `api.ts`, adaptadores y respaldo estático
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003
 - **Fase:** Fase 2: Cliente y configuración en `web/`
 
@@ -22,11 +22,11 @@
 
 ## Criterios de aceptación
 
-- [ ] Con un payload de la API equivalente a los precios actuales, `getCatalog()` devuelve los mismos planes que `data.ts` y `source: 'api'`.
-- [ ] Con la API caída, lenta (> timeout) o inválida, `getCatalog()` devuelve `source: 'static'` sin lanzar.
-- [ ] `fetchSchedule` rechaza respuestas con claves faltantes o de tipo incorrecto con `ApiError`.
-- [ ] El contrato JSON de ejemplo del spec pasa las guardas de tipo.
-- [ ] `bun run lint`, `format:check`, `check` y `test` en `web/` pasan.
+- [x] Con un payload de la API equivalente a los precios actuales, `getCatalog()` devuelve los mismos planes que `data.ts` y `source: 'api'`.
+- [x] Con la API caída, lenta (> timeout) o inválida, `getCatalog()` devuelve `source: 'static'` sin lanzar.
+- [x] `fetchSchedule` rechaza respuestas con claves faltantes o de tipo incorrecto con `ApiError`.
+- [x] El contrato JSON de ejemplo del spec pasa las guardas de tipo.
+- [x] `bun run lint`, `format:check`, `check` y `test` en `web/` pasan.
 
 ## Referencias
 
@@ -41,3 +41,4 @@
 
 ## Notas de implementación
 
+- Se verificaron paridad con el seed, errores HTTP, JSON y forma inválidos, timeout, ausencia de URL y contrato de ejemplo. Un build de Astro con una página temporal que llama a getCatalog y el puerto 9 inalcanzable generó el precio de respaldo. Pasaron 51 pruebas de web.
