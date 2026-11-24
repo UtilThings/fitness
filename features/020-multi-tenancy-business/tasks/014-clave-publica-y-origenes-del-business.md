@@ -1,7 +1,7 @@
 # 014 - [Endpoint] Clave pública y orígenes del business
 
 - **Prioridad:** 14
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001, 002
 - **Fase:** Fase 3: API pública por clave
 
@@ -22,11 +22,11 @@ El owner puede generar o rotar la clave pública de su business y la API conserv
 
 ## Criterios de aceptación
 
-- [ ] La respuesta devuelve la clave completa solo en esa llamada; ninguna ruta posterior la expone.
-- [ ] Rotar invalida la clave anterior (`verifyKey` falla con el nuevo hash).
-- [ ] Solo un owner activo del propio business puede rotar; coach y reception reciben `403`; sin sesión, `401`.
-- [ ] La clave no aparece en logs ni en `audit_logs`.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] La respuesta devuelve la clave completa solo en esa llamada; ninguna ruta posterior la expone.
+- [x] Rotar invalida la clave anterior (`verifyKey` falla con el nuevo hash).
+- [x] Solo un owner activo del propio business puede rotar; coach y reception reciben `403`; sin sesión, `401`.
+- [x] La clave no aparece en logs ni en `audit_logs`.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -39,4 +39,4 @@ El owner puede generar o rotar la clave pública de su business y la API conserv
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+La ruta de rotación usa aleatoriedad y SHA-256 de PocketBase en una transacción, y devuelve la clave completa con `Cache-Control: no-store`. En la prueba REST el owner rotó dos veces; coach y reception recibieron 403 y una petición sin sesión recibió 401. Las respuestas de negocio y auditoría omitieron ambas claves. Las pruebas comprueban formato, prefijos, digest y fallo de la clave antigua contra el hash nuevo. Build y 122 pruebas en verde.
