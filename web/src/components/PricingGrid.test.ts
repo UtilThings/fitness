@@ -6,6 +6,7 @@ import PricingGrid from './PricingGrid.vue';
 vi.mock('@/lib/env', () => ({
   env: {
     PUBLIC_API_URL: 'https://api.example.test',
+    PUBLIC_BUSINESS_KEY: 'pk_fixture1_12345678901234567890123456789012',
     PUBLIC_API_TIMEOUT_MS: 500,
   },
 }));
@@ -13,8 +14,15 @@ vi.mock('@/lib/env', () => ({
 afterEach(() => vi.unstubAllGlobals());
 
 const catalog = {
-  version: 1,
-  currency: 'USD',
+  version: 2,
+  business: {
+    name: 'Kent Fitness',
+    city: 'New York, NY',
+    logo_url: '',
+    currency: 'COP',
+    timezone: 'America/New_York',
+  },
+  currency: 'COP',
   services: [
     {
       slug: 'tropical-jump',
@@ -48,7 +56,7 @@ const props = {
 
 it('renders the initial build plans while revalidating and uses updated cents', async () => {
   let resolve!: (response: Response) => void;
-  const fetch = vi.fn(
+  const fetch = vi.fn<typeof globalThis.fetch>(
     () =>
       new Promise<Response>((done) => {
         resolve = done;
@@ -69,7 +77,13 @@ it('renders the initial build plans while revalidating and uses updated cents', 
   resolve(Response.json(catalog));
   await flushPromises();
   expect(fetch).toHaveBeenCalledTimes(1);
-  expect(wrapper.get('.card-surface').text()).toContain('$22.50');
+  expect(fetch.mock.calls[0]?.[1]).toMatchObject({
+    headers: {
+      'X-Business-Key': 'pk_fixture1_12345678901234567890123456789012',
+    },
+  });
+  expect(wrapper.get('.card-surface').text()).toContain('COP');
+  expect(wrapper.get('.card-surface').text()).toContain('22.50');
   expect(wrapper.text()).toContain('Weekly classes');
   expect(wrapper.get('[role="status"]').text()).toBe('');
   wrapper.unmount();

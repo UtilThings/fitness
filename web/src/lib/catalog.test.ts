@@ -7,6 +7,7 @@ import { env } from './env';
 vi.mock('./env', () => ({
   env: {
     PUBLIC_API_URL: 'https://api.example.test',
+    PUBLIC_BUSINESS_KEY: 'pk_fixture1_12345678901234567890123456789012',
     PUBLIC_API_TIMEOUT_MS: 500,
   },
 }));
@@ -27,7 +28,14 @@ function time24(time: string) {
 }
 
 const seededCatalog = {
-  version: 1,
+  version: 2,
+  business: {
+    name: 'Kent Fitness',
+    city: 'New York, NY',
+    logo_url: '',
+    currency: 'USD',
+    timezone: 'America/New_York',
+  },
   currency: 'USD',
   services: CATALOG_SEED.map(({ name, kind, slug, plans }) => ({
     name,
@@ -62,6 +70,7 @@ const seededCatalog = {
 
 const fallback = {
   source: 'static',
+  business: data.fallbackBusiness,
   personalOneOnOne: data.personalOneOnOne,
   personalPartner: data.personalPartner,
   groupPlans: data.groupPlans,
@@ -72,11 +81,18 @@ const fallback = {
 it('maps the seeded plans and weekly times to the existing presentation', async () => {
   const request = vi.fn().mockResolvedValue(Response.json(seededCatalog));
   vi.stubGlobal('fetch', request);
-  await expect(getCatalog()).resolves.toEqual({ ...fallback, source: 'api' });
+  await expect(getCatalog()).resolves.toEqual({
+    ...fallback,
+    source: 'api',
+    business: seededCatalog.business,
+  });
   expect(request).toHaveBeenCalledWith(
     'https://api.example.test/api/public/catalog',
     {
       credentials: 'omit',
+      headers: {
+        'X-Business-Key': 'pk_fixture1_12345678901234567890123456789012',
+      },
       signal: expect.any(AbortSignal),
     },
   );
@@ -91,6 +107,7 @@ it('treats an empty catalog as current data', async () => {
   );
   await expect(getCatalog()).resolves.toEqual({
     source: 'api',
+    business: seededCatalog.business,
     personalOneOnOne: [],
     personalPartner: [],
     groupPlans: [],
@@ -100,6 +117,7 @@ it('treats an empty catalog as current data', async () => {
 });
 
 it.each([
+  () => new Response('', { status: 401 }),
   () => new Response('', { status: 404 }),
   () => new Response('', { status: 500 }),
   () => new Response('{'),

@@ -7,6 +7,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getCatalog, type PlanGroup } from '@/lib/catalog';
 
 const catalog = await getCatalog();
+const { business } = catalog;
 const sections: { title: string; group: PlanGroup; cta: string; to: string }[] =
   [
     {
@@ -37,7 +38,8 @@ const sections: { title: string; group: PlanGroup; cta: string; to: string }[] =
 ---
 
 <BaseLayout
-  title="Pricing & Packages | JQ Fitness"
+  business={business}
+  title={`Pricing & Packages | ${business.name}`}
   description="Explore personal training packages, Group Strength memberships and Tropical Jump classes."
 >
   <PageHero
@@ -52,6 +54,7 @@ const sections: { title: string; group: PlanGroup; cta: string; to: string }[] =
         client:load
         class="mt-6"
         plans={catalog[group]}
+        currency={business.currency}
         {group}
         {cta}
         {to}

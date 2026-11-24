@@ -108,7 +108,23 @@ export function availability(
   return 'available';
 }
 
-export function formatPrice(price: number): string {
+export const fallbackBusiness = {
+  name: 'JQ Fitness',
+  city: 'Miramar, FL',
+  logo_url: '',
+  currency: 'USD',
+  timezone: 'America/New_York',
+};
+
+export function formatPrice(
+  price: number,
+  currency = fallbackBusiness.currency,
+): string {
   if (price === 0) return 'FREE';
-  return `$${price.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(price) ? 0 : 2 })}`;
+  return price.toLocaleString('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: Number.isInteger(price) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
 }

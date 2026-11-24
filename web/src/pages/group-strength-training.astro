@@ -8,7 +8,7 @@ import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getCatalog } from '@/lib/catalog';
 
-const { classTemplates, groupPlans } = await getCatalog();
+const { classTemplates, groupPlans, business } = await getCatalog();
 const days = [
   'Sunday',
   'Monday',
@@ -42,8 +42,9 @@ const policies = [
 ---
 
 <BaseLayout
-  title="Group Strength Training | JQ Fitness"
-  description="Explore small-group strength training, class packages and the weekly schedule in Miramar."
+  business={business}
+  title={`Group Strength Training | ${business.name}`}
+  description={`Explore small-group strength training, class packages and the weekly schedule in ${business.city}.`}
 >
   <PageHero
     eyebrow="Group Strength"
@@ -56,6 +57,7 @@ const policies = [
       client:load
       group="groupPlans"
       plans={groupPlans}
+      currency={business.currency}
       featuredIndex={0}
       cta="Book a class"
       to="/schedule"

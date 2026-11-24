@@ -3,11 +3,14 @@ import LeadForm from '@/components/LeadForm.vue';
 import PageHero from '@/components/PageHero.astro';
 import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getCatalog } from '@/lib/catalog';
+const { business } = await getCatalog();
 ---
 
 <BaseLayout
-  title="Contact JQ Fitness | Miramar, FL"
-  description="Questions about training, classes or packages? Get in touch with JQ Fitness."
+  business={business}
+  title={`Contact ${business.name} | ${business.city}`}
+  description={`Questions about training, classes or packages? Get in touch with ${business.name}.`}
 >
   <PageHero
     eyebrow="Contact"
@@ -18,7 +21,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
     <div class="space-y-6">
       <div class="card-surface p-7">
         <p class="eyebrow mb-2">Location</p>
-        <p class="text-xl">Miramar, Florida</p>
+        <p class="text-xl">{business.city}</p>
       </div>
       <div class="card-surface p-7">
         <p class="eyebrow mb-2">Programs</p>

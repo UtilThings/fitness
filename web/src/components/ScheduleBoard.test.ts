@@ -7,6 +7,7 @@ import ScheduleBoard from './ScheduleBoard.vue';
 vi.mock('@/lib/env', () => ({
   env: {
     PUBLIC_API_URL: 'https://api.example.test',
+    PUBLIC_BUSINESS_KEY: 'pk_fixture1_12345678901234567890123456789012',
     PUBLIC_API_TIMEOUT_MS: 4000,
   },
 }));
@@ -54,7 +55,14 @@ function schedule(week: string, classes: PublicSession[], maxWeeks?: number) {
   last.setUTCDate(last.getUTCDate() + 6);
   return Response.json(
     {
-      version: 1,
+      version: 2,
+      business: {
+        name: 'Kent Fitness',
+        city: 'New York, NY',
+        logo_url: '',
+        currency: 'USD',
+        timezone: 'America/New_York',
+      },
       timezone: 'America/New_York',
       week_start: week,
       week_end: last.toISOString().slice(0, 10),
@@ -78,7 +86,13 @@ it('requests the Miramar week and renders real availability, filters and transla
 
   expect(fetch.mock.calls.at(0)).toEqual([
     'https://api.example.test/api/public/schedule?week=2026-11-15',
-    { credentials: 'omit', signal: expect.any(AbortSignal) },
+    {
+      credentials: 'omit',
+      headers: {
+        'X-Business-Key': 'pk_fixture1_12345678901234567890123456789012',
+      },
+      signal: expect.any(AbortSignal),
+    },
   ]);
   expect(wrapper.get('[aria-live="polite"]').text()).toBe('Nov 15 – Nov 21');
   expect(wrapper.findAll('.text-3xl').map((day) => day.text())).toEqual([

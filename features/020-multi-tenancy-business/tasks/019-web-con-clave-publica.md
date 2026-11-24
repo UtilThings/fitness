@@ -1,7 +1,7 @@
 # 019 - [Web] `web/` con clave pública del business
 
 - **Prioridad:** 19
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 015
 - **Fase:** Fase 5: Sitio público
 
@@ -22,10 +22,10 @@ El sitio Astro se integra como el primer sitio de un business: envía su clave p
 
 ## Criterios de aceptación
 
-- [ ] Con clave válida, el build renderiza los precios reales y el navegador revalida enviando la cabecera.
-- [ ] Con clave inválida o API caída, el build termina y usa el respaldo estático.
-- [ ] Sin `PUBLIC_BUSINESS_KEY` y con `PUBLIC_API_URL` definida, `parseEnv` falla con mensaje claro.
-- [ ] `bun run lint`, `format:check`, `check`, `test`, `build` y `test:dist` pasan en verde.
+- [x] Con clave válida, el build renderiza los precios reales y el navegador revalida enviando la cabecera.
+- [x] Con clave inválida o API caída, el build termina y usa el respaldo estático.
+- [x] Sin `PUBLIC_BUSINESS_KEY` y con `PUBLIC_API_URL` definida, `parseEnv` falla con mensaje claro.
+- [x] `bun run lint`, `format:check`, `check`, `test`, `build` y `test:dist` pasan en verde.
 
 ## Fuera de alcance
 
@@ -38,4 +38,4 @@ El sitio Astro se integra como el primer sitio de un business: envía su clave p
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Astro envía `X-Business-Key` y valida v2. La marca, ciudad y moneda se toman del payload, con datos locales de respaldo. Las pruebas de Vue comprueban la revalidación con cabecera y COP. La prueba de compilación usó una API local y comprobó nombre, ciudad y precios reales con clave válida, y precios de respaldo con 401 o conexión caída. La clave se incorpora a los archivos públicos del build. `verify-web.sh` pasó con lint, formato, check, 62 pruebas, build y pruebas de dist.

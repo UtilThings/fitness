@@ -75,9 +75,72 @@ Las respuestas añaden un objeto `business` (campos públicos) y `version` pasa 
 ```json
 {
   "version": 2,
-  "business": { "name": "JQ Fitness", "city": "Miramar, FL", "logo_url": "https://api.example.com/api/files/businesses/abc/logo.png", "currency": "USD", "timezone": "America/New_York" },
+  "business": {
+    "name": "JQ Fitness",
+    "city": "Miramar, FL",
+    "logo_url": "https://api.example.com/api/files/businesses/abc/logo.png",
+    "currency": "USD",
+    "timezone": "America/New_York"
+  },
   "currency": "USD",
-  "services": []
+  "services": [
+    {
+      "slug": "group-strength",
+      "kind": "group",
+      "name": "Group Strength",
+      "plans": [
+        {
+          "name": "8-Class Pack",
+          "price_cents": 26000,
+          "billing_unit": "per_4_weeks",
+          "sessions": 8,
+          "per_week": 2,
+          "commitment_periods": 0,
+          "is_first_class": false,
+          "partner": false,
+          "note": ""
+        }
+      ],
+      "weekly_times": [
+        {
+          "weekday": 2,
+          "time": "09:00",
+          "coach_name": "Coach JQ",
+          "capacity": 6
+        }
+      ]
+    }
+  ]
+}
+```
+
+```json
+{
+  "version": 2,
+  "business": {
+    "name": "JQ Fitness",
+    "city": "Miramar, FL",
+    "logo_url": "https://api.example.com/api/files/businesses/abc/logo.png",
+    "currency": "USD",
+    "timezone": "America/New_York"
+  },
+  "timezone": "America/New_York",
+  "week_start": "2026-11-15",
+  "week_end": "2026-11-21",
+  "sessions": [
+    {
+      "local_date": "2026-11-17",
+      "local_time": "09:00",
+      "service": {
+        "slug": "group-strength",
+        "name": "Group Strength"
+      },
+      "coach_name": "Coach JQ",
+      "capacity": 6,
+      "spots_left": 2,
+      "status": "almost"
+    }
+  ]
 }
 ```
 

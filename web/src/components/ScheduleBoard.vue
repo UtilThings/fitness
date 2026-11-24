@@ -14,6 +14,7 @@ import {
   weekStart,
   type ServiceFilter,
 } from '@/lib/schedule';
+import { fallbackBusiness } from '@/lib/data';
 import { useLang } from '@/lib/use-lang';
 
 const filters = {
@@ -35,6 +36,8 @@ interface ClassCard {
   availability?: Pick<PublicSession, 'capacity' | 'spots_left' | 'status'>;
 }
 
+const props = defineProps<{ timezone?: string }>();
+const timezone = ref(props.timezone ?? fallbackBusiness.timezone);
 const { lang, t } = useLang();
 const locale = computed(() => (lang.value === 'es' ? 'es-US' : 'en-US'));
 const weekday = computed(
@@ -59,7 +62,7 @@ const filter = ref<ServiceFilter>('All');
 const retry = ref(0);
 const state = ref<'loading' | 'ready' | 'error'>('loading');
 const response = ref<PublicSchedule>();
-const start = computed(() => weekStart(today, offset.value));
+const start = computed(() => weekStart(today, offset.value, timezone.value));
 const week = computed(() => start.value.toISOString().slice(0, 10));
 const days = computed(() =>
   weekDays(
@@ -82,6 +85,7 @@ watch(
     try {
       const result = await fetchSchedule(requested, controller.signal);
       if (controller.signal.aborted) return;
+      timezone.value = result.schedule.timezone;
       response.value = result.schedule;
       maxWeeks.value = result.maxWeeks ?? MAX_SCHEDULE_WEEKS;
       state.value = 'ready';

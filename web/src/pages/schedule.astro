@@ -4,10 +4,13 @@ import ScheduleBoard from '@/components/ScheduleBoard.vue';
 import Section from '@/components/Section.astro';
 import T from '@/components/T.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getCatalog } from '@/lib/catalog';
+const { business } = await getCatalog();
 ---
 
 <BaseLayout
-  title="Class Schedule | JQ Fitness"
+  business={business}
+  title={`Class Schedule | ${business.name}`}
   description="See upcoming Group Strength and Tropical Jump classes and remaining spots this week."
 >
   <PageHero
@@ -17,6 +20,6 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
     <T slot="eyebrow" k="schedule" />
   </PageHero>
   <Section class="min-h-[24rem] !pt-0">
-    <ScheduleBoard client:only="vue" />
+    <ScheduleBoard client:only="vue" timezone={business.timezone} />
   </Section>
 </BaseLayout>

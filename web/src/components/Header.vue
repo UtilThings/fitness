@@ -1,10 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { fallbackBusiness } from '@/lib/data';
 import { navigation } from '@/lib/navigation';
 import { useLang } from '@/lib/use-lang';
 
 defineOptions({ name: 'SiteHeader' });
-defineProps<{ currentPath: string; logoSrc: string }>();
+const props = withDefaults(
+  defineProps<{
+    currentPath: string;
+    logoSrc: string;
+    businessName?: string;
+  }>(),
+  { businessName: fallbackBusiness.name },
+);
+const brand = computed(() => {
+  const words = props.businessName.trim().split(/\s+/);
+  return { prefix: words.slice(0, -1).join(' '), accent: words.at(-1) };
+});
 
 const { lang, setLang, t } = useLang();
 const menuOpen = ref(false);
@@ -24,12 +36,13 @@ function isCurrent(current: string, href: string) {
     >
       <a
         href="/"
-        aria-label="JQ Fitness — home"
+        :aria-label="`${businessName} — home`"
         class="flex items-center gap-2.5"
       >
-        <img :src="logoSrc" alt="JQ Fitness logo" class="h-10 w-auto" />
+        <img :src="logoSrc" :alt="`${businessName} logo`" class="h-10 w-auto" />
         <span class="font-display text-2xl uppercase tracking-wide"
-          >JQ <span class="text-primary">Fitness</span></span
+          >{{ brand.prefix }}
+          <span class="text-primary">{{ brand.accent }}</span></span
         >
       </a>
       <nav aria-label="Main menu" class="hidden items-center gap-5 xl:flex">
