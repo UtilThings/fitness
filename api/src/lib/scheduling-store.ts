@@ -1,12 +1,12 @@
 /// <reference path="../../pb_data/types.d.ts" />
 
-import { blockDates, fieldError, getRecord, pocketBaseDate, validateCoach } from "./schedule-store";
+import { blockDates, fieldError, pocketBaseDate, validateCoach } from "./schedule-store";
 import {
   toMinutes, validateAvailabilitySlots, validatePrivateSession, validateSpecialSession,
 } from "./scheduling";
 import { offsetMinutes, utcToLocal } from "./tz";
 import { covers, sessionDate } from "./memberships-service";
-import { getBusinessTimezone } from "./tenant";
+import { getBusinessTimezone, tenantRecord } from "./tenant";
 import { sessionBookings } from "./booking-store";
 
 const messages: Record<string, string> = {
@@ -45,7 +45,7 @@ function coachSlots(app: core.App, coach: string, weekday: number, excludeId = "
 export function validateAvailabilityRecord(app: core.App, record: core.Record) {
   const coach = record.getString("coach");
   if (!coach) throw fieldError("coach", "Elige un coach activo.");
-  validateCoach(app, coach);
+  validateCoach(app, coach, record.getString("business"));
   const current = slot(record);
   const error = validateAvailabilitySlots([current, ...coachSlots(app, coach, current.weekday, record.id)]);
   if (error) throw schedulingError(error);
@@ -64,8 +64,9 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
   const coach = record.getString("coach");
   const capacity = record.getFloat("capacity");
   const title = record.getString("title").trim();
+  const business = record.getString("business");
   if (kind === "private") {
-    const service = getRecord(app, "services", record.getString("service"));
+    const service = tenantRecord(app, "services", record.getString("service"), business);
     if (!service?.getBool("active") || service.getString("kind") !== "personal") {
       throw fieldError("service", "Selecciona un servicio personal activo.");
     }
@@ -73,7 +74,7 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
   } else {
     record.set("title", title);
   }
-  if (record.getString("status") !== "completed") validateCoach(app, coach);
+  if (record.getString("status") !== "completed") validateCoach(app, coach, business);
 
   const startMs = Date.parse(record.getString("starts_at").replace(" ", "T"));
   const durationMin = record.getFloat("duration_min");
@@ -83,7 +84,7 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
   }
   const minuteMs = 60_000;
   const endMs = startMs + durationMin * minuteMs;
-  const timezone = getBusinessTimezone(app, record.getString("business"));
+  const timezone = getBusinessTimezone(app, business);
   const start = utcToLocal(new Date(startMs).toISOString(), timezone);
   const last = utcToLocal(new Date(endMs - 1).toISOString(), timezone);
   const checkSchedule = coach && record.getString("status") !== "completed";
@@ -97,7 +98,7 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
       startMs: Date.parse(other.getString("starts_at").replace(" ", "T")), durationMin: other.getInt("duration_min"),
     }] : []) : [];
   const blocks = checkSchedule ? app.findRecordsByFilter("schedule_blocks",
-    "business = {:business} && date_from <= {:last} && date_to >= {:first}", "date_from,id", 0, 0, { business: record.getString("business"), first: start.date, last: last.date })
+    "business = {:business} && date_from <= {:last} && date_to >= {:first}", "date_from,id", 0, 0, { business, first: start.date, last: last.date })
     .flatMap((block) => block ? [{ id: block.id, ...blockDates(block) }] : []) : [];
 
   const input = { coach, capacity, startMs, durationMin, sessions, blocks, localDate: start.date,

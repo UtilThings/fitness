@@ -1,7 +1,7 @@
 # 020 - [Pruebas] Pruebas de aislamiento entre business
 
 - **Prioridad:** 20
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 012, 013, 015, 019
 - **Fase:** Fase final: Verificación y cierre
 
@@ -24,10 +24,10 @@ Los scripts `scripts/verify-*.ts` y `verify-api.sh` arrancan PocketBase con dato
 
 ## Criterios de aceptación
 
-- [ ] El script termina en verde y falla si se elimina cualquier regla de tenant (comprobado quitando una a propósito).
-- [ ] Cubre las 17 colecciones, `admins` y `businesses`.
-- [ ] Cubre las rutas admin y las dos rutas públicas.
-- [ ] `scripts/verify-api.sh` lo ejecuta y termina en verde.
+- [x] El script termina en verde y falla si se elimina cualquier regla de tenant (comprobado quitando una a propósito).
+- [x] Cubre las 17 colecciones, `admins` y `businesses`.
+- [x] Cubre las rutas admin y las dos rutas públicas.
+- [x] `scripts/verify-api.sh` lo ejecuta y termina en verde.
 
 ## Fuera de alcance
 
@@ -40,4 +40,4 @@ Los scripts `scripts/verify-*.ts` y `verify-api.sh` arrancan PocketBase con dato
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+`verify-tenancy.ts` probó dos negocios con datos en las 19 colecciones, permisos de lectura/escritura, asignación y relaciones cruzadas, rutas administrativas, API pública y crons. Las operaciones reservadas al servidor devolvieron 403; las de registros ajenos con regla devolvieron 404. La prueba quitó una regla en PocketBase temporalmente, confirmó el fallo del verificador y la restauró. Se protegieron los avatares del equipo y se verificaron con tokens de archivo propios, ajenos y de un negocio inactivo. Pasaron `verify-api.sh` y `verify-app.sh`.

@@ -1,8 +1,10 @@
 /// <reference path="../../pb_data/types.d.ts" />
 
 const { TENANT_COLLECTIONS } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
-// Booking request handlers carry out their own write and return before calling the next hook.
-const tenantRequestCollections = TENANT_COLLECTIONS.filter((name) => name !== "bookings");
+// These request handlers validate tenant references themselves or reject HTTP writes.
+const tenantRequestCollections = TENANT_COLLECTIONS.filter((name) => ![
+  "bookings", "coaching_programs", "coaching_checkins", "audit_logs", "payments", "receipt_sequences", "message_logs",
+].includes(name));
 
 onRecordCreateRequest((e) => {
   const { prepareTenantCreate } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");

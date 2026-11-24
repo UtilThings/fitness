@@ -1,3 +1,4 @@
+import { flushPromises } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {
@@ -9,6 +10,7 @@ const mocks = vi.hoisted(() => {
       active?: boolean;
     } | null,
     isValid: false,
+    token: 'test-token',
     listeners: [] as Array<() => void>,
     onChange(cb: () => void) {
       store.listeners.push(cb);
@@ -28,8 +30,9 @@ vi.mock('@/lib/pocketbase', () => ({
   pb: {
     authStore: mocks.store,
     files: {
-      getURL: (_r: unknown, f: string, o: { thumb: string }) =>
-        `http://pb/files/${f}?thumb=${o.thumb}`,
+      getToken: () => Promise.resolve('file-token'),
+      getURL: (_r: unknown, f: string, o: { thumb: string; token: string }) =>
+        `http://pb/files/${f}?thumb=${o.thumb}&token=${o.token}`,
     },
     collection: () => ({
       authWithPassword: mocks.authWithPassword,
@@ -88,12 +91,15 @@ describe('useAuth', () => {
     await expect(requestPasswordReset('a@b.co')).rejects.toThrow('red');
   });
 
-  it('avatarUrl usa el campo avatar del usuario', () => {
+  it('avatarUrl usa un token de archivo para el avatar del usuario', async () => {
     mocks.store.record = { email: 'a@b.co', avatar: 'foto.png' };
     mocks.store.isValid = true;
     mocks.store.listeners.forEach((cb) => cb());
     const { avatarUrl } = useAuth();
-    expect(avatarUrl.value).toBe('http://pb/files/foto.png?thumb=100x100');
+    await flushPromises();
+    expect(avatarUrl.value).toBe(
+      'http://pb/files/foto.png?thumb=100x100&token=file-token',
+    );
     mocks.store.record = { email: 'a@b.co' };
     mocks.store.listeners.forEach((cb) => cb());
     expect(avatarUrl.value).toBeUndefined();

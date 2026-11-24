@@ -1,9 +1,10 @@
 import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils';
 import PrimeVue from 'primevue/config';
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { reactive, ref } from 'vue';
 import RolePermissions from '@/components/team/RolePermissions.vue';
 import MemberForm from '@/components/team/MemberForm.vue';
+import { pb } from '@/lib/pocketbase';
 import TeamMemberView from './TeamMemberView.vue';
 
 const mocks = vi.hoisted(() => ({
@@ -38,8 +39,12 @@ vi.mock('@/composables/useNotify', () => ({
 }));
 vi.mock('@/composables/useTeam', () => ({ useTeam: () => mocks }));
 
+afterEach(() => vi.restoreAllMocks());
+
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.spyOn(pb.authStore, 'token', 'get').mockReturnValue('team-member-session');
+  vi.spyOn(pb.files, 'getToken').mockResolvedValue('team-member-file-token');
   route.params.id = member.id;
   mocks.can.mockReturnValue(true);
   mocks.getMember.mockResolvedValue(member);

@@ -207,6 +207,7 @@ JS
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-reports.ts "$base_url"
   JQ_VERIFY_DB="$work_dir/data/data.db" JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-messages.ts "$base_url"
   JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-public.ts "$base_url" "$work_dir/data/data.db" "$work_dir/pocketbase.log"
+  JQ_VERIFY_PASSWORD="$password" bun ../scripts/verify-tenancy.ts "$base_url" "$work_dir/data/data.db"
 }
 
 run_step bun install --frozen-lockfile

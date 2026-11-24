@@ -1,6 +1,9 @@
 /// <reference path="../../pb_data/types.d.ts" />
 
 function validateCoachingProgram(e: core.RecordRequestEvent) {
+  const { prepareTenantCreate, prepareTenantUpdate } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  if (e.record!.isNew()) prepareTenantCreate(e);
+  else prepareTenantUpdate(e);
   const { validateProgramInput } = require(`${__hooks}/lib/coaching`) as typeof import("../lib/coaching");
   const { addDays } = require(`${__hooks}/lib/membership-cycles`) as typeof import("../lib/membership-cycles");
   const { getRecord } = require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
@@ -63,6 +66,9 @@ onRecordCreateRequest(validateCoachingProgram, "coaching_programs");
 onRecordUpdateRequest(validateCoachingProgram, "coaching_programs");
 
 function validateCoachingCheckin(e: core.RecordRequestEvent) {
+  const { prepareTenantCreate, prepareTenantUpdate } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
+  if (e.record!.isNew()) prepareTenantCreate(e);
+  else prepareTenantUpdate(e);
   const { validateCheckin } = require(`${__hooks}/lib/coaching`) as typeof import("../lib/coaching");
   const { getRecord } = require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   const { getBusinessTimezone, resolveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");

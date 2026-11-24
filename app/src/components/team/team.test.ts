@@ -1,6 +1,7 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import PrimeVue from 'primevue/config';
-import { expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
+import { pb } from '@/lib/pocketbase';
 import { PERMISSIONS } from '@/lib/permissions';
 import { ROLES } from '@/types/pb';
 import MemberAvatar from './MemberAvatar.vue';
@@ -8,6 +9,7 @@ import MemberForm from './MemberForm.vue';
 import RolePermissions from './RolePermissions.vue';
 
 const global = { plugins: [PrimeVue] };
+afterEach(() => vi.restoreAllMocks());
 
 it('muestra la matriz completa y destaca el rol de la ficha', () => {
   const wrapper = mount(RolePermissions, { props: { highlight: 'coach' } });
@@ -103,8 +105,14 @@ it('muestra iniciales y solo emite archivos de imagen compatibles de hasta 2 MB'
   await choose(valid);
   expect(wrapper.find('[role=alert]').exists()).toBe(false);
   expect(wrapper.emitted('upload')).toEqual([[valid]]);
+  vi.spyOn(pb.authStore, 'token', 'get').mockReturnValue('team-test-session');
+  vi.spyOn(pb.files, 'getToken').mockResolvedValue('team-test-file-token');
   await wrapper.setProps({
     member: { ...wrapper.props('member')!, avatar: 'ana.png' },
   });
-  expect(wrapper.get('img').attributes('src')).toContain('ana.png?thumb=64x64');
+  await flushPromises();
+  const url = new URL(wrapper.get('img').attributes('src')!);
+  expect(url.pathname).toContain('/ana.png');
+  expect(url.searchParams.get('thumb')).toBe('64x64');
+  expect(url.searchParams.get('token')).toBe('team-test-file-token');
 });
