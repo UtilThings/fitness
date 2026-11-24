@@ -18,41 +18,56 @@ function watchSession() {
   const { isAuthenticated, user } = useAuth();
   watch(
     () => (isAuthenticated?.value ? user?.value : null),
-    async (admin, _, onCleanup) => {
+    (admin, _, onCleanup) => {
       let current = true;
-      onCleanup(() => {
-        current = false;
-      });
       currentBusiness.value = null;
       loading.value = false;
       error.value = false;
       if (!admin) return;
 
       const expanded = admin.expand?.business;
-      if (expanded && expanded.id === admin.business) {
+      const businessId = admin.business;
+      if (expanded && expanded.id === businessId)
         currentBusiness.value = expanded;
-        return;
-      }
-      loading.value = true;
-      try {
-        if (!admin.business) {
+
+      let refreshing = false;
+      async function refresh() {
+        if (refreshing) return;
+        refreshing = true;
+        const previous = currentBusiness.value;
+        if (!previous) loading.value = true;
+        try {
+          if (businessId) {
+            const record = await pb
+              .collection<Business>('businesses')
+              .getOne(businessId, { requestKey: null });
+            if (current && currentBusiness.value === previous) {
+              currentBusiness.value = record;
+              error.value = false;
+            }
+            return;
+          }
+
           // A session saved before the business migration needs the new relation.
           const restored = await pb.send<RecordAuthResponse<Admin>>(
             '/api/collections/admins/auth-refresh',
             { method: 'POST', query: { expand: 'business' } },
           );
           if (current) pb.authStore.save(restored.token, restored.record);
-          return;
+        } catch {
+          if (current && !currentBusiness.value) error.value = true;
+        } finally {
+          refreshing = false;
+          if (current) loading.value = false;
         }
-        const record = await pb
-          .collection<Business>('businesses')
-          .getOne(admin.business, { requestKey: null });
-        if (current) currentBusiness.value = record;
-      } catch {
-        if (current) error.value = true;
-      } finally {
-        if (current) loading.value = false;
       }
+
+      window.addEventListener('focus', refresh);
+      onCleanup(() => {
+        current = false;
+        window.removeEventListener('focus', refresh);
+      });
+      void refresh();
     },
     { immediate: true, flush: 'sync' },
   );

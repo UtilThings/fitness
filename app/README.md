@@ -266,10 +266,10 @@ La prueba de ida y vuelta del CSV usa `python3` y su módulo estándar `csv`.
 En **Operaciones → Comunicaciones** (`/communications`), el equipo activo puede abrir tres pestañas:
 
 - **Plantillas** muestra las versiones en español e inglés, las variables permitidas y la vista previa. El owner puede insertar variables en el texto, editar y activar o desactivar una plantilla. Coach y recepción tienen acceso de lectura.
-- **Historial** muestra la fecha de Miramar, cliente, tipo, estado, intentos y error. Admite filtros por tipo, estado y fechas, paginación y actualización.
+- **Historial** muestra la fecha en la zona horaria del negocio, cliente, tipo, estado, intentos y error. Admite filtros por tipo, estado y fechas, paginación y actualización.
 - **Mensaje a clase** permite seleccionar una clase próxima, revisar quién recibirá el correo, previsualizar el texto y confirmar el envío. La vista informa cuántos se enviaron, fallaron o se omitieron. El correo se dirige a inscritos confirmados o en espera con una dirección válida y estado activo o en pausa.
 
-En **Clientes → Datos → Idioma de comunicaciones**, elige **Español** o **English** y guarda la ficha. El idioma se usa en los avisos posteriores. Para configurar o probar SMTP, consulta la sección «Comunicaciones del servicio» del README de la API. Este módulo se dedica a mensajes operativos y excluye marketing y seguimiento comercial.
+En **Clientes → Datos → Idioma de comunicaciones**, elige **Español** o **English** y guarda la ficha. El idioma se usa en los avisos posteriores. La [guía de envío de correos](../docs/envio-de-correos.md) explica cómo configurar y probar SMTP. Este módulo se dedica a mensajes operativos y excluye marketing y seguimiento comercial.
 
 ## Aceptación del MVP
 

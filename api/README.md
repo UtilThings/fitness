@@ -305,6 +305,8 @@ Las rutas de solo lectura devuelven datos agregados y no incluyen nombres, corre
 
 Las comunicaciones cubren reservas, clases, cobros y renovaciones. No incluyen marketing, boletines ni seguimiento comercial.
 
+La [guía de envío de correos](../docs/envio-de-correos.md) describe la configuración SMTP, los datos por negocio, las pruebas y el diagnóstico de fallos.
+
 ### Configurar el correo
 
 En el panel de PocketBase, abre **Ajustes → Correo**, habilita SMTP y guarda el servidor, puerto, credenciales y dirección de envío. Los mensajes usan el nombre del negocio como remitente visible y su correo de contacto como dirección de respuesta, si es válido. Envía una prueba como owner con `POST /api/admin/messages/test` y el cuerpo `{"key":"booking_confirmed","locale":"es"}`. PocketBase entrega la prueba al correo del owner autenticado.
@@ -329,7 +331,7 @@ Las seis plantillas se inicializan activas en español e inglés. `clients.local
 | `membership_renewal` | `plan_name`, `period_end`, `amount` |
 | `manual` | `client_first_name`, `studio_name`, `class_name`, `class_date`, `class_time` |
 
-Las seis plantillas automáticas también admiten `client_first_name`, `studio_name` y `studio_phone`. Usa la sintaxis `{{nombre}}` en texto plano. La API valida las variables y genera HTML escapado. Los importes se muestran en dólares estadounidenses y las fechas de clase usan la hora de Miramar.
+Las seis plantillas automáticas también admiten `client_first_name`, `studio_name` y `studio_phone`. Usa la sintaxis `{{nombre}}` en texto plano. La API valida las variables y genera HTML escapado. Los importes usan la moneda del negocio y las fechas de clase usan su zona horaria.
 
 Los clientes activos y en pausa pueden recibir correo si su dirección es válida. Los clientes inactivos o sin dirección válida se omiten. El motor registra el resultado, intentos y un error genérico en `message_logs`. Ante un fallo automático, programa los reintentos a los 5 y 30 minutos después del intento previo. El cron revisa la cola cada diez minutos y el máximo es de tres intentos totales. Al reintentar se verifica que el aviso siga vigente y se reconstruye el contexto a partir de la sesión o del vencimiento. La clave de deduplicación protege frente a ejecuciones concurrentes y crons repetidos. Si el proceso muere después de que SMTP acepta el correo y antes de registrar el resultado, SMTP y SQLite no pueden confirmar el envío en una transacción común.
 

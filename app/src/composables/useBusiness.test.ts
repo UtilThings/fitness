@@ -51,6 +51,7 @@ afterEach(() => {
 });
 
 it('switches the brand, logo, date and currency with the session and clears them on sign-out', () => {
+  mocks.getOne.mockResolvedValueOnce(a).mockResolvedValueOnce(b);
   const { business, logoUrl } = useBusiness();
   const instant = '2026-06-02T04:30:00Z';
   user.value = admin(a);
@@ -70,11 +71,13 @@ it('switches the brand, logo, date and currency with the session and clears them
 
 it('ignores a business response from an earlier session', async () => {
   let resolve!: (record: Business) => void;
-  mocks.getOne.mockReturnValue(
-    new Promise<Business>((done) => {
-      resolve = done;
-    }),
-  );
+  mocks.getOne
+    .mockReturnValueOnce(
+      new Promise<Business>((done) => {
+        resolve = done;
+      }),
+    )
+    .mockResolvedValueOnce(b);
   const { business, loading, updateBusiness } = useBusiness();
   user.value = admin(a, false);
   expect(loading.value).toBe(true);
@@ -84,4 +87,24 @@ it('ignores a business response from an earlier session', async () => {
   expect(business.value?.id).toBe('b');
   updateBusiness({ ...a, name: 'Other' });
   expect(business.value?.name).toBe(b.name);
+});
+
+it('reloads a saved expansion and picks up a replacement logo when the window regains focus', async () => {
+  mocks.getOne
+    .mockResolvedValueOnce(a)
+    .mockResolvedValueOnce({ ...a, logo: 'replacement.png' });
+  const { logoUrl } = useBusiness();
+  user.value = admin({ ...a, logo: '' });
+  expect(logoUrl.value).toBeUndefined();
+  await flushPromises();
+  expect(mocks.getOne).toHaveBeenCalledWith(a.id, { requestKey: null });
+  expect(logoUrl.value).toBe('files/a/a.png');
+
+  window.dispatchEvent(new Event('focus'));
+  await flushPromises();
+  expect(logoUrl.value).toBe('files/a/replacement.png');
+
+  user.value = null;
+  window.dispatchEvent(new Event('focus'));
+  expect(mocks.getOne).toHaveBeenCalledTimes(2);
 });
