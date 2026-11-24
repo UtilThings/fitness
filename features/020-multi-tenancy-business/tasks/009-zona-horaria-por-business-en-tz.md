@@ -1,7 +1,7 @@
 # 009 - [Módulo] Zona horaria por business en `tz.ts`
 
 - **Prioridad:** 9
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 2: Zona horaria, moneda y mensajes por business
 
@@ -22,10 +22,10 @@ Las funciones de fecha local reciben la zona horaria y funcionan para cualquier 
 
 ## Criterios de aceptación
 
-- [ ] Todas las pruebas actuales de `tz.test.ts` siguen pasando sin modificar sus valores esperados.
-- [ ] Hay pruebas de DST para al menos tres zonas distintas.
-- [ ] Una zona no soportada lanza un error claro y `businesses` la rechaza (002).
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Todas las pruebas actuales de `tz.test.ts` siguen pasando sin modificar sus valores esperados.
+- [x] Hay pruebas de DST para al menos tres zonas distintas.
+- [x] Una zona no soportada lanza un error claro y `businesses` la rechaza (002).
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -38,4 +38,4 @@ Las funciones de fecha local reciben la zona horaria y funcionan para cualquier 
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+Se compartió la lista de zonas con la validación de `businesses`. Las reglas actuales de Norteamérica y Europa y los offsets fijos funcionan en Goja. Pruebas de transición en Nueva York, Los Ángeles y Madrid, offset fijo en Bogotá, jornadas de 23/25 horas y rechazo de zonas desconocidas. Se conservaron las expectativas originales. Build y 109 pruebas en verde.

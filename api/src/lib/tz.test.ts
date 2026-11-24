@@ -55,3 +55,30 @@ test("round trips each day of 2026 and keeps the same wall time across DST", () 
     expect(localToUtc(summer, "19:30")).toBe(summer + "T23:30:00.000Z");
   }
 });
+
+test("Madrid uses EU transition dates and preserves gap and overlap policy", async () => {
+  const { localDateToUtcRange } = await import("./tz");
+  const tz = "Europe/Madrid";
+  expect(localToUtc("2026-03-29", "02:30", tz)).toBe("2026-03-29T01:30:00.000Z");
+  expect(utcToLocal("2026-03-29T01:00:00.000Z", tz).time).toBe("03:00");
+  expect(localToUtc("2026-10-25", "02:30", tz)).toBe("2026-10-25T00:30:00.000Z");
+  expect(utcToLocal("2026-10-25T01:00:00.000Z", tz).time).toBe("02:00");
+  for (const [date, hours] of [["2026-03-29", 23], ["2026-10-25", 25]] as const) {
+    const { from, to } = localDateToUtcRange(date, tz);
+    expect(Date.parse(to) - Date.parse(from)).toBe(hours * 3_600_000);
+  }
+});
+
+test("Los Angeles changes offset at 02:00 on both transition days", () => {
+  const tz = "America/Los_Angeles";
+  expect(utcToLocal("2026-03-08T10:00:00Z", tz).time).toBe("03:00");
+  expect(utcToLocal("2026-11-01T09:00:00Z", tz).time).toBe("01:00");
+  expect(localToUtc("2026-11-01", "01:30", tz)).toBe("2026-11-01T08:30:00.000Z");
+});
+
+test("Bogotá keeps a fixed offset throughout both transition seasons", () => {
+  const tz = "America/Bogota";
+  expect(localToUtc("2026-03-08", "02:30", tz)).toBe("2026-03-08T07:30:00.000Z");
+  expect(localToUtc("2026-11-01", "01:30", tz)).toBe("2026-11-01T06:30:00.000Z");
+  expect(() => utcToLocal("2026-03-08T10:00:00Z", "Unknown/Zone")).toThrow("Unsupported timezone");
+});

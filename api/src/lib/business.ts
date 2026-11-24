@@ -1,12 +1,7 @@
-export const SUPPORTED_TIMEZONES = [
-  "UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
-  "America/Phoenix", "America/Toronto", "America/Vancouver", "America/Mexico_City",
-  "America/Bogota", "America/Costa_Rica", "Europe/London", "Europe/Paris",
-  "Europe/Madrid", "Europe/Berlin",
-] as const;
+import { SUPPORTED_TIMEZONES } from "./tz";
 
 export function isSupportedTimezone(value: string): boolean {
-  return (SUPPORTED_TIMEZONES as readonly string[]).includes(value);
+  return SUPPORTED_TIMEZONES.includes(value);
 }
 
 export function validateOrigins(value: unknown): string | undefined {
