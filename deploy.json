@@ -1,0 +1,30 @@
+{
+  "owner": "utilthings",
+  "registry": "ghcr.io",
+  "deployment_webhook": "https://server.thetiptrack.com/api/deploy",
+  "services": [
+    {
+      "key": "api",
+      "image_name": "fitness-api",
+      "version": "latest",
+      "build_context": "./api",
+      "dockerfile": "api/Dockerfile",
+      "default": true,
+      "deployment_key": "zv_CVtgU1Nt9ilxsC0Z33"
+    },
+    {
+      "key": "app",
+      "image_name": "fitness-app",
+      "version": "latest",
+      "build_context": ".",
+      "dockerfile": "app/Dockerfile",
+      "default": true,
+      "deployment_key": "H-BLAKG56f7UEHkhJa3xb",
+      "args": {
+        "VITE_POCKETBASE_URL": "https://api.fitness.utilthings.com",
+        "VITE_APP_NAME": "Fitness Utilthings",
+        "VITE_PRIMEVUE_LICENSE": "eyJpZCI6IjY1NDcxNDE2LWRlNjctNDcxYi1hZGJjLWMyZTY3MTg4ODczNyIsInByb2R1Y3QiOiJwcmltZXVpIiwidGllciI6ImNvbW11bml0eSIsInR5cGUiOiJkZXYiLCJpYXQiOjE3OTI2MjAyOTQsImV4cCI6MTgyNDE1NjI5NH0.3jxLOYc5o_S0mMEGUP_0GzNme0_jOLqAQScumdh0M-WXhImOMVdRxr3AE31ivyqmzExjOT0K1dfF-XnYURyHBQ"
+      }
+    }
+  ]
+}

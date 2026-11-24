@@ -12,7 +12,9 @@
       "default": true,
       "args": {
         "PUBLIC_SITE_URL": "https://fitness.juicyquisine.com",
-        "PUBLIC_API_URL": ""
+        "PUBLIC_API_URL": "https://api.fitness.utilthings.com",
+        "PUBLIC_BUSINESS_KEY": "pk_udb7zAVV_IelAOlit8wpSKCb9DIwrdjBKFqKwR8sM",
+        "PUBLIC_API_TIMEOUT_MS": "4000"
       },
       "deployment_key": "zKiBRf0wH5y9c9zOTYLNq"
     }
