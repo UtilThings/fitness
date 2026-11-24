@@ -1,7 +1,7 @@
 # 003 - [Migración] Campo `business` en `admins`, catálogo y agenda
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002
 - **Fase:** Fase 1: Fundamentos de datos y aislamiento
 
@@ -22,11 +22,11 @@ Existe un único business (002). Estas colecciones fueron creadas en 004, 005, 0
 
 ## Criterios de aceptación
 
-- [ ] Todas las filas existentes de las siete colecciones quedan con el business por defecto; `business` es requerido.
-- [ ] Dos business pueden tener un servicio con el mismo `slug`; el mismo `slug` en un business se rechaza.
-- [ ] Las sesiones de login existentes de `admins` siguen funcionando tras migrar.
-- [ ] `down` elimina campo e índices sin borrar datos de dominio.
-- [ ] `bun run build:ts` y `bun test` pasan en verde.
+- [x] Todas las filas existentes de las siete colecciones quedan con el business por defecto; `business` es requerido.
+- [x] Dos business pueden tener un servicio con el mismo `slug`; el mismo `slug` en un business se rechaza.
+- [x] Las sesiones de login existentes de `admins` siguen funcionando tras migrar.
+- [x] `down` elimina campo e índices sin borrar datos de dominio.
+- [x] `bun run build:ts` y `bun test` pasan en verde.
 
 ## Fuera de alcance
 
@@ -39,4 +39,4 @@ Existe un único business (002). Estas colecciones fueron creadas en 004, 005, 0
 
 ## Notas de implementación
 
-<!-- Vacío al crear la tarea. Al completarla, registra archivos creados/modificados, decisiones, desviaciones y hallazgos pendientes. -->
+`migrate up` sobre siete colecciones con datos asignó `jq-fitness` a todas las filas y dejó la relación requerida. Un token emitido antes de migrar siguió funcionando con `auth-refresh`. Se creó un servicio con un slug existente en el segundo negocio y se rechazó la repetición dentro del mismo negocio. `migrate down 1` conservó las filas. Build de hooks y 102 pruebas en verde.
