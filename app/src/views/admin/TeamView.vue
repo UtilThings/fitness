@@ -29,10 +29,12 @@ const { items, loading, error, page, perPage, total, filters } = team;
 const canManage = computed(() => can('team.manage'));
 const role = ref<Role | null>(null);
 const active = ref<boolean | null>(null);
-const roleOptions = ROLES.map((value) => ({
-  value,
-  label: ROLE_STATUS[value].label,
-}));
+const roleOptions = computed(() =>
+  ROLES.map((value) => ({
+    value,
+    label: ROLE_STATUS.value[value].label,
+  })),
+);
 const activeOptions = [
   { value: true, label: 'Activos' },
   { value: false, label: 'Inactivos' },

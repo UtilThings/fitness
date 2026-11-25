@@ -51,10 +51,12 @@ const serviceById = computed(
 const serviceOptions = computed(() =>
   services.items.value.map(({ id, name }) => ({ value: id, label: name })),
 );
-const unitOptions = Object.entries(billingUnitLabel).map(([value, label]) => ({
-  value,
-  label,
-}));
+const unitOptions = computed(() =>
+  Object.entries(billingUnitLabel.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
 
 const groups = computed(() => {
   const grouped = new Map(

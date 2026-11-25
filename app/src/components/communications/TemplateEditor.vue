@@ -28,9 +28,11 @@ const emit = defineEmits<{
   saved: [template: MessageTemplate];
 }>();
 const id = useId();
-const keys = Object.entries(MESSAGE_LABELS)
-  .filter(([key]) => key !== 'manual')
-  .map(([value, label]) => ({ value, label }));
+const keys = computed(() =>
+  Object.entries(MESSAGE_LABELS.value)
+    .filter(([key]) => key !== 'manual')
+    .map(([value, label]) => ({ value, label })),
+);
 const draft = ref({ ...props.template });
 const bodyField = ref<{ $el: HTMLTextAreaElement }>();
 const submitted = ref(false);

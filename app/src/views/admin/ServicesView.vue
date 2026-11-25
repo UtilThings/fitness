@@ -44,10 +44,12 @@ const visible = ref(false);
 const saving = ref(false);
 const checkingPlans = ref(false);
 const customSlug = ref(false);
-const kindOptions = Object.entries(kindLabel).map(([value, label]) => ({
-  value,
-  label,
-}));
+const kindOptions = computed(() =>
+  Object.entries(kindLabel.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
 const availableCoaches = computed(() => {
   const current = editing.value?.default_coach;
   if (current && !coachOptions.value.some(({ value }) => value === current)) {

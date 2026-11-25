@@ -37,10 +37,12 @@ const loading = ref(false);
 const error = ref('');
 let latest = 0;
 
-const states = Object.entries(membershipStatusLabels).map(([value, label]) => ({
-  value,
-  label,
-}));
+const states = computed(() =>
+  Object.entries(membershipStatusLabels.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
 const planOptions = computed(() =>
   plans.items.value.map((plan) => ({
     id: plan.id,

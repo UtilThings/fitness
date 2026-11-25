@@ -1,3 +1,5 @@
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import type { Client } from '@/lib/clients';
 import type { Membership } from '@/lib/memberships';
 import { roleCan } from '@/lib/permissions';
@@ -55,20 +57,26 @@ export interface ProgramOverview extends CoachingProgram {
   flags: ReturnType<typeof programFlags>;
 }
 
-export const programStatuses = {
-  active: 'Activo',
-  paused: 'Pausado',
-  ended: 'Finalizado',
-} satisfies Record<ProgramStatus, string>;
+export const programStatuses = computed(
+  () =>
+    ({
+      active: t('Active'),
+      paused: t('Paused'),
+      ended: t('Ended'),
+    }) satisfies Record<ProgramStatus, string>,
+);
 
-export const programAlerts = {
-  renewal_soon: 'Por renovar',
-  renewal_overdue: 'Renovación atrasada',
-  membership_expired: 'Membresía vencida',
-  checkin_due: 'Check-in pendiente',
-  at_risk: 'En riesgo',
-  ending: 'Por finalizar',
-} satisfies Record<ProgramAlert, string>;
+export const programAlerts = computed(
+  () =>
+    ({
+      renewal_soon: t('Renewal due soon'),
+      renewal_overdue: t('Renewal overdue'),
+      membership_expired: t('Membership expired'),
+      checkin_due: t('Check-in due'),
+      at_risk: t('At risk'),
+      ending: t('Ending soon'),
+    }) satisfies Record<ProgramAlert, string>,
+);
 
 export const renewalAlerts: readonly ProgramAlert[] = [
   'renewal_soon',

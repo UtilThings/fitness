@@ -6,7 +6,7 @@ import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
-import { ref, useId, watch } from 'vue';
+import { computed, ref, useId, watch } from 'vue';
 import CatalogField from '@/components/catalog/CatalogField.vue';
 import { fullName, type Client } from '@/lib/clients';
 import { addLocalDays, formatDateTime, localToUtcIso } from '@/lib/datetime';
@@ -22,7 +22,7 @@ type MessageLog = {
   id: string;
   client: string;
   created: string;
-  template_key: keyof typeof MESSAGE_LABELS;
+  template_key: keyof typeof MESSAGE_LABELS.value;
   status: keyof typeof states;
   attempts: number;
   error: string;
@@ -45,10 +45,12 @@ const statusOptions = Object.entries(states).map(([value, { label }]) => ({
   value,
   label,
 }));
-const keyOptions = Object.entries(MESSAGE_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
+const keyOptions = computed(() =>
+  Object.entries(MESSAGE_LABELS.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
 
 async function load() {
   const request = ++revision;

@@ -1,3 +1,5 @@
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import type { Booking } from '@/lib/bookings';
 import { localParts, localToUtcIso } from '@/lib/datetime';
 import type { PbError } from '@/lib/pb-errors';
@@ -46,7 +48,7 @@ export function slotError(
     !time.test(draft.end_time) ||
     draft.end_time <= draft.start_time
   ) {
-    return 'Indica una hora final posterior a la inicial.';
+    return t('Enter an end time after the start time.');
   }
   if (
     slots.some(
@@ -57,7 +59,7 @@ export function slotError(
         draft.start_time < slot.end_time,
     )
   ) {
-    return 'El tramo se solapa con otro del mismo día.';
+    return t('This time slot overlaps another slot on the same day.');
   }
   return '';
 }
@@ -100,24 +102,27 @@ export function fitsAvailability(
   );
 }
 
-const messages: Record<string, string> = {
-  coach_conflict: 'El coach ya tiene una sesión en ese horario.',
-  outside_availability:
-    'Elige un horario dentro de un tramo de disponibilidad del coach.',
-  block_conflict: 'El horario coincide con un bloqueo del calendario.',
-  invalid_capacity:
-    'El cupo debe ser de una o dos personas y alcanzar para los clientes seleccionados.',
-  partner_required:
-    'Cada cliente necesita una membresía partner activa para reservar una sesión con dos cupos.',
-  duplicate_session:
-    'Ya existe una sesión privada para ese coach, servicio y hora.',
-  no_credits: 'El cliente no tiene créditos disponibles.',
-  weekly_limit: 'El cliente alcanzó su límite semanal de reservas.',
-  no_membership: 'El cliente no tiene una membresía para este servicio.',
-  membership_not_active:
-    'El cliente no tiene una membresía activa para la fecha elegida.',
-};
+const messages = computed<Record<string, string>>(() => ({
+  coach_conflict: t('The coach already has a session at that time.'),
+  outside_availability: t("Choose a time within the coach's availability."),
+  block_conflict: t('This time overlaps a calendar block.'),
+  invalid_capacity: t(
+    'Capacity must be one or two and accommodate the selected clients.',
+  ),
+  partner_required: t(
+    'Each client needs an active partner membership to book a session for two people.',
+  ),
+  duplicate_session: t(
+    'A private session already exists for that coach, service, and time.',
+  ),
+  no_credits: t('The client has no available credits.'),
+  weekly_limit: t('The client has reached their weekly booking limit.'),
+  no_membership: t('The client has no membership for this service.'),
+  membership_not_active: t(
+    'The client has no active membership for the selected date.',
+  ),
+}));
 
 export function agendaError(error: PbError) {
-  return (error.code && messages[error.code]) || error.message;
+  return (error.code && messages.value[error.code]) || error.message;
 }

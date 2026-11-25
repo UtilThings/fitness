@@ -1,17 +1,22 @@
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import type { Booking } from '@/lib/bookings';
 import type { Plan } from '@/lib/catalog';
 import type { Client } from '@/lib/clients';
 import { formatDate, localToUtcIso, todayLocal } from '@/lib/datetime';
 import type { BaseRecord } from '@/types/pb';
 
-export const membershipStatusLabels = {
-  active: 'Activa',
-  paused: 'Pausada',
-  expired: 'Vencida',
-  cancelled: 'Cancelada',
-  renewal_pending: 'Renovación pendiente',
-} as const;
-export type MembershipState = keyof typeof membershipStatusLabels;
+export const membershipStatusLabels = computed(
+  () =>
+    ({
+      active: t("Active{''}"),
+      paused: t("Paused{''}"),
+      expired: t('Expired'),
+      cancelled: t('Canceled'),
+      renewal_pending: t('Renewal pending'),
+    }) as const,
+);
+export type MembershipState = keyof typeof membershipStatusLabels.value;
 export type MembershipStatus = Exclude<MembershipState, 'renewal_pending'>;
 
 export interface Membership extends Omit<BaseRecord, 'created'> {
@@ -60,6 +65,6 @@ export function membershipBalanceLabel(membership: Membership): string {
   return membership.credits_balance === 0 &&
     plan?.billing_unit === 'per_4_weeks' &&
     plan.sessions === 0
-    ? 'Ilimitado'
+    ? t('Unlimited')
     : String(membership.credits_balance);
 }

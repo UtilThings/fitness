@@ -4,7 +4,7 @@ import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
-import { ref, useId } from 'vue';
+import { computed, ref, useId } from 'vue';
 import type { NewMember } from '@/composables/useTeam';
 import { generatePassword, validatePassword } from '@/lib/password';
 import { ROLES } from '@/types/pb';
@@ -21,10 +21,12 @@ const model = defineModel<NewMember>({ required: true });
 const emit = defineEmits<{ submit: [values: NewMember]; cancel: [] }>();
 const id = useId();
 const clientErrors = ref<Record<string, string>>({});
-const roleOptions = ROLES.map((role) => ({
-  value: role,
-  label: ROLE_STATUS[role].label,
-}));
+const roleOptions = computed(() =>
+  ROLES.map((role) => ({
+    value: role,
+    label: ROLE_STATUS.value[role].label,
+  })),
+);
 
 function fieldError(field: keyof NewMember) {
   return clientErrors.value[field] || props.errors?.[field];

@@ -1,18 +1,23 @@
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import type { Client } from '@/lib/clients';
 import { formatDateTime } from '@/lib/datetime';
 import type { ClassSession } from '@/lib/schedule-week';
 import type { BaseRecord } from '@/types/pb';
 
-export const BOOKING_STATUS = {
-  booked: { label: 'Confirmada', severity: 'success' },
-  waitlisted: { label: 'En espera', severity: 'warn' },
-  cancelled: { label: 'Cancelada', severity: 'secondary' },
-  late_cancelled: { label: 'Cancelada tarde', severity: 'warn' },
-  attended: { label: 'Asistió', severity: 'success' },
-  no_show: { label: 'No se presentó', severity: 'danger' },
-} as const;
+export const BOOKING_STATUS = computed(
+  () =>
+    ({
+      booked: { label: t('Confirmed'), severity: 'success' },
+      waitlisted: { label: t('Waitlisted'), severity: 'warn' },
+      cancelled: { label: t('Canceled'), severity: 'secondary' },
+      late_cancelled: { label: t('Canceled late'), severity: 'warn' },
+      attended: { label: t('Attended'), severity: 'success' },
+      no_show: { label: t('No-show'), severity: 'danger' },
+    }) as const,
+);
 
-export type BookingStatus = keyof typeof BOOKING_STATUS;
+export type BookingStatus = keyof typeof BOOKING_STATUS.value;
 export type AttendanceStatus = Extract<BookingStatus, 'attended' | 'no_show'>;
 export type Availability = 'available' | 'almost' | 'full';
 

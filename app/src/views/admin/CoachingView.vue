@@ -63,14 +63,19 @@ const checkinVisible = ref(false);
 let latest = 0;
 let latestDetail = 0;
 
-const statusOptions = Object.entries(programStatuses).map(([value, label]) => ({
-  value,
-  label,
-}));
-const alertOptions = [
+const statusOptions = computed(() =>
+  Object.entries(programStatuses.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
+const alertOptions = computed(() => [
   { value: 'renewal', label: 'Todas las alertas de renovación' },
-  ...Object.entries(programAlerts).map(([value, label]) => ({ value, label })),
-];
+  ...Object.entries(programAlerts.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+]);
 const scope = computed(() =>
   rows.value.filter((program) => !coach.value || program.coach === coach.value),
 );

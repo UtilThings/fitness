@@ -1,24 +1,30 @@
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import { addLocalDays, localToUtcIso } from '@/lib/datetime';
 import { pb } from '@/lib/pocketbase';
 import type { AuditLog } from '@/types/pb';
 
-export const ACTION_LABELS: Record<AuditLog['action'], string> = {
-  create: 'Creación',
-  update: 'Edición',
-  delete: 'Eliminación',
-  custom: 'Acción',
-};
+export const ACTION_LABELS = computed<Record<AuditLog['action'], string>>(
+  () => ({
+    create: t('Creation'),
+    update: t('Update'),
+    delete: t('Deletion'),
+    custom: t('Action'),
+  }),
+);
 
-export const COLLECTION_LABELS: Readonly<Record<string, string>> = {
-  admins: 'Equipo',
-  services: 'Servicios',
-  plans: 'Planes',
-  class_templates: 'Plantillas de clases',
-  class_sessions: 'Sesiones de clase',
-  schedule_blocks: 'Bloqueos de horario',
-  clients: 'Clientes',
-  bookings: 'Reservas',
-};
+export const COLLECTION_LABELS = computed<Readonly<Record<string, string>>>(
+  () => ({
+    admins: t('Team'),
+    services: t('Services'),
+    plans: t('Plans'),
+    class_templates: t('Class templates'),
+    class_sessions: t('Class sessions'),
+    schedule_blocks: t('Schedule blocks'),
+    clients: t('Clients'),
+    bookings: t('Bookings'),
+  }),
+);
 
 export interface AuditFilters {
   collection?: string;

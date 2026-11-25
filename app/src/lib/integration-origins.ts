@@ -1,9 +1,13 @@
+import { t } from '@/i18n';
+const maxOrigins = 10;
+
 export function parseAllowedOrigins(text: string): string[] {
   const origins = text
     .split(/\r?\n/)
     .map((value) => value.trim())
     .filter(Boolean);
-  if (origins.length > 10) throw new Error('Ingresa un máximo de 10 orígenes.');
+  if (origins.length > maxOrigins)
+    throw new Error(t('Enter at most {max} origins.', { max: maxOrigins }));
   const seen = new Set<string>();
   for (const origin of origins) {
     const parts =
@@ -17,10 +21,10 @@ export function parseAllowedOrigins(text: string): string[] {
       parts[3] === (parts[1] === 'https' ? '443' : '80')
     ) {
       throw new Error(
-        'Ingresa un origen HTTP o HTTPS válido, sin ruta ni comodines.',
+        t('Enter a valid HTTP or HTTPS origin without a path or wildcards.'),
       );
     }
-    if (seen.has(origin)) throw new Error('Los orígenes no pueden repetirse.');
+    if (seen.has(origin)) throw new Error(t('Origins must be unique.'));
     seen.add(origin);
   }
   return origins;

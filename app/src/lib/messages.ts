@@ -1,3 +1,5 @@
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import type {
   Locale,
   ServiceKey,
@@ -11,15 +13,18 @@ export {
 export { isEligible } from '../../../api/src/lib/message-policy';
 export type { Locale, ServiceKey, Template };
 
-export const MESSAGE_LABELS = {
-  booking_confirmed: 'Confirmación de reserva',
-  class_reminder: 'Recordatorio de clase',
-  class_cancelled: 'Cancelación o cambio de clase',
-  waitlist_promoted: 'Cupo desde la lista de espera',
-  payment_due: 'Aviso de cobro',
-  membership_renewal: 'Aviso de renovación',
-  manual: 'Mensaje manual',
-} as const;
+export const MESSAGE_LABELS = computed(
+  () =>
+    ({
+      booking_confirmed: t('Booking confirmation'),
+      class_reminder: t('Class reminder'),
+      class_cancelled: t('Class cancellation or change'),
+      waitlist_promoted: t('Waitlist promotion'),
+      payment_due: t('Payment reminder'),
+      membership_renewal: t('Renewal reminder'),
+      manual: t('Manual message'),
+    }) as const,
+);
 
 export const LOCALES: { value: Locale; label: string }[] = [
   { value: 'es', label: 'Español' },

@@ -1,22 +1,24 @@
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import { formatMoney } from '@/lib/money';
 import type { Admin, BaseRecord } from '@/types/pb';
 
-export const kindLabel = {
-  group: 'Grupal',
-  personal: 'Personal',
-  online: 'En línea',
-};
+export const kindLabel = computed(() => ({
+  group: t('Group'),
+  personal: t('Personal'),
+  online: t('Online'),
+}));
 
-export const billingUnitLabel = {
-  per_4_weeks: 'Cada 4 semanas',
-  per_class: 'Por clase',
-  first_visit: 'Primera visita',
-};
+export const billingUnitLabel = computed(() => ({
+  per_4_weeks: t('Every 4 weeks'),
+  per_class: t('Per class'),
+  first_visit: t('First visit'),
+}));
 
 export interface ServiceForm {
   name: string;
   slug: string;
-  kind: keyof typeof kindLabel;
+  kind: keyof typeof kindLabel.value;
   description: string;
   capacity: number | null;
   cancellation_hours: number | null;
@@ -36,7 +38,7 @@ export interface PlanForm {
   service: string;
   name: string;
   price_cents: number | null;
-  billing_unit: keyof typeof billingUnitLabel;
+  billing_unit: keyof typeof billingUnitLabel.value;
   sessions: number | null;
   per_week: number | null;
   commitment_periods: number | null;
@@ -64,13 +66,13 @@ export interface Plan
 export type Direction = 'up' | 'down';
 
 export function formatCents(cents: number): string {
-  if (cents === 0) return 'Gratis';
+  if (cents === 0) return t('Free');
   const price = formatMoney(cents);
   return cents % 100 === 0 ? price.slice(0, -3) : price;
 }
 
 export function policyLabel(hours: number): string {
-  return hours === 0 ? 'Sin mínimo' : `${hours} h antes`;
+  return hours === 0 ? t('No minimum') : t('{hours} h before', { hours });
 }
 
 export function serviceSlug(name: string): string {
@@ -97,6 +99,12 @@ export function reorder<T extends { id: string; sort: number }>(
   );
 }
 
+const maxNameLength = 80;
+const maxDescriptionLength = 500;
+const maxNoteLength = 300;
+const maxCancellationHours = 168;
+const maxWeeklyFrequency = 7;
+
 const validInteger = (
   value: number | null,
   min: number,
@@ -108,19 +116,27 @@ export function validateServiceForm(
   input: ServiceForm,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (!input.name.trim() || input.name.length > 80)
-    errors.name = 'Escribe un nombre de hasta 80 caracteres.';
+  if (!input.name.trim() || input.name.length > maxNameLength)
+    errors.name = t('Enter a name of up to {max} characters.', {
+      max: maxNameLength,
+    });
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(input.slug))
-    errors.slug = 'Usa minúsculas, números y guiones entre palabras.';
-  if (!Object.hasOwn(kindLabel, input.kind))
-    errors.kind = 'Selecciona un tipo de servicio.';
+    errors.slug = t(
+      'Use lowercase letters, numbers, and hyphens between words.',
+    );
+  if (!Object.hasOwn(kindLabel.value, input.kind))
+    errors.kind = t('Select a service type.');
   if (!validInteger(input.capacity, input.kind === 'online' ? 0 : 1))
-    errors.capacity = 'Indica un cupo entero válido.';
-  if (!validInteger(input.cancellation_hours, 0, 168))
-    errors.cancellation_hours =
-      'Indica un número entero de horas entre 0 y 168.';
-  if (input.description.length > 500)
-    errors.description = 'Usa hasta 500 caracteres.';
+    errors.capacity = t('Enter a valid whole number for capacity.');
+  if (!validInteger(input.cancellation_hours, 0, maxCancellationHours))
+    errors.cancellation_hours = t(
+      'Enter a whole number of hours from {min} to {max}.',
+      { min: 0, max: maxCancellationHours },
+    );
+  if (input.description.length > maxDescriptionLength)
+    errors.description = t('Use up to {max} characters.', {
+      max: maxDescriptionLength,
+    });
   return errors;
 }
 
@@ -129,33 +145,39 @@ export function validatePlanForm(
   service?: Pick<Service, 'active'>,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (!input.name.trim() || input.name.length > 80)
-    errors.name = 'Escribe un nombre de hasta 80 caracteres.';
-  if (!input.service || !service)
-    errors.service = 'Selecciona un servicio válido.';
+  if (!input.name.trim() || input.name.length > maxNameLength)
+    errors.name = t('Enter a name of up to {max} characters.', {
+      max: maxNameLength,
+    });
+  if (!input.service || !service) errors.service = t('Select a valid service.');
   if (service && input.active && !service.active)
-    errors.active = 'El servicio está inactivo.';
+    errors.active = t('The service is inactive.');
   if (
     input.is_first_class
       ? input.price_cents !== 0
       : !validInteger(input.price_cents, 1)
   ) {
     errors.price_cents = input.is_first_class
-      ? 'La primera clase debe ser gratis.'
-      : 'Indica un precio mayor que cero con hasta dos decimales.';
+      ? t('The first class must be free.')
+      : t('Enter a price greater than zero with up to two decimal places.');
   }
   if (
-    !Object.hasOwn(billingUnitLabel, input.billing_unit) ||
+    !Object.hasOwn(billingUnitLabel.value, input.billing_unit) ||
     (input.is_first_class && input.billing_unit !== 'first_visit')
   )
-    errors.billing_unit = 'Selecciona una unidad de cobro válida.';
+    errors.billing_unit = t('Select a valid billing unit.');
   if (!validInteger(input.sessions, 0))
-    errors.sessions = 'Indica un número entero de sesiones no negativo.';
-  if (!validInteger(input.per_week, 0, 7))
-    errors.per_week = 'Indica una frecuencia entera entre 0 y 7.';
+    errors.sessions = t('Enter a nonnegative whole number of sessions.');
+  if (!validInteger(input.per_week, 0, maxWeeklyFrequency))
+    errors.per_week = t('Enter a whole-number frequency from {min} to {max}.', {
+      min: 0,
+      max: maxWeeklyFrequency,
+    });
   if (!validInteger(input.commitment_periods, 0))
-    errors.commitment_periods =
-      'Indica un número entero de periodos no negativo.';
-  if (input.note.length > 300) errors.note = 'Usa hasta 300 caracteres.';
+    errors.commitment_periods = t(
+      'Enter a nonnegative whole number of periods.',
+    );
+  if (input.note.length > maxNoteLength)
+    errors.note = t('Use up to {max} characters.', { max: maxNoteLength });
   return errors;
 }

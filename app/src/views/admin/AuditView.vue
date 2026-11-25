@@ -31,8 +31,11 @@ const diff = computed(() => formatDiff(selected.value?.diff));
 const invalidRange = computed(() =>
   Boolean(draft.from && draft.to && draft.from > draft.to),
 );
-const collectionOptions = Object.entries(COLLECTION_LABELS).map(
-  ([value, label]) => ({ value, label }),
+const collectionOptions = computed(() =>
+  Object.entries(COLLECTION_LABELS.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
 );
 const actorOptions = computed(() =>
   actors.value.map(({ id, name, email }) => ({
