@@ -79,7 +79,7 @@ describe('adminNav', () => {
       );
       expect(analysis?.items).toContainEqual({
         label: 'Reportes',
-        icon: 'pi pi-chart-bar',
+        icon: 'pi pi-chart-pie',
         to: '/reports',
       });
     },

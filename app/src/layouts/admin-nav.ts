@@ -23,7 +23,7 @@ export const adminNav: NavGroup[] = [
       { label: tl('Dashboard'), icon: 'pi pi-chart-bar', to: '/' },
       {
         label: tl('Reports'),
-        icon: 'pi pi-chart-bar',
+        icon: 'pi pi-chart-pie',
         to: '/reports',
       },
     ],
