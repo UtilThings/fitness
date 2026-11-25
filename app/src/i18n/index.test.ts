@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { initializeLocale, resolveLocale, setLocale, t, te } from '@/i18n';
 
 afterEach(async () => {
   await setLocale('en');
   localStorage.clear();
+  vi.unstubAllGlobals();
 });
 
 describe('admin locale', () => {
@@ -34,4 +35,28 @@ describe('admin locale', () => {
     expect(t('Sign out')).toBe('Sign out');
     expect(localStorage.getItem('locale')).toBe('en');
   });
+});
+
+it('uses a Spanish browser only when there is no preference and persists the choice', async () => {
+  vi.stubGlobal('navigator', { language: 'es-MX' });
+  localStorage.clear();
+  await initializeLocale();
+  expect(t('Sign out')).toBe('Cerrar sesión');
+  expect(document.documentElement.lang).toBe('es');
+  expect(localStorage.getItem('locale')).toBe('es');
+
+  localStorage.setItem('locale', 'en');
+  await initializeLocale();
+  expect(t('Sign out')).toBe('Sign out');
+  expect(document.documentElement.lang).toBe('en');
+
+  localStorage.setItem('locale', 'invalid');
+  await initializeLocale();
+  expect(localStorage.getItem('locale')).toBe('en');
+
+  vi.stubGlobal('navigator', { language: 'fr' });
+  localStorage.clear();
+  await initializeLocale();
+  expect(document.documentElement.lang).toBe('en');
+  expect(localStorage.getItem('locale')).toBe('en');
 });

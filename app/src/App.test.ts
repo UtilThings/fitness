@@ -53,6 +53,7 @@ it('renders a success toast and a confirmation requested from a routed view', as
   const dialog = document.querySelector('[role="alertdialog"]');
   expect(dialog?.textContent).toContain('Confirmar');
   expect(dialog?.textContent).toContain('¿Continuar?');
+  expect(dialog?.textContent).toContain('Sí');
 });
 
 it('renders the role-filtered admin menu and the restricted-route fallback', async () => {

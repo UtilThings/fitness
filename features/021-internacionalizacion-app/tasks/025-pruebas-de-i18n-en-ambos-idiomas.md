@@ -1,7 +1,7 @@
 # 025 - [Pruebas] Pruebas de i18n en ambos idiomas
 
 - **Prioridad:** 25
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, 006, 023, 024
 - **Fase:** Fase final: Verificación y cierre
 
@@ -22,9 +22,9 @@ Las pruebas existentes corren en `es` (003). Faltan pruebas del idioma como func
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] El recorrido de humo falla si una vista de la lista muestra un valor de `es.json` estando en `en`.
-- [ ] Las pruebas no dependen del idioma del sistema ni de `localStorage` previo.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] El recorrido de humo falla si una vista de la lista muestra un valor de `es.json` estando en `en`.
+- [x] Las pruebas no dependen del idioma del sistema ni de `localStorage` previo.
 
 ## Referencias
 
@@ -36,3 +36,4 @@ Las pruebas existentes corren en `es` (003). Faltan pruebas del idioma como func
 
 ## Notas de implementación
 
+Lint, comprobación de tipos y suite completa en verde. Se montaron el acceso, dashboard, clientes, pagos y reportes con datos de prueba. Las pruebas verifican el texto inglés, el cambio en vivo, las preferencias, el diálogo de confirmación, y los formatos con CAD y America/Vancouver.

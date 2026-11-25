@@ -1,3 +1,5 @@
+import { expectEnglishCopy } from '@/test/copy';
+import { withLocale } from '@/test/i18n';
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import PrimeVue from 'primevue/config';
 import DatePicker from 'primevue/datepicker';
@@ -101,6 +103,11 @@ afterEach(() => {
 describe('Reportes', () => {
   it('muestra cuatro pestañas al owner y sincroniza la pestaña activa al seleccionarla', async () => {
     const { view, router } = await render();
+    await withLocale('en', async () => {
+      await flushPromises();
+      expect(view.text()).toContain('Reports');
+      expectEnglishCopy(view.element);
+    });
     const tabs = view.findAll('[role="tab"]');
     expect(tabs.map((entry) => entry.text())).toEqual([
       'Ocupación',

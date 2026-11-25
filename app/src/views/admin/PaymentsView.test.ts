@@ -1,3 +1,4 @@
+import { expectEnglishCopy } from '@/test/copy';
 import { flushPromises, mount } from '@vue/test-utils';
 import PrimeVue from 'primevue/config';
 import { expect, it, vi } from 'vitest';
@@ -114,6 +115,11 @@ it('combina filtros y actualiza el recibo al marcar pagado desde una fila', asyn
     totalItems: 1,
   });
   const { view } = await render('/payments');
+  await withLocale('en', async () => {
+    await flushPromises();
+    expect(view.text()).toContain('Record payment');
+    expectEnglishCopy(view.element);
+  });
   await view.get('select').setValue('pending');
   await view.findAll('select')[1].setValue('zelle');
   await view.findAll('input[type=date]')[0].setValue('2026-01-01');
