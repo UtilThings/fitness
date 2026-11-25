@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils';
+import PrimeVue from 'primevue/config';
 import { nextTick, ref } from 'vue';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import { expect, it, vi } from 'vitest';
@@ -59,7 +60,7 @@ it('updates the sidebar and title when the business changes', async () => {
 
 it('keeps the login layout and title neutral', async () => {
   const wrapper = mount(AuthLayout, {
-    global: { plugins: [await routerFor('Iniciar sesión')] },
+    global: { plugins: [PrimeVue, await routerFor('Iniciar sesión')] },
   });
   expect(wrapper.text()).toContain('Admin');
   expect(wrapper.text()).not.toContain('Second Fitness');

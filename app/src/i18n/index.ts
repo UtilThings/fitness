@@ -38,6 +38,7 @@ export async function setLocale(value: Locale): Promise<void> {
   }
   if (request !== latestRequest) return;
   locale.value = value;
+  if (typeof document !== 'undefined') document.documentElement.lang = value;
   try {
     globalThis.localStorage?.setItem(localeKey, value);
   } catch {

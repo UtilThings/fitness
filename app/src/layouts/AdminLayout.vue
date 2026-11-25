@@ -20,6 +20,8 @@ import SidebarSpacer from 'primevue/sidebarspacer';
 import SidebarTrigger from 'primevue/sidebartrigger';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
+import { useDocumentTitle } from '@/composables/useDocumentTitle';
 import { useBusiness } from '@/composables/useBusiness';
 import { env } from '@/lib/env';
 import { useAuth } from '@/composables/useAuth';
@@ -46,13 +48,7 @@ const brandInitials = computed(() =>
 );
 const logoFailed = ref(false);
 watch(logoUrl, () => (logoFailed.value = false));
-watch(
-  [() => route.meta.title, brandName],
-  ([title, name]) => {
-    document.title = title ? `${title} · ${name}` : name;
-  },
-  { immediate: true },
-);
+useDocumentTitle(() => brandName.value);
 const nav = computed(() => visibleNav(role.value));
 const avatarFailed = ref(false);
 watch(avatarUrl, () => (avatarFailed.value = false));
@@ -190,7 +186,9 @@ const userMenu = computed(() => [
                 class="pi pi-chevron-down text-xs text-surface-400 in-data-[collapsible=icon]:hidden"
               />
             </button>
-            <Menu id="user-menu" ref="menu" :model="userMenu" popup />
+            <Menu id="user-menu" ref="menu" :model="userMenu" popup>
+              <template #end><LocaleSwitcher class="px-2 pb-2" /></template>
+            </Menu>
           </SidebarFooter>
         </SidebarPanel>
       </SidebarAside>

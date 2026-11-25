@@ -1,7 +1,7 @@
 # 004 - [Módulo] Selector de idioma y sincronización (html, título, PrimeVue)
 
 - **Prioridad:** 4
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003
 - **Fase:** Fase 1: Fundamentos
 
@@ -23,10 +23,10 @@ El usuario cambia el idioma desde la interfaz y el cambio es inmediato, persiste
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] Cambiar el idioma actualiza `<html lang>` y `localStorage` sin recargar.
-- [ ] Un `DatePicker`/diálogo de confirmación de PrimeVue muestra nombres de mes y botones del idioma activo.
-- [ ] El selector aparece en la pantalla de acceso y en el admin.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] Cambiar el idioma actualiza `<html lang>` y `localStorage` sin recargar.
+- [x] Un `DatePicker`/diálogo de confirmación de PrimeVue muestra nombres de mes y botones del idioma activo.
+- [x] El selector aparece en la pantalla de acceso y en el admin.
 
 ## Referencias
 
@@ -38,3 +38,4 @@ El usuario cambia el idioma desde la interfaz y el cambio es inmediato, persiste
 
 ## Notas de implementación
 
+Lint, comprobación de tipos y 336 pruebas en verde. El selector de acceso se probó con DatePicker y el locale de confirmación. El cambio actualiza el título, el atributo lang y la preferencia. El menú de usuario del admin utiliza el mismo selector.

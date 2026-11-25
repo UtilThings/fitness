@@ -1,14 +1,9 @@
 <script setup lang="ts">
-import { watchEffect } from 'vue';
-import { useRoute } from 'vue-router';
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
+import { useDocumentTitle } from '@/composables/useDocumentTitle';
 import { env } from '@/lib/env';
 
-const route = useRoute();
-watchEffect(() => {
-  document.title = route.meta.title
-    ? `${route.meta.title} · ${env.appName}`
-    : env.appName;
-});
+useDocumentTitle(() => env.appName);
 </script>
 
 <template>
@@ -18,6 +13,7 @@ watchEffect(() => {
     >
       <p class="mb-4 text-center text-lg font-semibold">{{ env.appName }}</p>
       <RouterView />
+      <LocaleSwitcher class="mt-4 flex justify-center" />
     </div>
   </main>
 </template>

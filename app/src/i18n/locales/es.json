@@ -1,5 +1,7 @@
 {
+  "Could not load the selected language.": "No se pudo cargar el idioma seleccionado.",
   "Dashboard": "Dashboard",
+  "Language": "Idioma",
   "Settings": "Configuración",
   "Sign out": "Cerrar sesión"
 }
