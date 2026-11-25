@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
@@ -102,7 +103,7 @@ async function deleteSlot() {
   <Message v-if="loadError" severity="error" :closable="false">{{
     loadError
   }}</Message>
-  <p v-else-if="loading" role="status">Cargando disponibilidad…</p>
+  <p v-else-if="loading" role="status">{{ t('Loading availability…') }}</p>
   <div v-else class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
     <section
       v-for="(day, weekday) in days"
@@ -110,7 +111,9 @@ async function deleteSlot() {
       class="grid content-start gap-3 rounded-xl border border-surface p-4"
     >
       <h2 class="font-semibold">{{ weekdayLabel(weekday) }}</h2>
-      <p v-if="!day.length" class="text-sm text-muted-color">Sin tramos</p>
+      <p v-if="!day.length" class="text-sm text-muted-color">
+        {{ t('No time slots') }}
+      </p>
       <ul v-else class="grid gap-1">
         <li
           v-for="slot in day"
@@ -122,7 +125,9 @@ async function deleteSlot() {
           >
           <Button
             v-if="!readonly"
-            :aria-label="'Editar tramo de ' + slot.start_time"
+            :aria-label="
+              t('Edit time slot starting at {time}', { time: slot.start_time })
+            "
             icon="pi pi-pencil"
             text
             size="small"
@@ -139,7 +144,7 @@ async function deleteSlot() {
       >
         <div class="flex flex-wrap gap-2">
           <div class="grid gap-1">
-            <label :for="id + '-start'" class="text-sm">Inicio</label>
+            <label :for="id + '-start'" class="text-sm">{{ t('Start') }}</label>
             <InputText
               :id="id + '-start'"
               v-model="draft.start_time"
@@ -148,7 +153,7 @@ async function deleteSlot() {
             />
           </div>
           <div class="grid gap-1">
-            <label :for="id + '-end'" class="text-sm">Fin</label>
+            <label :for="id + '-end'" class="text-sm">{{ t("End{''}") }}</label>
             <InputText
               :id="id + '-end'"
               v-model="draft.end_time"
@@ -161,9 +166,14 @@ async function deleteSlot() {
           error
         }}</Message>
         <div class="flex flex-wrap gap-2">
-          <Button type="submit" label="Guardar" size="small" :loading="busy" />
           <Button
-            label="Cerrar"
+            type="submit"
+            :label="t('Save')"
+            size="small"
+            :loading="busy"
+          />
+          <Button
+            :label="t('Close')"
             size="small"
             severity="secondary"
             text
@@ -172,7 +182,7 @@ async function deleteSlot() {
           />
           <Button
             v-if="draft.id"
-            label="Eliminar tramo"
+            :label="t('Delete time slot')"
             severity="danger"
             size="small"
             text
@@ -183,7 +193,7 @@ async function deleteSlot() {
       </form>
       <Button
         v-else-if="!readonly"
-        label="Añadir tramo"
+        :label="t('Add time slot')"
         icon="pi pi-plus"
         size="small"
         outlined

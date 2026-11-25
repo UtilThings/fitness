@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import { formatCivilDate } from '@/lib/datetime';
 import type { CoachingCheckin } from '@/lib/coaching';
 import AdherenceBadge from './AdherenceBadge.vue';
@@ -8,7 +9,7 @@ defineProps<{ checkins: CoachingCheckin[] }>();
 
 <template>
   <p v-if="!checkins.length" class="text-sm text-muted-color">
-    Todavía no hay check-ins.
+    {{ t('There are no check-ins yet.') }}
   </p>
   <ol
     v-else

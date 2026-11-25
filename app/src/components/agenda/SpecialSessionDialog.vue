@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputNumber from 'primevue/inputnumber';
@@ -38,7 +39,7 @@ const saving = ref(false);
 const error = shallowRef<PbError>();
 const formError = ref('');
 const options = computed(() => [
-  { label: 'Sin coach', value: '' },
+  { label: t('No coach'), value: '' },
   ...props.coaches,
 ]);
 const activeServices = computed(() =>
@@ -75,7 +76,9 @@ async function submit() {
     !duration.value ||
     !capacity.value
   ) {
-    formError.value = 'Completa el título, servicio, fecha, duración y cupo.';
+    formError.value = t(
+      'Enter the title, service, date, duration, and capacity.',
+    );
     return;
   }
   saving.value = true;
@@ -103,7 +106,7 @@ async function submit() {
   <Dialog
     v-model:visible="open"
     modal
-    header="Nueva clase especial"
+    :header="t('New special class')"
     class="w-full max-w-lg"
     :closable="!saving"
     :close-on-escape="!saving"
@@ -111,7 +114,7 @@ async function submit() {
     <form class="grid gap-4" @submit.prevent="submit">
       <CatalogField
         :id="id + '-title'"
-        label="Título"
+        :label="t('Title')"
         :error="error?.fields.title"
       >
         <InputText
@@ -125,7 +128,7 @@ async function submit() {
       </CatalogField>
       <CatalogField
         :id="id + '-service'"
-        label="Servicio"
+        :label="t('Service')"
         :error="error?.fields.service"
       >
         <Select
@@ -134,7 +137,7 @@ async function submit() {
           :options="activeServices"
           option-label="name"
           option-value="id"
-          placeholder="Selecciona un servicio"
+          :placeholder="t('Select a service')"
           :disabled="saving"
           fluid
         />
@@ -148,7 +151,7 @@ async function submit() {
       />
       <CatalogField
         :id="id + '-capacity'"
-        label="Cupo"
+        :label="t('Capacity')"
         :error="error?.fields.capacity"
       >
         <InputNumber
@@ -161,7 +164,7 @@ async function submit() {
       </CatalogField>
       <CatalogField
         :id="id + '-coach'"
-        label="Coach"
+        :label="t('Coach')"
         :error="error?.fields.coach"
       >
         <Select
@@ -176,7 +179,7 @@ async function submit() {
       </CatalogField>
       <CatalogField
         :id="id + '-notes'"
-        label="Notas internas"
+        :label="t('Internal notes')"
         :error="error?.fields.notes"
       >
         <Textarea
@@ -193,13 +196,13 @@ async function submit() {
       }}</Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
           @click="open = false"
         />
-        <Button type="submit" label="Guardar clase" :loading="saving" />
+        <Button type="submit" :label="t('Save class')" :loading="saving" />
       </div>
     </form>
   </Dialog>

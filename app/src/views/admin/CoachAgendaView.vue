@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Drawer from 'primevue/drawer';
 import Message from 'primevue/message';
@@ -99,22 +100,22 @@ function saved(session: AgendaSession) {
     coach.value = session.coach;
     date.value = created;
   }
-  notify.success('Sesión privada agendada');
+  notify.success(t('Private session scheduled'));
 }
 </script>
 
 <template>
   <div class="grid gap-5">
-    <PageHeader title="Agenda por coach">
+    <PageHeader :title="t('Coach schedule')">
       <template #actions>
         <RouterLink
           :to="{ name: 'coach-availability' }"
           class="text-sm font-medium text-primary hover:underline"
-          >Disponibilidad semanal</RouterLink
+          >{{ t('Weekly availability') }}</RouterLink
         >
         <Button
           v-if="canSchedule"
-          label="Sesión privada"
+          :label="t('Private session')"
           icon="pi pi-plus"
           @click="privateOpen = true"
         />
@@ -124,43 +125,43 @@ function saved(session: AgendaSession) {
     <div class="flex flex-wrap items-center justify-between gap-3">
       <Select
         v-model="coach"
-        aria-label="Coach"
+        :aria-label="t('Coach')"
         :options="catalog.coachOptions.value"
         option-label="label"
         option-value="value"
-        placeholder="Selecciona un coach"
+        :placeholder="t('Select a coach')"
         class="w-full sm:w-64"
       />
       <div class="flex flex-wrap items-center gap-2">
         <Button
-          aria-label="Anterior"
+          :aria-label="t('Previous')"
           icon="pi pi-chevron-left"
           severity="secondary"
           outlined
           @click="shift(-1)"
         />
         <Button
-          label="Hoy"
+          :label="t('Today')"
           severity="secondary"
           outlined
           @click="date = todayLocal()"
         />
         <Button
-          aria-label="Siguiente"
+          :aria-label="t('Next')"
           icon="pi pi-chevron-right"
           severity="secondary"
           outlined
           @click="shift(1)"
         />
         <Button
-          label="Día"
+          :label="t('Day')"
           severity="secondary"
           :outlined="week"
           :aria-pressed="!week"
           @click="week = false"
         />
         <Button
-          label="Semana"
+          :label="t('Week')"
           severity="secondary"
           :outlined="!week"
           :aria-pressed="week"
@@ -178,7 +179,7 @@ function saved(session: AgendaSession) {
         (catalog.coachesError.value ?? catalog.error.value ?? error)?.message
       }}
     </Message>
-    <p v-if="loading" role="status">Cargando agenda…</p>
+    <p v-if="loading" role="status">{{ t('Loading schedule…') }}</p>
     <CoachAgendaGrid
       v-else-if="coach && !error"
       :days="days"
@@ -191,7 +192,7 @@ function saved(session: AgendaSession) {
       :visible="!!selected"
       position="right"
       class="w-full! sm:w-96!"
-      header="Detalle de sesión"
+      :header="t('Session details')"
       @update:visible="
         (visible) => {
           if (!visible) selected = undefined;
@@ -200,14 +201,19 @@ function saved(session: AgendaSession) {
     >
       <div v-if="selected" class="grid gap-3">
         <h2 class="font-semibold">
-          {{ selected.title || selected.expand?.service?.name || 'Sesión' }}
+          {{ selected.title || selected.expand?.service?.name || t('Session') }}
         </h2>
         <p>
           {{ formatDateTime(selected.starts_at) }} ·
-          {{ selected.duration_min }} min · Cupo {{ selected.capacity }}
+          {{
+            t('{minutes} min · Capacity {capacity}', {
+              minutes: selected.duration_min,
+              capacity: selected.capacity,
+            })
+          }}
         </p>
         <p v-if="selected.notes">{{ selected.notes }}</p>
-        <h3 class="font-semibold">Reservas</h3>
+        <h3 class="font-semibold">{{ t('Bookings') }}</h3>
         <ul
           v-if="selected.expand?.bookings_via_session?.length"
           class="grid gap-1"
@@ -219,17 +225,17 @@ function saved(session: AgendaSession) {
             {{
               booking.expand?.client
                 ? fullName(booking.expand.client)
-                : 'Cliente'
+                : t('Client')
             }}
             · {{ BOOKING_STATUS[booking.status].label }}
           </li>
         </ul>
-        <p v-else class="text-sm text-muted-color">Sin reservas</p>
+        <p v-else class="text-sm text-muted-color">{{ t('No bookings') }}</p>
         <RouterLink
           :to="{ name: 'classes', query: { session: selected.id } }"
           class="font-medium text-primary hover:underline"
         >
-          Gestionar reservas y asistencia
+          {{ t('Manage bookings and attendance') }}
         </RouterLink>
       </div>
     </Drawer>

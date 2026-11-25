@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Tag from 'primevue/tag';
 import { computed } from 'vue';
 import {
@@ -29,25 +30,32 @@ const link = computed(() => safeProgramUrl(props.program.program_url));
     </div>
     <dl class="grid gap-3 sm:grid-cols-2">
       <div>
-        <dt class="text-sm text-muted-color">Coach</dt>
+        <dt class="text-sm text-muted-color">{{ t('Coach') }}</dt>
         <dd class="font-medium">
           {{ program.expand?.coach?.name ?? program.coach }}
         </dd>
       </div>
       <div>
-        <dt class="text-sm text-muted-color">Progreso</dt>
+        <dt class="text-sm text-muted-color">{{ t('Progress') }}</dt>
         <dd class="font-medium">
-          Semana {{ program.flags.week }} de {{ program.flags.total }}
+          {{
+            t('Week {week} of {total}', {
+              week: program.flags.week,
+              total: program.flags.total,
+            })
+          }}
         </dd>
       </div>
       <div>
-        <dt class="text-sm text-muted-color">Renovación</dt>
+        <dt class="text-sm text-muted-color">{{ t('Renewal') }}</dt>
         <dd class="font-medium">
           {{ program.renews_on ? formatCivilDate(program.renews_on) : '—' }}
         </dd>
       </div>
       <div>
-        <dt class="mb-1 text-sm text-muted-color">Adherencia promedio</dt>
+        <dt class="mb-1 text-sm text-muted-color">
+          {{ t('Average adherence') }}
+        </dt>
         <dd>
           <AdherenceBadge
             :value="program.flags.adherence.average"
@@ -56,19 +64,19 @@ const link = computed(() => safeProgramUrl(props.program.program_url));
         </dd>
       </div>
       <div>
-        <dt class="text-sm text-muted-color">Inicio</dt>
+        <dt class="text-sm text-muted-color">{{ t('Start') }}</dt>
         <dd class="font-medium">{{ formatCivilDate(program.starts_on) }}</dd>
       </div>
       <div>
-        <dt class="text-sm text-muted-color">Fin previsto</dt>
+        <dt class="text-sm text-muted-color">{{ t('Expected end') }}</dt>
         <dd class="font-medium">{{ formatCivilDate(program.flags.endsOn) }}</dd>
       </div>
       <div v-if="program.goal" class="sm:col-span-2">
-        <dt class="text-sm text-muted-color">Objetivo</dt>
+        <dt class="text-sm text-muted-color">{{ t('Goal') }}</dt>
         <dd class="whitespace-pre-wrap">{{ program.goal }}</dd>
       </div>
       <div v-if="program.notes" class="sm:col-span-2">
-        <dt class="text-sm text-muted-color">Notas internas</dt>
+        <dt class="text-sm text-muted-color">{{ t('Internal notes') }}</dt>
         <dd class="whitespace-pre-wrap">{{ program.notes }}</dd>
       </div>
     </dl>
@@ -79,7 +87,7 @@ const link = computed(() => safeProgramUrl(props.program.program_url));
       rel="noopener noreferrer"
       class="w-fit font-medium text-primary hover:underline"
     >
-      Abrir plan de entrenamiento
+      {{ t('Open training plan') }}
       <i class="pi pi-external-link ms-1 text-xs" aria-hidden="true" />
     </a>
   </div>

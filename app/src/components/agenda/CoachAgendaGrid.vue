@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import { computed } from 'vue';
 import {
   slotsByDay,
@@ -42,9 +43,11 @@ const columns = computed(() =>
         {{ formatDayLabel(day.date) }}
       </h2>
       <div class="grid gap-1">
-        <h3 class="text-xs font-semibold text-muted-color">Disponibilidad</h3>
+        <h3 class="text-xs font-semibold text-muted-color">
+          {{ t('Availability') }}
+        </h3>
         <p v-if="!day.slots.length" class="text-sm text-muted-color">
-          Sin tramos
+          {{ t('No time slots') }}
         </p>
         <p
           v-for="slot in day.slots"
@@ -55,7 +58,7 @@ const columns = computed(() =>
         </p>
       </div>
       <p v-if="!day.sessions.length" class="text-sm text-muted-color">
-        Sin sesiones
+        {{ t('No sessions') }}
       </p>
       <button
         v-for="session in day.sessions"
@@ -68,22 +71,28 @@ const columns = computed(() =>
           class="font-semibold"
           :class="{ 'line-through': session.status === 'cancelled' }"
         >
-          {{ session.title || session.expand?.service?.name || 'Sesión' }}
+          {{ session.title || session.expand?.service?.name || t('Session') }}
         </span>
         <span
           >{{ formatTime(session.starts_at) }} ·
-          {{ session.duration_min }} min</span
+          {{ t('{minutes} min', { minutes: session.duration_min }) }}</span
         >
-        <span class="text-muted-color">Cupo {{ session.capacity }}</span>
-        <span v-if="session.status === 'cancelled'">Cancelada</span>
-        <span v-else-if="session.status === 'completed'">Completada</span>
+        <span class="text-muted-color">{{
+          t('Capacity {capacity}', { capacity: session.capacity })
+        }}</span>
+        <span v-if="session.status === 'cancelled'">{{ t('Canceled') }}</span>
+        <span v-else-if="session.status === 'completed'">{{
+          t('Completed')
+        }}</span>
         <span
           v-for="booking in session.expand?.bookings_via_session"
           :key="booking.id"
           class="break-words text-xs"
         >
           {{
-            booking.expand?.client ? fullName(booking.expand.client) : 'Cliente'
+            booking.expand?.client
+              ? fullName(booking.expand.client)
+              : t('Client')
           }}
           · {{ BOOKING_STATUS[booking.status].label }}
         </span>
