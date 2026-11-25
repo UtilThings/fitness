@@ -1,6 +1,6 @@
 # Especificación: Internacionalización (i18n) del admin `app/`
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -44,7 +44,7 @@ Contrato que deja a las siguientes features: todo texto visible nuevo se escribe
 - `es.json` es **plano** (sin anidar) y ordenado alfabéticamente por clave; un solo archivo para todo el app.
 - Interpolación **nombrada**: `"{count} clients selected"`. Plurales con `|` y `{n}`/`{count}`: `"No clients | 1 client | {count} clients"`.
 - Texto con marcado o enlaces usa `<i18n-t keypath="…" tag="p">` con slots, nunca concatenación de fragmentos traducidos.
-- Un mismo texto en inglés con **sentidos distintos** se desambigua con contexto entre paréntesis en la clave (`"Open"` vs `"Open (status)"`), decidido caso por caso y documentado en `docs/i18n.md`.
+- Un mismo texto en inglés con **sentidos distintos** se desambigua con un sufijo literal vacío (`"Active"` y `"Active{''}"`) para conservar el mismo texto en inglés. Los casos se documentan en `docs/i18n.md`.
 - Texto dinámico de dominio (valores de enums como `role`, `status`) se traduce con mapas `Record<valor, clave>` que llaman a `t()` al renderizar, nunca con claves construidas por concatenación (`t('role.' + x)`), para que el extractor las encuentre.
 - Fuera de componentes (`lib/`, `composables/`, `router`) se usa `t` exportado de `@/i18n`; las listas de labels pasan de constantes a funciones/`computed` para reaccionar al cambio de idioma.
 
@@ -211,15 +211,24 @@ El API responde mensajes en inglés, **estáticos** y estables. Los que hoy inte
 
 ## Criterios de Aceptación
 
-- [ ] Con `locale = en` toda la interfaz se muestra en inglés; con `es`, en español idéntico al actual.
-- [ ] El idioma inicial respeta `localStorage` → `navigator.language` → `en`, y el selector cambia el idioma sin recargar y persiste.
-- [ ] `<html lang>`, título del documento y componentes PrimeVue (calendario, confirmaciones) siguen el idioma activo.
-- [ ] Fechas, horas, números y ordenamientos usan el idioma activo; moneda y zona horaria siguen siendo las del `business`.
-- [ ] No queda texto visible en español fuera de `es.json` (salvo datos de usuario y auditoría histórica).
-- [ ] Los errores del API se muestran traducidos en `es`; un mensaje no catalogado se muestra sin fallar.
-- [ ] `bun run i18n:check` termina en verde (sin claves faltantes, huérfanas ni variables inconsistentes).
-- [ ] `docs/i18n.md` existe y `scripts/verify-app.sh` incluye `i18n:check` y termina en verde.
-- [ ] `bun run lint`, `typecheck`, `test` y `build` en `app/`, y los tests del API, terminan en verde.
+- [x] Con `locale = en` toda la interfaz se muestra en inglés; con `es`, en español idéntico al actual.
+- [x] El idioma inicial respeta `localStorage` → `navigator.language` → `en`, y el selector cambia el idioma sin recargar y persiste.
+- [x] `<html lang>`, título del documento y componentes PrimeVue (calendario, confirmaciones) siguen el idioma activo.
+- [x] Fechas, horas, números y ordenamientos usan el idioma activo; moneda y zona horaria siguen siendo las del `business`.
+- [x] No queda texto visible en español fuera de `es.json` (salvo datos de usuario y auditoría histórica).
+- [x] Los errores del API se muestran traducidos en `es`; un mensaje no catalogado se muestra sin fallar.
+- [x] `bun run i18n:check` termina en verde (sin claves faltantes, huérfanas ni variables inconsistentes).
+- [x] `docs/i18n.md` existe y `scripts/verify-app.sh` incluye `i18n:check` y termina en verde.
+- [x] `bun run lint`, `typecheck`, `test` y `build` en `app/`, y los tests del API, terminan en verde.
+
+---
+
+## Verificación de cierre
+
+- `bash scripts/verify-app.sh` pasó con lint, Prettier, tipos, catálogo y barrido de literales, 361 pruebas y build de producción. Vite generó un chunk independiente para el catálogo español.
+- `bash scripts/verify-api.sh` compiló los hooks, pasó 123 pruebas y verificó rutas, permisos y comunicaciones con PocketBase y SMTP de captura temporales.
+- El recorrido en Edge con PocketBase temporal comprobó detección de un navegador en español, preferencia tras recargar, inicio de sesión, cambio de idioma en caliente y navegación bilingüe por dashboard, clientes, pagos y reportes.
+- La suite del admin comprueba calendarios y confirmaciones, formato en ambos idiomas con la moneda y zona del negocio, un 403 traducido, mensajes desconocidos y resúmenes históricos conservados. El barrido permite los nombres nativos que aparecen en los selectores de idioma.
 
 ---
 

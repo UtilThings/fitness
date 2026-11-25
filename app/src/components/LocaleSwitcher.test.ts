@@ -25,7 +25,9 @@ it('switches the login language and updates document and PrimeVue labels', async
     routes: [{ path: '/', component: page, meta: { title: 'Language' } }],
   });
   await router.push('/');
-  const wrapper = mount(AuthLayout, { global: { plugins: [PrimeVue, router] } });
+  const wrapper = mount(AuthLayout, {
+    global: { plugins: [PrimeVue, router] },
+  });
 
   expect(wrapper.text()).toContain('January');
   expect(wrapper.get('[data-test="accept"]').text()).toBe('Yes');

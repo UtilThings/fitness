@@ -49,6 +49,7 @@ src/
   components/   componentes reutilizables de autenticación y administración
   composables/  sesión, colecciones, avisos y confirmaciones
   layouts/      AuthLayout, AdminLayout y admin-nav.ts (menú lateral)
+  i18n/         idioma de interfaz, catálogo y formatos
   lib/          entorno, PocketBase, permisos, fechas y dinero
   router/       rutas, guard y safeRedirect
   styles/       main.css (Tailwind + tailwindcss-primeui)
@@ -65,6 +66,17 @@ src/
 - Las utilidades de `tailwindcss-primeui` (`bg-primary`, `text-surface-500`...) usan los tokens del tema.
 - El guard del router es solo experiencia de usuario; la autorización real son las reglas de API de PocketBase.
 
+## Internacionalización
+
+El admin usa inglés como idioma principal y carga el catálogo español cuando se selecciona o detecta ese idioma. El selector de la pantalla de acceso y del menú de usuario guarda la preferencia y aplica el cambio de inmediato.
+
+Para agregar texto visible, escribe la clave en inglés en `t('…')` y su traducción en `src/i18n/locales/es.json`. Consulta las convenciones de interpolación, plurales y mensajes del API en la [guía de internacionalización](../docs/i18n.md).
+
+```bash
+bun run i18n:sort
+bun run i18n:check --api --spanish-literals
+```
+
 ## Layouts y vistas
 
 Los layouts son rutas padre con `<RouterView />`; las vistas solo aportan su contenido.
@@ -74,7 +86,7 @@ Los layouts son rutas padre con `<RouterView />`; las vistas solo aportan su con
 
 ### Agregar una vista de auth
 
-1. Crea `src/views/auth/MiVista.vue` (empieza con `<AuthHeading title="..." />`).
+1. Crea `src/views/auth/MiVista.vue` (empieza con `<AuthHeading :title="t('…')" />`).
 2. Añádela como hija del padre `AuthLayout` en `src/router/index.ts`, con `name` y `meta.title`. Si no debe verse con sesión iniciada, agrega su `name` a `authRoutes`.
 
 ## Módulos de administración
@@ -91,6 +103,7 @@ import { onMounted } from 'vue';
 import DataToolbar from '@/components/DataToolbar.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import { t } from '@/i18n';
 import { useCollection } from '@/composables/useCollection';
 import type { Admin } from '@/types/pb';
 
@@ -101,17 +114,17 @@ onMounted(load);
 </script>
 
 <template>
-  <PageHeader title="Equipo" />
+  <PageHeader :title="t('Team')" />
   <DataToolbar
-    placeholder="Buscar por nombre o correo"
+    :placeholder="t('Search by name or email')"
     @search="search($event, ['name', 'email'])"
   />
   <p v-if="error" role="alert">{{ error.message }}</p>
-  <p v-else-if="loading" role="status">Cargando equipo…</p>
+  <p v-else-if="loading" role="status">{{ t('Loading team…') }}</p>
   <EmptyState
     v-else-if="!items.length"
     icon="pi pi-users"
-    title="Sin integrantes"
+    :title="t('No team members to display')"
   />
   <ul v-else>
     <li v-for="item in items" :key="item.id">{{ item.name }}</li>
