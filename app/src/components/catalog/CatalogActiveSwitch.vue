@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import ToggleSwitch from 'primevue/toggleswitch';
 import { ref } from 'vue';
 
@@ -31,10 +32,14 @@ function requestChange(value: boolean) {
     <ToggleSwitch
       :key="revision"
       :model-value="active"
-      :aria-label="(props.active ? 'Desactivar ' : 'Activar ') + name"
+      :aria-label="
+        props.active
+          ? t('Deactivate {name}', { name })
+          : t('Activate {name}', { name })
+      "
       :disabled="disabled"
       @update:model-value="requestChange"
     />
-    <span class="text-sm">{{ active ? 'Activo' : 'Inactivo' }}</span>
+    <span class="text-sm">{{ active ? t('Active') : t('Inactive') }}</span>
   </span>
 </template>

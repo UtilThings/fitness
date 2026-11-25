@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import { type Direction } from '@/lib/catalog';
 
@@ -16,7 +17,7 @@ defineEmits<{ move: [direction: Direction]; edit: []; remove: [] }>();
     <Button
       type="button"
       icon="pi pi-arrow-up"
-      :aria-label="'Subir ' + name"
+      :aria-label="t('Move up {name}', { name })"
       severity="secondary"
       size="small"
       text
@@ -26,7 +27,7 @@ defineEmits<{ move: [direction: Direction]; edit: []; remove: [] }>();
     <Button
       type="button"
       icon="pi pi-arrow-down"
-      :aria-label="'Bajar ' + name"
+      :aria-label="t('Move down {name}', { name })"
       severity="secondary"
       size="small"
       text
@@ -36,7 +37,7 @@ defineEmits<{ move: [direction: Direction]; edit: []; remove: [] }>();
     <Button
       type="button"
       icon="pi pi-pencil"
-      :aria-label="'Editar ' + name"
+      :aria-label="t('Edit {name}', { name })"
       severity="secondary"
       size="small"
       text
@@ -46,7 +47,7 @@ defineEmits<{ move: [direction: Direction]; edit: []; remove: [] }>();
     <Button
       type="button"
       icon="pi pi-trash"
-      :aria-label="'Eliminar ' + name"
+      :aria-label="t('Delete {name}', { name })"
       severity="danger"
       size="small"
       text

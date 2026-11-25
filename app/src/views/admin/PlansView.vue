@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -170,7 +171,7 @@ async function save() {
   try {
     await plans.save({ ...data }, editing.value?.id);
     visible.value = false;
-    notify.success('Plan guardado');
+    notify.success(t('Plan saved'));
   } catch (cause) {
     const error = cause as PbError;
     fields.value = error.fields;
@@ -183,10 +184,10 @@ async function save() {
 
 <template>
   <div class="grid gap-5">
-    <PageHeader title="Planes">
+    <PageHeader :title="t('Plans')">
       <template v-if="canManage" #actions>
         <Button
-          label="Nuevo plan"
+          :label="t('New plan')"
           icon="pi pi-plus"
           :disabled="busy || !services.items.value.length"
           @click="openEditor()"
@@ -199,8 +200,8 @@ async function save() {
       :options="serviceOptions"
       option-label="label"
       option-value="value"
-      aria-label="Filtrar por servicio"
-      placeholder="Todos los servicios"
+      :aria-label="t('Filter by service')"
+      :placeholder="t('All services')"
       class="w-full sm:w-72"
       show-clear
       @update:model-value="filterByService"
@@ -212,7 +213,7 @@ async function save() {
     >
       <span>{{ services.error.value.message }}</span>
       <Button
-        label="Recargar servicios"
+        :label="t('Reload services')"
         severity="secondary"
         outlined
         @click="services.load()"
@@ -221,7 +222,7 @@ async function save() {
     <div v-if="error" class="flex flex-wrap items-center gap-3" role="alert">
       <span>{{ error.message }}</span>
       <Button
-        label="Reintentar"
+        :label="t('Retry')"
         severity="secondary"
         outlined
         @click="plans.load(serviceFilter)"
@@ -230,54 +231,58 @@ async function save() {
     <EmptyState
       v-else-if="!loading && !rows.length"
       icon="pi pi-tags"
-      title="No hay planes para mostrar"
+      :title="t('No plans to display')"
     />
     <DataTable v-else :value="rows" data-key="id" :loading="loading">
-      <Column header="Servicio">
+      <Column :header="t('Service')">
         <template #body="{ data }">{{
           serviceById.get(data.service)?.name ||
           data.expand?.service?.name ||
           '—'
         }}</template>
       </Column>
-      <Column field="name" header="Nombre" />
-      <Column header="Precio">
+      <Column field="name" :header="t('Name')" />
+      <Column :header="t('Price')">
         <template #body="{ data }">{{
           formatCents(data.price_cents)
         }}</template>
       </Column>
-      <Column header="Unidad">
+      <Column :header="t('Unit')">
         <template #body="{ data }">{{
           billingUnitLabel[(data as Plan).billing_unit]
         }}</template>
       </Column>
-      <Column field="sessions" header="Sesiones" />
-      <Column header="Frecuencia">
+      <Column field="sessions" :header="t('Sessions')" />
+      <Column :header="t('Frequency')">
         <template #body="{ data }">{{
-          data.per_week ? data.per_week + ' por semana' : '—'
+          data.per_week ? t('{count} per week', { count: data.per_week }) : '—'
         }}</template>
       </Column>
-      <Column header="Compromiso">
+      <Column :header="t('Commitment')">
         <template #body="{ data }">{{
           data.commitment_periods
-            ? data.commitment_periods * 4 + ' semanas'
+            ? t('{count} weeks', { count: data.commitment_periods * 4 })
             : '—'
         }}</template>
       </Column>
-      <Column header="Características">
+      <Column :header="t('Features')">
         <template #body="{ data }">
           <div class="flex flex-wrap gap-1">
             <Tag
               v-if="data.is_first_class"
-              value="Primera clase"
+              :value="t('First class')"
               severity="info"
             />
-            <Tag v-if="data.partner" value="Partner" severity="secondary" />
+            <Tag
+              v-if="data.partner"
+              :value="t('Partner')"
+              severity="secondary"
+            />
             <span v-if="!data.is_first_class && !data.partner">—</span>
           </div>
         </template>
       </Column>
-      <Column header="Estado">
+      <Column :header="t('Status')">
         <template #body="{ data }">
           <template v-if="canManage">
             <CatalogActiveSwitch
@@ -286,19 +291,21 @@ async function save() {
               :disabled="busy || (!data.active && !serviceIsActive(data))"
               @change="actions.changeActive(data, $event)"
             />
-            <small v-if="!serviceIsActive(data)" class="block text-muted-color"
-              >Servicio inactivo</small
+            <small
+              v-if="!serviceIsActive(data)"
+              class="block text-muted-color"
+              >{{ t('Inactive service') }}</small
             >
           </template>
           <StatusTag v-else :value="String(data.active)" :map="ACTIVE_STATUS" />
         </template>
       </Column>
-      <Column header="Orden">
+      <Column :header="t('Order')">
         <template #body="{ data }">{{
           (positions.get(data.id)?.index ?? 0) + 1
         }}</template>
       </Column>
-      <Column v-if="canManage" header="Acciones">
+      <Column v-if="canManage" :header="t('Actions')">
         <template #body="{ data }">
           <CatalogRowActions
             :name="data.name"
@@ -321,7 +328,7 @@ async function save() {
     <Dialog
       v-if="canManage"
       v-model:visible="visible"
-      :header="editing ? 'Editar plan' : 'Nuevo plan'"
+      :header="editing ? t('Edit plan') : t('New plan')"
       modal
       :closable="!saving"
       :close-on-escape="!saving"
@@ -333,7 +340,7 @@ async function save() {
         </p>
         <CatalogField
           id="plan-service"
-          label="Servicio"
+          :label="t('Service')"
           :error="fields.service"
         >
           <Select
@@ -342,7 +349,7 @@ async function save() {
             :options="serviceOptions"
             option-label="label"
             option-value="value"
-            placeholder="Selecciona un servicio"
+            :placeholder="t('Select a service')"
             :invalid="!!fields.service"
             @update:model-value="setService"
           />
@@ -350,7 +357,7 @@ async function save() {
         <CatalogField
           id="plan-name"
           v-slot="{ describedBy }"
-          label="Nombre"
+          :label="t('Name')"
           :error="fields.name"
         >
           <InputText
@@ -365,7 +372,7 @@ async function save() {
           <CatalogField
             id="plan-price"
             v-slot="{ describedBy }"
-            :label="`Precio (${businessCurrency})`"
+            :label="t('Price ({currency})', { currency: businessCurrency })"
             :error="fields.price_cents"
           >
             <InputText
@@ -380,7 +387,7 @@ async function save() {
           </CatalogField>
           <CatalogField
             id="plan-unit"
-            label="Unidad de cobro"
+            :label="t('Billing unit')"
             :error="fields.billing_unit"
           >
             <Select
@@ -397,7 +404,7 @@ async function save() {
         <div class="grid gap-4 sm:grid-cols-3">
           <CatalogField
             id="plan-sessions"
-            label="Sesiones"
+            :label="t('Sessions')"
             :error="fields.sessions"
           >
             <InputNumber
@@ -413,7 +420,7 @@ async function save() {
           <CatalogField
             id="plan-frequency"
             v-slot="{ describedBy }"
-            label="Frecuencia"
+            :label="t('Frequency')"
             help="Sesiones por semana"
             :error="fields.per_week"
           >
@@ -433,7 +440,7 @@ async function save() {
           <CatalogField
             id="plan-commitment"
             v-slot="{ describedBy }"
-            label="Compromiso"
+            :label="t('Commitment')"
             help="Periodos de 4 semanas"
             :error="fields.commitment_periods"
           >
@@ -454,7 +461,7 @@ async function save() {
         <div class="grid gap-4 sm:grid-cols-3">
           <CatalogField
             id="plan-first"
-            label="Primera clase"
+            :label="t('First class')"
             :error="fields.is_first_class"
           >
             <ToggleSwitch
@@ -466,18 +473,18 @@ async function save() {
           </CatalogField>
           <CatalogField
             id="plan-partner"
-            label="Partner"
+            :label="t('Partner')"
             :error="fields.partner"
           >
             <ToggleSwitch v-model="form.partner" input-id="plan-partner" />
           </CatalogField>
           <CatalogField
             id="plan-active"
-            label="Activo"
+            :label="t('Active')"
             :error="fields.active"
             :help="
               selectedService?.active === false
-                ? 'El servicio está inactivo.'
+                ? t('The service is inactive.')
                 : undefined
             "
           >
@@ -492,7 +499,7 @@ async function save() {
         <CatalogField
           id="plan-note"
           v-slot="{ describedBy }"
-          label="Nota"
+          :label="t('Note')"
           :error="fields.note"
         >
           <Textarea
@@ -507,13 +514,13 @@ async function save() {
         <div class="flex justify-end gap-2">
           <Button
             type="button"
-            label="Cancelar"
+            :label="t('Cancel')"
             severity="secondary"
             text
             :disabled="saving"
             @click="visible = false"
           />
-          <Button type="submit" label="Guardar" :loading="saving" />
+          <Button type="submit" :label="t('Save')" :loading="saving" />
         </div>
       </form>
     </Dialog>
