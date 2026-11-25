@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{
@@ -12,7 +13,7 @@ const props = withDefaults(
   }>(),
   {
     modelValue: '',
-    placeholder: 'Buscar',
+    placeholder: undefined,
     searchClass: 'w-full sm:w-auto',
   },
 );
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   search: [value: string];
 }>();
 
+const searchLabel = computed(() => props.placeholder ?? t('Search'));
 const draft = ref(props.modelValue);
 let pendingSearch: ReturnType<typeof setTimeout> | undefined;
 
@@ -50,8 +52,8 @@ onBeforeUnmount(() => clearTimeout(pendingSearch));
       <InputText
         :model-value="draft"
         type="search"
-        :placeholder="placeholder"
-        :aria-label="placeholder"
+        :placeholder="searchLabel"
+        :aria-label="searchLabel"
         class="w-full"
         @update:model-value="updateSearch"
       />

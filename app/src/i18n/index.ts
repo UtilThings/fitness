@@ -28,12 +28,13 @@ export function translateMessage(message: string): string {
   return te(message) ? t(message) : message;
 }
 
+export function translateKey(key: string): string {
+  return t(key);
+}
+
 export function tl<Key extends string>(key: Key): Key {
   return key;
 }
-
-// These keys seed the navigation migration.
-export const initialNavKeys = [tl('Dashboard'), tl('Settings'), tl('Sign out')];
 
 let spanishMessages: Promise<Record<string, string>> | undefined;
 let latestRequest = 0;

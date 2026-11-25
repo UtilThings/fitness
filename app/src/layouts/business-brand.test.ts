@@ -60,7 +60,7 @@ it('updates the sidebar and title when the business changes', async () => {
 
 it('keeps the login layout and title neutral', async () => {
   const wrapper = mount(AuthLayout, {
-    global: { plugins: [PrimeVue, await routerFor('Iniciar sesión')] },
+    global: { plugins: [PrimeVue, await routerFor('Sign in')] },
   });
   expect(wrapper.text()).toContain('Admin');
   expect(wrapper.text()).not.toContain('Second Fitness');

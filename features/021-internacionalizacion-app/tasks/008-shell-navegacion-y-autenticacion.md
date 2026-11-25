@@ -1,7 +1,7 @@
 # 008 - [Módulo] Shell, navegación, autenticación y errores de ruta
 
 - **Prioridad:** 8
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 004, 005, 006, 007
 - **Fase:** Fase 3: Migración del texto de la interfaz
 
@@ -22,10 +22,10 @@ El marco del admin (menú, cabeceras, acceso, páginas de error) está en inglé
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
-- [ ] Con `en` el menú, los títulos de página y el acceso aparecen en inglés; con `es`, igual que antes de la feature.
-- [ ] Los textos de navegación cambian al instante al cambiar el idioma.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
+- [x] Con `en` el menú, los títulos de página y el acceso aparecen en inglés; con `es`, igual que antes de la feature.
+- [x] Los textos de navegación cambian al instante al cambiar el idioma.
 
 ## Referencias
 
@@ -37,3 +37,4 @@ El marco del admin (menú, cabeceras, acceso, páginas de error) está en inglé
 
 ## Notas de implementación
 
+Lint, comprobación de tipos, catálogo y suite completa en verde. Las pruebas verifican el cambio en caliente de los enlaces y grupos de navegación, el selector en el menú del usuario y los títulos de las rutas.

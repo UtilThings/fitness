@@ -21,7 +21,7 @@ function translationVariables(message: string): string {
   return [...new Set(variables)].sort().join(', ');
 }
 
-function readSource(code: string, file: string, skipLegacyRouteTitles = false) {
+function readSource(code: string, file: string) {
   const keys: Keys = new Map();
   const errors: string[] = [];
 
@@ -42,10 +42,7 @@ function readSource(code: string, file: string, skipLegacyRouteTitles = false) {
           const [argument] = node.arguments;
           if (argument && ts.isStringLiteralLike(argument))
             keys.set(argument.text, file);
-          else if (
-            file !== 'src/i18n/index.ts' &&
-            file !== 'src/composables/useDocumentTitle.ts'
-          ) {
+          else if (file !== 'src/i18n/index.ts') {
             errors.push(
               `${file}: dynamic ${name}(${argument?.getText(source) ?? ''}) needs a literal key or a marked key map`,
             );
@@ -53,7 +50,6 @@ function readSource(code: string, file: string, skipLegacyRouteTitles = false) {
         }
       }
       if (
-        !skipLegacyRouteTitles &&
         ts.isPropertyAssignment(node) &&
         ts.isIdentifier(node.name) &&
         node.name.text === 'meta' &&
@@ -176,8 +172,7 @@ export function checkCatalog(
   const { entries, errors } = readCatalog(catalog, catalogFile);
   const used: Keys = new Map();
   for (const [file, code] of Object.entries(sources)) {
-    // The router still contains legacy Spanish titles until the shell migration.
-    const source = readSource(code, file, file === 'src/router/index.ts');
+    const source = readSource(code, file);
     errors.push(...source.errors);
     for (const [key, path] of source.keys) {
       used.set(key, path);

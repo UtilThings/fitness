@@ -1,3 +1,4 @@
+import { tl, translateKey } from '@/i18n';
 import { PERMISSIONS } from '@/lib/permissions';
 import type { Role } from '@/types/pb';
 
@@ -17,40 +18,40 @@ export interface NavGroup {
 /** Cada módulo retira su marcador al registrar la ruta. */
 export const adminNav: NavGroup[] = [
   {
-    label: 'Análisis',
+    label: tl('Analytics'),
     items: [
-      { label: 'Dashboard', icon: 'pi pi-chart-bar', to: '/' },
+      { label: tl('Dashboard'), icon: 'pi pi-chart-bar', to: '/' },
       {
-        label: 'Reportes',
+        label: tl('Reports'),
         icon: 'pi pi-chart-bar',
         to: '/reports',
       },
     ],
   },
   {
-    label: 'Operaciones',
+    label: tl('Operations'),
     items: [
       {
-        label: 'Clientes',
+        label: tl('Clients'),
         icon: 'pi pi-users',
         to: '/clients',
       },
       {
-        label: 'Comunicaciones',
+        label: tl('Communications'),
         icon: 'pi pi-envelope',
         to: '/communications',
       },
-      { label: 'Online Coaching', icon: 'pi pi-comments', to: '/coaching' },
+      { label: tl('Online Coaching'), icon: 'pi pi-comments', to: '/coaching' },
       {
-        label: 'Clases',
+        label: tl('Classes'),
         icon: 'pi pi-calendar',
         to: '/classes',
       },
-      { label: 'Agenda', icon: 'pi pi-calendar-clock', to: '/agenda' },
-      { label: 'Plantillas', icon: 'pi pi-list', to: '/classes/templates' },
-      { label: 'Bloqueos', icon: 'pi pi-ban', to: '/classes/blocks' },
+      { label: tl('Schedule'), icon: 'pi pi-calendar-clock', to: '/agenda' },
+      { label: tl('Templates'), icon: 'pi pi-list', to: '/classes/templates' },
+      { label: tl('Blocks'), icon: 'pi pi-ban', to: '/classes/blocks' },
       {
-        label: 'Reservas',
+        label: tl('Bookings'),
         icon: 'pi pi-bookmark',
         to: '/bookings',
         placeholder: true,
@@ -58,49 +59,49 @@ export const adminNav: NavGroup[] = [
     ],
   },
   {
-    label: 'Catálogo',
-    items: [{ label: 'Planes', icon: 'pi pi-tags', to: '/plans' }],
+    label: tl('Catalog'),
+    items: [{ label: tl('Plans'), icon: 'pi pi-tags', to: '/plans' }],
   },
   {
-    label: 'Ajustes',
+    label: tl('Settings'),
     items: [
-      { label: 'Servicios', icon: 'pi pi-briefcase', to: '/services' },
+      { label: tl('Services'), icon: 'pi pi-briefcase', to: '/services' },
       {
-        label: 'Auditoría',
+        label: tl('Audit log'),
         icon: 'pi pi-history',
         to: '/audit',
         roles: ['owner'],
       },
       {
-        label: 'Equipo',
+        label: tl('Team'),
         icon: 'pi pi-id-card',
         to: '/team',
       },
       {
-        label: 'Negocio',
+        label: tl('Business'),
         icon: 'pi pi-building',
         to: '/settings/business',
         roles: ['owner'],
       },
       {
-        label: 'Integración',
+        label: tl('Integration'),
         icon: 'pi pi-link',
         to: '/settings/integration',
         roles: ['owner'],
       },
-      { label: 'Mi perfil', icon: 'pi pi-user', to: '/settings/profile' },
+      { label: tl('My profile'), icon: 'pi pi-user', to: '/settings/profile' },
     ],
   },
   {
-    label: 'Facturación',
+    label: tl('Billing'),
     items: [
       {
-        label: 'Suscripciones',
+        label: tl('Memberships'),
         icon: 'pi pi-ticket',
         to: '/memberships',
       },
       {
-        label: 'Pagos',
+        label: tl('Payments'),
         icon: 'pi pi-credit-card',
         to: '/payments',
         roles: [...PERMISSIONS['payments.manage']],
@@ -109,8 +110,19 @@ export const adminNav: NavGroup[] = [
   },
 ];
 
+export function navItems(): NavGroup[] {
+  return adminNav.map((group) => ({
+    ...group,
+    label: translateKey(group.label),
+    items: group.items.map((item) => ({
+      ...item,
+      label: translateKey(item.label),
+    })),
+  }));
+}
+
 export function visibleNav(role: Role | null): NavGroup[] {
-  return adminNav
+  return navItems()
     .map((group) => ({
       ...group,
       items: group.items.filter(

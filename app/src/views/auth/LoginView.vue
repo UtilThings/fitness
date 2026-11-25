@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
@@ -24,7 +25,7 @@ async function onSubmit() {
     await login(email.value, password.value);
     await router.push(safeRedirect(route.query.redirect));
   } catch {
-    error.value = 'Correo o contraseña incorrectos.';
+    error.value = t('Incorrect email or password.');
   } finally {
     loading.value = false;
   }
@@ -32,22 +33,22 @@ async function onSubmit() {
 </script>
 
 <template>
-  <AuthHeading title="Iniciar sesión" subtitle="Ingresa tus credenciales." />
+  <AuthHeading :title="t('Sign in')" :subtitle="t('Enter your credentials.')" />
   <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
     <div class="flex flex-col gap-2">
-      <label for="email" class="text-sm">Correo electrónico</label>
+      <label for="email" class="text-sm">{{ t('Email address') }}</label>
       <InputText
         id="email"
         v-model="email"
         type="email"
-        placeholder="nombre@empresa.com"
+        :placeholder="t('name{\'@\'}company.com')"
         autocomplete="username"
         required
         fluid
       />
     </div>
     <div class="flex flex-col gap-2">
-      <label for="password" class="text-sm">Contraseña</label>
+      <label for="password" class="text-sm">{{ t('Password') }}</label>
       <Password
         v-model="password"
         input-id="password"
@@ -59,14 +60,14 @@ async function onSubmit() {
       />
     </div>
     <p v-if="error" class="text-sm text-red-500" role="alert">{{ error }}</p>
-    <Button type="submit" label="Entrar" :loading="loading" fluid />
+    <Button type="submit" :label="t('Log in')" :loading="loading" fluid />
   </form>
   <p class="mt-6 text-center text-sm text-surface-500">
     <RouterLink
       :to="{ name: 'forgot-password' }"
       class="text-primary hover:underline"
     >
-      ¿Olvidaste tu contraseña?
+      {{ t('Forgot your password?') }}
     </RouterLink>
   </p>
 </template>

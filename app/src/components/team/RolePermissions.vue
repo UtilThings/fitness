@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {
   PERMISSIONS,
-  PERMISSION_LABELS,
+  permissionLabel,
   type Permission,
 } from '@/lib/permissions';
 import { ROLES, type Role } from '@/types/pb';
@@ -41,7 +41,7 @@ const highlightClass = 'bg-primary/10 font-semibold';
           :data-permission="permission"
         >
           <th class="px-3 py-2 font-medium" scope="row">
-            {{ PERMISSION_LABELS[permission] }}
+            {{ permissionLabel(permission) }}
           </th>
           <td
             v-for="role in ROLES"

@@ -1,6 +1,6 @@
 import { watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
-import { t } from '@/i18n';
+import { translateKey } from '@/i18n';
 
 export function useDocumentTitle(brandName: () => string, active = () => true) {
   const route = useRoute();
@@ -9,6 +9,6 @@ export function useDocumentTitle(brandName: () => string, active = () => true) {
     if (!active()) return;
     const title = route.meta.title;
     const name = brandName();
-    document.title = title ? `${t(title)} · ${name}` : name;
+    document.title = title ? `${translateKey(title)} · ${name}` : name;
   });
 }
