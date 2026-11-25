@@ -111,10 +111,12 @@ const userMenu = computed(() => [
       <SidebarAside>
         <SidebarPanel>
           <SidebarHeader>
-            <div class="flex items-center gap-2 px-2 py-1">
+            <div
+              class="flex items-center gap-2 px-2 py-1 in-data-[collapsible=icon]:justify-center in-data-[collapsible=icon]:px-0"
+            >
               <div
                 v-if="businessLoading"
-                class="h-7 w-28 animate-pulse rounded bg-surface-200 dark:bg-surface-700"
+                class="h-7 w-28 animate-pulse rounded bg-surface-200 in-data-[collapsible=icon]:w-7 dark:bg-surface-700"
                 role="status"
                 :aria-label="t('Loading business')"
               ></div>
@@ -123,11 +125,13 @@ const userMenu = computed(() => [
                   v-if="logoUrl && !logoFailed"
                   :src="logoUrl"
                   alt=""
-                  class="h-7 w-auto shrink-0"
+                  class="size-7 shrink-0 object-contain"
                   @error="logoFailed = true"
                 />
                 <Avatar v-else :label="brandInitials" class="shrink-0" />
-                <span class="truncate font-semibold">{{ brandName }}</span>
+                <span class="truncate font-semibold in-data-[collapsible=icon]:sr-only">
+                  {{ brandName }}
+                </span>
               </template>
             </div>
           </SidebarHeader>
