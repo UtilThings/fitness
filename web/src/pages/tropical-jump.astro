@@ -1,4 +1,5 @@
 ---
+import { tl } from '@/i18n';
 import jump from '@/assets/jump.jpg';
 import CtaBand from '@/components/CtaBand.astro';
 import PageHero from '@/components/PageHero.astro';
@@ -48,7 +49,7 @@ const policies = [
       plans={jumpPlans}
       currency={business.currency}
       featuredIndex={1}
-      cta="Book now"
+      cta={tl('Book now')}
       to="/schedule"
     >
       <div class="card-surface p-7">

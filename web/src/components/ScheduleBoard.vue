@@ -14,15 +14,15 @@ import {
   weekStart,
   type ServiceFilter,
 } from '@/lib/schedule';
-import { fallbackBusiness, formatTime } from '@/lib/data';
-import { formatMessage, resolveText, tl, type Text } from '@/i18n';
+import { fallbackBusiness, formatTime, regionalLocale } from '@/lib/data';
+import { resolveText, tl, type MessageKey, type Text } from '@/i18n';
 import { useLang } from '@/lib/use-lang';
 
 const filters = {
-  all: 'All',
-  [SERVICE_SLUGS.groupPlans]: 'Group Strength',
-  [SERVICE_SLUGS.jumpPlans]: 'Tropical Jump',
-} satisfies Record<ServiceFilter, string>;
+  all: tl('All'),
+  [SERVICE_SLUGS.groupPlans]: tl('Group Strength'),
+  [SERVICE_SLUGS.jumpPlans]: tl('Tropical Jump'),
+} satisfies Record<ServiceFilter, MessageKey>;
 const statusColor = {
   full: 'text-destructive',
   almost: 'text-accent',
@@ -47,7 +47,7 @@ interface ClassCard {
 const props = defineProps<{ timezone?: string }>();
 const timezone = ref(props.timezone ?? fallbackBusiness.timezone);
 const { lang, t, translateKey } = useLang();
-const locale = computed(() => (lang.value === 'es' ? 'es-US' : 'en-US'));
+const locale = computed(() => regionalLocale(lang.value));
 const weekday = computed(
   () =>
     new Intl.DateTimeFormat(locale.value, {
@@ -145,7 +145,7 @@ function moveWeek(increment: number) {
       <div
         class="flex flex-wrap gap-2"
         role="group"
-        aria-label="Filter by service"
+        :aria-label="t('Filter by service')"
       >
         <button
           v-for="(label, service) in filters"
@@ -160,13 +160,13 @@ function moveWeek(increment: number) {
           "
           @click="filter = service"
         >
-          {{ label }}
+          {{ translateKey(label) }}
         </button>
       </div>
       <div class="flex items-center gap-3">
         <button
           type="button"
-          aria-label="Previous week"
+          :aria-label="t('Previous week')"
           class="rounded-full border border-border p-2"
           :disabled="offset === 0"
           @click="moveWeek(-1)"
@@ -188,7 +188,7 @@ function moveWeek(increment: number) {
         <span class="text-sm font-bold" aria-live="polite">{{ range }}</span>
         <button
           type="button"
-          aria-label="Next week"
+          :aria-label="t('Next week')"
           class="rounded-full border border-border p-2"
           :disabled="offset >= maxWeeks"
           @click="moveWeek(1)"
@@ -264,13 +264,11 @@ function moveWeek(increment: number) {
           >
             <div class="flex items-start justify-between">
               <div>
-                <p class="font-display text-2xl">{{ formatTime(time) }}</p>
+                <p class="font-display text-2xl">
+                  {{ formatTime(time, lang) }}
+                </p>
                 <p class="font-semibold">
-                  {{
-                    resolveText(service, (key, params) =>
-                      formatMessage(key, params, 'en'),
-                    )
-                  }}
+                  {{ resolveText(service, translateKey) }}
                 </p>
                 <p v-if="coach" class="text-xs text-muted-foreground">
                   {{ coach }}
@@ -289,8 +287,15 @@ function moveWeek(increment: number) {
               >
             </div>
             <p v-if="availability" class="mt-3 text-sm text-muted-foreground">
-              {{ availability.spots_left }} / {{ availability.capacity }}
-              {{ t('spots left') }}
+              {{
+                t(
+                  '{count} / {capacity} spot left | {count} / {capacity} spots left',
+                  {
+                    count: availability.spots_left,
+                    capacity: availability.capacity,
+                  },
+                )
+              }}
             </p>
             <a
               href="/contact"

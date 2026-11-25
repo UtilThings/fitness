@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { formatMessage, resolveText, type Text } from '@/i18n';
+import { resolveText, tl, type MessageKey, type Text } from '@/i18n';
 import { getCatalog, type PlanGroup } from '@/lib/catalog';
 import { fallbackBusiness, formatPrice, type Plan } from '@/lib/data';
 import { env } from '@/lib/env';
@@ -11,12 +11,12 @@ const props = withDefaults(
     plans: Plan[];
     currency?: string;
     group: PlanGroup;
-    cta?: string;
+    cta?: MessageKey;
     to?: string;
     featuredIndex?: number;
   }>(),
   {
-    cta: 'Inquire now',
+    cta: tl('Inquire now'),
     to: '/contact',
     featuredIndex: -1,
     currency: fallbackBusiness.currency,
@@ -26,12 +26,10 @@ const props = withDefaults(
 const plans = ref(props.plans);
 const currency = ref(props.currency);
 const updating = ref(false);
-const { lang } = useLang();
+const { lang, t, translateKey } = useLang();
 
-function textInEnglish(text?: Text) {
-  return resolveText(text ?? '', (key, params) =>
-    formatMessage(key, params, 'en'),
-  );
+function renderText(text?: Text) {
+  return resolveText(text ?? '', translateKey);
 }
 
 onMounted(async () => {
@@ -57,17 +55,17 @@ onMounted(async () => {
       <span
         v-if="index === featuredIndex"
         class="mb-3 self-start rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase text-accent-foreground"
-        >Most popular</span
+        >{{ t('Most popular') }}</span
       >
-      <h3 class="text-2xl">{{ textInEnglish(plan.name) }}</h3>
+      <h3 class="text-2xl">{{ renderText(plan.name) }}</h3>
       <p
         class="mt-4 font-display text-5xl text-primary"
-        :class="{ uppercase: plan.price === 0 }"
+        :class="{ uppercase: plan.price === 0 && lang === 'en' }"
       >
-        {{ formatPrice(plan.price, currency) }}
+        {{ formatPrice(plan.price, currency, lang) }}
       </p>
       <p class="text-sm text-muted-foreground">
-        {{ textInEnglish(plan.unit) }}
+        {{ renderText(plan.unit) }}
       </p>
       <ul class="my-6 space-y-2 text-sm">
         <li
@@ -91,14 +89,14 @@ onMounted(async () => {
           >
             <path d="m20 6-11 11-5-5" />
           </svg>
-          {{ textInEnglish(item) }}
+          {{ renderText(item) }}
         </li>
       </ul>
       <a
         :href="to"
         class="btn mt-auto"
         :class="index === featuredIndex ? 'btn-primary' : 'btn-outline'"
-        >{{ cta }}</a
+        >{{ translateKey(cta) }}</a
       >
     </div>
     <slot />
@@ -106,7 +104,7 @@ onMounted(async () => {
       class="pointer-events-none absolute end-0 top-full mt-1 text-xs text-muted-foreground"
       role="status"
     >
-      {{ updating ? (lang === 'es' ? 'Actualizando…' : 'Updating…') : '' }}
+      {{ updating ? t('Updating…') : '' }}
     </p>
   </div>
 </template>

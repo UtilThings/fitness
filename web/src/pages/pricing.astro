@@ -1,4 +1,5 @@
 ---
+import { tl, type MessageKey } from '@/i18n';
 import CtaBand from '@/components/CtaBand.astro';
 import PageHero from '@/components/PageHero.astro';
 import PricingGrid from '@/components/PricingGrid.vue';
@@ -8,33 +9,37 @@ import { getCatalog, type PlanGroup } from '@/lib/catalog';
 
 const catalog = await getCatalog();
 const { business } = catalog;
-const sections: { title: string; group: PlanGroup; cta: string; to: string }[] =
-  [
-    {
-      title: 'Personal Training — 1-on-1',
-      group: 'personalOneOnOne',
-      cta: 'Inquire now',
-      to: '/contact',
-    },
-    {
-      title: 'Personal Training — Partner',
-      group: 'personalPartner',
-      cta: 'Inquire now',
-      to: '/contact',
-    },
-    {
-      title: 'Group Strength',
-      group: 'groupPlans',
-      cta: 'Book now',
-      to: '/schedule',
-    },
-    {
-      title: 'Tropical Jump',
-      group: 'jumpPlans',
-      cta: 'Book now',
-      to: '/schedule',
-    },
-  ];
+const sections: {
+  title: string;
+  group: PlanGroup;
+  cta: MessageKey;
+  to: string;
+}[] = [
+  {
+    title: 'Personal Training — 1-on-1',
+    group: 'personalOneOnOne',
+    cta: tl('Inquire now'),
+    to: '/contact',
+  },
+  {
+    title: 'Personal Training — Partner',
+    group: 'personalPartner',
+    cta: tl('Inquire now'),
+    to: '/contact',
+  },
+  {
+    title: 'Group Strength',
+    group: 'groupPlans',
+    cta: tl('Book now'),
+    to: '/schedule',
+  },
+  {
+    title: 'Tropical Jump',
+    group: 'jumpPlans',
+    cta: tl('Book now'),
+    to: '/schedule',
+  },
+];
 ---
 
 <BaseLayout

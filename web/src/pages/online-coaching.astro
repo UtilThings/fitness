@@ -1,4 +1,5 @@
 ---
+import { tl } from '@/i18n';
 import LeadForm from '@/components/LeadForm.vue';
 import PageHero from '@/components/PageHero.astro';
 import Section from '@/components/Section.astro';
@@ -44,25 +45,29 @@ const { business } = await getCatalog();
     </div>
     <LeadForm
       client:load
-      title="Request a consultation"
+      title={tl('Request a consultation')}
       fields={[
-        { kind: 'text', placeholder: 'Full name', required: true },
-        { kind: 'email', placeholder: 'Email', required: true },
-        { kind: 'text', placeholder: 'Phone' },
+        { kind: 'text', placeholder: tl('Full name'), required: true },
+        { kind: 'email', placeholder: tl('Email'), required: true },
+        { kind: 'text', placeholder: tl('Phone') },
         {
           kind: 'select',
-          placeholder: 'Program length',
+          placeholder: tl('Program length'),
           options: [
-            '8-week program',
-            '12-week program',
-            '16-week program',
-            'Not sure yet',
+            tl('8-week program'),
+            tl('12-week program'),
+            tl('16-week program'),
+            tl('Not sure yet'),
           ],
         },
-        { kind: 'textarea', placeholder: 'Tell us about your goals', rows: 4 },
+        {
+          kind: 'textarea',
+          placeholder: tl('Tell us about your goals'),
+          rows: 4,
+        },
       ]}
-      submitLabel="Submit application"
-      successMessage="Thanks! We'll be in touch within 1–2 business days."
+      submitLabel={tl('Submit application')}
+      successMessage={tl("Thanks! We'll be in touch within 1–2 business days.")}
     />
   </Section>
 </BaseLayout>

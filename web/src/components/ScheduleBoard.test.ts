@@ -110,12 +110,27 @@ it('requests the Miramar week and renders real availability, filters and transla
   expect(almost.get('.text-accent').text()).toBe('Almost full');
   expect(available.get('a').text()).toBe('Reserve');
 
+  const strength = wrapper.get('button:nth-child(2)');
+  await strength.trigger('click');
+  expect(wrapper.findAll('.card-surface')).toHaveLength(2);
   await setLocale('es');
   await wrapper.vm.$nextTick();
-  expect(full.text()).toContain('Lista de espera');
-  expect(almost.text()).toContain('Casi lleno');
-  expect(available.text()).toContain('Disponible');
-  expect(available.text()).toContain('5 / 6 cupos');
+  expect(strength.text()).toBe('Fuerza en Grupo');
+  expect(strength.attributes('aria-pressed')).toBe('true');
+  expect(wrapper.get('[role="group"]').attributes('aria-label')).toBe(
+    'Filtrar por servicio',
+  );
+  expect(wrapper.find('[aria-label="Semana siguiente"]').exists()).toBe(true);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  await wrapper.get('[role="group"] button:first-child').trigger('click');
+  const [fullEs, almostEs, availableEs] = wrapper.findAll('.card-surface');
+  expect(fullEs.text()).toContain('Lista de espera');
+  expect(almostEs.text()).toContain('Casi lleno');
+  expect(almostEs.text()).toContain('09:00');
+  expect(almostEs.text()).toContain('Coach JQ');
+  expect(almostEs.text()).toContain('Group Strength');
+  expect(availableEs.text()).toContain('Disponible');
+  expect(availableEs.text()).toContain('5 / 6 cupos');
   await wrapper
     .findAll('button')
     .find((button) => button.text() === 'Tropical Jump')!

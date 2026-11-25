@@ -1,4 +1,5 @@
 ---
+import { tl } from '@/i18n';
 import LeadForm from '@/components/LeadForm.vue';
 import PageHero from '@/components/PageHero.astro';
 import Section from '@/components/Section.astro';
@@ -33,23 +34,23 @@ const { business } = await getCatalog();
     <LeadForm
       client:load
       fields={[
-        { kind: 'text', placeholder: 'Full name', required: true },
-        { kind: 'email', placeholder: 'Email', required: true },
+        { kind: 'text', placeholder: tl('Full name'), required: true },
+        { kind: 'email', placeholder: tl('Email'), required: true },
         {
           kind: 'select',
-          placeholder: 'Program',
+          placeholder: tl('Program'),
           options: [
-            'Personal Training',
-            'Group Strength',
-            'Tropical Jump',
-            'Online Coaching',
-            'Other',
+            tl('Personal Training'),
+            tl('Group Strength'),
+            tl('Tropical Jump'),
+            tl('Online Coaching'),
+            tl('Other'),
           ],
         },
-        { kind: 'textarea', placeholder: 'Message', rows: 5 },
+        { kind: 'textarea', placeholder: tl('Message'), rows: 5 },
       ]}
-      submitLabel="Send message"
-      successMessage="Thanks! We'll get back to you shortly."
+      submitLabel={tl('Send message')}
+      successMessage={tl("Thanks! We'll get back to you shortly.")}
     />
   </Section>
 </BaseLayout>

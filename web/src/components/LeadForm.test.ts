@@ -1,19 +1,20 @@
 import { mount } from '@vue/test-utils';
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { createSSRApp, nextTick } from 'vue';
 import { renderToString } from 'vue/server-renderer';
+import { setLocale, tl } from '@/i18n';
 import LeadForm from './LeadForm.vue';
 
 const props = {
-  title: 'Request a consultation',
-  submitLabel: 'Apply',
-  successMessage: 'Thanks!',
+  title: tl('Request a consultation'),
+  submitLabel: tl('Apply'),
+  successMessage: tl('Thanks!'),
   fields: [
-    { kind: 'text' as const, placeholder: 'Full name', required: true },
-    { kind: 'email' as const, placeholder: 'Email', required: true },
-    { kind: 'text' as const, placeholder: 'Phone' },
-    { kind: 'select' as const, options: ['Training', 'Jump'] },
-    { kind: 'textarea' as const, placeholder: 'Goals', rows: 4 },
+    { kind: 'text' as const, placeholder: tl('Full name'), required: true },
+    { kind: 'email' as const, placeholder: tl('Email'), required: true },
+    { kind: 'text' as const, placeholder: tl('Phone') },
+    { kind: 'select' as const, options: [tl('Training'), tl('Jump')] },
+    { kind: 'textarea' as const, placeholder: tl('Goals'), rows: 4 },
   ],
 };
 
@@ -55,4 +56,44 @@ it('renders the form on the server', async () => {
   expect(html).toContain('placeholder="Full name"');
   expect(html).toContain('type="email"');
   expect(html).toContain('<textarea');
+});
+
+afterEach(async () => {
+  await setLocale('en');
+  localStorage.clear();
+});
+
+it('translates form controls and confirmation without losing the selected option', async () => {
+  const wrapper = mount(LeadForm, {
+    props: {
+      ...props,
+      fields: [
+        props.fields[0],
+        {
+          kind: 'select',
+          placeholder: tl('Program'),
+          options: [tl('Personal Training'), tl('Other')],
+        },
+      ],
+      submitLabel: tl('Send message'),
+      successMessage: tl("Thanks! We'll get back to you shortly."),
+    },
+  });
+  await wrapper.get('select').setValue('Other');
+  await setLocale('es');
+  expect(wrapper.get('input').attributes('placeholder')).toBe(
+    'Nombre completo',
+  );
+  expect(wrapper.get('select').element.value).toBe('Other');
+  expect(wrapper.get('select').attributes('aria-label')).toBe('Programa');
+  expect(wrapper.findAll('option').map((option) => option.text())).toEqual([
+    'Entrenamiento Personal',
+    'Otro',
+  ]);
+  expect(wrapper.get('button').text()).toBe('Enviar mensaje');
+  await wrapper.get('form').trigger('submit');
+  expect(wrapper.get('[role="status"]').text()).toBe(
+    '¡Gracias! Te responderemos pronto.',
+  );
+  wrapper.unmount();
 });
