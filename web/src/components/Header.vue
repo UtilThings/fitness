@@ -37,24 +37,24 @@ function isCurrent(current: string, href: string) {
       <a
         href="/"
         :aria-label="t('{name} — home', { name: businessName })"
-        class="flex items-center gap-2.5"
+        class="flex min-w-0 items-center gap-2.5"
       >
         <img
           :src="logoSrc"
           :alt="t('{name} logo', { name: businessName })"
-          class="h-10 w-auto"
+          class="h-10 w-auto shrink-0"
         />
-        <span class="font-display text-2xl uppercase tracking-wide"
+        <span class="truncate font-display text-2xl uppercase tracking-wide"
           >{{ brand.prefix }}
           <span class="text-primary">{{ brand.accent }}</span></span
         >
       </a>
       <nav
         :aria-label="t('Main menu')"
-        class="hidden items-center gap-5 xl:flex"
+        class="hidden shrink-0 items-center gap-5 whitespace-nowrap xl:flex"
       >
         <a
-          v-for="{ key, href } in navigation"
+          v-for="{ key, headerKey, href } in navigation"
           :key="key"
           :href="href"
           :aria-current="isCurrent(currentPath, href) ? 'page' : undefined"
@@ -64,10 +64,10 @@ function isCurrent(current: string, href: string) {
               ? 'text-primary'
               : 'text-muted-foreground hover:text-foreground'
           "
-          >{{ translateKey(key) }}</a
+          >{{ translateKey(headerKey ?? key) }}</a
         >
       </nav>
-      <div class="flex items-center gap-3">
+      <div class="flex shrink-0 items-center gap-3">
         <div
           class="flex rounded-full border border-border p-0.5 text-xs font-bold"
           role="group"
@@ -92,7 +92,7 @@ function isCurrent(current: string, href: string) {
         </div>
         <a
           href="/schedule"
-          class="btn btn-primary hidden !px-4 !py-2 sm:inline-flex"
+          class="btn btn-primary hidden !px-4 !py-2 whitespace-nowrap sm:inline-flex"
           >{{ t('Book your class') }}</a
         >
         <button

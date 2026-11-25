@@ -48,6 +48,16 @@ it('translates, dispatches the event and restores the stored language', async ()
   await wrapper.get('button:nth-child(2)').trigger('click');
   await changed;
   await flushPromises();
+  expect(wrapper.findAll('nav a').map((link) => link.text())).toEqual([
+    'Entreno personal',
+    'Fuerza grupal',
+    'Tropical Jump',
+    'Planes en línea',
+    'Horario',
+    'Precios',
+    'Nosotros',
+    'Contacto',
+  ]);
   expect(wrapper.get('nav a[href="/schedule"]').text()).toBe('Horario');
   expect(wrapper.get('[role="group"]').attributes('aria-label')).toBe('Idioma');
   expect(wrapper.get('nav').attributes('aria-label')).toBe('Menú principal');
@@ -74,6 +84,17 @@ it('renders the logo, links and language choices during SSR', async () => {
   host.innerHTML = html;
   expect(host.querySelector('img')?.getAttribute('src')).toBe(props.logoSrc);
   expect(host.querySelectorAll('nav a')).toHaveLength(8);
+  expect(
+    Array.from(
+      host.querySelectorAll('nav a'),
+      (link) => link.textContent,
+    ).slice(0, 4),
+  ).toEqual([
+    'Personal Training',
+    'Group Strength',
+    'Tropical Jump',
+    'Online Coaching',
+  ]);
   expect(
     Array.from(
       host.querySelectorAll('button[aria-pressed]'),
