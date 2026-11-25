@@ -1,7 +1,7 @@
 # 019 - [Docs] Inventario y convención de mensajes del API
 
 - **Prioridad:** 19
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** Ninguna
 - **Fase:** Fase 4: Mensajes del API
 
@@ -22,9 +22,9 @@ Se conoce el universo de mensajes de usuario del API y hay una convención clara
 
 ## Criterios de aceptación
 
-- [ ] El inventario cubre todos los archivos de `api/src/hooks` y `api/src/lib` con mensajes de usuario.
-- [ ] Cada mensaje dinámico tiene una decisión registrada.
-- [ ] No quedan cambios en código; solo `docs/i18n.md`.
+- [x] El inventario cubre todos los archivos de `api/src/hooks` y `api/src/lib` con mensajes de usuario.
+- [x] Cada mensaje dinámico tiene una decisión registrada.
+- [x] No quedan cambios en código; solo `docs/i18n.md`.
 
 ## Referencias
 
@@ -36,3 +36,4 @@ Se conoce el universo de mensajes de usuario del API y hay una convención clara
 
 ## Notas de implementación
 
+Inventario por archivo completado en docs/i18n.md. Las entradas dinámicas incluyen la decisión de retirar la interpolación o conservar los valores en datos estructurados. El diff de producto contiene únicamente documentación.
