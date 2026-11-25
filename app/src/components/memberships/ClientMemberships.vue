@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { computed, ref, shallowRef, watch } from 'vue';
@@ -95,20 +96,20 @@ function refresh(membership: Membership) {
   <section class="grid gap-4">
     <div v-if="canManage" class="flex justify-end">
       <Button
-        label="Asignar plan"
+        :label="t('Assign plan')"
         icon="pi pi-plus"
         @click="assigning = true"
       />
     </div>
     <Message v-if="error" severity="error" :closable="false">
       {{ error }}
-      <Button label="Reintentar" size="small" text @click="revision++" />
+      <Button :label="t('Retry')" size="small" text @click="revision++" />
     </Message>
     <p v-else-if="loading && !visible.length" role="status">
-      Cargando membresías…
+      {{ t('Loading memberships…') }}
     </p>
     <p v-else-if="!visible.length" class="text-muted-color">
-      El cliente aún no tiene membresías.
+      {{ t('This client has no memberships yet.') }}
     </p>
     <ul v-if="visible.length" class="grid gap-2">
       <li
@@ -133,18 +134,23 @@ function refresh(membership: Membership) {
               'text-red-600 dark:text-red-400': membership.credits_balance < 0,
             }"
           >
-            Créditos: {{ membershipBalanceLabel(membership) }}
+            {{
+              t('Credits: {balance}', {
+                balance: membershipBalanceLabel(membership),
+              })
+            }}
           </span>
         </div>
         <div class="flex flex-wrap gap-2">
           <Button
-            label="Historial"
+            :label="t('History')"
             size="small"
             severity="secondary"
             text
             :aria-label="
-              'Historial de ' +
-              (membership.expand?.plan?.name ?? membership.plan)
+              t('History for {name}', {
+                name: membership.expand?.plan?.name ?? membership.plan,
+              })
             "
             :aria-pressed="selected === membership.id"
             @click="selected = membership.id"
@@ -162,11 +168,15 @@ function refresh(membership: Membership) {
       class="rounded-lg border border-surface-200 p-4 dark:border-surface-700"
     >
       <h2 class="mb-3 font-semibold">
-        Historial de {{ current.expand?.plan?.name ?? current.plan }}
+        {{
+          t('History for {name}', {
+            name: current.expand?.plan?.name ?? current.plan,
+          })
+        }}
       </h2>
       <Message v-if="ledgerError" severity="error" :closable="false">
         {{ ledgerError }}
-        <Button label="Reintentar" size="small" text @click="revision++" />
+        <Button :label="t('Retry')" size="small" text @click="revision++" />
       </Message>
       <CreditLedger
         :membership="current"

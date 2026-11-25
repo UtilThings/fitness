@@ -44,5 +44,5 @@ onRecordCreateRequest((e) => {
     require(`${__hooks}/lib/scheduling-store`) as typeof import("../lib/scheduling-store");
   prepareTenantCreate(e);
   validateSessionRecord(e.app, e.record!);
-  throw new BadRequestError("Usa la ruta de sesión privada para agendar junto con sus reservas.");
+  throw new BadRequestError("Use the private-session endpoint to schedule the session with its bookings.");
 }, "class_sessions");

@@ -21,7 +21,7 @@ onRecordUpdate(updateBookingLedger, "bookings");
 
 onRecordDelete((e) => {
   if (e.app.countRecords("credit_movements", $dbx.hashExp({ booking: e.record!.id }))) {
-    throw new ForbiddenError("Corrige el estado de la reserva para conservar su historial de créditos.");
+    throw new ForbiddenError("Correct the booking status to preserve its credit history.");
   }
   return e.next();
 }, "bookings");
@@ -36,13 +36,13 @@ routerAdd("GET", "/api/admin/memberships/eligibility", (e) => {
   const client = tenantRecord(e.app, "clients", query.get("client"), business);
   const sessionId = query.get("session");
   if (!sessionId && query.get("service") && query.get("starts_at")) {
-    if (!client) throw membershipError(404, "not_found", "Cliente no encontrado.");
+    if (!client) throw membershipError(404, "not_found", "Client not found.");
     const { privateSessionDraft } = require(`${__hooks}/lib/private-sessions`) as typeof import("../lib/private-sessions");
     const { hasPartnerMembership } = require(`${__hooks}/lib/scheduling-store`) as typeof import("../lib/scheduling-store");
     const draft = privateSessionDraft(e.app, { service: query.get("service"), starts_at: query.get("starts_at") }, business);
     return e.json(200, { ...checkEligibility(e.app, client.id, draft), partner: hasPartnerMembership(e.app, client.id, draft) });
   }
   const session = tenantRecord(e.app, "class_sessions", sessionId, business);
-  if (!client || !session) throw membershipError(404, "not_found", "Cliente o sesión no encontrado.");
+  if (!client || !session) throw membershipError(404, "not_found", "Client or session not found.");
   return e.json(200, checkEligibility(e.app, client.id, session));
 });

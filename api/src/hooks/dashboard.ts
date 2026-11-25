@@ -9,7 +9,7 @@ routerAdd("GET", "/api/admin/dashboard", (e) => {
   const { pocketBaseDate } =
     require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
 
-  if (!e.auth) throw new UnauthorizedError("Se requiere iniciar sesión.");
+  if (!e.auth) throw new UnauthorizedError("Sign in is required.");
   requireBookingStaff(e);
   const { getBusinessTimezone } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
   const business = e.auth.getString("business");
@@ -17,7 +17,7 @@ routerAdd("GET", "/api/admin/dashboard", (e) => {
   const query = e.request.url.query();
   const rawDays = query.has("days") ? query.get("days") : "7";
   if (!/^(?:[1-9]|1[0-4])$/.test(rawDays)) {
-    throw new BadRequestError("Indica una ventana de 1 a 14 días.");
+    throw new BadRequestError("Enter a window of 1 to 14 days.");
   }
 
   const days = Number(rawDays);
@@ -36,12 +36,12 @@ routerAdd("GET", "/api/admin/dashboard", (e) => {
 
   const records = e.app.findRecordsByFilter("class_sessions", inScope(""), "starts_at,id", 0, 0, params);
   const errors = e.app.expandRecords(records, ["service", "coach"], null);
-  if (Object.keys(errors).length) throw new InternalServerError("No se pudieron cargar las relaciones de las clases.");
+  if (Object.keys(errors).length) throw new InternalServerError("Could not load the related class records.");
 
   const sessions = records.flatMap((record) => {
     if (!record) return [];
     const service = record.expandedOne("service");
-    if (!service) throw new InternalServerError("La clase no tiene un servicio asociado.");
+    if (!service) throw new InternalServerError("The class has no associated service.");
     const coach = record.expandedOne("coach");
     return [{
       id: record.id,

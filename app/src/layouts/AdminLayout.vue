@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t, translateKey } from '@/i18n';
 import Avatar from 'primevue/avatar';
 import Menu from 'primevue/menu';
 import Sidebar from 'primevue/sidebar';
@@ -20,6 +21,8 @@ import SidebarSpacer from 'primevue/sidebarspacer';
 import SidebarTrigger from 'primevue/sidebartrigger';
 import { computed, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
+import { useDocumentTitle } from '@/composables/useDocumentTitle';
 import { useBusiness } from '@/composables/useBusiness';
 import { env } from '@/lib/env';
 import { useAuth } from '@/composables/useAuth';
@@ -46,13 +49,7 @@ const brandInitials = computed(() =>
 );
 const logoFailed = ref(false);
 watch(logoUrl, () => (logoFailed.value = false));
-watch(
-  [() => route.meta.title, brandName],
-  ([title, name]) => {
-    document.title = title ? `${title} · ${name}` : name;
-  },
-  { immediate: true },
-);
+useDocumentTitle(() => brandName.value);
 const nav = computed(() => visibleNav(role.value));
 const avatarFailed = ref(false);
 watch(avatarUrl, () => (avatarFailed.value = false));
@@ -73,7 +70,7 @@ watch(
 );
 
 const displayName = computed(
-  () => user.value?.name || user.value?.email?.split('@')[0] || 'Usuario',
+  () => user.value?.name || user.value?.email?.split('@')[0] || t('User'),
 );
 const initials = computed(() => displayName.value.slice(0, 2).toUpperCase());
 
@@ -85,13 +82,13 @@ const userMenu = computed(() => [
   { label: user.value?.email ?? '', disabled: true },
   { separator: true },
   {
-    label: 'Ajustes',
+    label: t('Settings'),
     icon: 'pi pi-cog',
     command: () => router.push({ name: 'profile' }),
   },
   { separator: true },
   {
-    label: 'Cerrar sesión',
+    label: t('Sign out'),
     icon: 'pi pi-sign-out',
     command: async () => {
       logout();
@@ -119,7 +116,7 @@ const userMenu = computed(() => [
                 v-if="businessLoading"
                 class="h-7 w-28 animate-pulse rounded bg-surface-200 dark:bg-surface-700"
                 role="status"
-                aria-label="Cargando negocio"
+                :aria-label="t('Loading business')"
               ></div>
               <template v-else>
                 <img
@@ -135,7 +132,7 @@ const userMenu = computed(() => [
             </div>
           </SidebarHeader>
           <SidebarContent>
-            <SidebarGroup v-for="group in nav" :key="group.label">
+            <SidebarGroup v-for="group in nav" :key="group.items[0].to">
               <SidebarGroupLabel>{{ group.label }}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -144,7 +141,7 @@ const userMenu = computed(() => [
                       :as="item.placeholder ? 'button' : RouterLink"
                       :to="item.placeholder ? undefined : item.to"
                       :disabled="item.placeholder || undefined"
-                      :title="item.placeholder ? 'Próximamente' : undefined"
+                      :title="item.placeholder ? t('Coming soon') : undefined"
                       :pt="
                         item.placeholder
                           ? { root: { class: 'cursor-not-allowed opacity-50' } }
@@ -190,7 +187,9 @@ const userMenu = computed(() => [
                 class="pi pi-chevron-down text-xs text-surface-400 in-data-[collapsible=icon]:hidden"
               />
             </button>
-            <Menu id="user-menu" ref="menu" :model="userMenu" popup />
+            <Menu id="user-menu" ref="menu" :model="userMenu" popup>
+              <template #end><LocaleSwitcher class="px-2 pb-2" /></template>
+            </Menu>
           </SidebarFooter>
         </SidebarPanel>
       </SidebarAside>
@@ -204,12 +203,16 @@ const userMenu = computed(() => [
           icon="pi pi-bars"
           severity="secondary"
           variant="text"
-          aria-label="Alternar barra lateral"
+          :aria-label="t('Toggle sidebar')"
         />
-        <span class="text-sm font-medium">{{ route.meta.title }}</span>
+        <span class="text-sm font-medium">{{
+          route.meta.title ? translateKey(route.meta.title) : ''
+        }}</span>
       </header>
       <div class="p-4">
-        <p v-if="businessError" role="alert">No se pudo cargar el negocio.</p>
+        <p v-if="businessError" role="alert">
+          {{ t('Could not load the business.') }}
+        </p>
         <RouterView v-else-if="!businessLoading" />
       </div>
     </SidebarMain>

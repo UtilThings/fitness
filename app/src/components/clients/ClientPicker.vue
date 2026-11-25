@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import AutoComplete, {
   type AutoCompleteCompleteEvent,
   type AutoCompleteOptionSelectEvent,
@@ -14,7 +15,7 @@ import {
 
 const props = withDefaults(
   defineProps<{ label?: string; status?: ClientStatus; disabled?: boolean }>(),
-  { label: 'Cliente', status: undefined },
+  { label: undefined, status: undefined },
 );
 const client = defineModel<Client | null>({ default: null });
 const text = shallowRef<Client | string | null>(client.value);
@@ -72,7 +73,9 @@ function select({ value }: AutoCompleteOptionSelectEvent) {
 
 <template>
   <div class="grid gap-1.5">
-    <label :for="id" class="text-sm font-medium">{{ label }}</label>
+    <label :for="id" class="text-sm font-medium">{{
+      label ?? t('Client')
+    }}</label>
     <AutoComplete
       :input-id="id"
       :model-value="text"
@@ -83,9 +86,9 @@ function select({ value }: AutoCompleteOptionSelectEvent) {
       :pt="{ option: { onMousedown: keepInputFocus } }"
       :disabled="disabled"
       :empty-search-message="
-        failed ? 'No se pudo buscar clientes' : 'Sin coincidencias'
+        failed ? t('Could not search for clients') : t('No matches')
       "
-      placeholder="Busca por nombre, email o teléfono"
+      :placeholder="t('Search by name, email, or phone')"
       force-selection
       fluid
       @update:model-value="changeInput"

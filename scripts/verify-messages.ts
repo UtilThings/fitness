@@ -77,7 +77,7 @@ await call(`${clients}/${client.id}`, owner, "DELETE", undefined, 204);
 const invalid = await call<{ data: { body?: { message: string } } }>(
   `${templates}/${id}`, owner, "PATCH", { body: "{{password}}" }, 400,
 );
-assert.match(invalid.data.body?.message ?? "", /password/);
+assert.equal(invalid.data.body?.message, "This variable is not allowed.");
 await call(`${templates}/${id}`, owner, "PATCH", { subject: "Asunto\nOtra línea" }, 400);
 await call(`${templates}/${id}`, owner, "PATCH", { body: "Prueba de auditoría" });
 const audit = "collections/audit_logs/records?" + new URLSearchParams({
@@ -160,7 +160,7 @@ const unknown = await call<{ unknown_variables: string[] }>(preview, coach, "POS
 assert.deepEqual(unknown.unknown_variables, ["password"]);
 for (const path of [preview, testMail, manual(promotion)]) await call(path, "", "POST", draft, [401, 403]);
 for (const token of [coach, reception]) await call(testMail, token, "POST", { key, locale }, 403);
-assert.equal((await call(testMail, owner, "POST", { key, locale }, 400)).message, "El correo no está configurado.");
+assert.equal((await call(testMail, owner, "POST", { key, locale }, 400)).message, "Email is not configured.");
 
 const manualTarget = await createSession(4, 1);
 await reserve(manualTarget, recipients[2]!);
@@ -316,7 +316,7 @@ async function verifySmtp() {
       await runRetry(maxAttempt.id);
       await wait(async () => {
         const [log] = await sessionLogs(maxAttemptSession, "booking_confirmed");
-        return log?.attempts === attempt && log.error === "No se pudo enviar por SMTP." &&
+        return log?.attempts === attempt && log.error === "Could not send through SMTP." &&
           (attempt === 2 ? !!log.next_retry_at : log.next_retry_at === "");
       });
     }

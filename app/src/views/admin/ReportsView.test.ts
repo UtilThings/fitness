@@ -1,3 +1,5 @@
+import { expectEnglishCopy } from '@/test/copy';
+import { withLocale } from '@/test/i18n';
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import PrimeVue from 'primevue/config';
 import DatePicker from 'primevue/datepicker';
@@ -101,6 +103,11 @@ afterEach(() => {
 describe('Reportes', () => {
   it('muestra cuatro pestañas al owner y sincroniza la pestaña activa al seleccionarla', async () => {
     const { view, router } = await render();
+    await withLocale('en', async () => {
+      await flushPromises();
+      expect(view.text()).toContain('Reports');
+      expectEnglishCopy(view.element);
+    });
     const tabs = view.findAll('[role="tab"]');
     expect(tabs.map((entry) => entry.text())).toEqual([
       'Ocupación',
@@ -173,7 +180,7 @@ describe('Reportes', () => {
     expect(button).toBeDefined();
     await button!.trigger('click');
     expect(download).toHaveBeenCalledWith(
-      'jq-reportes-ocupacion-2026-11-01_2026-11-30.csv',
+      'jq-reports-ocupacion-2026-11-01_2026-11-30.csv',
       '\uFEFFFecha,Hora,Servicio,Coach,Cupos,Reservas,Lista de espera,Ocupación\r\n2026-11-04,16:00,Fuerza,"\'=Coach, Muñoz",6,5,1,83.3%',
     );
   });

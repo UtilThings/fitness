@@ -34,7 +34,7 @@ export function toCsv(
 export function csvFilename(kind: string, from: string, to: string): string {
   const safe = (value: string) =>
     value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-  return `jq-reportes-${safe(kind)}-${safe(from)}_${safe(to)}.csv`;
+  return `jq-reports-${safe(kind)}-${safe(from)}_${safe(to)}.csv`;
 }
 
 export function downloadCsv(filename: string, csv: string): void {

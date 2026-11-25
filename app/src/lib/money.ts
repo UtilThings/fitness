@@ -1,16 +1,19 @@
+import { intlLocale } from '@/i18n/formats';
 import { businessCurrency } from './business-session';
 
 const formatters = new Map<string, Intl.NumberFormat>();
 function moneyFormatter(currency: string) {
-  let formatter = formatters.get(currency);
+  const locale = intlLocale();
+  const key = `${locale}:${currency}`;
+  let formatter = formatters.get(key);
   if (!formatter) {
-    formatter = new Intl.NumberFormat('en-US', {
+    formatter = new Intl.NumberFormat(locale, {
       style: 'currency',
       currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-    formatters.set(currency, formatter);
+    formatters.set(key, formatter);
   }
   return formatter;
 }
@@ -18,7 +21,7 @@ const maxCents = BigInt(Number.MAX_SAFE_INTEGER);
 
 function splitCents(cents: number) {
   if (!Number.isSafeInteger(cents)) {
-    throw new RangeError('Se espera un número entero seguro de centavos');
+    throw new RangeError('Expected a safe integer number of cents');
   }
 
   const amount = BigInt(Math.abs(cents));

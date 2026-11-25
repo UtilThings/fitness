@@ -15,7 +15,7 @@ export function normalizePhone(raw?: string | null):
   if (/^\+[1-9]\d{7,14}$/.test(compact)) return { ok: true, value: compact };
   if (/^\d{10}$/.test(compact)) return { ok: true, value: "+1" + compact };
   if (/^1\d{10}$/.test(compact)) return { ok: true, value: "+" + compact };
-  return { ok: false, error: "Ingresa un teléfono válido con código de país." };
+  return { ok: false, error: "Enter a valid phone number with a country code." };
 }
 
 type Shape = { [key: string]: Rule };
@@ -72,16 +72,16 @@ function checkShape(input: Record<string, unknown>, shape: Shape, errors: Record
   for (const [key, value] of Object.entries(input)) {
     const path = prefix + key;
     if (!Object.prototype.hasOwnProperty.call(shape, key)) {
-      errors[path] = "Campo desconocido.";
+      errors[path] = "Unknown field.";
       continue;
     }
     const rule = shape[key]!;
     if (typeof rule === "function") {
-      if (!rule(value)) errors[path] = "Valor inválido.";
+      if (!rule(value)) errors[path] = "Invalid value.";
     } else if (isObject(value)) {
       checkShape(value, rule, errors, path + ".");
     } else {
-      errors[path] = "Debe ser un objeto.";
+      errors[path] = "Enter an object.";
     }
   }
 }
@@ -96,11 +96,11 @@ export function validateAssessment(input: unknown): {
     return { ok: true, errors, value: null };
   }
   if (!isObject(input)) {
-    errors.assessment = "La evaluación debe ser un objeto.";
+    errors.assessment = "The assessment must be an object.";
     return { ok: false, errors, value: null };
   }
   checkShape(input, assessmentV1, errors);
-  if (input.version !== 1) errors.version = "La versión debe ser 1.";
+  if (input.version !== 1) errors.version = "The version must be one.";
   const ok = Object.keys(errors).length === 0;
   return { ok, errors, value: ok ? input : null };
 }

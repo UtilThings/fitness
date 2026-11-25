@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { adminNav, visibleNav } from '@/layouts/admin-nav';
+import { adminNav, navItems, visibleNav } from '@/layouts/admin-nav';
 import router from '@/router';
 
 describe('adminNav', () => {
-  const items = adminNav.flatMap((group) => group.items);
+  const items = navItems().flatMap((group) => group.items);
 
   it('mantiene los cinco grupos acordados, sin badges', () => {
     expect(
-      adminNav.map(({ label, items }) => [label, items.map(({ to }) => to)]),
+      navItems().map(({ label, items }) => [label, items.map(({ to }) => to)]),
     ).toEqual([
       ['Análisis', ['/', '/reports']],
       [
@@ -79,7 +79,7 @@ describe('adminNav', () => {
       );
       expect(analysis?.items).toContainEqual({
         label: 'Reportes',
-        icon: 'pi pi-chart-bar',
+        icon: 'pi pi-chart-pie',
         to: '/reports',
       });
     },

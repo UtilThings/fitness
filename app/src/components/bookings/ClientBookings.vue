@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
@@ -49,7 +50,7 @@ const options = computed(() =>
   sessions.value
     .filter((item) => canReserveSession(item, now.value))
     .map((item) => ({
-      label: `${formatTime(item.starts_at)} · ${item.expand?.service?.name ?? 'Sesión'}`,
+      label: `${formatTime(item.starts_at)} · ${item.expand?.service?.name ?? t('Session')}`,
       value: item,
     })),
 );
@@ -109,8 +110,8 @@ function reserved(booking: Booking) {
   changed();
   notify.success(
     booking.status === 'waitlisted'
-      ? 'Cliente añadido a la lista de espera'
-      : 'Reserva confirmada',
+      ? t('Client added to the waitlist')
+      : t('Booking confirmed'),
   );
 }
 
@@ -124,7 +125,7 @@ function cancel(booking: Booking) {
   <div class="grid gap-3">
     <Button
       v-if="client && client.status !== 'inactive'"
-      label="Reservar clase"
+      :label="t('Book class')"
       icon="pi pi-plus"
       class="w-fit"
       :aria-expanded="selecting"
@@ -137,7 +138,7 @@ function cancel(booking: Booking) {
         session && canReserveSession(session, now) && (bookingOpen = true)
       "
     >
-      <CatalogField :id="id + '-date'" label="Fecha en Miramar">
+      <CatalogField :id="id + '-date'" :label="t('Date in Miramar')">
         <InputText
           :id="id + '-date'"
           v-model="date"
@@ -147,26 +148,26 @@ function cancel(booking: Booking) {
       </CatalogField>
       <CatalogField
         :id="id + '-session'"
-        label="Sesión"
+        :label="t('Session')"
         :error="sessionError?.message"
       >
         <Select
           v-model="session"
           :input-id="id + '-session'"
-          aria-label="Sesión"
+          :aria-label="t('Session')"
           :options="options"
           option-label="label"
           option-value="value"
           :loading="loadingSessions"
           :disabled="loadingSessions || !options.length"
           :placeholder="
-            options.length ? 'Selecciona una sesión' : 'Sin sesiones próximas'
+            options.length ? t('Select a session') : t('No upcoming sessions')
           "
         />
       </CatalogField>
       <Button
         type="submit"
-        label="Continuar"
+        :label="t('Continue')"
         :disabled="!session || !canReserveSession(session, now)"
       />
     </form>
@@ -174,9 +175,9 @@ function cancel(booking: Booking) {
     <Message v-if="error" severity="error" :closable="false">{{
       error.message
     }}</Message>
-    <p v-if="loading" role="status">Cargando reservas…</p>
+    <p v-if="loading" role="status">{{ t('Loading bookings…') }}</p>
     <p v-else-if="!error && !rows.length" class="text-sm text-muted-color">
-      Sin reservas registradas
+      {{ t('No bookings recorded') }}
     </p>
     <ul v-if="rows.length" class="divide-y divide-surface">
       <li
@@ -186,7 +187,7 @@ function cancel(booking: Booking) {
       >
         <div>
           <p class="font-medium">
-            {{ booking.expand?.session?.expand?.service?.name ?? 'Sesión' }}
+            {{ booking.expand?.session?.expand?.service?.name ?? t('Session') }}
           </p>
           <p v-if="booking.expand?.session" class="text-sm text-muted-color">
             {{ formatDateTime(booking.expand.session.starts_at) }}
@@ -194,7 +195,7 @@ function cancel(booking: Booking) {
           <p v-if="booking.override_note" class="text-sm wrap-break-word">
             {{
               booking.override_note === 'session_cancelled'
-                ? 'Sesión cancelada por el gimnasio'
+                ? t('Session canceled by the gym')
                 : booking.override_note
             }}
           </p>
@@ -209,7 +210,7 @@ function cancel(booking: Booking) {
               booking.expand?.session?.status === 'scheduled' &&
               canCancelBooking(booking, booking.expand.session.starts_at, now)
             "
-            label="Cancelar"
+            :label="t('Cancel')"
             severity="danger"
             text
             size="small"

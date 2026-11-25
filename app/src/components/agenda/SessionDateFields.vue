@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import { useId } from 'vue';
@@ -15,7 +16,7 @@ const id = useId();
   <div class="grid gap-3 sm:grid-cols-2">
     <CatalogField
       :id="id + '-date'"
-      label="Fecha en Miramar"
+      :label="t('Date in Miramar')"
       :error="fields?.starts_at"
     >
       <InputText
@@ -27,7 +28,7 @@ const id = useId();
         fluid
       />
     </CatalogField>
-    <CatalogField :id="id + '-time'" label="Hora en Miramar">
+    <CatalogField :id="id + '-time'" :label="t('Time in Miramar')">
       <InputText
         :id="id + '-time'"
         v-model="time"
@@ -40,7 +41,7 @@ const id = useId();
   </div>
   <CatalogField
     :id="id + '-duration'"
-    label="Duración (minutos)"
+    :label="t('Duration (minutes)')"
     :error="fields?.duration_min"
   >
     <InputNumber

@@ -1,3 +1,4 @@
+import { t, translateMessage } from '@/i18n';
 import { useConfirm } from 'primevue/useconfirm';
 import { computed, ref } from 'vue';
 import { useAuth } from '@/composables/useAuth';
@@ -40,7 +41,7 @@ export function useCatalogActions<T extends CatalogRow>(catalog: {
   function changeActive(row: T, active: boolean) {
     return run(
       () => catalog.setActive(row.id, active),
-      active ? 'Registro activado' : 'Registro desactivado',
+      active ? t('Record activated') : t('Record deactivated'),
     );
   }
 
@@ -50,25 +51,29 @@ export function useCatalogActions<T extends CatalogRow>(catalog: {
 
   function remove(row: T, askDeactivate: (row: T) => unknown) {
     confirmDelete({
-      message: `¿Eliminar «${row.name}»?`,
+      message: t('Delete «{name}»?', { name: row.name }),
       onConfirm: () =>
         run(async () => {
           try {
             await catalog.remove(row.id);
-            notify.success('Registro eliminado');
+            notify.success(t('Record deleted'));
           } catch (cause) {
             const error = cause as PbError;
             if (
               error.status === 400 &&
               row.active &&
-              error.message.includes('Desactívalo en su lugar')
+              (error.message ===
+                translateMessage(
+                  'This record has related records. Deactivate it instead.',
+                ) ||
+                /^Tiene .+ en su lugar[.]?$/.test(error.message))
             ) {
               confirm.require({
-                header: 'Conservar registro',
+                header: t('Keep record'),
                 message: error.message,
-                acceptProps: { label: 'Desactivar', severity: 'warn' },
+                acceptProps: { label: t('Deactivate'), severity: 'warn' },
                 rejectProps: {
-                  label: 'Cancelar',
+                  label: t('Cancel'),
                   severity: 'secondary',
                   outlined: true,
                 },

@@ -8,17 +8,17 @@ function validateMessageTemplate(e: core.RecordRequestEvent) {
     record.set("active", true);
   }
   const key = record.getString("key");
-  if (key === "manual") throw new BadRequestError("Clave de plantilla inválida.");
+  if (key === "manual") throw new BadRequestError("The template key is invalid.");
   const problems = validateTemplate({ key, subject: record.getString("subject"), body: record.getString("body") });
   if (problems.length) {
-    const messages: Record<string, string[]> = {};
+    const messages: Record<string, string> = {};
     for (const { field, message } of problems) {
-      (messages[field] ??= []).push(message);
+      messages[field] ??= message;
     }
-    const fields = Object.fromEntries(Object.entries(messages).map(([field, errors]) => [
-      field, new ValidationError("invalid_template", errors.join(" ")),
+    const fields = Object.fromEntries(Object.entries(messages).map(([field, message]) => [
+      field, new ValidationError("invalid_template", message),
     ]));
-    throw new BadRequestError("La plantilla es inválida.", fields);
+    throw new BadRequestError("The template is invalid.", fields);
   }
   return e.next();
 }
@@ -33,7 +33,7 @@ cronAdd("retry_failed_messages", "*/10 * * * *", () => {
 });
 
 function blockMessageLogWrites() {
-  throw new ForbiddenError("El historial de mensajes se escribe en el servidor.");
+  throw new ForbiddenError("The server records message history.");
 }
 
 onRecordCreateRequest(blockMessageLogWrites, "message_logs");

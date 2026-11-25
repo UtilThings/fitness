@@ -16,7 +16,7 @@ function validateCoachingProgram(e: core.RecordRequestEvent) {
       const original = record.original();
       if (!record.isNew() && (!previous || record.collection().fields.fieldNames()
         .some((field) => previous.getString(field) !== original.getString(field)))) {
-        throw new ApiError(409, "El registro cambió. Recarga los datos antes de guardar.");
+        throw new ApiError(409, "The record changed. Reload the data before saving.");
       }
       const status = record.getString("status");
       const coachId = record.getString("coach");
@@ -27,15 +27,15 @@ function validateCoachingProgram(e: core.RecordRequestEvent) {
         duration_weeks: record.getFloat("duration_weeks"),
       });
       if (previous?.getString("status") === "ended" && status !== "ended") {
-        errors.status = "Un programa finalizado no puede reabrirse.";
+        errors.status = "An ended program cannot be reopened.";
       }
       const coach = getRecord(tx, "admins", coachId);
       if (!coach?.getBool("active") || !["coach", "owner"].includes(coach.getString("role"))) {
-        errors.coach = "Selecciona un coach activo.";
+        errors.coach = "Select an active coach.";
       }
       if (e.auth?.getString("role") === "coach"
         && (coachId !== e.auth.id || (previous && previous.getString("coach") !== e.auth.id))) {
-        throw new ForbiddenError("Solo puedes modificar tus propios programas.");
+        throw new ForbiddenError("You can only edit your own programs.");
       }
       const membership = getRecord(tx, "memberships", membershipId);
       const plan = membership && getRecord(tx, "plans", membership.getString("plan"));
@@ -45,10 +45,10 @@ function validateCoachingProgram(e: core.RecordRequestEvent) {
 
       if (!membership || membership.getString("client") !== clientId || service?.getString("kind") !== "online"
         || ((relink || activate) && membership.getString("status") !== "active")) {
-        errors.membership = "Selecciona una membresía online activa del cliente.";
+        errors.membership = "Select an active online membership for the client.";
       }
       if (Object.keys(errors).length) {
-        throw new BadRequestError("Revisa los datos del programa.", Object.fromEntries(
+        throw new BadRequestError("Check the program details.", Object.fromEntries(
           Object.entries(errors).map(([field, message]) => [field, new ValidationError("validation_coaching", message)]),
         ));
       }
@@ -83,20 +83,20 @@ function validateCoachingCheckin(e: core.RecordRequestEvent) {
       const original = record.original();
       if (!record.isNew() && (!previous || record.collection().fields.fieldNames()
         .some((field) => previous.getString(field) !== original.getString(field)))) {
-        throw new ApiError(409, "El registro cambió. Recarga los datos antes de guardar.");
+        throw new ApiError(409, "The record changed. Reload the data before saving.");
       }
       if (e.auth?.getString("role") === "coach" && (program?.getString("coach") !== e.auth.id
         || (previous && previous.getString("program") !== program?.id))) {
-        throw new ForbiddenError("Solo puedes registrar check-ins en tus propios programas.");
+        throw new ForbiddenError("You can only record check-ins for your own programs.");
       }
       const business = e.hasSuperuserAuth() ? record.getString("business") : resolveBusiness(e.auth);
       const today = utcToLocal(new Date().toISOString(), getBusinessTimezone(tx, business, e)).date;
       const errors = validateCheckin({
         checked_at: record.getString("checked_at").slice(0, 10), adherence: record.getFloat("adherence"),
       }, { status: program?.getString("status") ?? "" }, today);
-      if (!program) errors.program = "Selecciona un programa válido.";
+      if (!program) errors.program = "Select a valid program.";
       if (Object.keys(errors).length) {
-        throw new BadRequestError("Revisa los datos del check-in.", Object.fromEntries(
+        throw new BadRequestError("Check the check-in details.", Object.fromEntries(
           Object.entries(errors).map(([field, message]) => [field, new ValidationError("validation_coaching", message)]),
         ));
       }

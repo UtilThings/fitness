@@ -1,3 +1,4 @@
+import { intlLocale } from '@/i18n/formats';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { businessCurrency } from '@/lib/business-session';
 
@@ -41,18 +42,18 @@ export function buildChartData(
 
 export function formatChartValue(value: number, format: ValueFormat): string {
   if (format === 'money') {
-    return new Intl.NumberFormat('es-US', {
+    return new Intl.NumberFormat(intlLocale(), {
       style: 'currency',
       currency: businessCurrency.value,
     }).format(value);
   }
   if (format === 'percent') {
-    return new Intl.NumberFormat('es-US', {
+    return new Intl.NumberFormat(intlLocale(), {
       style: 'percent',
       maximumFractionDigits: 1,
     }).format(value / 100);
   }
-  return new Intl.NumberFormat('es-US').format(value);
+  return new Intl.NumberFormat(intlLocale()).format(value);
 }
 
 export function buildChartOptions(

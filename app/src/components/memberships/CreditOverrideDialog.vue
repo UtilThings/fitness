@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
@@ -26,7 +27,7 @@ function submit() {
   if (props.saving) return;
   const reason = note.value.trim();
   if (!reason) {
-    validation.value = 'Indica el motivo de la excepción.';
+    validation.value = t('Enter a reason for the override.');
     return;
   }
   validation.value = '';
@@ -37,7 +38,7 @@ function submit() {
 <template>
   <Dialog
     v-model:visible="open"
-    header="Excepción de créditos"
+    :header="t('Credit override')"
     modal
     class="w-full max-w-lg"
     :closable="!saving"
@@ -46,7 +47,7 @@ function submit() {
     <form class="grid gap-4" @submit.prevent="submit">
       <Message severity="warn" :closable="false">{{ message }}</Message>
       <div class="grid gap-1">
-        <label :for="id">Motivo de la excepción</label>
+        <label :for="id">{{ t('Reason for override') }}</label>
         <Textarea
           :id="id"
           v-model="note"
@@ -61,14 +62,14 @@ function submit() {
       }}</Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
           @click="open = false"
         />
         <Button
-          label="Reservar con excepción"
+          :label="t('Book with an override')"
           type="submit"
           :loading="saving"
         />

@@ -12,7 +12,7 @@ export function parseKey(key: string) {
 export function generateKey(random: Random = $security) {
   const key = `pk_${random.randomString(8)}_${random.randomString(32)}`;
   const parts = parseKey(key);
-  if (!parts) throw new Error("No se pudo generar la clave pública.");
+  if (!parts) throw new Error("Could not generate the public key.");
   return { key, prefix: parts.prefix! };
 }
 

@@ -1,3 +1,5 @@
+import { expectEnglishCopy } from '@/test/copy';
+import { withLocale } from '@/test/i18n';
 import {
   enableAutoUnmount,
   flushPromises,
@@ -93,6 +95,11 @@ it('muestra métricas, ocupación y cobros reales con enlace a los vencidos', as
     '2',
   ]);
   expect(wrapper.text()).toContain('4 / 6 cupos ocupados');
+  await withLocale('en', async () => {
+    await flushPromises();
+    expect(wrapper.text()).toContain('Admin dashboard');
+    expectEnglishCopy(wrapper.element);
+  });
   expect(wrapper.text()).toContain('Sin coach');
   expect(wrapper.text()).toContain('Casi llena · 2 cupos');
   expect(wrapper.get('[role="progressbar"]').attributes('aria-valuenow')).toBe(

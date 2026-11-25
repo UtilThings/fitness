@@ -23,7 +23,7 @@ routerAdd("GET", "/api/admin/payments/due", e => {
   const readInt = (key: string, fallback: number, max: number) => {
     const value = query.has(key) ? query.get(key) : String(fallback);
     if (!/^[1-9]\d*$/.test(value) || Number(value) > max) {
-      throw new BadRequestError(`${key} debe ser un entero entre 1 y ${max}.`);
+      throw new BadRequestError("Enter a whole number within the allowed range.");
     }
     return Number(value);
   };

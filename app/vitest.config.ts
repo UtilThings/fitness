@@ -6,6 +6,7 @@ export default mergeConfig(
   defineConfig({
     test: {
       environment: 'happy-dom',
+      setupFiles: ['./src/test/setup.ts'],
       env: { VITE_POCKETBASE_URL: 'http://127.0.0.1:8090' },
     },
   }),

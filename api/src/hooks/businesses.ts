@@ -6,12 +6,12 @@ function validateBusinessRequest(e: core.RecordRequestEvent) {
   if (!e.hasSuperuserAuth()) {
     const body = e.requestInfo().body;
     if (Object.keys(body).some((key) => !BUSINESS_OWNER_FIELDS.includes(key === "logo-" ? "logo" : key))) {
-      throw new BadRequestError("Solo puedes editar los datos de marca, contacto y orígenes.");
+      throw new BadRequestError("You can only edit brand details, contact information, and allowed origins.");
     }
   }
   const record = e.record!;
   if (!isSupportedTimezone(record.getString("timezone"))) {
-    throw new BadRequestError("Zona horaria no admitida.");
+    throw new BadRequestError("The time zone is unsupported.");
   }
   const origins = record.getString("allowed_origins");
   const error = validateOrigins(origins ? JSON.parse(origins) : null);

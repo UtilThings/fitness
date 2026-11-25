@@ -16,7 +16,7 @@ export function requirePaymentRole(event: core.RequestEvent) {
 
 function textField(value: unknown) {
   if (value === undefined) return "";
-  if (typeof value !== "string") throw new BadRequestError("Ingresa un texto válido.");
+  if (typeof value !== "string") throw new BadRequestError("Enter valid text.");
   return value.trim();
 }
 
@@ -26,7 +26,7 @@ function dateField(value: unknown) {
     try {
       localYear(date);
     } catch {
-      throw new BadRequestError("Indica una fecha válida en formato YYYY-MM-DD.");
+      throw new BadRequestError("Enter a valid date in YYYY-MM-DD format.");
     }
   }
   return date;
@@ -35,7 +35,7 @@ function dateField(value: unknown) {
 function methodField(value: unknown, required: boolean) {
   const method = textField(value);
   if ((!method && required) || (method && !["cash", "zelle", "card", "other"].includes(method))) {
-    throw new BadRequestError("Selecciona un método de pago válido.");
+    throw new BadRequestError("Select a valid payment method.");
   }
   return method;
 }
@@ -53,7 +53,7 @@ export function issueReceipt(tx: core.App, year: number, business: string, prefi
 function paidFields(tx: core.App, { method, paidAt, note, business }: Settlement) {
   const today = utcToLocal(new Date().toISOString(), getBusinessTimezone(tx, business)).date;
   const date = dateField(paidAt) || today;
-  if (date > today) throw new BadRequestError("La fecha de pago no puede ser futura.");
+  if (date > today) throw new BadRequestError("The payment date cannot be in the future.");
   return {
     status: "paid", method: methodField(method, true), paid_at: date,
     ...(note !== undefined && { note: textField(note) }),
@@ -63,7 +63,7 @@ function paidFields(tx: core.App, { method, paidAt, note, business }: Settlement
 
 function paymentRecord(tx: core.App, id: string, business: string) {
   const payment = tenantRecord(tx, "payments", id, business);
-  if (!payment) throw new NotFoundError("Pago no encontrado.");
+  if (!payment) throw new NotFoundError("Payment not found.");
   return payment;
 }
 
@@ -73,30 +73,30 @@ function paymentConflict(message: string) {
 
 export function createPayment(app: core.App, body: Body, recordedBy: string, business: string) {
   const { status, amount_cents } = body;
-  if (status !== "paid" && status !== "pending") throw new BadRequestError("Selecciona un estado de pago válido.");
+  if (status !== "paid" && status !== "pending") throw new BadRequestError("Select a valid payment status.");
   if (typeof amount_cents !== "number" || !Number.isSafeInteger(amount_cents) || amount_cents <= 0) {
-    throw new BadRequestError("Indica un monto positivo en centavos enteros.");
+    throw new BadRequestError("Enter a positive amount in whole cents.");
   }
   const client = textField(body.client);
-  if (!client) throw new BadRequestError("Selecciona un cliente.");
+  if (!client) throw new BadRequestError("Select a client.");
   const membership = textField(body.membership);
   const plan = textField(body.plan);
   const due_on = dateField(body.due_on);
   const note = textField(body.note);
-  if (status === "pending" && !due_on) throw new BadRequestError("Indica la fecha de vencimiento.");
+  if (status === "pending" && !due_on) throw new BadRequestError("Enter the due date.");
 
   return inScheduleTransaction(app, tx => {
     const related = membership ? tenantRecord(tx, "memberships", membership, business) : null;
-    if (!tenantRecord(tx, "clients", client, business)) throw new NotFoundError("Cliente no encontrado.");
+    if (!tenantRecord(tx, "clients", client, business)) throw new NotFoundError("Client not found.");
     if ((plan && !tenantRecord(tx, "plans", plan, business)) || (membership && !related)) {
-      throw new BadRequestError("Selecciona registros válidos del mismo negocio.");
+      throw new BadRequestError("Select valid records from the same business.");
     }
     if (related && (related.getString("client") !== client || (plan && related.getString("plan") !== plan))) {
-      throw new BadRequestError("La membresía debe corresponder al cliente y al plan.");
+      throw new BadRequestError("The membership must belong to the client and plan.");
     }
     if (membership && tx.findRecordsByFilter("payments",
       "membership = {:membership} && period_index = 0 && status != 'void'", "", 1, 0, { membership }).length) {
-      throw paymentConflict("Ya existe un cobro manual para esta membresía.");
+      throw paymentConflict("A manual charge already exists for this membership.");
     }
 
     const payment = new Record(tx.findCollectionByNameOrId("payments"), {
@@ -106,7 +106,7 @@ export function createPayment(app: core.App, body: Body, recordedBy: string, bus
     if (status === "paid") payment.load(paidFields(tx, { method: body.method, paidAt: body.paid_at, recordedBy, business }));
     auditActor(payment, recordedBy);
     tx.save(payment);
-    scheduleAudit(tx, "payments", payment.id, recordedBy, status === "paid" ? "Pago registrado" : "Cobro pendiente registrado", {});
+    scheduleAudit(tx, "payments", payment.id, recordedBy, status === "paid" ? "Payment recorded." : "Pending charge recorded.", {});
     return payment;
   });
 }
@@ -114,11 +114,11 @@ export function createPayment(app: core.App, body: Body, recordedBy: string, bus
 export function settlePayment(app: core.App, id: string, details: Settlement) {
   return inScheduleTransaction(app, tx => {
     const payment = paymentRecord(tx, id, details.business);
-    if (payment.getString("status") !== "pending") throw paymentConflict("Solo se puede pagar un cobro pendiente.");
+    if (payment.getString("status") !== "pending") throw paymentConflict("Only pending charges can be paid.");
     payment.load(paidFields(tx, details));
     auditActor(payment, details.recordedBy);
     tx.save(payment);
-    scheduleAudit(tx, "payments", id, details.recordedBy, "Cobro marcado como pagado", {});
+    scheduleAudit(tx, "payments", id, details.recordedBy, "Charge marked as paid.", {});
     return payment;
   });
 }
@@ -126,15 +126,15 @@ export function settlePayment(app: core.App, id: string, details: Settlement) {
 export function voidPayment(app: core.App, id: string, { reason, by, business }: { reason: unknown; by: string; business: string }) {
   return inScheduleTransaction(app, tx => {
     const payment = paymentRecord(tx, id, business);
-    if (payment.getString("status") === "void") throw paymentConflict("El pago ya está anulado.");
+    if (payment.getString("status") === "void") throw paymentConflict("The payment is already voided.");
     const why = textField(reason);
-    if (!why) throw new BadRequestError("Indica el motivo de la anulación.");
+    if (!why) throw new BadRequestError("Enter a reason for voiding the payment.");
     payment.load({
       status: "void", void_reason: why, voided_at: new Date().toISOString().replace("T", " "), voided_by: by,
     });
     auditActor(payment, by);
     tx.save(payment);
-    scheduleAudit(tx, "payments", id, by, "Pago anulado", {});
+    scheduleAudit(tx, "payments", id, by, "Payment voided.", {});
     return payment;
   });
 }
@@ -177,6 +177,6 @@ export function ensurePendingCharge(app: core.App, membership: core.Record) {
       if (String(error).includes("UNIQUE constraint failed: payments.membership, payments.period_index")) return;
       throw error;
     }
-    scheduleAudit(tx, "payments", payment.id, actor, "Cobro por ciclo generado", { period_index: charge.period_index });
+    scheduleAudit(tx, "payments", payment.id, actor, "Billing cycle charge generated.", { period_index: charge.period_index });
   });
 }

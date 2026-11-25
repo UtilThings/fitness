@@ -1,3 +1,4 @@
+import { t, translateMessage } from '@/i18n';
 import { ClientResponseError } from 'pocketbase';
 
 export interface PbError {
@@ -19,7 +20,7 @@ function fieldMessages(data: unknown): Record<string, string> {
       'message' in field &&
       typeof field.message === 'string'
     ) {
-      fields.push([name, field.message]);
+      fields.push([name, translateMessage(field.message)]);
     }
   }
   return Object.fromEntries(fields);
@@ -28,35 +29,42 @@ function fieldMessages(data: unknown): Record<string, string> {
 export function parsePbError(error: unknown): PbError {
   if (error instanceof ClientResponseError && error.isAbort) {
     return {
-      message: 'Petición cancelada',
+      message: t('Request canceled'),
       fields: {},
       status: error.status,
       aborted: true,
     };
   }
 
+  const response = error instanceof ClientResponseError ? error.response : {};
   const status = error instanceof ClientResponseError ? error.status : 0;
+  if (!status)
+    return {
+      message: t('Could not connect to the server'),
+      fields: {},
+      status,
+    };
+
+  const message =
+    typeof response.message === 'string' && response.message.trim()
+      ? translateMessage(response.message)
+      : fallbackMessage(status);
+  const code = response.data?.code?.code;
+  return {
+    message,
+    ...(typeof code === 'string' ? { code } : {}),
+    fields: status === 400 ? fieldMessages(response.data) : {},
+    status,
+  };
+}
+
+function fallbackMessage(status: number): string {
   switch (status) {
-    case 0:
-      return { message: 'Sin conexión con el servidor', fields: {}, status };
     case 403:
-      return { message: 'No tienes permiso', fields: {}, status };
+      return t('You do not have permission');
     case 404:
-      return { message: 'No se encontró el registro', fields: {}, status };
-    default: {
-      const response =
-        error instanceof ClientResponseError ? error.response : {};
-      const message =
-        typeof response.message === 'string' && response.message.trim()
-          ? response.message
-          : 'No se pudo completar la operación';
-      const code = response.data?.code?.code;
-      return {
-        message,
-        ...(typeof code === 'string' ? { code } : {}),
-        fields: status === 400 ? fieldMessages(response.data) : {},
-        status,
-      };
-    }
+      return t('Record not found');
+    default:
+      return t('Could not complete the operation');
   }
 }

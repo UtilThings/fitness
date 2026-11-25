@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Dialog from 'primevue/dialog';
@@ -177,8 +178,9 @@ async function submit() {
     !first.value ||
     (withSecond.value && (!second.value || second.value.id === first.value.id))
   ) {
-    formError.value =
-      'Completa el servicio, coach, fecha, duración y selecciona clientes distintos.';
+    formError.value = t(
+      'Enter the service, coach, date, and duration, and select different clients.',
+    );
     return;
   }
   saving.value = true;
@@ -216,7 +218,7 @@ async function submit() {
   <Dialog
     v-model:visible="open"
     modal
-    header="Sesión privada"
+    :header="t('Private session')"
     class="w-full max-w-lg"
     :closable="!saving"
     :close-on-escape="!saving"
@@ -224,7 +226,7 @@ async function submit() {
     <form class="grid gap-4" @submit.prevent="submit">
       <CatalogField
         :id="id + '-coach'"
-        label="Coach"
+        :label="t('Coach')"
         :error="error?.fields.coach"
       >
         <Select
@@ -233,14 +235,14 @@ async function submit() {
           :options="coaches"
           option-label="label"
           option-value="value"
-          placeholder="Selecciona un coach"
+          :placeholder="t('Select a coach')"
           :disabled="saving || !!lockedCoach"
           fluid
         />
       </CatalogField>
       <CatalogField
         :id="id + '-service'"
-        label="Servicio personal"
+        :label="t('Personal service')"
         :error="error?.fields.service"
       >
         <Select
@@ -249,7 +251,7 @@ async function submit() {
           :options="personal"
           option-label="name"
           option-value="id"
-          placeholder="Selecciona un servicio"
+          :placeholder="t('Select a service')"
           :disabled="saving"
           fluid
         />
@@ -261,13 +263,12 @@ async function submit() {
         :fields="error?.fields"
         :disabled="saving"
       />
-      <Message v-if="outside" severity="warn" :closable="false"
-        >El horario elegido parece quedar fuera de la disponibilidad del
-        coach.</Message
-      >
+      <Message v-if="outside" severity="warn" :closable="false">{{
+        t("The selected time appears to be outside the coach's availability.")
+      }}</Message>
       <ClientPicker
         v-model="first"
-        label="Primer cliente"
+        :label="t('First client')"
         status="active"
         :disabled="saving"
       />
@@ -278,12 +279,12 @@ async function submit() {
           binary
           :disabled="saving"
         />
-        <label :for="id + '-second'">Invitar a un segundo cliente</label>
+        <label :for="id + '-second'">{{ t('Invite a second client') }}</label>
       </div>
       <ClientPicker
         v-if="withSecond"
         v-model="second"
-        label="Segundo cliente"
+        :label="t('Second client')"
         status="active"
         :disabled="saving"
       />
@@ -294,15 +295,15 @@ async function submit() {
           binary
           :disabled="saving"
         />
-        <label :for="id + '-open-seat'"
-          >Dejar un segundo cupo disponible para otro cliente partner</label
-        >
+        <label :for="id + '-open-seat'">{{
+          t('Leave a second spot open for another partner client')
+        }}</label>
       </div>
       <p v-if="checking" role="status" class="text-sm text-muted-color">
-        Consultando elegibilidad…
+        {{ t('Checking eligibility…') }}
       </p>
       <p v-else-if="previewError" class="text-sm text-muted-color">
-        La elegibilidad se confirmará al guardar.
+        {{ t('Eligibility will be confirmed when you save.') }}
       </p>
       <div v-for="client in clients" :key="client.id" class="grid gap-2">
         <Message
@@ -314,7 +315,7 @@ async function submit() {
           {{
             agendaError({
               code: previews[client.id]?.code,
-              message: 'Revisa la membresía del cliente.',
+              message: t("Check the client's membership."),
               fields: {},
               status: 400,
             })
@@ -325,8 +326,11 @@ async function submit() {
           severity="warn"
           :closable="false"
         >
-          {{ fullName(client) }} necesita una membresía partner activa para este
-          servicio.
+          {{
+            t('{name} needs an active partner membership for this service.', {
+              name: fullName(client),
+            })
+          }}
         </Message>
         <CatalogField
           v-if="
@@ -341,7 +345,7 @@ async function submit() {
                 ].includes(error.code)))
           "
           :id="id + '-' + client.id"
-          :label="'Nota de excepción · ' + fullName(client)"
+          :label="t('Override note · {name}', { name: fullName(client) })"
         >
           <Textarea
             :id="id + '-' + client.id"
@@ -355,7 +359,7 @@ async function submit() {
       </div>
       <CatalogField
         :id="id + '-notes'"
-        label="Notas internas"
+        :label="t('Internal notes')"
         :error="error?.fields.notes"
       >
         <Textarea
@@ -372,13 +376,17 @@ async function submit() {
       }}</Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
           @click="open = false"
         />
-        <Button type="submit" label="Agendar sesión" :loading="saving" />
+        <Button
+          type="submit"
+          :label="t('Schedule session')"
+          :loading="saving"
+        />
       </div>
     </form>
   </Dialog>

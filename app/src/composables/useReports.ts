@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import {
   getCurrentScope,
   onScopeDispose,
@@ -17,7 +18,6 @@ import type {
   ReportResponse,
 } from '@/types/reports';
 
-const permissionMessage = 'No tienes permiso para ver este reporte';
 let nextRequestId = 0;
 
 function presetDates(preset: ReportPreset): ReportDates {
@@ -84,9 +84,10 @@ export function useReports<K extends ReportKind>(kind: MaybeRefOrGetter<K>) {
       if (current !== revision) return;
       const failure = parsePbError(cause);
       if (failure.aborted) return;
-      if (failure.status === 403) error.value = permissionMessage;
+      if (failure.status === 403)
+        error.value = t('You do not have permission to view this report');
       else if (failure.status === 400) error.value = failure.message;
-      else error.value = 'No se pudo cargar el reporte.';
+      else error.value = t('Could not load the report.');
     } finally {
       if (current === revision) loading.value = false;
     }

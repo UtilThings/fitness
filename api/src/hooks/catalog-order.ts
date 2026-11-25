@@ -27,14 +27,14 @@ routerAdd(
       new Set(updates.map(({ id }) => id)).size !== updates.length ||
       new Set(updates.map(({ sort }) => sort)).size !== updates.length
     ) {
-      throw new BadRequestError("El orden del catálogo no es válido.");
+      throw new BadRequestError("The catalog order is invalid.");
     }
 
     e.app.runInTransaction((txApp) => {
       const collection = txApp.findCollectionByNameOrId(name);
       const owner = actor && txApp.findRecordById("admins", actor.id);
       if (!owner?.getBool("active") || owner.getString("role") !== "owner") {
-        throw new ForbiddenError("Solo el owner puede ordenar el catálogo.");
+        throw new ForbiddenError("Only the owner can reorder the catalog.");
       }
 
       const changes = updates.map(({ id, previous, sort }) => {
@@ -49,7 +49,7 @@ routerAdd(
         if (!record || record.getInt("sort") !== previous) {
           throw new ApiError(
             409,
-            "El orden cambió. Vuelve a intentarlo con la lista actualizada.",
+            "The order changed. Retry with the updated list.",
           );
         }
         return { record, sort };
@@ -60,7 +60,7 @@ routerAdd(
           .size !== 1
       ) {
         throw new BadRequestError(
-          "Ordena solo los planes de un mismo servicio.",
+          "Reorder plans within the same service.",
         );
       }
 

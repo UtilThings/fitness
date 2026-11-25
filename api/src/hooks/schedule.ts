@@ -11,9 +11,9 @@ onRecordValidate((e) => {
   const { fieldError, getRecord, validateCoach } = require(`${__hooks}/lib/schedule-store`) as typeof import("../lib/schedule-store");
   const record = e.record!;
   const service = getRecord(e.app, "services", record.getString("service"));
-  if (!service?.getBool("active")) throw fieldError("service", "Selecciona un servicio activo.");
+  if (!service?.getBool("active")) throw fieldError("service", "Select an active service.");
   validateCoach(e.app, record.getString("coach"));
-  if (record.getFloat("capacity") < 1) throw fieldError("capacity", "El cupo debe ser al menos 1.");
+  if (record.getFloat("capacity") < 1) throw fieldError("capacity", "Capacity must be at least one.");
   return e.next();
 }, "class_templates");
 
@@ -37,11 +37,11 @@ onRecordValidate((e) => {
   const from = previous.getString("status") || "scheduled";
   const to = record.getString("status");
   const role = record.getBool("@pbInternalScheduleOwner") ? "owner" : "";
-  if (!canTransition(from, to, role)) throw fieldError("status", "La transición de estado no está permitida.");
+  if (!canTransition(from, to, role)) throw fieldError("status", "This status change is not allowed.");
   if (from === "completed" && !creating) {
     for (const field of ["template", "service", "starts_at"]) {
       if (previous.getString(field) !== record.getString(field)) {
-        throw fieldError(field, "Este dato está fijo en una sesión completada.");
+        throw fieldError(field, "This detail cannot change on a completed session.");
       }
     }
   }
@@ -69,11 +69,11 @@ onRecordValidate((e) => {
     try {
       startOfLocalDay(block[field], timezone);
     } catch {
-      throw fieldError(field, "Indica una fecha válida.");
+      throw fieldError(field, "Provide a valid date.");
     }
   }
   if (block.date_to < block.date_from) {
-    throw fieldError("date_to", "La fecha final debe ser igual o posterior a la inicial.");
+    throw fieldError("date_to", "The end date must be on or after the start date.");
   }
   return e.next();
 }, "schedule_blocks");
@@ -112,7 +112,7 @@ onRecordDelete((e) => {
     return app.runInTransaction((tx) => {
       e.app = tx;
       if (tx.countRecords("class_sessions", $dbx.hashExp({ template: e.record!.id }))) {
-        throw new BadRequestError("La plantilla tiene sesiones. Desactívala en su lugar.");
+        throw new BadRequestError("The template has scheduled sessions. Deactivate it instead.");
       }
       return e.next();
     });

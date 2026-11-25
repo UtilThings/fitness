@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -47,7 +48,7 @@ const templates = computed(() => {
 });
 const hasUnassigned = computed(() => templates.value.some((row) => !row.coach));
 const coachOptions = computed(() => [
-  { label: 'Sin coach', value: '' },
+  { label: t('No coach'), value: '' },
   ...catalog.coachOptions.value,
 ]);
 const applyToFuture = ref<Record<string, boolean>>({});
@@ -76,7 +77,7 @@ function serviceLabel(row: ClassTemplate) {
   return (
     row.expand?.service?.name ??
     services.value.find((item) => item.value === row.service)?.label ??
-    'Servicio'
+    t('Service')
   );
 }
 
@@ -84,7 +85,7 @@ function coachLabel(row: ClassTemplate) {
   return (
     row.expand?.coach?.name ||
     row.expand?.coach?.email ||
-    (row.coach ? 'Coach asignado' : 'Sin coach')
+    (row.coach ? t('Assigned coach') : t('No coach'))
   );
 }
 
@@ -139,14 +140,14 @@ function save() {
       await schedule.createTemplate(draft.value);
     }
     editing.value = false;
-    return 'Plantilla guardada';
+    return t('Template saved');
   });
 }
 
 function toggle(row: ClassTemplate, active: boolean) {
   return run(async () => {
     await schedule.updateTemplate(row.id, { active });
-    return active ? 'Plantilla activada' : 'Plantilla desactivada';
+    return active ? t('Template activated') : t('Template deactivated');
   });
 }
 
@@ -158,16 +159,18 @@ function assign(row: ClassTemplate, coach: string) {
       !!applyToFuture.value[row.id],
     );
     await schedule.loadTemplates();
-    return `Asignación guardada · Sesiones actualizadas: ${updated_sessions}`;
+    return t('Assignment saved · Sessions updated: {count}', {
+      count: updated_sessions,
+    });
   });
 }
 </script>
 
 <template>
   <div class="grid gap-5">
-    <PageHeader title="Plantillas de clases">
+    <PageHeader :title="t('Class templates')">
       <template v-if="isOwner" #actions>
-        <Button label="Nueva plantilla" icon="pi pi-plus" @click="edit()" />
+        <Button :label="t('New template')" icon="pi pi-plus" @click="edit()" />
       </template>
     </PageHeader>
     <Message
@@ -188,8 +191,11 @@ function assign(row: ClassTemplate, coach: string) {
       }}
     </Message>
     <Message v-if="hasUnassigned" severity="warn" :closable="false">
-      Las plantillas sin coach asignado usan el coach predeterminado del
-      servicio cuando está disponible.
+      {{
+        t(
+          "Templates without an assigned coach use the service's default coach when available.",
+        )
+      }}
     </Message>
     <DataTable
       :value="templates"
@@ -199,28 +205,30 @@ function assign(row: ClassTemplate, coach: string) {
       group-rows-by="weekday"
       scrollable
     >
-      <template #empty>Sin plantillas</template>
+      <template #empty>{{ t('No templates') }}</template>
       <template #groupheader="{ data }">
         <span class="font-semibold">{{ weekdayLabel(data.weekday) }}</span>
       </template>
-      <Column field="start_time" header="Hora" />
-      <Column header="Servicio">
+      <Column field="start_time" :header="t('Time')" />
+      <Column :header="t('Service')">
         <template #body="{ data }">{{ serviceLabel(data) }}</template>
       </Column>
-      <Column header="Duración">
-        <template #body="{ data }">{{ data.duration_min }} min</template>
+      <Column :header="t('Duration')">
+        <template #body="{ data }">{{
+          t('{minutes} min', { minutes: data.duration_min })
+        }}</template>
       </Column>
-      <Column field="capacity" header="Cupo" />
-      <Column header="Coach">
+      <Column field="capacity" :header="t('Capacity')" />
+      <Column :header="t('Coach')">
         <template #body="{ data }">
           <div v-if="isOwner" class="grid min-w-44 gap-2">
             <Select
               :model-value="data.coach"
               :aria-label="
-                'Coach de la plantilla ' +
-                weekdayLabel(data.weekday) +
-                ' ' +
-                data.start_time
+                t('Template coach for {day} at {time}', {
+                  day: weekdayLabel(data.weekday),
+                  time: data.start_time,
+                })
               "
               :options="coachOptions"
               option-label="label"
@@ -235,11 +243,11 @@ function assign(row: ClassTemplate, coach: string) {
                 type="checkbox"
                 :disabled="busy"
               />
-              Aplicar también a sesiones futuras
+              {{ t('Also apply to future sessions') }}
             </label>
             <Button
               v-if="applyToFuture[data.id] && data.coach"
-              label="Aplicar coach actual"
+              :label="t('Apply current coach')"
               size="small"
               severity="secondary"
               text
@@ -250,7 +258,7 @@ function assign(row: ClassTemplate, coach: string) {
           <span v-else>{{ coachLabel(data) }}</span>
         </template>
       </Column>
-      <Column header="Estado">
+      <Column :header="t('Status')">
         <template #body="{ data }">
           <div class="flex items-center gap-2">
             <ToggleSwitch
@@ -258,21 +266,21 @@ function assign(row: ClassTemplate, coach: string) {
               :model-value="data.active"
               :disabled="busy"
               :aria-label="
-                'Activar plantilla de ' +
-                weekdayLabel(data.weekday) +
-                ' ' +
-                data.start_time
+                t('Activate template for {day} at {time}', {
+                  day: weekdayLabel(data.weekday),
+                  time: data.start_time,
+                })
               "
               @update:model-value="toggle(data, $event)"
             />
-            <span>{{ data.active ? 'Activa' : 'Inactiva' }}</span>
+            <span>{{ data.active ? t("Active{''}") : t("Inactive{''}") }}</span>
           </div>
         </template>
       </Column>
-      <Column v-if="isOwner" header="Acciones">
+      <Column v-if="isOwner" :header="t('Actions')">
         <template #body="{ data }">
           <Button
-            label="Editar"
+            :label="t('Edit')"
             severity="secondary"
             text
             :disabled="busy"
@@ -286,12 +294,12 @@ function assign(row: ClassTemplate, coach: string) {
       v-model:visible="editing"
       modal
       class="w-full max-w-lg"
-      :header="editingId ? 'Editar plantilla' : 'Nueva plantilla'"
+      :header="editingId ? t('Edit template') : t('New template')"
     >
       <form class="grid gap-4" @submit.prevent="save">
         <CatalogField
           id="template-service"
-          label="Servicio"
+          :label="t('Service')"
           :error="fields.service"
         >
           <Select
@@ -309,7 +317,7 @@ function assign(row: ClassTemplate, coach: string) {
         <div class="grid grid-cols-2 gap-3">
           <CatalogField
             id="template-weekday"
-            label="Día"
+            :label="t('Day')"
             :error="fields.weekday"
           >
             <Select
@@ -322,7 +330,7 @@ function assign(row: ClassTemplate, coach: string) {
           </CatalogField>
           <CatalogField
             id="template-time"
-            label="Hora en Miramar"
+            :label="t('Time in Miramar')"
             :error="fields.start_time"
           >
             <InputText
@@ -334,7 +342,7 @@ function assign(row: ClassTemplate, coach: string) {
           </CatalogField>
           <CatalogField
             id="template-duration"
-            label="Duración (minutos)"
+            :label="t('Duration (minutes)')"
             :error="fields.duration_min"
           >
             <InputNumber
@@ -347,7 +355,7 @@ function assign(row: ClassTemplate, coach: string) {
           </CatalogField>
           <CatalogField
             id="template-capacity"
-            label="Cupo"
+            :label="t('Capacity')"
             :error="fields.capacity"
           >
             <InputNumber
@@ -361,7 +369,7 @@ function assign(row: ClassTemplate, coach: string) {
         <CatalogField
           v-if="!editingId"
           id="template-coach"
-          label="Coach"
+          :label="t('Coach')"
           :error="fields.coach"
         >
           <Select
@@ -373,17 +381,17 @@ function assign(row: ClassTemplate, coach: string) {
           />
         </CatalogField>
         <label class="flex items-center gap-2">
-          <ToggleSwitch v-model="draft.active" /> Activa
+          <ToggleSwitch v-model="draft.active" /> {{ t("Active{''}") }}
         </label>
         <div class="flex justify-end gap-2">
           <Button
-            label="Cerrar"
+            :label="t('Close')"
             severity="secondary"
             outlined
             :disabled="busy"
             @click="editing = false"
           />
-          <Button type="submit" label="Guardar plantilla" :loading="busy" />
+          <Button type="submit" :label="t('Save template')" :loading="busy" />
         </div>
       </form>
     </Dialog>

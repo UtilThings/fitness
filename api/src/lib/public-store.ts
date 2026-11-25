@@ -55,7 +55,7 @@ function withPublicBusiness(e: core.RequestEvent, load: (record: core.Record) =>
   const matches = verifyKey(key, record?.getString("public_key_hash") ?? "");
   if (!matches || !record?.getBool("active")) {
     header.set("Cache-Control", "no-store");
-    return e.json(401, { message: "Clave de API inválida" });
+    return e.json(401, { message: "The API key is invalid." });
   }
 
   const origin = e.request.header.get("Origin");
@@ -142,8 +142,8 @@ function cachedResponse(e: core.RequestEvent, key: string, load: () => unknown) 
 
 function publicError(e: core.RequestEvent, error: unknown) {
   if (error instanceof PublicQueryError) return e.json(400, { message: error.message });
-  e.app.logger().error("Error al cargar datos públicos", "error", String(error));
-  return e.json(500, { message: "No se pudieron cargar los datos públicos." });
+  e.app.logger().error("Could not load public data.", "error", String(error));
+  return e.json(500, { message: "Could not load the public data." });
 }
 
 export function servePublicCatalog(e: core.RequestEvent) {

@@ -17,7 +17,7 @@ routerAdd("POST", "/api/admin/memberships/{id}/{action}", (e) => {
   const business = e.auth!.getString("business");
   const action = e.request!.pathValue("action");
   if (action !== "renew" && action !== "pause" && action !== "resume" && action !== "cancel" && action !== "adjust") {
-    throw new NotFoundError("Acción de membresía no encontrada.");
+    throw new NotFoundError("Membership action not found.");
   }
   return e.json(200, manageMembership(e.app, e.request!.pathValue("id"), action, e.requestInfo().body,
     { business, actor, today: membershipToday(getBusinessTimezone(e.app, business, e)) }));
@@ -26,15 +26,15 @@ routerAdd("POST", "/api/admin/memberships/{id}/{action}", (e) => {
 onRecordValidate((e) => {
   const movement = e.record!;
   if (movement.getString("reason") === "adjust" && !movement.getString("note").trim()) {
-    throw new BadRequestError("Indica el motivo del ajuste.");
+    throw new BadRequestError("Enter a reason for the adjustment.");
   }
   return e.next();
 }, "credit_movements");
 
 onRecordUpdate(() => {
-  throw new ForbiddenError("Los movimientos se corrigen mediante ajustes.");
+  throw new ForbiddenError("Correct transactions through adjustments.");
 }, "credit_movements");
 
 onRecordDelete(() => {
-  throw new ForbiddenError("Los movimientos forman parte del historial de créditos.");
+  throw new ForbiddenError("Transactions are part of the credit history.");
 }, "credit_movements");

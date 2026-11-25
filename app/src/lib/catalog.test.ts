@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { withLocale } from '@/test/i18n';
 import {
   formatCents,
+  kindLabel,
   policyLabel,
   reorder,
   serviceSlug,
@@ -65,7 +67,7 @@ describe('utilidades del catálogo', () => {
     ).toHaveProperty('billing_unit');
   });
 
-  it('valida el cupo y las horas de cancelación', () => {
+  it('valida el cupo y las horas de cancelación', async () => {
     const online = {
       name: 'En línea',
       slug: 'en-linea',
@@ -76,6 +78,14 @@ describe('utilidades del catálogo', () => {
       default_coach: '',
     };
     expect(validateServiceForm(online)).toEqual({});
+    expect(kindLabel.value.online).toBe('En línea');
+    await withLocale('en', () => {
+      expect(kindLabel.value.online).toBe('Online');
+      expect(validateServiceForm({ ...online, name: '' }).name).toBe(
+        'Enter a name of up to 80 characters.',
+      );
+    });
+    expect(kindLabel.value.online).toBe('En línea');
     expect(
       validateServiceForm({
         ...online,

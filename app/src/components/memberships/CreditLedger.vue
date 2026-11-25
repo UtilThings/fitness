@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t, translateMessage } from '@/i18n';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import { computed } from 'vue';
@@ -14,13 +15,13 @@ const props = defineProps<{
   movements: CreditMovement[];
   loading?: boolean;
 }>();
-const reasons: Record<CreditMovement['reason'], string> = {
-  grant: 'Otorgamiento',
-  attend: 'Asistencia',
-  late_cancel: 'Cancelación tardía o ausencia',
-  adjust: 'Ajuste',
-  expire: 'Vencimiento',
-};
+const reasons = computed<Record<CreditMovement['reason'], string>>(() => ({
+  grant: t('Grant'),
+  attend: t('Attendance'),
+  late_cancel: t('Late cancellation or no-show'),
+  adjust: t('Adjustment'),
+  expire: t('Expiration'),
+}));
 const ordered = computed(() =>
   [...props.movements].sort(
     (a, b) => b.created.localeCompare(a.created) || b.id.localeCompare(a.id),
@@ -29,9 +30,9 @@ const ordered = computed(() =>
 </script>
 
 <template>
-  <section aria-label="Historial de créditos" class="grid gap-3">
+  <section :aria-label="t('Credit history')" class="grid gap-3">
     <div>
-      <span class="text-sm text-muted-color">Saldo actual</span>
+      <span class="text-sm text-muted-color">{{ t('Current balance') }}</span>
       <p
         class="text-xl font-semibold"
         :class="{
@@ -40,27 +41,31 @@ const ordered = computed(() =>
       >
         {{ membershipBalanceLabel(membership) }}
         <span v-if="membership.credits_balance < 0" class="text-sm">
-          · deuda de créditos</span
+          {{ t('· credit debt') }}</span
         >
       </p>
     </div>
     <DataTable :value="ordered" :loading="loading" data-key="id" size="small">
-      <template #empty>Sin movimientos de créditos.</template>
-      <Column header="Fecha">
+      <template #empty>{{ t('No credit transactions.') }}</template>
+      <Column :header="t('Date')">
         <template #body="{ data }">{{ formatDateTime(data.created) }}</template>
       </Column>
-      <Column header="Créditos">
+      <Column :header="t('Credits')">
         <template #body="{ data }"
           >{{ data.delta > 0 ? '+' : '' }}{{ data.delta }}</template
         >
       </Column>
-      <Column header="Motivo">
+      <Column :header="t('Reason')">
         <template #body="{ data }">{{
           reasons[(data as CreditMovement).reason]
         }}</template>
       </Column>
-      <Column field="note" header="Nota" />
-      <Column header="Reserva">
+      <Column field="note" :header="t('Note')">
+        <template #body="{ data }">{{
+          data.reason === 'expire' ? translateMessage(data.note) : data.note
+        }}</template>
+      </Column>
+      <Column :header="t('Booking')">
         <template #body="{ data }">
           <span v-if="data.booking" :title="data.booking">
             {{

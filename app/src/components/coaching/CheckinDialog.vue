@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
@@ -65,7 +66,7 @@ async function submit() {
   <Dialog
     v-model:visible="visible"
     modal
-    header="Registrar check-in"
+    :header="t('Record check-in')"
     :closable="!saving"
     :close-on-escape="!saving"
     class="w-full max-w-lg"
@@ -77,7 +78,7 @@ async function submit() {
       <CatalogField
         :id="id + '-date'"
         v-slot="{ describedBy }"
-        label="Fecha"
+        :label="t('Date')"
         :error="fields.checked_at"
       >
         <input
@@ -96,7 +97,7 @@ async function submit() {
           fields.adherence ? id + '-adherence-error' : undefined
         "
       >
-        <legend class="text-sm font-medium">Adherencia</legend>
+        <legend class="text-sm font-medium">{{ t('Adherence') }}</legend>
         <div class="flex flex-wrap gap-2">
           <Button
             v-for="value in 5"
@@ -116,19 +117,19 @@ async function submit() {
           >{{ fields.adherence }}</small
         >
       </fieldset>
-      <CatalogField :id="id + '-notes'" label="Notas">
+      <CatalogField :id="id + '-notes'" :label="t('Notes{\'\'}')">
         <Textarea :id="id + '-notes'" v-model="form.notes" rows="4" fluid />
       </CatalogField>
       <div class="flex justify-end gap-2">
         <Button
           type="button"
-          label="Cancelar"
+          :label="t('Cancel')"
           severity="secondary"
           text
           :disabled="saving"
           @click="visible = false"
         />
-        <Button type="submit" label="Guardar check-in" :loading="saving" />
+        <Button type="submit" :label="t('Save check-in')" :loading="saving" />
       </div>
     </form>
   </Dialog>

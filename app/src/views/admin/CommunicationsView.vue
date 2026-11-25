@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Message from 'primevue/message';
 import Tab from 'primevue/tab';
 import TabList from 'primevue/tablist';
@@ -69,31 +70,31 @@ function recordSave(template: MessageTemplate) {
 
 <template>
   <div class="grid gap-5">
-    <PageHeader title="Comunicaciones" />
+    <PageHeader :title="t('Communications')" />
     <Tabs value="templates" lazy scrollable>
       <TabList>
-        <Tab value="templates">Plantillas</Tab>
-        <Tab value="history">Historial</Tab>
-        <Tab value="manual">Mensaje a clase</Tab>
+        <Tab value="templates">{{ t('Templates') }}</Tab>
+        <Tab value="history">{{ t('History') }}</Tab>
+        <Tab value="manual">{{ t('Message a class') }}</Tab>
       </TabList>
       <TabPanels>
         <TabPanel value="templates">
           <p v-if="loading" role="status" class="text-sm text-muted-color">
-            Cargando plantillas…
+            {{ t('Loading templates…') }}
           </p>
           <Message v-else-if="error" severity="error" :closable="false">{{
             error
           }}</Message>
           <template v-else>
             <p v-if="!isOwner" class="mt-0 text-sm text-muted-color">
-              Solo lectura.
+              {{ t('Read-only.') }}
             </p>
             <Message
               v-if="saved"
               severity="success"
               class="mb-4"
               :closable="false"
-              >Plantilla guardada.</Message
+              >{{ t('Template saved.') }}</Message
             >
             <TemplateEditor
               :template="selected"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputNumber from 'primevue/inputnumber';
@@ -29,7 +30,7 @@ watch(open, (visible) => {
 async function submit() {
   if (saving.value) return;
   if (!note.value.trim()) {
-    error.value = 'Indica el motivo del ajuste.';
+    error.value = t('Enter a reason for the adjustment.');
     return;
   }
   if (
@@ -37,7 +38,7 @@ async function submit() {
     !Number.isSafeInteger(delta.value) ||
     delta.value === 0
   ) {
-    error.value = 'Indica un número entero distinto de cero.';
+    error.value = t('Enter a nonzero whole number.');
     return;
   }
   saving.value = true;
@@ -61,7 +62,7 @@ async function submit() {
 <template>
   <Dialog
     v-model:visible="open"
-    header="Ajustar créditos"
+    :header="t('Adjust credits')"
     modal
     class="w-full max-w-lg"
     :closable="!saving"
@@ -69,7 +70,9 @@ async function submit() {
   >
     <form class="grid gap-4" @submit.prevent="submit">
       <div class="grid gap-1">
-        <label :for="id + '-delta'">Créditos a sumar o restar</label>
+        <label :for="id + '-delta'">{{
+          t('Credits to add or subtract')
+        }}</label>
         <InputNumber
           v-model="delta"
           :input-id="id + '-delta'"
@@ -78,7 +81,7 @@ async function submit() {
         />
       </div>
       <div class="grid gap-1">
-        <label :for="id + '-note'">Motivo del ajuste</label>
+        <label :for="id + '-note'">{{ t('Reason for adjustment') }}</label>
         <Textarea
           :id="id + '-note'"
           v-model="note"
@@ -92,13 +95,13 @@ async function submit() {
       }}</Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
           @click="open = false"
         />
-        <Button label="Guardar ajuste" type="submit" :loading="saving" />
+        <Button :label="t('Save adjustment')" type="submit" :loading="saving" />
       </div>
     </form>
   </Dialog>

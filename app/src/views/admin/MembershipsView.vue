@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable, { type DataTablePageEvent } from 'primevue/datatable';
@@ -37,10 +38,12 @@ const loading = ref(false);
 const error = ref('');
 let latest = 0;
 
-const states = Object.entries(membershipStatusLabels).map(([value, label]) => ({
-  value,
-  label,
-}));
+const states = computed(() =>
+  Object.entries(membershipStatusLabels.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
 const planOptions = computed(() =>
   plans.items.value.map((plan) => ({
     id: plan.id,
@@ -86,11 +89,12 @@ function changePage(event: DataTablePageEvent) {
 function commitment(membership: Membership) {
   const periods = membership.commitment_periods_total;
   return periods > 0
-    ? 'Hasta el ' +
-        formatMembershipDate(
+    ? t('Until {date}', {
+        date: formatMembershipDate(
           addLocalDays(membership.starts_on.slice(0, 10), periods * 28 - 1),
-        )
-    : 'Sin compromiso';
+        ),
+      })
+    : t('No commitment');
 }
 
 watch(
@@ -107,7 +111,7 @@ onMounted(() => void plans.load());
 
 <template>
   <section class="grid gap-5">
-    <PageHeader title="Suscripciones" />
+    <PageHeader :title="t('Memberships')" />
     <div class="flex flex-wrap gap-3">
       <Select
         v-model="status"
@@ -115,8 +119,8 @@ onMounted(() => void plans.load());
         option-label="label"
         option-value="value"
         show-clear
-        placeholder="Todos los estados"
-        aria-label="Estado de membresía"
+        :placeholder="t('All statuses')"
+        :aria-label="t('Membership status')"
         class="min-w-48"
       />
       <Select
@@ -126,19 +130,19 @@ onMounted(() => void plans.load());
         option-value="id"
         show-clear
         filter
-        placeholder="Todos los planes"
-        aria-label="Plan"
+        :placeholder="t('All plans')"
+        :aria-label="t('Plan')"
         :loading="plans.loading.value"
         class="min-w-48"
       />
     </div>
     <Message v-if="plans.error.value" severity="error" :closable="false">
       {{ plans.error.value.message }}
-      <Button label="Reintentar" size="small" text @click="plans.load()" />
+      <Button :label="t('Retry')" size="small" text @click="plans.load()" />
     </Message>
     <Message v-if="error" severity="error" :closable="false">
       {{ error }}
-      <Button label="Reintentar" size="small" text @click="load" />
+      <Button :label="t('Retry')" size="small" text @click="load" />
     </Message>
     <DataTable
       v-else
@@ -156,9 +160,11 @@ onMounted(() => void plans.load());
       @page="changePage"
     >
       <template #empty
-        ><span v-if="!loading">No hay membresías para mostrar.</span></template
+        ><span v-if="!loading">{{
+          t('No memberships to display.')
+        }}</span></template
       >
-      <Column header="Cliente">
+      <Column :header="t('Client')">
         <template #body="{ data }">
           <RouterLink
             :to="{ name: 'client-detail', params: { id: data.client } }"
@@ -170,23 +176,23 @@ onMounted(() => void plans.load());
           </RouterLink>
         </template>
       </Column>
-      <Column header="Plan">
+      <Column :header="t('Plan')">
         <template #body="{ data }">{{
           data.expand?.plan?.name ?? data.plan
         }}</template>
       </Column>
-      <Column header="Estado">
+      <Column :header="t('Status')">
         <template #body="{ data }"
           ><MembershipStatusTag :membership="data"
         /></template>
       </Column>
-      <Column header="Periodo">
+      <Column :header="t('Period')">
         <template #body="{ data }">
           {{ formatMembershipDate(data.current_period_start) }} –
           {{ formatMembershipDate(data.current_period_end) }}
         </template>
       </Column>
-      <Column header="Saldo">
+      <Column :header="t('Balance')">
         <template #body="{ data }">
           <span
             :class="{
@@ -197,10 +203,10 @@ onMounted(() => void plans.load());
           </span>
         </template>
       </Column>
-      <Column header="Compromiso"
+      <Column :header="t('Commitment')"
         ><template #body="{ data }">{{ commitment(data) }}</template></Column
       >
-      <Column v-if="canManage" header="Acciones">
+      <Column v-if="canManage" :header="t('Actions')">
         <template #body="{ data }"
           ><MembershipActions :membership="data" @updated="load"
         /></template>

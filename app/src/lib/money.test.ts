@@ -1,6 +1,10 @@
 import { expect, it } from 'vitest';
+import { setLocale } from '@/i18n';
+import { withLocale } from '@/test/i18n';
+import { computed } from 'vue';
 import {
   centsToDecimal,
+  formatMoney,
   formatUsd,
   parseToCents,
   parseUsdToCents,
@@ -46,4 +50,24 @@ it.each([
   ['90071992547409.915', null],
 ])('convierte %j a centavos', (input, expected) => {
   expect(parseToCents(input)).toBe(expected);
+});
+
+it('formats a business currency reactively in both locales', async () => {
+  const displayed = computed(() => formatMoney(123456, 'CAD'));
+  await withLocale('en', async () => {
+    expect(displayed.value).toBe(
+      new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'CAD',
+      }).format(1234.56),
+    );
+    await setLocale('es');
+    expect(displayed.value).toBe(
+      new Intl.NumberFormat('es-US', {
+        style: 'currency',
+        currency: 'CAD',
+      }).format(1234.56),
+    );
+    expect(parseToCents('1.234,56')).toBe(123456);
+  });
 });

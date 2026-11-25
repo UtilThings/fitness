@@ -31,8 +31,8 @@ describe("catálogo", () => {
     expect(findFirstClassConflict(plans, "first")).toBeUndefined();
     expect(canActivatePlan(false)).toBe(false);
     expect(canActivatePlan(true)).toBe(true);
-    expect(dependentsBlockMessage("service", { plans: 3 })).toBe("Tiene 3 planes asociados. Desactívalo en su lugar.");
-    expect(dependentsBlockMessage("plan", { memberships: 1, payments: 2 })).toContain("1 membresía asociada, 2 pagos asociados");
+    expect(dependentsBlockMessage("service", { plans: 3 })).toBe("This record has related records. Deactivate it instead.");
+    expect(dependentsBlockMessage("plan", { memberships: 1, payments: 2 })).toBe("This record has related records. Deactivate it instead.");
     expect(dependentsBlockMessage("plan", {})).toBeNull();
   });
 

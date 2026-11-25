@@ -245,7 +245,7 @@ const { id: blockId } = await call<{ id: string }>(blocks, owner, "POST", {
 for (const row of affected) {
   const record = await getSession(row.id);
   assert.equal(record.status, "cancelled");
-  assert.equal(record.cancel_reason, "Bloqueo: Feriado");
+  assert.equal(record.cancel_reason, "Schedule block: Feriado");
 }
 const afterBlock = await postGenerate({ from });
 assert.equal(afterBlock.created, 0);

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
@@ -20,7 +21,7 @@ async function onSubmit() {
     await requestPasswordReset(email.value);
     sent.value = true;
   } catch {
-    error.value = 'No se pudo enviar la solicitud. Inténtalo de nuevo.';
+    error.value = t('Could not send the request. Try again.');
   } finally {
     loading.value = false;
   }
@@ -29,17 +30,17 @@ async function onSubmit() {
 
 <template>
   <AuthHeading
-    title="¿Olvidaste tu contraseña?"
-    subtitle="Ingresa tu correo electrónico."
+    :title="t('Forgot your password?')"
+    :subtitle="t('Enter your email address.')"
   />
   <form class="flex flex-col gap-4" @submit.prevent="onSubmit">
     <div class="flex flex-col gap-2">
-      <label for="email" class="text-sm">Correo electrónico</label>
+      <label for="email" class="text-sm">{{ t('Email address') }}</label>
       <InputText
         id="email"
         v-model="email"
         type="email"
-        placeholder="nombre@empresa.com"
+        :placeholder="t('name{\'@\'}company.com')"
         autocomplete="username"
         :disabled="sent"
         required
@@ -47,22 +48,25 @@ async function onSubmit() {
       />
     </div>
     <Message v-if="sent" severity="success" size="small">
-      Si el correo está registrado, recibirás un enlace para restablecer tu
-      contraseña.
+      {{
+        t(
+          'If the email address is registered, you will receive a password reset link.',
+        )
+      }}
     </Message>
     <p v-if="error" class="text-sm text-red-500" role="alert">{{ error }}</p>
     <Button
       type="submit"
-      label="Enviar enlace"
+      :label="t('Send link')"
       :loading="loading"
       :disabled="sent"
       fluid
     />
   </form>
   <p class="mt-6 text-center text-sm text-surface-500">
-    ¿Recordaste tu contraseña?
+    {{ t('Remember your password?') }}
     <RouterLink :to="{ name: 'login' }" class="text-primary hover:underline">
-      Iniciar sesión
+      {{ t('Sign in') }}
     </RouterLink>
   </p>
 </template>

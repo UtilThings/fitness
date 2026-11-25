@@ -32,45 +32,45 @@ const validInteger = (value: number, min: number, max = Number.MAX_SAFE_INTEGER)
 export function validateService(input: ServiceInput): Record<string, string> {
   const errors: Record<string, string> = {};
   if (!input.name.trim() || input.name.length > 80) {
-    errors.name = "Escribe un nombre de hasta 80 caracteres.";
+    errors.name = "Enter a name of up to 80 characters.";
   }
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(input.slug)) {
-    errors.slug = "Usa letras minúsculas, números y guiones entre palabras.";
+    errors.slug = "Use lowercase letters and numbers with hyphens between words.";
   }
-  if (!SERVICE_KINDS.includes(input.kind)) errors.kind = "Selecciona un tipo de servicio.";
+  if (!SERVICE_KINDS.includes(input.kind)) errors.kind = "Select a service type.";
   if (!validInteger(input.capacity, input.kind === "online" ? 0 : 1)) {
-    errors.capacity = input.kind === "online" ? "El cupo debe ser un entero no negativo." : "El cupo debe ser un entero de al menos 1.";
+    errors.capacity = input.kind === "online" ? "Capacity must be a nonnegative whole number." : "Capacity must be a whole number of at least one.";
   }
   if (!validInteger(input.cancellation_hours, 0, 168)) {
-    errors.cancellation_hours = "Indica un número entero de horas entre 0 y 168.";
+    errors.cancellation_hours = "Enter a whole number of hours from 0 to 168.";
   }
-  if ((input.description?.length ?? 0) > 500) errors.description = "Usa hasta 500 caracteres.";
-  if (input.sort !== undefined && !validInteger(input.sort, 0)) errors.sort = "El orden debe ser un entero no negativo.";
+  if ((input.description?.length ?? 0) > 500) errors.description = "Use up to 500 characters.";
+  if (input.sort !== undefined && !validInteger(input.sort, 0)) errors.sort = "The order must be a nonnegative whole number.";
   return errors;
 }
 
 export function validatePlan(input: PlanInput): Record<string, string> {
   const errors: Record<string, string> = {};
   if (!input.name.trim() || input.name.length > 80) {
-    errors.name = "Escribe un nombre de hasta 80 caracteres.";
+    errors.name = "Enter a name of up to 80 characters.";
   }
   if (input.is_first_class ? input.price_cents !== 0 : !validInteger(input.price_cents, 1)) {
     errors.price_cents = input.is_first_class
-      ? "La primera clase debe ser gratis."
-      : "El precio debe ser mayor que cero y expresarse en centavos enteros.";
+      ? "The first class must be free."
+      : "The price must be positive and expressed in whole cents.";
   }
   if (input.is_first_class && input.billing_unit !== "first_visit") {
-    errors.billing_unit = "La primera clase debe cobrarse por primera visita.";
+    errors.billing_unit = "The first class must use first-visit billing.";
   } else if (!BILLING_UNITS.includes(input.billing_unit)) {
-    errors.billing_unit = "Selecciona una unidad de cobro.";
+    errors.billing_unit = "Select a billing unit.";
   }
-  if (!validInteger(input.sessions, 0)) errors.sessions = "Indica un número entero de sesiones no negativo.";
-  if (!validInteger(input.per_week, 0, 7)) errors.per_week = "Indica una frecuencia entera entre 0 y 7.";
+  if (!validInteger(input.sessions, 0)) errors.sessions = "Enter a nonnegative whole number of sessions.";
+  if (!validInteger(input.per_week, 0, 7)) errors.per_week = "Enter a whole-number frequency from 0 to 7.";
   if (!validInteger(input.commitment_periods, 0)) {
-    errors.commitment_periods = "Indica un número entero de periodos no negativo.";
+    errors.commitment_periods = "Enter a nonnegative whole number of periods.";
   }
-  if ((input.note?.length ?? 0) > 300) errors.note = "Usa hasta 300 caracteres.";
-  if (input.sort !== undefined && !validInteger(input.sort, 0)) errors.sort = "El orden debe ser un entero no negativo.";
+  if ((input.note?.length ?? 0) > 300) errors.note = "Use up to 300 characters.";
+  if (input.sort !== undefined && !validInteger(input.sort, 0)) errors.sort = "The order must be a nonnegative whole number.";
   return errors;
 }
 
@@ -87,13 +87,13 @@ export function findFirstClassConflict(
 
 export const CATALOG_DEPENDENTS = {
   service: [
-    { collection: "plans", field: "service", singular: "plan asociado", plural: "planes asociados" },
-    { collection: "class_templates", field: "service", singular: "plantilla asociada", plural: "plantillas asociadas" },
-    { collection: "class_sessions", field: "service", singular: "sesión asociada", plural: "sesiones asociadas" },
+    { collection: "plans", field: "service" },
+    { collection: "class_templates", field: "service" },
+    { collection: "class_sessions", field: "service" },
   ],
   plan: [
-    { collection: "memberships", field: "plan", singular: "membresía asociada", plural: "membresías asociadas" },
-    { collection: "payments", field: "plan", singular: "pago asociado", plural: "pagos asociados" },
+    { collection: "memberships", field: "plan" },
+    { collection: "payments", field: "plan" },
   ],
 } as const;
 
@@ -101,11 +101,8 @@ export function dependentsBlockMessage(
   kind: keyof typeof CATALOG_DEPENDENTS,
   counts: Readonly<Record<string, number>>,
 ): string | null {
-  const found = CATALOG_DEPENDENTS[kind].flatMap(({ collection, singular, plural }) => {
-    const count = counts[collection] ?? 0;
-    return count ? [`${count} ${count === 1 ? singular : plural}`] : [];
-  });
-  return found.length ? `Tiene ${found.join(", ")}. Desactívalo en su lugar.` : null;
+  const hasDependents = CATALOG_DEPENDENTS[kind].some(({ collection }) => (counts[collection] ?? 0) > 0);
+  return hasDependents ? "This record has related records. Deactivate it instead." : null;
 }
 
 interface SeedPlan extends PlanInput {

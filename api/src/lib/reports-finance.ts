@@ -47,12 +47,12 @@ export function aggregateRevenue(
     const plan = planIndex.get(payment.plan);
     const relatedService = plan && serviceIndex.get(plan.service);
     if (service && service !== relatedService?.slug) continue;
-    if (payment.currency !== currency) throw new ReportRangeError("El rango incluye pagos en otra moneda.");
+    if (payment.currency !== currency) throw new ReportRangeError("The range includes payments in another currency.");
     const planId = plan?.id ?? "";
     const slug = relatedService?.slug ?? "";
-    const planRow = countsByPlan.get(planId) ?? { plan: planId, name: plan?.name ?? "Sin plan", ...revenueCounts() };
+    const planRow = countsByPlan.get(planId) ?? { plan: planId, name: plan?.name ?? "No plan", ...revenueCounts() };
     const serviceRow = countsByService.get(slug) ?? {
-      service: slug, name: relatedService?.name ?? "Sin servicio", ...revenueCounts(),
+      service: slug, name: relatedService?.name ?? "No service", ...revenueCounts(),
     };
     const amountKey = status === "paid" ? "paid_cents" : status === "pending" ? "pending_cents" : "void_cents";
     for (const row of [totals, planRow, serviceRow]) {
@@ -100,7 +100,7 @@ export function aggregateRetention(memberships: ReportMembership[], plans: Repor
 
     const plan = planIndex.get(membership.plan);
     const planId = plan?.id ?? "";
-    const row = byPlan.get(planId) ?? { plan: planId, name: plan?.name ?? "Sin plan", ...retentionCounts() };
+    const row = byPlan.get(planId) ?? { plan: planId, name: plan?.name ?? "No plan", ...retentionCounts() };
     const isNew = start >= range.from;
     const churned = !!end && end <= range.to;
     for (const counts of [totals, row]) {

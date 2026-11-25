@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable, {
@@ -43,13 +44,13 @@ const status = computed<ClientStatus | 'all'>(() => {
   if (value === 'all') return value;
   return CLIENT_STATUSES.find((item) => item === value) ?? 'active';
 });
-const statusOptions = [
-  { value: 'all', label: 'Todos' },
+const statusOptions = computed(() => [
+  { value: 'all', label: t('All') },
   ...CLIENT_STATUSES.map((value) => ({
     value,
-    label: CLIENT_STATUS[value].label,
+    label: CLIENT_STATUS.value[value].label,
   })),
-];
+]);
 const plan = computed(() =>
   typeof route.query.plan === 'string' ? route.query.plan : null,
 );
@@ -64,10 +65,10 @@ const planOptions = computed(() =>
     label: [plan.expand?.service?.name, plan.name].filter(Boolean).join(' · '),
   })),
 );
-const membershipOptions = [
-  { value: 'with', label: 'Con membresía activa' },
-  { value: 'without', label: 'Sin membresía activa' },
-];
+const membershipOptions = computed(() => [
+  { value: 'with', label: t('With an active membership') },
+  { value: 'without', label: t('Without an active membership') },
+]);
 const membershipFilter = computed(() =>
   activeMembership.value === undefined
     ? null
@@ -213,8 +214,8 @@ async function create(values: ClientDetails) {
     creationError.value =
       cause instanceof RangeError
         ? {
-            fields: { joined_on: 'Ingresa una fecha válida.' },
-            message: 'Revisa los datos del cliente.',
+            fields: { joined_on: t('Enter a valid date.') },
+            message: t('Check the client details.'),
             status: 400,
           }
         : (cause as PbError);
@@ -226,15 +227,19 @@ async function create(values: ClientDetails) {
 
 <template>
   <section class="grid grid-cols-1 gap-5">
-    <PageHeader title="Clientes">
+    <PageHeader :title="t('Clients')">
       <template #actions>
-        <Button icon="pi pi-plus" label="Nuevo cliente" @click="openCreate" />
+        <Button
+          icon="pi pi-plus"
+          :label="t('New client')"
+          @click="openCreate"
+        />
       </template>
     </PageHeader>
 
     <DataToolbar
       :model-value="q"
-      placeholder="Nombre, email o teléfono"
+      :placeholder="t('Name, email, or phone')"
       search-class="w-full min-w-0 self-start sm:w-64"
       @search="search"
     >
@@ -244,7 +249,7 @@ async function create(values: ClientDetails) {
           :options="statusOptions"
           option-label="label"
           option-value="value"
-          aria-label="Estado"
+          :aria-label="t('Status')"
           class="min-w-32 self-start"
           @update:model-value="filterStatus"
         />
@@ -253,8 +258,8 @@ async function create(values: ClientDetails) {
           :options="planOptions"
           option-label="label"
           option-value="id"
-          aria-label="Plan activo"
-          placeholder="Plan activo"
+          :aria-label="t('Active plan')"
+          :placeholder="t('Active plan')"
           show-clear
           filter
           :loading="plans.loading.value"
@@ -266,8 +271,8 @@ async function create(values: ClientDetails) {
           :options="membershipOptions"
           option-label="label"
           option-value="value"
-          aria-label="Membresía activa"
-          placeholder="Cualquier membresía"
+          :aria-label="t('Active membership')"
+          :placeholder="t('Any membership')"
           show-clear
           class="min-w-44"
           @update:model-value="filterMembership"
@@ -278,7 +283,7 @@ async function create(values: ClientDetails) {
     <Message v-if="plans.error.value" severity="error" :closable="false">
       {{ plans.error.value.message }}
       <Button
-        label="Reintentar planes"
+        :label="t('Retry loading plans')"
         size="small"
         text
         @click="plans.load()"
@@ -287,7 +292,7 @@ async function create(values: ClientDetails) {
     <Message v-if="listError" severity="error" :closable="false">
       {{ listError.message }}
       <Button
-        label="Reintentar"
+        :label="t('Retry')"
         size="small"
         severity="secondary"
         text
@@ -315,11 +320,11 @@ async function create(values: ClientDetails) {
         <EmptyState
           v-if="!loading"
           icon="pi pi-users"
-          title="No hay clientes para mostrar"
-          description="Prueba otra búsqueda o cambia los filtros."
+          :title="t('No clients to display')"
+          :description="t('Try a different search or change the filters.')"
         />
       </template>
-      <Column header="Nombre">
+      <Column :header="t('Name')">
         <template #body="{ data }">
           <RouterLink
             :to="profile(data.id)"
@@ -330,30 +335,30 @@ async function create(values: ClientDetails) {
           </RouterLink>
         </template>
       </Column>
-      <Column header="Correo electrónico">
+      <Column :header="t('Email address')">
         <template #body="{ data }">{{ data.email || '—' }}</template>
       </Column>
-      <Column header="Teléfono">
+      <Column :header="t('Phone')">
         <template #body="{ data }">{{
           formatPhone(data.phone) || '—'
         }}</template>
       </Column>
-      <Column header="Estado">
+      <Column :header="t('Status')">
         <template #body="{ data }"
           ><ClientStatusTag :status="data.status"
         /></template>
       </Column>
-      <Column header="Primera clase gratis">
+      <Column :header="t('Free first class')">
         <template #body="{ data }">{{
-          data.free_class_used ? 'Usada' : 'Disponible'
+          data.free_class_used ? t('Used') : t('Available')
         }}</template>
       </Column>
-      <Column header="Fecha de alta">
+      <Column :header="t('Join date')">
         <template #body="{ data }">{{
           data.joined_on ? formatDate(data.joined_on) : '—'
         }}</template>
       </Column>
-      <Column header="Planes activos">
+      <Column :header="t('Active plans')">
         <template #body="{ data }">{{ activePlans(data) || '—' }}</template>
       </Column>
     </DataTable>
@@ -361,7 +366,7 @@ async function create(values: ClientDetails) {
     <Dialog
       v-model:visible="visible"
       modal
-      header="Nuevo cliente"
+      :header="t('New client')"
       class="w-[min(38rem,calc(100%-2rem))]"
       :closable="!saving"
       :close-on-escape="!saving"

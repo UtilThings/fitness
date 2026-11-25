@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import { computed, ref, shallowRef, watch } from 'vue';
@@ -31,7 +32,7 @@ const editErrors = ref<Record<string, string>>();
 const isSelf = computed(() => member.value?.id === user.value?.id);
 const canEdit = computed(() => can('team.manage') && !isSelf.value);
 const displayName = computed(
-  () => member.value?.name || member.value?.email || 'Sin nombre',
+  () => member.value?.name || member.value?.email || t('Unnamed'),
 );
 
 watch(
@@ -101,19 +102,19 @@ async function update(
 function save({ name, role, phone, bio }: NewMember) {
   return update(
     (id) => team.updateMember(id, { name, role, phone, bio }),
-    'Integrante actualizado',
+    t('Team member updated'),
   );
 }
 
 function upload(file: File) {
-  return update((id) => team.uploadAvatar(id, file), 'Foto actualizada');
+  return update((id) => team.uploadAvatar(id, file), t('Photo updated'));
 }
 
 function toggleActive() {
   const active = !member.value?.active;
   return update(
     (id) => team.setActive(id, active),
-    active ? 'Integrante activado' : 'Integrante desactivado',
+    active ? t('Team member activated') : t('Team member deactivated'),
   );
 }
 </script>
@@ -124,13 +125,14 @@ function toggleActive() {
       :to="{ name: 'team' }"
       class="w-fit text-sm font-medium text-primary hover:underline"
     >
-      <i class="pi pi-arrow-left mr-1" aria-hidden="true" /> Volver al equipo
+      <i class="pi pi-arrow-left mr-1" aria-hidden="true" />
+      {{ t('Back to team') }}
     </RouterLink>
-    <p v-if="loading" role="status">Cargando integrante…</p>
+    <p v-if="loading" role="status">{{ t('Loading team member…') }}</p>
     <EmptyState
       v-else-if="!member && (!loadError || loadError.status === 404)"
       icon="pi pi-user"
-      title="Integrante no encontrado"
+      :title="t('Team member not found')"
     />
     <div
       v-else-if="loadError"
@@ -139,7 +141,7 @@ function toggleActive() {
     >
       <span>{{ loadError.message }}</span>
       <Button
-        label="Reintentar"
+        :label="t('Retry')"
         severity="secondary"
         outlined
         @click="retry++"
@@ -151,14 +153,14 @@ function toggleActive() {
         <template v-if="canEdit || isSelf" #actions>
           <template v-if="canEdit">
             <Button
-              :label="member.active ? 'Desactivar' : 'Activar'"
+              :label="member.active ? t('Deactivate') : t('Activate')"
               severity="secondary"
               outlined
               :disabled="busy"
               @click="toggleActive"
             />
             <Button
-              label="Editar"
+              :label="t('Edit')"
               icon="pi pi-pencil"
               :disabled="busy"
               @click="openEdit"
@@ -168,7 +170,7 @@ function toggleActive() {
             v-else
             :to="{ name: 'profile' }"
             class="text-sm font-medium text-primary hover:underline"
-            >Ir a mi perfil</RouterLink
+            >{{ t('Go to my profile') }}</RouterLink
           >
         </template>
       </PageHeader>
@@ -191,19 +193,19 @@ function toggleActive() {
         </div>
         <dl class="grid gap-4 text-sm sm:grid-cols-2">
           <div>
-            <dt class="font-medium">Correo electrónico</dt>
+            <dt class="font-medium">{{ t('Email address') }}</dt>
             <dd class="break-all text-surface-600 dark:text-surface-300">
               {{ member.email || '—' }}
             </dd>
           </div>
           <div>
-            <dt class="font-medium">Teléfono</dt>
+            <dt class="font-medium">{{ t('Phone') }}</dt>
             <dd class="text-surface-600 dark:text-surface-300">
               {{ member.phone || '—' }}
             </dd>
           </div>
           <div class="sm:col-span-2">
-            <dt class="font-medium">Biografía</dt>
+            <dt class="font-medium">{{ t('Bio') }}</dt>
             <dd
               class="wrap-anywhere whitespace-pre-wrap text-surface-600 dark:text-surface-300"
             >
@@ -216,7 +218,7 @@ function toggleActive() {
       <section
         class="grid gap-3 rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-900"
       >
-        <h2 class="font-semibold">Permisos por rol</h2>
+        <h2 class="font-semibold">{{ t('Permissions by role') }}</h2>
         <RolePermissions :highlight="member.role" />
       </section>
 
@@ -224,11 +226,11 @@ function toggleActive() {
         v-if="member.role !== 'reception'"
         class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-900"
       >
-        <h2 class="font-semibold">Horario y clases</h2>
+        <h2 class="font-semibold">{{ t('Schedule and classes') }}</h2>
         <Button
           as="RouterLink"
           :to="{ name: 'classes', query: { coach: member.id } }"
-          label="Ver horario"
+          :label="t('View schedule')"
           icon="pi pi-calendar"
           severity="secondary"
           outlined
@@ -238,7 +240,7 @@ function toggleActive() {
       <Dialog
         v-if="canEdit"
         v-model:visible="editing"
-        header="Editar integrante"
+        :header="t('Edit team member')"
         modal
         :closable="!busy"
         :close-on-escape="!busy"

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
+import { intlLocale } from '@/i18n/formats';
 import Tag from 'primevue/tag';
 import { computed } from 'vue';
 import type { Trend } from '@/lib/coaching';
@@ -13,16 +15,16 @@ const severity = computed(() => {
 });
 const score = computed(() =>
   props.value === null
-    ? 'Sin check-ins'
-    : new Intl.NumberFormat('es', { maximumFractionDigits: 2 }).format(
+    ? t('No check-ins')
+    : new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: 2 }).format(
         props.value,
       ) + ' / 5',
 );
-const trends = {
-  up: { icon: 'pi pi-arrow-up', label: 'Al alza' },
-  flat: { icon: 'pi pi-minus', label: 'Estable' },
-  down: { icon: 'pi pi-arrow-down', label: 'A la baja' },
-};
+const trends = computed(() => ({
+  up: { icon: 'pi pi-arrow-up', label: t('Trending up') },
+  flat: { icon: 'pi pi-minus', label: t('Steady') },
+  down: { icon: 'pi pi-arrow-down', label: t('Trending down') },
+}));
 </script>
 
 <template>

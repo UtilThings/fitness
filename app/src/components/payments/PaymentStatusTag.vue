@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import { computed } from 'vue';
 import StatusTag from '@/components/StatusTag.vue';
 import {
@@ -14,12 +15,15 @@ const props = defineProps<{
 const value = computed(() =>
   isOverdue(props.payment, props.today) ? 'overdue' : props.payment.status,
 );
-const map = {
-  pending: { label: paymentStatuses.pending, severity: 'warn' },
-  paid: { label: paymentStatuses.paid, severity: 'success' },
-  void: { label: paymentStatuses.void, severity: 'secondary' },
-  overdue: { label: 'Vencido', severity: 'danger' },
-} as const;
+const map = computed(
+  () =>
+    ({
+      pending: { label: paymentStatuses.value.pending, severity: 'warn' },
+      paid: { label: paymentStatuses.value.paid, severity: 'success' },
+      void: { label: paymentStatuses.value.void, severity: 'secondary' },
+      overdue: { label: t('Overdue'), severity: 'danger' },
+    }) as const,
+);
 </script>
 
 <template>

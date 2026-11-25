@@ -4,12 +4,13 @@ import PrimeVue from 'primevue/config';
 import ToastService from 'primevue/toastservice';
 import { useConfirm } from 'primevue/useconfirm';
 import { afterEach, expect, it } from 'vitest';
-import { defineComponent, h } from 'vue';
+import { defineComponent, h, nextTick } from 'vue';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import { useNotify } from '@/composables/useNotify';
 import { pb } from '@/lib/pocketbase';
 import { AppPreset } from '@/lib/theme';
 import appRouter, { installGuard } from '@/router';
+import { withLocale } from '@/test/i18n';
 import type { Role } from '@/types/pb';
 import App from './App.vue';
 
@@ -52,6 +53,7 @@ it('renders a success toast and a confirmation requested from a routed view', as
   const dialog = document.querySelector('[role="alertdialog"]');
   expect(dialog?.textContent).toContain('Confirmar');
   expect(dialog?.textContent).toContain('¿Continuar?');
+  expect(dialog?.textContent).toContain('Sí');
 });
 
 it('renders the role-filtered admin menu and the restricted-route fallback', async () => {
@@ -112,6 +114,14 @@ it('renders the role-filtered admin menu and the restricted-route fallback', asy
       'Facturación',
     ]);
     expect(sidebar.get('a[href="/"]').text()).toBe('Dashboard');
+    await withLocale('en', async () => {
+      await nextTick();
+      expect(sidebar.get('a[href="/clients"]').text()).toBe('Clients');
+      expect(sidebar.get('a[href="/memberships"]').text()).toBe('Memberships');
+      expect(sidebar.text()).toContain('Analytics');
+    });
+    await nextTick();
+    expect(sidebar.get('a[href="/clients"]').text()).toBe('Clientes');
     const disabledItems = sidebar
       .findAll('button[disabled]')
       .map((item) => item.text());
@@ -124,6 +134,7 @@ it('renders the role-filtered admin menu and the restricted-route fallback', asy
     await sidebar.get('button[aria-controls="user-menu"]').trigger('click');
     const menu = document.getElementById('user-menu');
     expect(menu?.textContent).toContain('Cerrar sesión');
+    expect(menu?.textContent).toContain('Español');
     expect(menu?.textContent).not.toContain('Notificaciones');
 
     await router.push('/owner-only');

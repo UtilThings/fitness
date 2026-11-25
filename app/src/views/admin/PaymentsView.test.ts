@@ -1,9 +1,11 @@
+import { expectEnglishCopy } from '@/test/copy';
 import { flushPromises, mount } from '@vue/test-utils';
 import PrimeVue from 'primevue/config';
 import { expect, it, vi } from 'vitest';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import type { Payment } from '@/composables/usePayments';
 import PaymentsView from './PaymentsView.vue';
+import { withLocale } from '@/test/i18n';
 import ReceiptView from './ReceiptView.vue';
 
 const api = vi.hoisted(() => ({
@@ -113,6 +115,11 @@ it('combina filtros y actualiza el recibo al marcar pagado desde una fila', asyn
     totalItems: 1,
   });
   const { view } = await render('/payments');
+  await withLocale('en', async () => {
+    await flushPromises();
+    expect(view.text()).toContain('Record payment');
+    expectEnglishCopy(view.element);
+  });
   await view.get('select').setValue('pending');
   await view.findAll('select')[1].setValue('zelle');
   await view.findAll('input[type=date]')[0].setValue('2026-01-01');
@@ -160,6 +167,11 @@ it('carga el recibo anulado e impide imprimir o ver uno pendiente', async () => 
   expect(view.get('article').text()).toContain('JQ-2026-000042');
   expect(view.get('article').text()).toContain('$12.50');
   expect(view.get('article').text()).toContain('ANULADO');
+  await withLocale('en', async () => {
+    await flushPromises();
+    expect(view.get('article').text()).toContain('Payment receipt');
+    expect(view.get('article').text()).toContain('VOID');
+  });
   expect(view.get('article').find('button').exists()).toBe(false);
   await view.get('nav button').trigger('click');
   expect(print).toHaveBeenCalledOnce();

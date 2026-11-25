@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
@@ -15,13 +16,16 @@ const emit = defineEmits<{ updated: [membership: Membership] }>();
 const api = useMemberships();
 const id = useId();
 const menu = useTemplateRef('menu');
-const labels = {
-  renew: 'Renovar',
-  pause: 'Pausar',
-  resume: 'Reanudar',
-  cancel: 'Cancelar membresía',
-} as const;
-type Action = keyof typeof labels;
+const labels = computed(
+  () =>
+    ({
+      renew: t('Renew'),
+      pause: t('Pause'),
+      resume: t('Resume'),
+      cancel: t('Cancel membership'),
+    }) as const,
+);
+type Action = keyof typeof labels.value;
 const selected = ref<Action>();
 const open = ref(false);
 const adjustment = ref(false);
@@ -54,11 +58,11 @@ const items = computed(() => {
   if (status !== 'cancelled') actions.push('cancel');
   return [
     ...actions.map((action) => ({
-      label: labels[action],
+      label: labels.value[action],
       command: () => choose(action),
     })),
     {
-      label: 'Ajustar créditos',
+      label: t('Adjust credits'),
       command: () => {
         adjustment.value = true;
       },
@@ -71,7 +75,7 @@ async function submit() {
   if (!action || saving.value) return;
   const reason = note.value.trim();
   if (noteRequired.value && !reason) {
-    error.value = 'Indica el motivo de la acción.';
+    error.value = t('Enter a reason for the action.');
     return;
   }
   const membership = props.membership.id;
@@ -93,7 +97,7 @@ async function submit() {
 
 <template>
   <Button
-    label="Acciones"
+    :label="t('Actions')"
     size="small"
     outlined
     :aria-controls="id + '-menu'"
@@ -112,7 +116,7 @@ async function submit() {
     <form class="grid gap-4" @submit.prevent="submit">
       <div v-if="selected !== 'resume'" class="grid gap-1">
         <label :for="id + '-note'">{{
-          noteRequired ? 'Motivo de la acción' : 'Observaciones'
+          noteRequired ? t('Reason for action') : t('Notes')
         }}</label>
         <Textarea
           :id="id + '-note'"
@@ -122,20 +126,24 @@ async function submit() {
           :disabled="saving"
         />
       </div>
-      <p v-else>Se ampliará el periodo por los días que duró la pausa.</p>
+      <p v-else>
+        {{
+          t('The period will be extended by the number of days it was paused.')
+        }}
+      </p>
       <Message v-if="error" severity="error" :closable="false">{{
         error
       }}</Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
           @click="open = false"
         />
         <Button
-          :label="selected ? labels[selected] : 'Confirmar'"
+          :label="selected ? labels[selected] : t('Confirm')"
           type="submit"
           :severity="selected === 'cancel' ? 'danger' : undefined"
           :loading="saving"

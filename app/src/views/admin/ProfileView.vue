@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Textarea from 'primevue/textarea';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import PageHeader from '@/components/PageHeader.vue';
 import MemberAvatar from '@/components/team/MemberAvatar.vue';
@@ -23,19 +24,26 @@ const passwords = ref({ oldPassword: '', password: '', passwordConfirm: '' });
 const detailErrors = ref<Record<string, string>>({});
 const passwordErrors = ref<Record<string, string>>({});
 const busy = ref<'details' | 'avatar' | 'password' | null>(null);
-const passwordFields = [
-  {
-    key: 'oldPassword',
-    label: 'Contraseña actual',
-    autocomplete: 'current-password',
-  },
-  { key: 'password', label: 'Nueva contraseña', autocomplete: 'new-password' },
-  {
-    key: 'passwordConfirm',
-    label: 'Confirmar nueva contraseña',
-    autocomplete: 'new-password',
-  },
-] as const;
+const passwordFields = computed(
+  () =>
+    [
+      {
+        key: 'oldPassword',
+        label: t('Current password'),
+        autocomplete: 'current-password',
+      },
+      {
+        key: 'password',
+        label: t('New password'),
+        autocomplete: 'new-password',
+      },
+      {
+        key: 'passwordConfirm',
+        label: t('Confirm new password'),
+        autocomplete: 'new-password',
+      },
+    ] as const,
+);
 
 function setDetails(record?: Admin | null) {
   details.value = {
@@ -59,7 +67,7 @@ async function saveDetails() {
     phone: details.value.phone.trim(),
   };
   const fields: Record<string, string> = {};
-  if (!data.name) fields.name = 'Ingresa un nombre';
+  if (!data.name) fields.name = t('Enter a name');
   const phoneError = validatePhone(data.phone);
   const bioError = validateBio(data.bio);
   if (phoneError) fields.phone = phoneError;
@@ -73,7 +81,7 @@ async function saveDetails() {
       .collection<Admin>('admins')
       .update(user.value.id, data, { requestKey: null });
     setDetails(record);
-    notify.success('Perfil actualizado');
+    notify.success(t('Profile updated'));
   } catch (cause) {
     const error = parsePbError(cause);
     detailErrors.value = error.fields;
@@ -92,7 +100,7 @@ async function upload(file: File) {
     await pb
       .collection<Admin>('admins')
       .update(user.value.id, data, { requestKey: null });
-    notify.success('Foto actualizada');
+    notify.success(t('Photo updated'));
   } catch (cause) {
     const error = parsePbError(cause);
     notify.error(error.fields.avatar || error.message);
@@ -111,10 +119,10 @@ async function changePassword() {
   const data = { ...passwords.value };
   const fields: Record<string, string> = {};
   const invalid = validatePassword(data.password);
-  if (!data.oldPassword) fields.oldPassword = 'Ingresa tu contraseña actual';
+  if (!data.oldPassword) fields.oldPassword = t('Enter your current password');
   if (invalid) fields.password = invalid;
   if (!data.passwordConfirm || data.password !== data.passwordConfirm) {
-    fields.passwordConfirm = 'Las contraseñas deben coincidir';
+    fields.passwordConfirm = t('Passwords must match');
   }
   passwordErrors.value = fields;
   if (Object.keys(fields).length) return;
@@ -125,12 +133,10 @@ async function changePassword() {
     resetPasswords();
     try {
       await login(email, data.password);
-      notify.success('Contraseña actualizada');
+      notify.success(t('Password updated'));
     } catch {
       logout();
-      notify.info(
-        'Contraseña actualizada. Vuelve a iniciar sesión con la nueva contraseña.',
-      );
+      notify.info(t('Password updated. Sign in again with the new password.'));
       await router.replace({
         name: 'login',
         query: { redirect: '/settings/profile' },
@@ -140,7 +146,7 @@ async function changePassword() {
     const error = parsePbError(cause);
     passwordErrors.value = error.fields;
     if (error.fields.oldPassword)
-      passwordErrors.value.oldPassword = 'La contraseña actual es incorrecta';
+      passwordErrors.value.oldPassword = t('The current password is incorrect');
     if (!Object.keys(error.fields).length) notify.error(error.message);
   } finally {
     busy.value = null;
@@ -150,13 +156,13 @@ async function changePassword() {
 
 <template>
   <div class="grid max-w-3xl gap-5">
-    <PageHeader title="Mi perfil" />
+    <PageHeader :title="t('My profile')" />
 
     <section
       v-if="user"
       class="grid gap-4 rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-900"
     >
-      <h2 class="font-semibold">Datos personales</h2>
+      <h2 class="font-semibold">{{ t('Personal information') }}</h2>
       <MemberAvatar
         :member="user"
         size="xlarge"
@@ -165,13 +171,15 @@ async function changePassword() {
         @upload="upload"
       />
       <form
-        aria-label="Datos personales"
+        :aria-label="t('Personal information')"
         class="grid gap-4"
         novalidate
         @submit.prevent="saveDetails"
       >
         <div class="grid gap-1.5">
-          <label for="profile-name" class="text-sm font-medium">Nombre</label>
+          <label for="profile-name" class="text-sm font-medium">{{
+            t('Name')
+          }}</label>
           <InputText
             id="profile-name"
             v-model="details.name"
@@ -189,9 +197,9 @@ async function changePassword() {
           >
         </div>
         <div class="grid gap-1.5">
-          <label for="profile-phone" class="text-sm font-medium"
-            >Teléfono</label
-          >
+          <label for="profile-phone" class="text-sm font-medium">{{
+            t('Phone')
+          }}</label>
           <InputText
             id="profile-phone"
             v-model="details.phone"
@@ -210,7 +218,9 @@ async function changePassword() {
           >
         </div>
         <div class="grid gap-1.5">
-          <label for="profile-bio" class="text-sm font-medium">Biografía</label>
+          <label for="profile-bio" class="text-sm font-medium">{{
+            t('Bio')
+          }}</label>
           <Textarea
             id="profile-bio"
             v-model="details.bio"
@@ -229,7 +239,7 @@ async function changePassword() {
         </div>
         <Button
           type="submit"
-          label="Guardar cambios"
+          :label="t('Save changes')"
           class="justify-self-start"
           :disabled="!!busy"
           :loading="busy === 'details'"
@@ -241,9 +251,9 @@ async function changePassword() {
       v-if="user"
       class="grid gap-4 rounded-xl border border-surface-200 bg-surface-0 p-5 dark:border-surface-800 dark:bg-surface-900"
     >
-      <h2 class="font-semibold">Cambiar contraseña</h2>
+      <h2 class="font-semibold">{{ t('Change password') }}</h2>
       <form
-        aria-label="Cambiar contraseña"
+        :aria-label="t('Change password')"
         class="grid gap-4"
         novalidate
         @submit.prevent="changePassword"
@@ -279,7 +289,7 @@ async function changePassword() {
         </div>
         <Button
           type="submit"
-          label="Cambiar contraseña"
+          :label="t('Change password')"
           class="justify-self-start"
           :disabled="!!busy"
           :loading="busy === 'password'"

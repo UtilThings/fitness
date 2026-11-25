@@ -24,7 +24,7 @@ onRecordValidate((e) => {
   if (!record.collection().fields.getByName("business")) return e.next();
   const stored = record.isNew() ? undefined : e.app.findRecordById(record.collection(), record.id);
   if (stored && !assertSameBusiness(record, stored)) {
-    throw new BadRequestError("No se puede cambiar el negocio de un registro.");
+    throw new BadRequestError("A record cannot be moved to another business.");
   }
   validateTenantReferences(e.app, record);
   return e.next();
@@ -33,7 +33,7 @@ onRecordValidate((e) => {
 onRecordAuthRequest((e) => {
   const { getBusiness, resolveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
   if (e.record!.collection().fields.getByName("business") && !getBusiness(e.app, resolveBusiness(e.record))?.getBool("active")) {
-    throw new ForbiddenError("El negocio o la cuenta están inactivos.");
+    throw new ForbiddenError("The business or account is inactive.");
   }
   return e.next();
 }, "admins");
@@ -42,7 +42,7 @@ routerUse((e) => {
   if (e.auth?.collection().name === "admins" && e.auth.collection().fields.getByName("business")) {
     const { getBusiness, resolveBusiness } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
     if (!getBusiness(e.app, resolveBusiness(e.auth))?.getBool("active")) {
-      throw new ForbiddenError("El negocio o la cuenta están inactivos.");
+      throw new ForbiddenError("The business or account is inactive.");
     }
   }
   return e.next();

@@ -1,3 +1,5 @@
+import { expectEnglishCopy } from '@/test/copy';
+import { withLocale } from '@/test/i18n';
 import { flushPromises, mount } from '@vue/test-utils';
 import { ClientResponseError } from 'pocketbase';
 import PrimeVue from 'primevue/config';
@@ -69,6 +71,11 @@ it('sincroniza búsqueda y estado, filtra en el servidor y muestra el estado vac
     wrapper.get<HTMLInputElement>('input[type=search]').element.value,
   ).toBe('ana');
   expect(wrapper.get('tbody').text()).toContain('Ana García');
+  await withLocale('en', async () => {
+    await flushPromises();
+    expect(wrapper.text()).toContain('New client');
+    expectEnglishCopy(wrapper.element);
+  });
   expect(mocks.getList.mock.lastCall?.[2].filter).toMatch(
     /"ana".*status = "active"/,
   );

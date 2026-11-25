@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { Role } from '@/types/pb';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -104,7 +105,7 @@ describe('guard', () => {
       ] as const) {
         await router.push(path);
         expect(router.currentRoute.value.name).toBe(name);
-        expect(router.currentRoute.value.meta.title).toBe(title);
+        expect(t(router.currentRoute.value.meta.title!)).toBe(title);
         expect(router.currentRoute.value.matched[0].components?.default).toBe(
           AdminLayout,
         );
@@ -151,7 +152,7 @@ describe('guard', () => {
       state.role = role;
       await router.push('/owner-only/details');
       expect(router.currentRoute.value.fullPath).toBe('/forbidden');
-      expect(router.currentRoute.value.meta.title).toBe('Sin permiso');
+      expect(router.currentRoute.value.meta.title).toBe('Access denied');
       expect(router.currentRoute.value.matched[0].components?.default).toBe(
         AdminLayout,
       );

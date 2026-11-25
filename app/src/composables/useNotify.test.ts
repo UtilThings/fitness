@@ -1,4 +1,5 @@
 import { expect, it, vi } from 'vitest';
+import { withLocale } from '@/test/i18n';
 import { useNotify } from './useNotify';
 
 const { add } = vi.hoisted(() => ({ add: vi.fn() }));
@@ -23,4 +24,16 @@ it('configures each severity, with Spanish titles and an optional override', () 
     ],
     [{ severity: 'info', summary: 'Reserva', detail: 'En espera', life: 3000 }],
   ]);
+});
+
+it('updates the default toast title after a language change', async () => {
+  const notify = useNotify();
+  await withLocale('en', () => notify.success('Saved'));
+  expect(add).toHaveBeenLastCalledWith(
+    expect.objectContaining({ summary: 'Success' }),
+  );
+  notify.success('Guardado');
+  expect(add).toHaveBeenLastCalledWith(
+    expect.objectContaining({ summary: 'Éxito' }),
+  );
 });

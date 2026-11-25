@@ -6,7 +6,7 @@ onRecordAfterCreateSuccess((e) => {
       require(`${__hooks}/lib/message-triggers`) as typeof import("../lib/message-triggers");
     bookingMessage(e.app, e.record!, true);
   } catch {
-    e.app.logger().error("No se pudo procesar el aviso de reserva.");
+    e.app.logger().error("Could not process the booking notice.");
   }
   return e.next();
 }, "bookings");
@@ -17,7 +17,7 @@ onRecordAfterUpdateSuccess((e) => {
       require(`${__hooks}/lib/message-triggers`) as typeof import("../lib/message-triggers");
     bookingMessage(e.app, e.record!, false);
   } catch {
-    e.app.logger().error("No se pudo procesar el aviso de la reserva actualizada.");
+    e.app.logger().error("Could not process the updated booking notice.");
   }
   return e.next();
 }, "bookings");
@@ -30,7 +30,7 @@ onRecordAfterUpdateSuccess((e) => {
       require(`${__hooks}/lib/message-triggers`) as typeof import("../lib/message-triggers");
     classChangeMessages(e.app, e.record!);
   } catch {
-    e.app.logger().error("No se pudo procesar el aviso de cambio de clase.");
+    e.app.logger().error("Could not process the class change notice.");
   }
   return e.next();
 }, "class_sessions");

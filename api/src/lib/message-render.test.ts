@@ -11,7 +11,7 @@ test("escapa texto y valores HTML con párrafos y saltos de línea", () => {
 test("parsea variables repetidas y valores vacíos sin volver a interpretar el valor", () => {
   expect(extractVariables("{{ name }} {{name}}")).toEqual(["name"]);
   expect(renderText("{{x}}.{{y}}", { x: "", y: "{{literal}}" })).toBe(".{{literal}}");
-  expect(() => renderText(valid.body, {})).toThrow("Falta el valor");
+  expect(() => renderText(valid.body, {})).toThrow("A template variable has no value.");
   for (const body of ["{{ {{client_first_name}} }}", "{{client_first_name", "texto }}"]) {
     expect(validateTemplate({ ...valid, body })).not.toEqual([]);
   }

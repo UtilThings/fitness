@@ -10,10 +10,10 @@ import { setFreeClassUsed } from "./booking-store";
 const eligibilityMessages: Record<EligibilityCode, string> = {
   ok: "",
   overridden: "",
-  no_membership: "El cliente no tiene una membresía para este servicio.",
-  membership_not_active: "El cliente no tiene una membresía activa para la fecha de la sesión.",
-  no_credits: "El cliente no tiene créditos disponibles.",
-  weekly_limit: "El cliente alcanzó el límite semanal de reservas.",
+  no_membership: "The client has no membership for this service.",
+  membership_not_active: "The client has no active membership on the session date.",
+  no_credits: "The client has no available credits.",
+  weekly_limit: "The client has reached the weekly booking limit.",
 };
 
 export function authorizeBooking(app: core.App, client: core.Record, session: core.Record,
@@ -27,7 +27,7 @@ export function authorizeBooking(app: core.App, client: core.Record, session: co
       "client = {:client} && (plan.is_first_class = true || plan.billing_unit = 'first_visit')", "", 1, 0, { client: client.id });
     if (!plan || !canUseFirstClass({ free_class_used: client.getBool("free_class_used") },
       firstVisitUsed.length ? [planData(plan)] : [])) {
-      throw membershipError(400, "first_class_used", "El cliente no puede usar una primera clase en este servicio.");
+      throw membershipError(400, "first_class_used", "The client cannot use a first-class plan for this service.");
     }
     assign(app, { client: client.id, plan: plan.id }, { ...options, business: client.getString("business") });
     selection = selectBookingMembership(app, client.id, session, { ...options, override: false });
@@ -81,7 +81,7 @@ export function reconcileBooking(app: core.App, booking: core.Record) {
     const change = creditsToApply(membershipId === target?.id ? status : "cancelled", computeBalance(entries));
     if (!change) continue;
     const membership = app.findRecordById("memberships", membershipId);
-    const note = change.reason === "adjust" ? "Corrección de la reserva" : status === "no_show" ? "No-show" : "";
+    const note = change.reason === "adjust" ? "Booking correction." : status === "no_show" ? "No-show" : "";
     recordMovement(app, membership, change.delta, change.reason, { booking: booking.id, note });
   }
 }

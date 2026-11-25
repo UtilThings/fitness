@@ -1,3 +1,4 @@
+import { tl, translateKey } from '@/i18n';
 import { ROLES, type Role } from '@/types/pb';
 
 export type Permission =
@@ -28,14 +29,18 @@ export function roleCan(role: Role | null, permission: Permission): boolean {
   return role !== null && PERMISSIONS[permission].includes(role);
 }
 
-export const PERMISSION_LABELS: Record<Permission, string> = {
-  'team.read': 'Consultar el equipo',
-  'team.manage': 'Gestionar el equipo',
-  'profile.edit': 'Editar el perfil propio',
-  'audit.read': 'Consultar la auditoría',
-  'catalog.manage': 'Gestionar el catálogo',
-  'memberships.manage': 'Gestionar membresías',
-  'payments.manage': 'Gestionar pagos',
-  'coaching.programs.manage': 'Gestionar programas de coaching',
-  'coaching.checkins.manage': 'Registrar check-ins de coaching',
+const permissionKeys: Record<Permission, string> = {
+  'team.read': tl('View the team'),
+  'team.manage': tl('Manage the team'),
+  'profile.edit': tl('Edit your own profile'),
+  'audit.read': tl('View the audit log'),
+  'catalog.manage': tl('Manage the catalog'),
+  'memberships.manage': tl('Manage memberships'),
+  'payments.manage': tl('Manage payments'),
+  'coaching.programs.manage': tl('Manage coaching programs'),
+  'coaching.checkins.manage': tl('Record coaching check-ins'),
 };
+
+export function permissionLabel(permission: Permission) {
+  return translateKey(permissionKeys[permission]);
+}

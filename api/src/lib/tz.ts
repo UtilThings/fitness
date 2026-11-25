@@ -23,7 +23,7 @@ const zones: Record<string, Zone> = {
 export const SUPPORTED_TIMEZONES = Object.keys(zones);
 
 function zoneFor(timezone: string): Zone {
-  if (!Object.prototype.hasOwnProperty.call(zones, timezone)) throw new RangeError(`Unsupported timezone: ${timezone}`);
+  if (!Object.prototype.hasOwnProperty.call(zones, timezone)) throw new RangeError("The time zone is unsupported.");
   return zones[timezone];
 }
 
@@ -70,12 +70,12 @@ export function nyOffsetMinutes(utcMs: number): number {
 function dateMs(date: string): number {
   const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
   if (!parts) {
-    throw new RangeError("Expected a local date in YYYY-MM-DD format");
+    throw new RangeError("Expected a local date in YYYY-MM-DD format.");
   }
 
   const value = civilUtc(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
   if (new Date(value).toISOString().slice(0, 10) !== date) {
-    throw new RangeError(`Invalid local date: ${date}`);
+    throw new RangeError("The local date is invalid.");
   }
   return value;
 }
@@ -83,7 +83,7 @@ function dateMs(date: string): number {
 export function localToUtc(date: string, time: string, timezone: string): string {
   const parts = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time);
   if (!parts) {
-    throw new RangeError("Expected a local time in HH:mm format");
+    throw new RangeError("Expected a local time in HH:mm format.");
   }
 
   const wallTime = dateMs(date) + (Number(parts[1]) * 60 + Number(parts[2])) * MINUTE_MS;
@@ -107,13 +107,13 @@ export function utcToLocal(isoUtc: string, timezone: string): { date: string; ti
 
 export function localWeekday(date: string, timezone?: string): number {
   if (!date.includes("T")) return new Date(dateMs(date)).getUTCDay();
-  if (!timezone) throw new RangeError("A timezone is required for UTC instants");
+  if (!timezone) throw new RangeError("A time zone is required for UTC instants.");
   return utcToLocal(date, timezone).weekday;
 }
 
 export function addLocalDays(date: string, days: number): string {
   if (!Number.isInteger(days)) {
-    throw new RangeError("Expected a whole number of local days");
+    throw new RangeError("Expected a whole number of local days.");
   }
   return new Date(dateMs(date) + days * DAY_MS).toISOString().split("T")[0];
 }

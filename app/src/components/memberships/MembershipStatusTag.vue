@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import StatusTag from '@/components/StatusTag.vue';
 import {
   membershipState,
@@ -11,16 +12,28 @@ defineProps<{
   today?: string;
 }>();
 
-const map = {
-  active: { label: membershipStatusLabels.active, severity: 'success' },
-  paused: { label: membershipStatusLabels.paused, severity: 'info' },
-  cancelled: { label: membershipStatusLabels.cancelled, severity: 'secondary' },
-  expired: { label: membershipStatusLabels.expired, severity: 'danger' },
-  renewal_pending: {
-    label: membershipStatusLabels.renewal_pending,
-    severity: 'warn',
-  },
-} as const;
+const map = computed(
+  () =>
+    ({
+      active: {
+        label: membershipStatusLabels.value.active,
+        severity: 'success',
+      },
+      paused: { label: membershipStatusLabels.value.paused, severity: 'info' },
+      cancelled: {
+        label: membershipStatusLabels.value.cancelled,
+        severity: 'secondary',
+      },
+      expired: {
+        label: membershipStatusLabels.value.expired,
+        severity: 'danger',
+      },
+      renewal_pending: {
+        label: membershipStatusLabels.value.renewal_pending,
+        severity: 'warn',
+      },
+    }) as const,
+);
 </script>
 
 <template>

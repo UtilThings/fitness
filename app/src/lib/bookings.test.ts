@@ -8,10 +8,10 @@ import {
 import { formatDateTime } from './datetime';
 
 it('shows distinct labels for cancellation and attendance outcomes', () => {
-  expect(BOOKING_STATUS.cancelled.label).not.toBe(
-    BOOKING_STATUS.late_cancelled.label,
+  expect(BOOKING_STATUS.value.cancelled.label).not.toBe(
+    BOOKING_STATUS.value.late_cancelled.label,
   );
-  expect(BOOKING_STATUS.no_show.severity).toBe('danger');
+  expect(BOOKING_STATUS.value.no_show.severity).toBe('danger');
 });
 
 it('uses business time for the UTC deadline and disables cancellation exactly at the start', () => {

@@ -67,7 +67,7 @@ describe('CSV', () => {
 
   it('sanitizes the report filename', () => {
     expect(csvFilename('revenue', '2026-11-01', '2026-11-30')).toBe(
-      'jq-reportes-revenue-2026-11-01_2026-11-30.csv',
+      'jq-reports-revenue-2026-11-01_2026-11-30.csv',
     );
     expect(csvFilename('../RévenuE', '2026/11/01', '2026:11:30')).toMatch(
       /^[a-z0-9_-]+\.csv$/,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { ref, shallowRef, watch } from 'vue';
@@ -46,7 +47,7 @@ watch(
         !payment.receipt_number ||
         !payment.paid_at
       ) {
-        error.value = 'Este cobro aún no tiene recibo.';
+        error.value = t('This charge does not have a receipt yet.');
         return;
       }
       receipt.value = payment;
@@ -68,27 +69,30 @@ function printReceipt() {
   <main class="receipt-page mx-auto grid max-w-2xl gap-4 p-5 sm:p-8">
     <nav
       class="receipt-actions flex items-center justify-between gap-3"
-      aria-label="Acciones del recibo"
+      :aria-label="t('Receipt actions')"
     >
       <RouterLink
         :to="{ name: 'payments' }"
         class="text-sm font-medium text-primary hover:underline"
       >
-        <i class="pi pi-arrow-left mr-1" aria-hidden="true" /> Volver a Pagos
+        <i class="pi pi-arrow-left mr-1" aria-hidden="true" />
+        {{ t('Back to payments') }}
       </RouterLink>
       <Button
         v-if="receipt"
         icon="pi pi-print"
-        label="Imprimir"
+        :label="t('Print')"
         @click="printReceipt"
       />
     </nav>
-    <p v-if="loading || businessLoading" role="status">Cargando recibo…</p>
+    <p v-if="loading || businessLoading" role="status">
+      {{ t('Loading receipt…') }}
+    </p>
     <Message
       v-else-if="error || businessError"
       severity="warn"
       :closable="false"
-      >{{ error || 'No se pudo cargar el negocio.' }}</Message
+      >{{ error || t('Could not load the business.') }}</Message
     >
     <article
       v-else-if="receipt"
@@ -105,20 +109,20 @@ function printReceipt() {
           <p v-if="business?.email">{{ business.email }}</p>
         </div>
         <div class="text-right">
-          <h1 class="text-xl font-semibold">Recibo de pago</h1>
+          <h1 class="text-xl font-semibold">{{ t('Payment receipt') }}</h1>
           <p class="font-mono text-sm">{{ receipt.receipt_number }}</p>
           <p>{{ formatCivilDate(receipt.paid_at) }}</p>
           <p
             v-if="receipt.status === 'void'"
             class="mt-2 font-bold text-red-700 dark:text-red-400"
           >
-            ANULADO
+            {{ t('VOID') }}
           </p>
         </div>
       </header>
       <dl class="grid gap-4 sm:grid-cols-2">
         <div>
-          <dt class="text-sm font-medium">Cliente</dt>
+          <dt class="text-sm font-medium">{{ t('Client') }}</dt>
           <dd>
             {{
               receipt.expand?.client
@@ -128,16 +132,20 @@ function printReceipt() {
           </dd>
         </div>
         <div>
-          <dt class="text-sm font-medium">Concepto</dt>
-          <dd>{{ receipt.expand?.plan?.name ?? 'Cobro manual' }}</dd>
+          <dt class="text-sm font-medium">{{ t("Description{''}") }}</dt>
+          <dd>{{ receipt.expand?.plan?.name ?? t('Manual charge') }}</dd>
         </div>
         <div>
-          <dt class="text-sm font-medium">Método de pago</dt>
+          <dt class="text-sm font-medium">{{ t('Payment method') }}</dt>
           <dd>{{ receipt.method ? paymentMethods[receipt.method] : '—' }}</dd>
         </div>
         <div>
           <dt class="text-sm font-medium">
-            Monto ({{ receipt.currency || businessCurrency }})
+            {{
+              t('Amount ({currency})', {
+                currency: receipt.currency || businessCurrency,
+              })
+            }}
           </dt>
           <dd class="text-xl font-semibold">
             {{ formatCents(receipt.amount_cents, receipt.currency) }}

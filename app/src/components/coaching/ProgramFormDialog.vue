@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
+import { collator } from '@/i18n/formats';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -50,7 +52,7 @@ const clientOptions = computed(() => {
   if (current) clients.set(current.id, fullName(current));
   return [...clients]
     .map(([value, label]) => ({ value, label }))
-    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+    .sort((a, b) => collator().compare(a.label, b.label));
 });
 const membershipOptions = computed(() =>
   memberships.value
@@ -62,10 +64,12 @@ const selectedCoachOptions = computed(() =>
     ? coaches.value.filter(({ id }) => id === user.value?.id)
     : coaches.value,
 );
-const durations = PROGRAM_DURATIONS.map((value) => ({
-  value,
-  label: value + ' semanas',
-}));
+const durations = computed(() =>
+  PROGRAM_DURATIONS.map((value) => ({
+    value,
+    label: t('{count} weeks', { count: value }),
+  })),
+);
 const loading = ref(false);
 const saving = ref(false);
 const failed = ref(false);
@@ -136,13 +140,13 @@ async function submit() {
   if (saving.value || loading.value || failed.value) return;
   const validation = validateProgramInput(form);
   if (!clientOptions.value.some(({ value }) => value === form.client))
-    validation.client = 'Selecciona un cliente con membresía online activa.';
+    validation.client = t('Select a client with an active online membership.');
   if (!membershipOptions.value.some(({ value }) => value === form.membership))
-    validation.membership = 'Selecciona una membresía online activa.';
+    validation.membership = t('Select an active online membership.');
   if (!selectedCoachOptions.value.some(({ id }) => id === form.coach))
-    validation.coach = 'Selecciona un coach activo.';
+    validation.coach = t('Select an active coach.');
   if (form.program_url && !safeProgramUrl(form.program_url))
-    validation.program_url = 'Indica un enlace HTTP o HTTPS válido.';
+    validation.program_url = t('Enter a valid HTTP or HTTPS link.');
   fields.value = validation;
   message.value = '';
   if (Object.keys(validation).length) return;
@@ -168,7 +172,7 @@ async function submit() {
   <Dialog
     v-model:visible="visible"
     modal
-    :header="program ? 'Editar programa' : 'Nuevo programa'"
+    :header="program ? t('Edit program') : t('New program')"
     :closable="!saving"
     :close-on-escape="!saving"
     class="w-full max-w-xl"
@@ -181,12 +185,14 @@ async function submit() {
         v-if="!loading && !failed && !clientOptions.length"
         severity="info"
         :closable="false"
-        >Primero asigna una membresía online activa al cliente.</Message
+        >{{
+          t('Assign an active online membership to the client first.')
+        }}</Message
       >
       <CatalogField
         :id="id + '-client'"
         v-slot="{ describedBy }"
-        label="Cliente"
+        :label="t('Client')"
         :error="fields.client"
       >
         <Select
@@ -206,7 +212,7 @@ async function submit() {
       <CatalogField
         :id="id + '-membership'"
         v-slot="{ describedBy }"
-        label="Membresía online"
+        :label="t('Online membership')"
         :error="fields.membership"
       >
         <Select
@@ -223,7 +229,7 @@ async function submit() {
       <CatalogField
         :id="id + '-coach'"
         v-slot="{ describedBy }"
-        label="Coach"
+        :label="t('Coach')"
         :error="fields.coach"
       >
         <Select
@@ -242,7 +248,7 @@ async function submit() {
         <CatalogField
           :id="id + '-starts'"
           v-slot="{ describedBy }"
-          label="Fecha de inicio"
+          :label="t('Start date')"
           :error="fields.starts_on"
         >
           <input
@@ -256,7 +262,7 @@ async function submit() {
         <CatalogField
           :id="id + '-duration'"
           v-slot="{ describedBy }"
-          label="Duración"
+          :label="t('Duration')"
           :error="fields.duration_weeks"
         >
           <Select
@@ -270,13 +276,13 @@ async function submit() {
           />
         </CatalogField>
       </div>
-      <CatalogField :id="id + '-goal'" label="Objetivo" :error="fields.goal">
+      <CatalogField :id="id + '-goal'" :label="t('Goal')" :error="fields.goal">
         <Textarea :id="id + '-goal'" v-model="form.goal" rows="2" fluid />
       </CatalogField>
       <CatalogField
         :id="id + '-url'"
         v-slot="{ describedBy }"
-        label="Enlace al plan"
+        :label="t('Plan link')"
         :error="fields.program_url"
       >
         <InputText
@@ -289,7 +295,7 @@ async function submit() {
       </CatalogField>
       <CatalogField
         :id="id + '-notes'"
-        label="Notas internas"
+        :label="t('Internal notes')"
         :error="fields.notes"
       >
         <Textarea :id="id + '-notes'" v-model="form.notes" rows="3" fluid />
@@ -297,7 +303,7 @@ async function submit() {
       <div class="flex justify-end gap-2">
         <Button
           type="button"
-          label="Cancelar"
+          :label="t('Cancel')"
           severity="secondary"
           text
           :disabled="saving"
@@ -305,7 +311,7 @@ async function submit() {
         />
         <Button
           type="submit"
-          label="Guardar programa"
+          :label="t('Save program')"
           :disabled="loading || failed || !clientOptions.length"
           :loading="saving"
         />

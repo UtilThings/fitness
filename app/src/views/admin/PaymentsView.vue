@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
@@ -54,14 +55,18 @@ const loading = ref(false);
 const error = ref('');
 let latest = 0;
 
-const statuses = Object.entries(paymentStatuses).map(([value, label]) => ({
-  value,
-  label,
-}));
-const methods = Object.entries(paymentMethods).map(([value, label]) => ({
-  value,
-  label,
-}));
+const statuses = computed(() =>
+  Object.entries(paymentStatuses.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
+const methods = computed(() =>
+  Object.entries(paymentMethods.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
 const formOpen = ref(false);
 const voidOpen = ref(false);
 const selected = shallowRef<Payment>();
@@ -70,7 +75,7 @@ async function load() {
   const version = ++latest;
   error.value = '';
   if (from.value && through.value && from.value > through.value) {
-    error.value = 'La fecha inicial debe ser anterior o igual a la final.';
+    error.value = t('The start date must be on or before the end date.');
     loading.value = false;
     return;
   }
@@ -120,10 +125,12 @@ function openVoid(payment: Payment) {
 function saved(payment: Payment) {
   const message =
     payment.status === 'void'
-      ? 'Pago anulado'
+      ? t('Payment voided')
       : payment.status === 'pending'
-        ? 'Cobro pendiente registrado'
-        : `Pago registrado · ${payment.receipt_number}`;
+        ? t('Pending charge recorded')
+        : t('Payment recorded · {receipt}', {
+            receipt: payment.receipt_number,
+          });
   notify.success(message);
   void load();
   void refreshDue();
@@ -175,9 +182,13 @@ onMounted(() => void refreshDue());
 
 <template>
   <section class="grid min-w-0 gap-5">
-    <PageHeader title="Pagos">
+    <PageHeader :title="t('Payments')">
       <template #actions>
-        <Button label="Registrar pago" icon="pi pi-plus" @click="openForm()" />
+        <Button
+          :label="t('Record payment')"
+          icon="pi pi-plus"
+          @click="openForm()"
+        />
       </template>
     </PageHeader>
 
@@ -185,7 +196,9 @@ onMounted(() => void refreshDue());
       <div
         class="rounded-lg border border-surface-200 p-4 dark:border-surface-700"
       >
-        <dt class="text-sm">Vencidos · {{ due.totals.overdue_count }}</dt>
+        <dt class="text-sm">
+          {{ t('Overdue · {count}', { count: due.totals.overdue_count }) }}
+        </dt>
         <dd class="text-xl font-semibold">
           {{ formatCents(due.totals.overdue_cents) }}
         </dd>
@@ -194,7 +207,9 @@ onMounted(() => void refreshDue());
         class="rounded-lg border border-surface-200 p-4 dark:border-surface-700"
       >
         <dt class="text-sm">
-          Por vencer en 7 días · {{ due.totals.upcoming_count }}
+          {{
+            t('Due in 7 days · {count}', { count: due.totals.upcoming_count })
+          }}
         </dt>
         <dd class="text-xl font-semibold">
           {{ formatCents(due.totals.upcoming_cents) }}
@@ -202,50 +217,50 @@ onMounted(() => void refreshDue());
       </div>
     </dl>
     <Message v-if="dueError" severity="warn" :closable="false">
-      Totales de cobros · {{ dueError.message }}
-      <Button label="Reintentar" size="small" text @click="refreshDue()" />
+      {{ t('Charge totals · {message}', { message: dueError.message }) }}
+      <Button :label="t('Retry')" size="small" text @click="refreshDue()" />
     </Message>
 
     <div class="flex flex-wrap items-end gap-3">
-      <CatalogField :id="id + '-status'" label="Estado">
+      <CatalogField :id="id + '-status'" :label="t('Status')">
         <Select
           v-model="status"
           :input-id="id + '-status'"
-          aria-label="Estado"
+          :aria-label="t('Status')"
           :options="statuses"
           option-label="label"
           option-value="value"
           show-clear
-          placeholder="Todos"
+          :placeholder="t('All')"
           class="min-w-36"
         />
       </CatalogField>
-      <CatalogField :id="id + '-method'" label="Método">
+      <CatalogField :id="id + '-method'" :label="t('Method')">
         <Select
           v-model="method"
           :input-id="id + '-method'"
-          aria-label="Método"
+          :aria-label="t('Method')"
           :options="methods"
           option-label="label"
           option-value="value"
           show-clear
-          placeholder="Todos"
+          :placeholder="t('All')"
           class="min-w-36"
         />
       </CatalogField>
       <ClientPicker :model-value="client" @update:model-value="selectClient" />
       <Button
         v-if="clientId && !client"
-        label="Quitar filtro de cliente"
+        :label="t('Remove client filter')"
         severity="secondary"
         text
         size="small"
         @click="selectClient(null)"
       />
-      <CatalogField :id="id + '-from'" label="Desde">
+      <CatalogField :id="id + '-from'" :label="t('From')">
         <InputText :id="id + '-from'" v-model="from" type="date" />
       </CatalogField>
-      <CatalogField :id="id + '-through'" label="Hasta">
+      <CatalogField :id="id + '-through'" :label="t('To')">
         <InputText :id="id + '-through'" v-model="through" type="date" />
       </CatalogField>
       <label
@@ -253,13 +268,13 @@ onMounted(() => void refreshDue());
         class="flex items-center gap-2 self-end pb-2"
       >
         <Checkbox v-model="overdue" :input-id="id + '-overdue'" binary />
-        Solo vencidos
+        {{ t('Overdue only') }}
       </label>
     </div>
 
     <Message v-if="error" severity="error" :closable="false">
       {{ error }}
-      <Button label="Reintentar" size="small" text @click="load" />
+      <Button :label="t('Retry')" size="small" text @click="load" />
     </Message>
     <DataTable
       v-else
@@ -277,9 +292,11 @@ onMounted(() => void refreshDue());
       @page="changePage"
     >
       <template #empty
-        ><span v-if="!loading">No hay pagos para mostrar.</span></template
+        ><span v-if="!loading">{{
+          t('No payments to display.')
+        }}</span></template
       >
-      <Column header="Cliente">
+      <Column :header="t('Client')">
         <template #body="{ data }">
           <RouterLink
             :to="{ name: 'client-detail', params: { id: data.client } }"
@@ -291,32 +308,32 @@ onMounted(() => void refreshDue());
           </RouterLink>
         </template>
       </Column>
-      <Column header="Concepto">
+      <Column :header="t('Description{\'\'}')">
         <template #body="{ data }">{{
-          data.expand?.plan?.name ?? 'Cobro manual'
+          data.expand?.plan?.name ?? t('Manual charge')
         }}</template>
       </Column>
-      <Column header="Monto">
+      <Column :header="t('Amount')">
         <template #body="{ data }">{{
           formatCents(data.amount_cents, data.currency)
         }}</template>
       </Column>
-      <Column header="Método">
+      <Column :header="t('Method')">
         <template #body="{ data }">{{
           paymentMethods[data.method as PaymentMethod] ?? '—'
         }}</template>
       </Column>
-      <Column header="Estado">
+      <Column :header="t('Status')">
         <template #body="{ data }"
           ><PaymentStatusTag :payment="data"
         /></template>
       </Column>
-      <Column header="Vencimiento">
+      <Column :header="t('Due date')">
         <template #body="{ data }">{{
           data.due_on ? formatCivilDate(data.due_on) : '—'
         }}</template>
       </Column>
-      <Column header="Recibo">
+      <Column :header="t('Receipt')">
         <template #body="{ data }">
           <RouterLink
             v-if="data.receipt_number && data.status !== 'pending'"
@@ -328,19 +345,19 @@ onMounted(() => void refreshDue());
           <span v-else>—</span>
         </template>
       </Column>
-      <Column header="Acciones">
+      <Column :header="t('Actions')">
         <template #body="{ data }">
           <div class="flex flex-wrap gap-1">
             <Button
               v-if="data.status === 'pending'"
-              label="Marcar pagado"
+              :label="t('Mark as paid')"
               size="small"
               text
               @click="openForm(data)"
             />
             <Button
               v-if="data.status !== 'void'"
-              label="Anular"
+              :label="t('Void')"
               severity="danger"
               size="small"
               text

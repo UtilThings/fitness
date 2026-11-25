@@ -312,7 +312,7 @@ async function publicAndCrons(a: Fixture, b: Fixture) {
     return { body: await response.json(), origin: response.headers.get("Access-Control-Allow-Origin") };
   }
   for (const path of ["catalog", "schedule"]) {
-    assert.deepEqual((await publicRoute(path, old.key, a.origin, 401)).body, { message: "Clave de API inválida" });
+    assert.deepEqual((await publicRoute(path, old.key, a.origin, 401)).body, { message: "The API key is invalid." });
     for (const [fixture, key, other] of [[a, aKey, b], [b, bKey, a]] as const) {
       const result = await publicRoute(path, key.key, fixture.origin);
       assert.equal(result.origin, fixture.origin);

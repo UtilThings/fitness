@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Dialog from 'primevue/dialog';
@@ -147,7 +148,7 @@ async function submit(overrideNote?: string) {
 <template>
   <Dialog
     v-model:visible="open"
-    header="Reservar clase"
+    :header="t('Book class')"
     modal
     class="w-full max-w-lg"
     :closable="!saving"
@@ -173,26 +174,26 @@ async function submit(overrideNote?: string) {
           severity="warn"
           :closable="false"
         >
-          Se añadirá a la lista de espera.
+          {{ t('They will be added to the waitlist.') }}
         </Message>
       </template>
-      <p v-else role="status">Consultando cupos…</p>
-      <Message v-if="!reservable" severity="warn" :closable="false"
-        >La sesión ya no admite reservas.</Message
-      >
+      <p v-else role="status">{{ t('Checking availability…') }}</p>
+      <Message v-if="!reservable" severity="warn" :closable="false">{{
+        t('This session no longer accepts bookings.')
+      }}</Message>
       <p v-if="props.client">{{ fullName(props.client) }}</p>
       <ClientPicker v-else v-model="picked" :disabled="saving" />
       <Message
         v-if="client?.status === 'paused'"
         severity="warn"
         :closable="false"
-        >El cliente está en pausa.</Message
+        >{{ t('The client is paused.') }}</Message
       >
       <Message
         v-if="client?.status === 'inactive'"
         severity="warn"
         :closable="false"
-        >El cliente está inactivo.</Message
+        >{{ t('The client is inactive.') }}</Message
       >
       <div v-if="eligible" class="flex items-center gap-2">
         <Checkbox
@@ -201,10 +202,10 @@ async function submit(overrideNote?: string) {
           binary
           :disabled="saving"
         />
-        <label :for="id">Primera clase gratis</label>
+        <label :for="id">{{ t('Free first class') }}</label>
       </div>
       <p v-else-if="planError" class="text-sm text-muted-color">
-        No se pudo comprobar la primera clase gratis.
+        {{ t('Could not verify the free first class.') }}
       </p>
       <Message
         v-if="saveError && !overrideOpen"
@@ -215,14 +216,14 @@ async function submit(overrideNote?: string) {
       </Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
           @click="open = false"
         />
         <Button
-          label="Reservar"
+          :label="t('Book')"
           type="submit"
           :loading="saving"
           :disabled="

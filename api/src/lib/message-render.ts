@@ -37,7 +37,7 @@ function substitute(text: string, value: (name: string) => string): string {
   let match: RegExpExecArray | null;
   while ((match = delimiter.exec(text))) {
     const variable = /^\{\{[ \t]*([a-z][a-z0-9_]*)[ \t]*\}\}/i.exec(text.slice(match.index));
-    if (!variable) throw new Error("Usa variables con la sintaxis {{nombre}}.");
+    if (!variable) throw new Error("Use double braces around variable names.");
     result += text.slice(offset, match.index) + value(variable[1]!);
     offset = match.index + variable[0].length;
     delimiter.lastIndex = offset;
@@ -56,21 +56,21 @@ export function extractVariables(text: string): string[] {
 
 export function validateTemplate({ key, subject, body }: Template): TemplateProblem[] {
   const problems: TemplateProblem[] = [];
-  if (!isMessageKey(key)) problems.push({ field: "key", message: "Clave de plantilla desconocida." });
+  if (!isMessageKey(key)) problems.push({ field: "key", message: "Unknown template key." });
   for (const [field, text, max] of [["subject", subject, 150], ["body", body, 5000]] as const) {
-    if (!text.trim()) problems.push({ field, message: "Este campo es obligatorio." });
-    if ([...text].length > max) problems.push({ field, message: `Máximo de ${max} caracteres.` });
+    if (!text.trim()) problems.push({ field, message: "This field is required." });
+    if ([...text].length > max) problems.push({ field, message: field === "subject" ? "The subject can contain up to 150 characters." : "The body can contain up to 5000 characters." });
     if (field === "subject" && NEWLINE.test(text)) {
-      problems.push({ field, message: "El asunto debe ocupar una sola línea." });
+      problems.push({ field, message: "The subject must fit on one line." });
     }
     try {
       for (const name of extractVariables(text)) {
         if (!isMessageKey(key) || !ALLOWED_VARIABLES[key].some((allowed) => allowed === name)) {
-          problems.push({ field, message: `Variable no permitida: {{${name}}}.`, variable: name });
+          problems.push({ field, message: "This variable is not allowed.", variable: name });
         }
       }
     } catch {
-      problems.push({ field, message: "Usa variables con la sintaxis {{nombre}}." });
+      problems.push({ field, message: "Use double braces around variable names." });
     }
   }
   return problems;
@@ -79,7 +79,7 @@ export function validateTemplate({ key, subject, body }: Template): TemplateProb
 export function renderText(text: string, vars: Variables): string {
   return substitute(text, (name) => {
     if (!Object.prototype.hasOwnProperty.call(vars, name) || typeof vars[name] !== "string") {
-      throw new Error(`Falta el valor de {{${name}}}.`);
+      throw new Error("A template variable has no value.");
     }
     return vars[name];
   });
@@ -99,7 +99,7 @@ export function renderTemplate(template: Template, vars: Variables) {
   const problems = validateTemplate(template);
   if (problems.length) throw new Error(problems[0]!.message);
   const subject = renderText(template.subject, vars);
-  if (!subject.trim() || NEWLINE.test(subject)) throw new Error("El asunto debe ocupar una sola línea.");
+  if (!subject.trim() || NEWLINE.test(subject)) throw new Error("The subject must fit on one line.");
   return { subject, body: renderText(template.body, vars), html: renderHtml(template.body, vars) };
 }
 

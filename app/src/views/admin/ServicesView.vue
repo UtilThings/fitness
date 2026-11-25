@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -44,10 +45,12 @@ const visible = ref(false);
 const saving = ref(false);
 const checkingPlans = ref(false);
 const customSlug = ref(false);
-const kindOptions = Object.entries(kindLabel).map(([value, label]) => ({
-  value,
-  label,
-}));
+const kindOptions = computed(() =>
+  Object.entries(kindLabel.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
 const availableCoaches = computed(() => {
   const current = editing.value?.default_coach;
   if (current && !coachOptions.value.some(({ value }) => value === current)) {
@@ -56,7 +59,7 @@ const availableCoaches = computed(() => {
       ...coachOptions.value,
       {
         value: current,
-        label: coach?.name || coach?.email || 'Coach asignado',
+        label: coach?.name || coach?.email || t('Assigned coach'),
       },
     ];
   }
@@ -132,7 +135,7 @@ async function save() {
       editing.value?.id,
     );
     visible.value = false;
-    notify.success('Servicio guardado');
+    notify.success(t('Service saved'));
   } catch (cause) {
     const error = cause as PbError;
     fields.value = error.fields;
@@ -150,13 +153,18 @@ async function requestActive(service: Service, active: boolean) {
   try {
     const count = await services.countActivePlans(service.id);
     confirm.require({
-      header: 'Desactivar servicio',
-      message:
-        count === 1
-          ? `También se desactivará 1 plan de «${service.name}».`
-          : `También se desactivarán ${count} planes de «${service.name}».`,
-      acceptProps: { label: 'Desactivar', severity: 'warn' },
-      rejectProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
+      header: t('Deactivate service'),
+      message: t(
+        '1 plan for «{name}» will also be deactivated. | {count} plans for «{name}» will also be deactivated.',
+        { name: service.name, count },
+        count,
+      ),
+      acceptProps: { label: t('Deactivate'), severity: 'warn' },
+      rejectProps: {
+        label: t('Cancel'),
+        severity: 'secondary',
+        outlined: true,
+      },
       defaultFocus: 'reject',
       accept: () => actions.changeActive(service, false),
     });
@@ -170,10 +178,10 @@ async function requestActive(service: Service, active: boolean) {
 
 <template>
   <div class="grid gap-5">
-    <PageHeader title="Servicios">
+    <PageHeader :title="t('Services')">
       <template v-if="canManage" #actions>
         <Button
-          label="Nuevo servicio"
+          :label="t('New service')"
           icon="pi pi-plus"
           :disabled="busy"
           @click="openEditor()"
@@ -184,7 +192,7 @@ async function requestActive(service: Service, active: boolean) {
     <div v-if="error" class="flex flex-wrap items-center gap-3" role="alert">
       <span>{{ error.message }}</span>
       <Button
-        label="Reintentar"
+        :label="t('Retry')"
         severity="secondary"
         outlined
         @click="services.load()"
@@ -193,29 +201,29 @@ async function requestActive(service: Service, active: boolean) {
     <EmptyState
       v-else-if="!loading && !items.length"
       icon="pi pi-briefcase"
-      title="No hay servicios"
+      :title="t('No services')"
     />
     <DataTable v-else :value="items" data-key="id" :loading="loading">
-      <Column field="name" header="Nombre" />
-      <Column header="Tipo">
+      <Column field="name" :header="t('Name')" />
+      <Column :header="t('Type')">
         <template #body="{ data }"
           ><Tag :value="kindLabel[(data as Service).kind]" severity="secondary"
         /></template>
       </Column>
-      <Column field="capacity" header="Cupo" />
-      <Column header="Política de cancelación">
+      <Column field="capacity" :header="t('Capacity')" />
+      <Column :header="t('Cancellation policy')">
         <template #body="{ data }">{{
           policyLabel(data.cancellation_hours)
         }}</template>
       </Column>
-      <Column header="Coach por defecto">
+      <Column :header="t('Default coach')">
         <template #body="{ data }">{{
           data.expand?.default_coach?.name ||
           data.expand?.default_coach?.email ||
           '—'
         }}</template>
       </Column>
-      <Column header="Estado">
+      <Column :header="t('Status')">
         <template #body="{ data }">
           <CatalogActiveSwitch
             v-if="canManage"
@@ -227,10 +235,10 @@ async function requestActive(service: Service, active: boolean) {
           <StatusTag v-else :value="String(data.active)" :map="ACTIVE_STATUS" />
         </template>
       </Column>
-      <Column header="Orden">
+      <Column :header="t('Order')">
         <template #body="{ index }">{{ index + 1 }}</template>
       </Column>
-      <Column v-if="canManage" header="Acciones">
+      <Column v-if="canManage" :header="t('Actions')">
         <template #body="{ data, index }">
           <CatalogRowActions
             :name="data.name"
@@ -248,7 +256,7 @@ async function requestActive(service: Service, active: boolean) {
     <Dialog
       v-if="canManage"
       v-model:visible="visible"
-      :header="editing ? 'Editar servicio' : 'Nuevo servicio'"
+      :header="editing ? t('Edit service') : t('New service')"
       modal
       :closable="!saving"
       :close-on-escape="!saving"
@@ -261,7 +269,7 @@ async function requestActive(service: Service, active: boolean) {
         <CatalogField
           id="service-name"
           v-slot="{ describedBy }"
-          label="Nombre"
+          :label="t('Name')"
           :error="fields.name"
         >
           <InputText
@@ -276,7 +284,7 @@ async function requestActive(service: Service, active: boolean) {
         <CatalogField
           id="service-slug"
           v-slot="{ describedBy }"
-          label="Slug"
+          :label="t('Slug')"
           :error="fields.slug"
         >
           <InputText
@@ -288,7 +296,7 @@ async function requestActive(service: Service, active: boolean) {
             @update:model-value="updateSlug"
           />
         </CatalogField>
-        <CatalogField id="service-kind" label="Tipo" :error="fields.kind">
+        <CatalogField id="service-kind" :label="t('Type')" :error="fields.kind">
           <Select
             input-id="service-kind"
             :model-value="form.kind"
@@ -302,7 +310,7 @@ async function requestActive(service: Service, active: boolean) {
         <CatalogField
           id="service-description"
           v-slot="{ describedBy }"
-          label="Descripción"
+          :label="t('Description')"
           :error="fields.description"
         >
           <Textarea
@@ -317,7 +325,7 @@ async function requestActive(service: Service, active: boolean) {
         <div class="grid gap-4 sm:grid-cols-2">
           <CatalogField
             id="service-capacity"
-            label="Cupo"
+            :label="t('Capacity')"
             :error="fields.capacity"
           >
             <InputNumber
@@ -331,7 +339,7 @@ async function requestActive(service: Service, active: boolean) {
           </CatalogField>
           <CatalogField
             id="service-cancellation"
-            label="Antelación mínima (h)"
+            :label="t('Minimum notice (h)')"
             help="Personal 24 h, grupal 12 h."
             :error="fields.cancellation_hours"
           >
@@ -346,7 +354,7 @@ async function requestActive(service: Service, active: boolean) {
         </div>
         <CatalogField
           id="service-coach"
-          label="Coach por defecto"
+          :label="t('Default coach')"
           :error="fields.default_coach || coachesError?.message"
         >
           <Select
@@ -355,7 +363,7 @@ async function requestActive(service: Service, active: boolean) {
             :options="availableCoaches"
             option-label="label"
             option-value="value"
-            placeholder="Sin coach asignado"
+            :placeholder="t('No coach assigned')"
             show-clear
             :invalid="!!fields.default_coach"
           />
@@ -363,13 +371,13 @@ async function requestActive(service: Service, active: boolean) {
         <div class="flex justify-end gap-2">
           <Button
             type="button"
-            label="Cancelar"
+            :label="t('Cancel')"
             severity="secondary"
             text
             :disabled="saving"
             @click="visible = false"
           />
-          <Button type="submit" label="Guardar" :loading="saving" />
+          <Button type="submit" :label="t('Save')" :loading="saving" />
         </div>
       </form>
     </Dialog>

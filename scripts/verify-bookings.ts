@@ -174,11 +174,14 @@ await confirmFreeClass(fourthClient, false);
 
 const logs = records("audit_logs") + filter('collection = "bookings"') + "&perPage=100";
 const { items } = await call<{ items: { id: string; actor: string; summary: string; diff: { status?: { to?: string } } }[] }>(logs, owner);
-for (const event of ["created", "waitlisted", "promoted", "cancelled", "late_cancelled", "attended", "cancelled_by_session"]) {
-  assert(items.some((item) => item.actor && item.summary.startsWith(`booking.${event}: `)), event);
+for (const summary of [
+  "Booking created.", "Booking added to the waitlist.", "Booking promoted from the waitlist.",
+  "Booking canceled.", "Booking canceled late.", "Attendance recorded.", "Booking canceled by the session.",
+]) {
+  assert(items.some((item) => item.actor && item.summary === summary), summary);
 }
 
-assert(items.some((item) => item.summary.startsWith("booking.waitlisted: ") && item.diff?.status?.to === "waitlisted"),
+assert(items.some((item) => item.summary === "Booking added to the waitlist." && item.diff?.status?.to === "waitlisted"),
   "El diff de auditoría debe conservar los cambios al persistirlos.");
 
 console.log("Reservas, concurrencia, cancelación, asistencia, disponibilidad y auditoría verificadas.");

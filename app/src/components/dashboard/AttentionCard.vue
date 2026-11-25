@@ -1,18 +1,23 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import Card from 'primevue/card';
 import type { DashboardAttention } from '@/composables/useDashboard';
 import { formatDateTime } from '@/lib/datetime';
 
 defineProps<{ items: DashboardAttention[] }>();
 
-const reasons = { no_coach: 'Sin coach', no_bookings: 'Sin reservas' };
+const reasons = computed(() => ({
+  no_coach: t('No coach'),
+  no_bookings: t('No bookings'),
+}));
 </script>
 
 <template>
   <Card class="min-w-0">
-    <template #title>Sesiones que requieren atención</template>
+    <template #title>{{ t('Sessions needing attention') }}</template>
     <template #content>
-      <p v-if="!items.length">No hay alertas para los próximos días.</p>
+      <p v-if="!items.length">{{ t('No alerts for the next few days.') }}</p>
       <ul v-else class="grid gap-2">
         <li v-for="item in items" :key="`${item.session_id}-${item.reason}`">
           <RouterLink

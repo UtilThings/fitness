@@ -22,7 +22,7 @@ interface GuardError {
 
 const lastOwner: GuardError = {
   status: 400,
-  message: "Debe quedar al menos un owner activo",
+  message: "At least one active owner must remain.",
 };
 
 export function checkAdminChange({ before, after, actorId, activeOwners }: {
@@ -32,7 +32,7 @@ export function checkAdminChange({ before, after, actorId, activeOwners }: {
   activeOwners: number;
 }): GuardError | null {
   if (before.active && !after.active && before.id === actorId) {
-    return { status: 400, message: "No puedes desactivarte a ti mismo" };
+    return { status: 400, message: "You cannot deactivate your own account." };
   }
   if (before.active && before.role === "owner" && activeOwners <= 1
     && (!after.active || after.role !== "owner")) {
@@ -47,9 +47,9 @@ export function canDeleteAdmin({ referencesCount, isLastOwner, isSelf }: {
   isSelf: boolean;
 }): GuardError | null {
   if (isLastOwner) return lastOwner;
-  if (isSelf) return { status: 400, message: "No puedes eliminar tu propia cuenta" };
+  if (isSelf) return { status: 400, message: "You cannot delete your own account." };
   if (referencesCount > 0) {
-    return { status: 409, message: "Tiene registros asociados; desactívalo en su lugar" };
+    return { status: 409, message: "This team member has related records. Deactivate them instead." };
   }
   return null;
 }

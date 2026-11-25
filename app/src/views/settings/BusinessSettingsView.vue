@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
@@ -12,12 +13,15 @@ import type { Business } from '@/types/pb';
 
 const { business, logoUrl, updateBusiness } = useBusiness();
 const notify = useNotify();
-const fields = [
-  { key: 'name', label: 'Nombre', max: 80, type: 'text', required: true },
-  { key: 'city', label: 'Ciudad', max: 80, type: 'text' },
-  { key: 'phone', label: 'Teléfono', type: 'tel' },
-  { key: 'email', label: 'Correo de contacto', type: 'email' },
-] as const;
+const fields = computed(
+  () =>
+    [
+      { key: 'name', label: t('Name'), max: 80, type: 'text', required: true },
+      { key: 'city', label: t('City'), max: 80, type: 'text' },
+      { key: 'phone', label: t('Phone'), type: 'tel' },
+      { key: 'email', label: t('Contact email'), type: 'email' },
+    ] as const,
+);
 const imageTypes = [
   'image/png',
   'image/jpeg',
@@ -64,10 +68,9 @@ function selectLogo(event: Event) {
   if (!file) return;
   delete errors.value.logo;
   if (!imageTypes.includes(file.type)) {
-    errors.value.logo =
-      'Selecciona una imagen PNG, JPEG, WebP, GIF, AVIF o SVG.';
+    errors.value.logo = t('Select a PNG, JPEG, WebP, GIF, AVIF, or SVG image.');
   } else if (file.size > 2 * 1024 * 1024) {
-    errors.value.logo = 'El logo no puede superar 2 MB.';
+    errors.value.logo = t('The logo cannot exceed 2 MB.');
   } else {
     setLogo(file);
   }
@@ -83,11 +86,11 @@ async function save() {
   if (!id || saving.value) return;
   errors.value = {};
   if (!details.value.name.trim()) {
-    errors.value.name = 'Ingresa el nombre del negocio.';
+    errors.value.name = t('Enter the business name.');
     return;
   }
   const data = new FormData();
-  for (const { key } of fields) data.set(key, details.value[key].trim());
+  for (const { key } of fields.value) data.set(key, details.value[key].trim());
   if (logoChange.value !== undefined) data.set('logo', logoChange.value ?? '');
 
   saving.value = true;
@@ -96,7 +99,7 @@ async function save() {
       .collection<Business>('businesses')
       .update(id, data, { requestKey: null });
     updateBusiness(record);
-    notify.success('Negocio actualizado');
+    notify.success(t('Business updated'));
   } catch (cause) {
     const error = parsePbError(cause);
     errors.value = error.fields;
@@ -109,7 +112,7 @@ async function save() {
 
 <template>
   <div class="grid max-w-3xl gap-5">
-    <PageHeader title="Negocio" />
+    <PageHeader :title="t('Business')" />
     <form v-if="business" class="grid gap-5" @submit.prevent="save">
       <fieldset
         :disabled="saving"
@@ -137,7 +140,7 @@ async function save() {
         <CatalogField
           id="business-logo"
           v-slot="{ describedBy }"
-          label="Logo"
+          :label="t('Logo')"
           :error="errors.logo"
           help="Imagen de hasta 2 MB."
         >
@@ -145,7 +148,7 @@ async function save() {
             <img
               v-if="image"
               :src="image"
-              alt="Vista previa del logo"
+              :alt="t('Logo preview')"
               class="h-14 max-w-40 object-contain"
             />
             <input
@@ -161,33 +164,36 @@ async function save() {
               type="button"
               severity="secondary"
               variant="text"
-              label="Quitar logo"
+              :label="t('Remove logo')"
               @click="removeLogo"
             />
           </div>
         </CatalogField>
         <div>
-          <Button type="submit" label="Guardar cambios" :loading="saving" />
+          <Button type="submit" :label="t('Save changes')" :loading="saving" />
         </div>
       </fieldset>
       <section
         class="grid gap-3 rounded-xl border border-surface-200 p-5 dark:border-surface-800"
       >
         <p class="text-sm text-muted-color">
-          La moneda, la zona horaria y el prefijo los cambia el administrador de
-          la plataforma.
+          {{
+            t(
+              'The platform administrator manages the currency, time zone, and receipt prefix.',
+            )
+          }}
         </p>
         <dl class="grid gap-3 text-sm sm:grid-cols-3">
           <div>
-            <dt class="font-medium">Moneda</dt>
+            <dt class="font-medium">{{ t('Currency') }}</dt>
             <dd>{{ business.currency }}</dd>
           </div>
           <div>
-            <dt class="font-medium">Zona horaria</dt>
+            <dt class="font-medium">{{ t('Time zone') }}</dt>
             <dd>{{ business.timezone }}</dd>
           </div>
           <div>
-            <dt class="font-medium">Prefijo de recibo</dt>
+            <dt class="font-medium">{{ t('Receipt prefix') }}</dt>
             <dd>{{ business.receipt_prefix }}</dd>
           </div>
         </dl>

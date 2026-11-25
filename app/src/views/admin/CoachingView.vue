@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
+import { collator } from '@/i18n/formats';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -62,36 +64,41 @@ const checkinVisible = ref(false);
 let latest = 0;
 let latestDetail = 0;
 
-const statusOptions = Object.entries(programStatuses).map(([value, label]) => ({
-  value,
-  label,
-}));
-const alertOptions = [
-  { value: 'renewal', label: 'Todas las alertas de renovación' },
-  ...Object.entries(programAlerts).map(([value, label]) => ({ value, label })),
-];
+const statusOptions = computed(() =>
+  Object.entries(programStatuses.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
+const alertOptions = computed(() => [
+  { value: 'renewal', label: t('All renewal alerts') },
+  ...Object.entries(programAlerts.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+]);
 const scope = computed(() =>
   rows.value.filter((program) => !coach.value || program.coach === coach.value),
 );
 const metrics = computed(() => [
   {
-    label: 'Programas activos',
+    label: t('Active programs'),
     count: scope.value.filter(({ status }) => status === 'active').length,
   },
   {
-    label: 'Renovaciones con alerta',
+    label: t('Renewal alerts'),
     count: scope.value.filter(({ flags }) =>
       matchesProgramAlert(flags.alerts, 'renewal'),
     ).length,
   },
   {
-    label: 'Check-ins pendientes',
+    label: t('Pending check-ins'),
     count: scope.value.filter(({ flags }) =>
       flags.alerts.includes('checkin_due'),
     ).length,
   },
   {
-    label: 'En riesgo',
+    label: t('At risk'),
     count: scope.value.filter(({ flags }) => flags.alerts.includes('at_risk'))
       .length,
   },
@@ -149,7 +156,7 @@ const coachOptions = computed(() => {
   }
   return [...options]
     .map(([id, name]) => ({ id, name }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    .sort((a, b) => collator().compare(a.name, b.name));
 });
 
 onMounted(() => {
@@ -211,10 +218,14 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
 
   if (target === 'ended') {
     confirm.require({
-      header: 'Finalizar programa',
-      message: '¿Finalizar este programa? Su historial seguirá disponible.',
-      acceptProps: { label: 'Finalizar', severity: 'danger' },
-      rejectProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
+      header: t('End program'),
+      message: t('End this program? Its history will remain available.'),
+      acceptProps: { label: t('End'), severity: 'danger' },
+      rejectProps: {
+        label: t('Cancel'),
+        severity: 'secondary',
+        outlined: true,
+      },
       defaultFocus: 'reject',
       accept: apply,
     });
@@ -224,11 +235,11 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
 
 <template>
   <section class="grid gap-5">
-    <PageHeader title="Online Coaching">
+    <PageHeader :title="t('Online Coaching')">
       <template #actions>
         <Button
           v-if="canManageProgram(user)"
-          label="Nuevo programa"
+          :label="t('New program')"
           icon="pi pi-plus"
           @click="openForm()"
         />
@@ -251,8 +262,8 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
     <div class="flex flex-wrap gap-3">
       <InputText
         v-model="search"
-        placeholder="Buscar cliente"
-        aria-label="Buscar cliente"
+        :placeholder="t('Search for a client')"
+        :aria-label="t('Search for a client')"
         class="min-w-48"
       />
       <Select
@@ -261,8 +272,8 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
         option-label="label"
         option-value="value"
         show-clear
-        placeholder="Todos los estados"
-        aria-label="Estado del programa"
+        :placeholder="t('All statuses')"
+        :aria-label="t('Program status')"
         class="min-w-44"
       />
       <Select
@@ -272,8 +283,8 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
         option-value="id"
         show-clear
         filter
-        placeholder="Todos los coaches"
-        aria-label="Coach"
+        :placeholder="t('All coaches')"
+        :aria-label="t('Coach')"
         class="min-w-44"
       />
       <Select
@@ -282,15 +293,15 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
         option-label="label"
         option-value="value"
         show-clear
-        placeholder="Todas las alertas"
-        aria-label="Alerta"
+        :placeholder="t('All alerts')"
+        :aria-label="t('Alert')"
         class="min-w-44"
       />
     </div>
 
     <Message v-if="error" severity="error" :closable="false">
       {{ error }}
-      <Button label="Reintentar" size="small" text @click="load" />
+      <Button :label="t('Retry')" size="small" text @click="load" />
     </Message>
     <DataTable
       v-model:first="first"
@@ -304,11 +315,11 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
       table-style="min-width: 62rem"
     >
       <template #empty
-        ><span v-if="!loading && !error"
-          >No hay programas con estos filtros.</span
-        ></template
+        ><span v-if="!loading && !error">{{
+          t('No programs match these filters.')
+        }}</span></template
       >
-      <Column header="Cliente">
+      <Column :header="t('Client')">
         <template #body="{ data }">
           <Button
             :label="clientLabel(data)"
@@ -318,39 +329,42 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
           />
         </template>
       </Column>
-      <Column header="Coach">
+      <Column :header="t('Coach')">
         <template #body="{ data }">{{
           data.expand?.coach?.name ?? data.coach
         }}</template>
       </Column>
-      <Column header="Estado">
+      <Column :header="t('Status')">
         <template #body="{ data }"
           ><ProgramStatusTag :status="data.status"
         /></template>
       </Column>
-      <Column header="Progreso">
-        <template #body="{ data }"
-          >Semana {{ data.flags.week }} de {{ data.flags.total }}</template
-        >
+      <Column :header="t('Progress')">
+        <template #body="{ data }">{{
+          t('Week {week} of {total}', {
+            week: data.flags.week,
+            total: data.flags.total,
+          })
+        }}</template>
       </Column>
-      <Column header="Adherencia promedio">
+      <Column :header="t('Average adherence')">
         <template #body="{ data }"
           ><AdherenceBadge
             :value="data.flags.adherence.average"
             :trend="data.flags.adherence.trend"
         /></template>
       </Column>
-      <Column header="Último check-in">
+      <Column :header="t('Last check-in')">
         <template #body="{ data }">{{
           data.flags.lastCheckin ? formatCivilDate(data.flags.lastCheckin) : '—'
         }}</template>
       </Column>
-      <Column header="Renovación">
+      <Column :header="t('Renewal')">
         <template #body="{ data }">{{
           data.renews_on ? formatCivilDate(data.renews_on) : '—'
         }}</template>
       </Column>
-      <Column header="Alertas">
+      <Column :header="t('Alerts')">
         <template #body="{ data }">
           <div class="flex flex-wrap gap-1">
             <Tag
@@ -370,7 +384,7 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
       :closable="!actionPending"
       :close-on-escape="!actionPending"
       modal
-      :header="detail ? clientLabel(detail.program) : 'Programa de coaching'"
+      :header="detail ? clientLabel(detail.program) : t('Coaching program')"
       class="w-full max-w-2xl"
     >
       <div class="grid gap-4">
@@ -378,24 +392,26 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
           {{ detailError }}
           <Button
             v-if="!detail"
-            label="Reintentar"
+            :label="t('Retry')"
             size="small"
             text
             @click="loadDetail(detailId)"
           />
         </Message>
-        <p v-if="detailLoading && !detail" role="status">Cargando programa…</p>
+        <p v-if="detailLoading && !detail" role="status">
+          {{ t('Loading program…') }}
+        </p>
         <template v-if="detail">
           <ProgramSummary :program="detail.program" />
           <div class="flex flex-wrap gap-2">
             <Button
               v-if="canRegisterCheckin(user, detail.program)"
-              label="Registrar check-in"
+              :label="t('Record check-in')"
               @click="checkinVisible = true"
             />
             <template v-if="canManageProgram(user, detail.program)">
               <Button
-                label="Editar"
+                :label="t('Edit')"
                 severity="secondary"
                 outlined
                 @click="openForm(detail.program)"
@@ -403,7 +419,9 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
               <template v-if="detail.program.status !== 'ended'">
                 <Button
                   :label="
-                    detail.program.status === 'active' ? 'Pausar' : 'Reanudar'
+                    detail.program.status === 'active'
+                      ? t('Pause')
+                      : t('Resume')
                   "
                   severity="secondary"
                   outlined
@@ -420,7 +438,7 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
                   "
                 />
                 <Button
-                  label="Finalizar"
+                  :label="t('End')"
                   severity="danger"
                   outlined
                   :disabled="actionPending"
@@ -429,7 +447,7 @@ function changeStatus(program: CoachingProgram, target: ProgramStatus) {
               </template>
             </template>
           </div>
-          <h2 class="text-lg font-semibold">Historial de check-ins</h2>
+          <h2 class="text-lg font-semibold">{{ t('Check-in history') }}</h2>
           <CheckinTimeline :checkins="detail.history" />
         </template>
       </div>

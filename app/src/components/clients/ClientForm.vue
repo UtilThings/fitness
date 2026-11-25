@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
-import { ref, useId, watch } from 'vue';
+import { computed, ref, useId, watch } from 'vue';
 import CatalogField from '@/components/catalog/CatalogField.vue';
 import { useClients } from '@/composables/useClients';
 import type { ClientDetails } from '@/lib/clients';
@@ -22,45 +23,48 @@ const duplicatePhone = ref(false);
 const phone = () => model.value.phone;
 let latestCheck = 0;
 
-const fields = [
-  {
-    key: 'first_name',
-    label: 'Nombre',
-    type: 'text',
-    max: 80,
-    required: true,
-    autocomplete: 'given-name',
-  },
-  {
-    key: 'last_name',
-    label: 'Apellido',
-    type: 'text',
-    max: 80,
-    required: true,
-    autocomplete: 'family-name',
-  },
-  {
-    key: 'email',
-    label: 'Correo electrónico',
-    type: 'email',
-    autocomplete: 'email',
-  },
-  { key: 'phone', label: 'Teléfono', type: 'tel', autocomplete: 'tel' },
-  { key: 'joined_on', label: 'Fecha de alta', type: 'date' },
-  {
-    key: 'emergency_contact',
-    label: 'Contacto de emergencia',
-    type: 'text',
-    max: 200,
-  },
-] as const satisfies readonly {
-  key: Exclude<keyof ClientDetails, 'locale'>;
-  label: string;
-  type: string;
-  max?: number;
-  required?: boolean;
-  autocomplete?: string;
-}[];
+const fields = computed(
+  () =>
+    [
+      {
+        key: 'first_name',
+        label: t('Name'),
+        type: 'text',
+        max: 80,
+        required: true,
+        autocomplete: 'given-name',
+      },
+      {
+        key: 'last_name',
+        label: t('Last name'),
+        type: 'text',
+        max: 80,
+        required: true,
+        autocomplete: 'family-name',
+      },
+      {
+        key: 'email',
+        label: t('Email address'),
+        type: 'email',
+        autocomplete: 'email',
+      },
+      { key: 'phone', label: t('Phone'), type: 'tel', autocomplete: 'tel' },
+      { key: 'joined_on', label: t('Join date'), type: 'date' },
+      {
+        key: 'emergency_contact',
+        label: t('Emergency contact'),
+        type: 'text',
+        max: 200,
+      },
+    ] as const satisfies readonly {
+      key: Exclude<keyof ClientDetails, 'locale'>;
+      label: string;
+      type: string;
+      max?: number;
+      required?: boolean;
+      autocomplete?: string;
+    }[],
+);
 
 watch(phone, () => {
   latestCheck++;
@@ -98,7 +102,7 @@ function submit() {
         :error="errors?.[field.key]"
         :help="
           field.key === 'phone' && duplicatePhone
-            ? 'Otro cliente tiene este teléfono.'
+            ? t('Another client has this phone number.')
             : undefined
         "
       >
@@ -125,7 +129,7 @@ function submit() {
       </CatalogField>
       <CatalogField
         :id="id + '-locale'"
-        label="Idioma de comunicaciones"
+        :label="t('Communication language')"
         :error="errors?.locale"
       >
         <template #default="{ describedBy }">
@@ -147,7 +151,7 @@ function submit() {
     <div class="flex justify-end gap-2">
       <Button
         v-if="mode === 'create'"
-        label="Cancelar"
+        :label="t('Cancel')"
         severity="secondary"
         text
         :disabled="busy"
@@ -155,7 +159,9 @@ function submit() {
       />
       <Button
         type="submit"
-        :label="mode === 'create' ? 'Crear cliente' : 'Guardar datos'"
+        :label="
+          mode === 'create' ? t('Create client') : t('Save details{\'\'}')
+        "
         :loading="busy"
       />
     </div>

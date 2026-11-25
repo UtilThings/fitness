@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -86,11 +87,11 @@ function preview() {
     date_to: pickerDate(draft.value.to),
   };
   fields.value = {};
-  if (!input.date_from) fields.value.date_from = 'Indica la fecha inicial.';
+  if (!input.date_from) fields.value.date_from = t('Enter the start date.');
   if (!input.date_to || input.date_to < input.date_from) {
-    fields.value.date_to = 'Indica una fecha igual o posterior a la inicial.';
+    fields.value.date_to = t('Enter a date on or after the start date.');
   }
-  if (!input.title) fields.value.title = 'Escribe un título.';
+  if (!input.title) fields.value.title = t('Enter a title.');
   if (Object.keys(fields.value).length) return;
 
   return run(async () => {
@@ -100,20 +101,21 @@ function preview() {
     );
     if (!editing.value || editingId.value !== id) return;
     confirm.require({
-      header: 'Confirmar bloqueo',
-      message:
-        count === 1
-          ? 'Se cancelará 1 sesión.'
-          : `Se cancelarán ${count} sesiones.`,
-      acceptProps: { label: 'Guardar bloqueo' },
-      rejectProps: { label: 'Volver', severity: 'secondary', outlined: true },
+      header: t('Confirm schedule block'),
+      message: t(
+        '1 session will be canceled. | {count} sessions will be canceled.',
+        { count },
+        count,
+      ),
+      acceptProps: { label: t('Save block') },
+      rejectProps: { label: t('Back'), severity: 'secondary', outlined: true },
       defaultFocus: 'reject',
       accept: () =>
         void run(async () => {
           if (id) await schedule.updateBlock(id, input);
           else await schedule.createBlock(input);
           editing.value = false;
-          notify.success('Bloqueo guardado');
+          notify.success(t('Schedule block saved'));
         }),
     });
   });
@@ -121,11 +123,13 @@ function preview() {
 
 function remove(block: ScheduleBlock) {
   confirmDelete({
-    message: `¿Eliminar «${block.title}»? Las sesiones ya canceladas seguirán canceladas.`,
+    message: t('Delete «{title}»? Canceled sessions will remain canceled.', {
+      title: block.title,
+    }),
     onConfirm: () =>
       run(async () => {
         await schedule.deleteBlock(block.id);
-        notify.success('Bloqueo eliminado');
+        notify.success(t('Schedule block deleted'));
       }),
   });
 }
@@ -133,9 +137,9 @@ function remove(block: ScheduleBlock) {
 
 <template>
   <div class="grid gap-5">
-    <PageHeader title="Bloqueos de horario">
+    <PageHeader :title="t('Schedule blocks')">
       <template v-if="isOwner" #actions>
-        <Button label="Nuevo bloqueo" icon="pi pi-plus" @click="edit()" />
+        <Button :label="t('New block')" icon="pi pi-plus" @click="edit()" />
       </template>
     </PageHeader>
     <Message v-if="schedule.error.value" severity="error" :closable="false">
@@ -147,23 +151,23 @@ function remove(block: ScheduleBlock) {
       data-key="id"
       scrollable
     >
-      <template #empty>Sin bloqueos</template>
-      <Column field="title" header="Título" />
-      <Column field="date_from" header="Desde" />
-      <Column field="date_to" header="Hasta (inclusive)" />
-      <Column field="reason" header="Motivo" />
-      <Column v-if="isOwner" header="Acciones">
+      <template #empty>{{ t('No blocks') }}</template>
+      <Column field="title" :header="t('Title')" />
+      <Column field="date_from" :header="t('From')" />
+      <Column field="date_to" :header="t('To (inclusive)')" />
+      <Column field="reason" :header="t('Reason')" />
+      <Column v-if="isOwner" :header="t('Actions')">
         <template #body="{ data }">
           <div class="flex gap-2">
             <Button
-              label="Editar"
+              :label="t('Edit')"
               severity="secondary"
               text
               :disabled="busy"
               @click="edit(data)"
             />
             <Button
-              label="Eliminar"
+              :label="t('Delete')"
               severity="danger"
               text
               :disabled="busy"
@@ -178,10 +182,14 @@ function remove(block: ScheduleBlock) {
       v-model:visible="editing"
       modal
       class="w-full max-w-lg"
-      :header="editingId ? 'Editar bloqueo' : 'Nuevo bloqueo'"
+      :header="editingId ? t('Edit block') : t('New block')"
     >
       <form class="grid gap-4" @submit.prevent="preview">
-        <CatalogField id="block-title" label="Título" :error="fields.title">
+        <CatalogField
+          id="block-title"
+          :label="t('Title')"
+          :error="fields.title"
+        >
           <InputText
             id="block-title"
             v-model="draft.title"
@@ -192,7 +200,7 @@ function remove(block: ScheduleBlock) {
         <div class="grid grid-cols-2 gap-3">
           <CatalogField
             id="block-from"
-            label="Fecha inicial en Miramar"
+            :label="t('Start date in Miramar')"
             :error="fields.date_from"
           >
             <DatePicker
@@ -205,7 +213,7 @@ function remove(block: ScheduleBlock) {
           </CatalogField>
           <CatalogField
             id="block-to"
-            label="Fecha final en Miramar"
+            :label="t('End date in Miramar')"
             :error="fields.date_to"
           >
             <DatePicker
@@ -217,7 +225,11 @@ function remove(block: ScheduleBlock) {
             />
           </CatalogField>
         </div>
-        <CatalogField id="block-reason" label="Motivo" :error="fields.reason">
+        <CatalogField
+          id="block-reason"
+          :label="t('Reason')"
+          :error="fields.reason"
+        >
           <Textarea
             id="block-reason"
             v-model="draft.reason"
@@ -227,13 +239,13 @@ function remove(block: ScheduleBlock) {
         </CatalogField>
         <div class="flex justify-end gap-2">
           <Button
-            label="Cerrar"
+            :label="t('Close')"
             severity="secondary"
             outlined
             :disabled="busy"
             @click="editing = false"
           />
-          <Button type="submit" label="Revisar bloqueo" :loading="busy" />
+          <Button type="submit" :label="t('Review block')" :loading="busy" />
         </div>
       </form>
     </Dialog>

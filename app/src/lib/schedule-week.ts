@@ -1,3 +1,5 @@
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import type { Service } from '@/lib/catalog';
 import { addLocalDays, localParts, localToUtcIso } from '@/lib/datetime';
 import type { Admin, BaseRecord } from '@/types/pb';
@@ -120,16 +122,16 @@ export function nextCalendarSlot(
   return undefined;
 }
 
-const weekdays = [
-  'Domingo',
-  'Lunes',
-  'Martes',
-  'Miércoles',
-  'Jueves',
-  'Viernes',
-  'Sábado',
-];
+const weekdays = computed(() => [
+  t('Sunday'),
+  t('Monday'),
+  t('Tuesday'),
+  t('Wednesday'),
+  t('Thursday'),
+  t('Friday'),
+  t('Saturday'),
+]);
 
 export function weekdayLabel(weekday: number): string {
-  return weekdays[weekday] ?? '';
+  return weekdays.value[weekday] ?? '';
 }

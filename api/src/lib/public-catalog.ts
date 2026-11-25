@@ -15,7 +15,7 @@ export function normalizeWeek(input: string | undefined, today: string, maxWeeks
     if (requested > addLocalDays(current, maxWeeks * 7)) throw new RangeError();
     return requested < current ? current : requested;
   } catch {
-    throw new PublicQueryError("Indica una fecha de semana válida dentro del rango permitido.");
+    throw new PublicQueryError("Enter a valid week date within the allowed range.");
   }
 }
 

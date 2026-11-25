@@ -101,6 +101,6 @@ for (const query of [
   { ...params, group_by: "hora" }, { from: "2040-01-01", to: "2040-04-03", group_by: "day" },
 ]) {
   const error = await report("revenue", owner, query as Record<string, string>, 400);
-  assert.match(error.message, /^(Indica fechas|La fecha final|El rango|El servicio|La agrupación)/);
+  assert.match(error.message, /^(Enter valid dates|The end date|The range|The selected service|Group by|Daily grouping)/);
 }
 console.log("Reportes: contratos, permisos, privacidad, filtros y límites locales verificados.");

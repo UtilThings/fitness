@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import { computed, ref, shallowRef, watch } from 'vue';
@@ -83,19 +84,19 @@ function checkinSaved() {
     <template v-if="current">
       <ProgramSummary :program="current" />
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <h2 class="text-lg font-semibold">Historial de check-ins</h2>
+        <h2 class="text-lg font-semibold">{{ t('Check-in history') }}</h2>
         <Button
           v-if="canRegisterCheckin(user, current)"
-          label="Registrar check-in"
+          :label="t('Record check-in')"
           icon="pi pi-plus"
           @click="registering = true"
         />
       </div>
       <Message v-if="error" severity="error" :closable="false">
         {{ error }}
-        <Button label="Reintentar" size="small" text @click="revision++" />
+        <Button :label="t('Retry')" size="small" text @click="revision++" />
       </Message>
-      <p v-else-if="loading" role="status">Cargando check-ins…</p>
+      <p v-else-if="loading" role="status">{{ t('Loading check-ins…') }}</p>
       <CheckinTimeline v-else :checkins="history" />
       <CheckinDialog
         v-if="registering"
@@ -105,17 +106,19 @@ function checkinSaved() {
       />
     </template>
     <div v-else class="flex flex-wrap items-center justify-between gap-2">
-      <p class="text-muted-color">El cliente no tiene un programa vigente.</p>
+      <p class="text-muted-color">
+        {{ t('This client has no current program.') }}
+      </p>
       <Button
         v-if="canCreate"
-        label="Crear programa"
+        :label="t('Create program')"
         icon="pi pi-plus"
         @click="creating = true"
       />
     </div>
 
     <div v-if="previous.length" class="grid gap-2">
-      <h2 class="text-lg font-semibold">Programas anteriores</h2>
+      <h2 class="text-lg font-semibold">{{ t('Past programs') }}</h2>
       <ul class="grid gap-2">
         <li
           v-for="program in previous"
@@ -125,7 +128,7 @@ function checkinSaved() {
           <ProgramStatusTag :status="program.status" />
           <span class="text-sm"
             >{{ formatCivilDate(program.starts_on) }} ·
-            {{ program.duration_weeks }} semanas</span
+            {{ t('{count} weeks', { count: program.duration_weeks }) }}</span
           >
           <span class="text-sm">{{
             program.expand?.coach?.name ?? program.coach

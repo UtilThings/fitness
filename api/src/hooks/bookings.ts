@@ -91,10 +91,10 @@ onRecordUpdateRequest((e) => {
   prepareTenantUpdate(e);
   const status = body.status;
   if (status !== "cancelled" && status !== "attended" && status !== "no_show") {
-    throw bookingError("status", "Selecciona una transición de reserva permitida.");
+    throw bookingError("status", "Choose an allowed booking status.");
   }
   const note = typeof body.override_note === "string" ? body.override_note.trim() : "";
-  if (note === SESSION_CANCELLED_NOTE) throw bookingError("override_note", "Indica el motivo de la excepción.");
+  if (note === SESSION_CANCELLED_NOTE) throw bookingError("override_note", "Enter a reason for the override.");
 
   const result = inScheduleTransaction(e.app, (tx) => {
     const booking = tx.findRecordById("bookings", e.record!.id);
@@ -106,7 +106,7 @@ onRecordUpdateRequest((e) => {
 
     if (status === "cancelled" && ["attended", "late_cancelled", "no_show"].includes(input.booking.status)) {
       requireMembershipRole(e, ["owner", "reception"]);
-      if (!note) throw bookingError("override_note", "Indica el motivo de la corrección.");
+      if (!note) throw bookingError("override_note", "Enter a reason for the correction.");
       saveCancellation(tx, booking, "cancelled", input.now, actor, note);
       updateWaitlist(tx, session, actor, input.booking.status !== "late_cancelled");
     } else if (status === "cancelled") {

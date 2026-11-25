@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -25,14 +26,16 @@ const open = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ saved: [payment: Payment] }>();
 const payments = usePayments();
 const id = useId();
-const methods = Object.entries(paymentMethods).map(([value, label]) => ({
-  value,
-  label,
-}));
-const statuses = [
-  { value: 'paid', label: 'Pagado' },
-  { value: 'pending', label: 'Pendiente' },
-];
+const methods = computed(() =>
+  Object.entries(paymentMethods.value).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
+const statuses = computed(() => [
+  { value: 'paid', label: t('Paid') },
+  { value: 'pending', label: t('Pending') },
+]);
 const selectedClient = ref<Client | null>(null);
 const amount = ref('');
 const method = ref<PaymentMethod>();
@@ -42,7 +45,7 @@ const note = ref('');
 const error = ref('');
 const saving = ref(false);
 const title = computed(() =>
-  props.payment ? 'Marcar pagado' : 'Registrar pago',
+  props.payment ? t('Mark as paid') : t('Record payment'),
 );
 
 watch(
@@ -67,7 +70,7 @@ async function submit() {
     !props.payment &&
     (!selectedClient.value || amount_cents === null || amount_cents < 1)
   ) {
-    error.value = 'Selecciona un cliente e indica un monto mayor que cero.';
+    error.value = t('Select a client and enter an amount greater than zero.');
     return;
   }
   if (
@@ -76,8 +79,8 @@ async function submit() {
   ) {
     error.value =
       status.value === 'paid'
-        ? 'Selecciona el método y una fecha de pago válida.'
-        : 'Indica la fecha de vencimiento.';
+        ? t('Select a payment method and enter a valid payment date.')
+        : t('Enter the due date.');
     return;
   }
   const details = { note: note.value.trim() };
@@ -134,7 +137,7 @@ async function submit() {
         />
         <CatalogField
           :id="id + '-amount'"
-          :label="`Monto (${businessCurrency})`"
+          :label="t('Amount ({currency})', { currency: businessCurrency })"
         >
           <InputText
             :id="id + '-amount'"
@@ -144,11 +147,11 @@ async function submit() {
             fluid
           />
         </CatalogField>
-        <CatalogField :id="id + '-status'" label="Estado">
+        <CatalogField :id="id + '-status'" :label="t('Status')">
           <Select
             v-model="status"
             :input-id="id + '-status'"
-            aria-label="Estado"
+            :aria-label="t('Status')"
             :options="statuses"
             option-label="label"
             option-value="value"
@@ -160,12 +163,12 @@ async function submit() {
       <CatalogField
         v-if="status === 'paid'"
         :id="id + '-method'"
-        label="Método"
+        :label="t('Method')"
       >
         <Select
           v-model="method"
           :input-id="id + '-method'"
-          aria-label="Método"
+          :aria-label="t('Method')"
           :options="methods"
           option-label="label"
           option-value="value"
@@ -175,7 +178,7 @@ async function submit() {
       </CatalogField>
       <CatalogField
         :id="id + '-date'"
-        :label="status === 'paid' ? 'Fecha de pago' : 'Vence el'"
+        :label="status === 'paid' ? t('Payment date') : t('Due on')"
       >
         <InputText
           :id="id + '-date'"
@@ -186,7 +189,7 @@ async function submit() {
           fluid
         />
       </CatalogField>
-      <CatalogField :id="id + '-note'" label="Nota">
+      <CatalogField :id="id + '-note'" :label="t('Note')">
         <Textarea
           :id="id + '-note'"
           v-model="note"
@@ -200,7 +203,7 @@ async function submit() {
       }}</Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
