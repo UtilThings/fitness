@@ -9,16 +9,16 @@ export interface AppEnv {
 export function parseEnv(raw: Partial<Record<string, unknown>>): AppEnv {
   const url = raw.VITE_POCKETBASE_URL;
   if (typeof url !== 'string' || url.trim() === '') {
-    throw new Error('Falta la variable de entorno VITE_POCKETBASE_URL');
+    throw new Error('The VITE_POCKETBASE_URL environment variable is missing');
   }
   let parsed: URL;
   try {
     parsed = new URL(url.trim());
   } catch {
-    throw new Error('VITE_POCKETBASE_URL no es una URL válida');
+    throw new Error('VITE_POCKETBASE_URL must be a valid URL');
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    throw new Error('VITE_POCKETBASE_URL debe usar http o https');
+    throw new Error('VITE_POCKETBASE_URL must use HTTP or HTTPS');
   }
   const license =
     typeof raw.VITE_PRIMEVUE_LICENSE === 'string'

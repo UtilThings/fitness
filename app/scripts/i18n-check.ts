@@ -11,6 +11,11 @@ import ts from 'typescript';
 import { readApiMessages } from './i18n-api';
 
 const calls = new Set(['t', '$t', 'te', 'tl']);
+const spanishText = /[áéíóúñÁÉÍÓÚÑ¿¡]/u;
+const languageNameSources = new Set([
+  'src/components/LocaleSwitcher.vue',
+  'src/lib/messages.ts',
+]);
 
 type Keys = Map<string, string>;
 
@@ -22,9 +27,15 @@ function translationVariables(message: string): string {
   return [...new Set(variables)].sort().join(', ');
 }
 
-function readSource(code: string, file: string) {
+function readSource(code: string, file: string, spanishLiterals: boolean) {
   const keys: Keys = new Map();
   const errors: string[] = [];
+
+  function readLiteral(value: string) {
+    if (!spanishLiterals || !spanishText.test(value)) return;
+    if (value === 'Español' && languageNameSources.has(file)) return;
+    errors.push(`${file}: Spanish literal ${JSON.stringify(value.trim())}`);
+  }
 
   function readCode(content: string) {
     const source = ts.createSourceFile(
@@ -35,6 +46,9 @@ function readSource(code: string, file: string) {
       ts.ScriptKind.TS,
     );
     function visit(node: ts.Node) {
+      if (ts.isStringLiteralLike(node) || ts.isTemplateLiteralToken(node)) {
+        readLiteral(node.text);
+      }
       if (ts.isCallExpression(node)) {
         const name = ts.isIdentifier(node.expression)
           ? node.expression.text
@@ -73,6 +87,7 @@ function readSource(code: string, file: string) {
   }
 
   function readTemplate(node: TemplateChildNode) {
+    if (node.type === NodeTypes.TEXT) readLiteral(node.content);
     if (
       node.type === NodeTypes.INTERPOLATION &&
       node.content.type === NodeTypes.SIMPLE_EXPRESSION
@@ -81,16 +96,23 @@ function readSource(code: string, file: string) {
     }
     if (node.type !== NodeTypes.ELEMENT) return;
     for (const prop of node.props) {
-      if (
-        prop.type === NodeTypes.ATTRIBUTE &&
-        prop.name === 'keypath' &&
-        prop.value
-      ) {
-        keys.set(prop.value.content, file);
+      if (prop.type === NodeTypes.ATTRIBUTE && prop.value) {
+        readLiteral(prop.value.content);
+        if (prop.name === 'keypath') keys.set(prop.value.content, file);
       } else if (
         prop.type === NodeTypes.DIRECTIVE &&
         prop.exp?.type === NodeTypes.SIMPLE_EXPRESSION
       ) {
+        if (
+          prop.name === 'html' &&
+          /(?:\bt|\$t|\btranslateMessage|\btranslateKey)\s*\(/.test(
+            prop.exp.content,
+          )
+        ) {
+          errors.push(
+            `${file}: render translations with Vue interpolation instead of v-html`,
+          );
+        }
         readCode(prop.exp.content);
       }
     }
@@ -165,17 +187,26 @@ export function sortCatalog(content: string, file: string): string {
   return lines.length ? `{\n${lines.join(',\n')}\n}\n` : '{}\n';
 }
 
+type CheckOptions = {
+  api?: ReadonlyMap<string, string>;
+  checkApi?: boolean;
+  spanishLiterals?: boolean;
+};
+
 export function checkCatalog(
   sources: Record<string, string>,
   catalog: string,
   catalogFile: string,
-  api: ReadonlyMap<string, string> = new Map(),
-  checkApi = true,
+  {
+    api = new Map(),
+    checkApi = true,
+    spanishLiterals = false,
+  }: CheckOptions = {},
 ): string[] {
   const { entries, errors } = readCatalog(catalog, catalogFile);
   const used: Keys = new Map();
   for (const [file, code] of Object.entries(sources)) {
-    const source = readSource(code, file);
+    const source = readSource(code, file, spanishLiterals);
     errors.push(...source.errors);
     for (const [key, path] of source.keys) {
       used.set(key, path);
@@ -218,13 +249,11 @@ if (
       const sources = Object.fromEntries(
         sourceFiles('src').map((file) => [file, readFileSync(file, 'utf8')]),
       );
-      const errors = checkCatalog(
-        sources,
-        catalog,
-        catalogFile,
-        readApiMessages(),
-        process.argv.includes('--api'),
-      );
+      const errors = checkCatalog(sources, catalog, catalogFile, {
+        api: readApiMessages(),
+        checkApi: process.argv.includes('--api'),
+        spanishLiterals: process.argv.includes('--spanish-literals'),
+      });
       if (errors.length) {
         console.error(errors.join('\n'));
         process.exitCode = 1;

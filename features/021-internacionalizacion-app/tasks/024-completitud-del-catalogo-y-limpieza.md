@@ -1,7 +1,7 @@
 # 024 - [Pruebas] Completitud del catálogo y limpieza
 
 - **Prioridad:** 24
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 008, 009, 010, 011, 012, 013, 014, 015, 016, 017, 018, 023
 - **Fase:** Fase final: Verificación y cierre
 
@@ -22,10 +22,10 @@ Tras la migración por módulo pueden quedar literales en `lib/`, `composables/`
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
-- [ ] `grep` de literales en español en `app/src` (salvo `es.json`, pruebas y fixtures) no devuelve coincidencias.
-- [ ] `i18n:check --spanish-literals` falla ante una cadena con acento agregada a propósito.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
+- [x] `grep` de literales en español en `app/src` (salvo `es.json`, pruebas y fixtures) no devuelve coincidencias.
+- [x] `i18n:check --spanish-literals` falla ante una cadena con acento agregada a propósito.
 
 ## Referencias
 
@@ -37,3 +37,4 @@ Tras la migración por módulo pueden quedar literales en `lib/`, `composables/`
 
 ## Notas de implementación
 
+Lint, comprobación de tipos y suite completa en verde. El barrido de cadenas y el catálogo pasan con las opciones --api y --spanish-literals. Un archivo temporal con Pruébame produjo un error y se retiró. Los textos de PrimeVue se unificaron en es.json.

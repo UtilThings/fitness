@@ -74,3 +74,27 @@ it('sorts keys deterministically and never silently discards duplicates', () => 
     sortCatalog('{"Alpha":"Alfa","Alpha":"Otro"}', catalogFile),
   ).toThrow('duplicate key');
 });
+
+it('flags Spanish script strings, text nodes and attribute values', () => {
+  const sources = {
+    'source.ts': "const title = 'Información'; // Esta línea es un comentario",
+    'View.vue':
+      '<template><p aria-label="Información">Últimas noticias</p></template>',
+  };
+  expect(
+    checkCatalog(sources, '{}', catalogFile, { spanishLiterals: true }),
+  ).toEqual([
+    'source.ts: Spanish literal "Información"',
+    'View.vue: Spanish literal "Información"',
+    'View.vue: Spanish literal "Últimas noticias"',
+  ]);
+});
+
+it('rejects HTML injection for a translated message', () => {
+  const sources = {
+    'View.vue': `<template><p v-html="t('Text')" /></template>`,
+  };
+  expect(checkCatalog(sources, '{"Text":"Texto"}', catalogFile)).toEqual([
+    'View.vue: render translations with Vue interpolation instead of v-html',
+  ]);
+});

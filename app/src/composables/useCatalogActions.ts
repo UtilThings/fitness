@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { t, translateMessage } from '@/i18n';
 import { useConfirm } from 'primevue/useconfirm';
 import { computed, ref } from 'vue';
 import { useAuth } from '@/composables/useAuth';
@@ -63,8 +63,10 @@ export function useCatalogActions<T extends CatalogRow>(catalog: {
               error.status === 400 &&
               row.active &&
               (error.message ===
-                'This record has related records. Deactivate it instead.' ||
-                error.message.includes('Desactívalo en su lugar'))
+                translateMessage(
+                  'This record has related records. Deactivate it instead.',
+                ) ||
+                /^Tiene .+ en su lugar[.]?$/.test(error.message))
             ) {
               confirm.require({
                 header: t('Keep record'),

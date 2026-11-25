@@ -167,7 +167,9 @@ async function copyKey() {
           id="integration-origins"
           v-slot="{ describedBy }"
           :label="t('Allowed origins')"
-          help="Escribe un origen por línea, por ejemplo https://tusitio.com."
+          :help="
+            t('Enter one origin per line, for example https://yoursite.com.')
+          "
           :error="originsError"
         >
           <Textarea
