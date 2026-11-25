@@ -23,7 +23,7 @@ export function validateCoach(app: core.App, id: string, business?: string) {
   if (!id) return;
   const coach = business === undefined ? getRecord(app, "admins", id) : tenantRecord(app, "admins", id, business);
   if (!coach?.getBool("active") || !["coach", "owner"].includes(coach.getString("role"))) {
-    throw fieldError("coach", "Elige un coach activo.");
+    throw fieldError("coach", "Choose an active coach.");
   }
 }
 
@@ -44,10 +44,10 @@ export function pocketBaseDate(iso: string) {
 }
 
 export function scheduleAudit(app: core.App, collection: string, recordId: string, actorId: string,
-  summary: string, counts: Record<string, number>, businessId?: string) {
+  summary: string, details: Record<string, unknown>, businessId?: string) {
   const business = businessId || (recordId ? getRecord(app, collection, recordId)?.getString("business") : "")
     || (actorId ? getRecord(app, "admins", actorId)?.getString("business") : "");
-  const data = buildEntry({ action: "custom", collection, recordId: recordId || app.findCollectionByNameOrId(collection).id, actorId, after: counts });
+  const data = buildEntry({ action: "custom", collection, recordId: recordId || app.findCollectionByNameOrId(collection).id, actorId, after: details });
   if (data) {
     app.save(new Record(app.findCollectionByNameOrId("audit_logs"), {
       ...data, business, summary, diff: JSON.stringify(data.diff),
@@ -62,12 +62,12 @@ export function cancelBlockedSessions(app: core.App, block: core.Record) {
   const affected = scheduledInRange(app, blockRangeUtc(blockDates(block), timezone), business);
   for (const session of affected) {
     session.set("status", "cancelled");
-    session.set("cancel_reason", "Bloqueo: " + block.getString("title"));
+    session.set("cancel_reason", "Schedule block: " + block.getString("title"));
     auditActor(session, actor);
     app.save(session);
   }
   scheduleAudit(app, "schedule_blocks", block.id, actor,
-    "Sesiones canceladas por bloqueo: " + affected.length, { cancelled: affected.length });
+    "Sessions canceled by a schedule block.", { cancelled: affected.length });
 }
 
 export function persistGeneratedSessions(app: core.App, options: {
@@ -146,7 +146,7 @@ export function getReason(reason: unknown): string {
 export function requireScheduleRole(event: core.RequestEvent, roles: string[]): string {
   const actor = event.auth;
   if (!actor?.getBool("active") || !roles.includes(actor.getString("role"))) {
-    throw new ForbiddenError("Tu rol no permite esta operación.");
+    throw new ForbiddenError("Your role does not allow this operation.");
   }
   return actor.id;
 }

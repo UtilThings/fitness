@@ -17,7 +17,7 @@ onRecordUpdate((e) => {
       const reducing = next.getInt("capacity") < current.getInt("capacity");
       const bookings = cancelling || reducing ? sessionBookings(tx, next.id) : [];
       if (reducing && !cancelling && occupiedSeats(bookings.map(bookingData)) > next.getInt("capacity")) {
-        throw bookingError("capacity", "El cupo no puede ser menor que el número de reservas confirmadas.");
+        throw bookingError("capacity", "Capacity cannot be lower than the number of confirmed bookings.");
       }
       e.next();
       if (!cancelling) return;

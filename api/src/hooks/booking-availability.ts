@@ -7,7 +7,7 @@ routerAdd("GET", "/api/admin/sessions/{id}/availability", (e) => {
   const { tenantRecord } = require(`${__hooks}/lib/tenant`) as typeof import("../lib/tenant");
   requireBookingStaff(e);
   const session = tenantRecord(e.app, "class_sessions", e.request.pathValue("id"), e.auth!.getString("business"));
-  if (!session) throw new NotFoundError("Sesión no encontrada.");
+  if (!session) throw new NotFoundError("Session not found.");
   return e.json(200, singleSessionAvailability(e.app, session));
 }, $apis.requireAuth("admins"));
 

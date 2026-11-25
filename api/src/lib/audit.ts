@@ -77,6 +77,17 @@ const actionSummaries: Record<Action, string> = {
   custom: "Record action.",
 };
 
+const bookingSummaries: Record<NonNullable<ReturnType<typeof classifyTransition>>, string> = {
+  "booking.created": "Booking created.",
+  "booking.promoted": "Booking promoted from the waitlist.",
+  "booking.waitlisted": "Booking added to the waitlist.",
+  "booking.cancelled": "Booking canceled.",
+  "booking.cancelled_by_session": "Booking canceled by the session.",
+  "booking.late_cancelled": "Booking canceled late.",
+  "booking.attended": "Attendance recorded.",
+  "booking.no_show": "No-show recorded.",
+};
+
 export function buildEntry({
   action, collection, recordId, actorId, credentialsChanged, before, after,
 }: EntryInput) {
@@ -94,7 +105,7 @@ export function buildEntry({
     action,
     collection,
     record_id: recordId,
-    summary: bookingEvent ? bookingEvent + ": " + recordId : actionSummaries[action],
+    summary: bookingEvent ? bookingSummaries[bookingEvent] : actionSummaries[action],
     diff,
   };
 }

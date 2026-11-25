@@ -45,13 +45,13 @@ export function canBook({ session, client, existing, now }: {
   now: Time;
 }): Decision {
   if (session.status !== "scheduled" || !(timestamp(session.starts_at) > timestamp(now))) {
-    return { ok: false, field: "session", message: "Selecciona una sesión programada que todavía no haya empezado." };
+    return { ok: false, field: "session", message: "Select a scheduled session that has not started." };
   }
   if (client.status === "inactive") {
-    return { ok: false, field: "client", message: "El cliente está inactivo." };
+    return { ok: false, field: "client", message: "The client is inactive." };
   }
   if (existing && !isCancelled(existing.status)) {
-    return { ok: false, field: "client", message: "El cliente ya tiene una reserva en esta sesión." };
+    return { ok: false, field: "client", message: "The client already has a booking for this session." };
   }
   return { ok: true };
 }
@@ -93,10 +93,10 @@ export function decideCancellation({ booking, startsAt, cancellationHours, now, 
   override?: Override;
 }): { ok: true; status: "cancelled" | "late_cancelled" } | Extract<Decision, { ok: false }> {
   if (!["booked", "waitlisted"].includes(booking.status) || timestamp(now) >= timestamp(startsAt)) {
-    return { ok: false, field: "status", message: "La reserva ya no se puede cancelar." };
+    return { ok: false, field: "status", message: "This booking can no longer be canceled." };
   }
   if (missingOverrideNote(override)) {
-    return { ok: false, field: "override_note", message: "Indica el motivo de la excepción." };
+    return { ok: false, field: "override_note", message: "Enter a reason for the override." };
   }
   const late = booking.status === "booked" && timestamp(now) > Number(cancellationDeadline(startsAt, cancellationHours));
   return { ok: true, status: late && !override?.note?.trim() ? "late_cancelled" : "cancelled" };
@@ -127,16 +127,16 @@ export function nextAttendanceStatus({ booking, status, startsAt, now, override 
 }): Decision {
   const correction = booking.status === "attended" || booking.status === "no_show";
   if (booking.status !== "booked" && (!correction || status === booking.status)) {
-    return { ok: false, field: "status", message: "La transición de asistencia no está permitida." };
+    return { ok: false, field: "status", message: "This attendance change is not allowed." };
   }
   if (!canMarkAttendance({ startsAt, now, override }) || (correction && !override?.note?.trim())) {
-    return { ok: false, field: "override_note", message: "Indica el motivo de la excepción o corrección." };
+    return { ok: false, field: "override_note", message: "Enter a reason for the override or correction." };
   }
   return { ok: true };
 }
 
 /** Events for model success hooks (013, 015, 018). Compare record.original() with the saved record. */
-export function classifyTransition(old: BookingLike | undefined, next: BookingLike): string | undefined {
+export function classifyTransition(old: BookingLike | undefined, next: BookingLike) {
   if (old?.status === next.status) return undefined;
   switch (next.status) {
     case "booked":

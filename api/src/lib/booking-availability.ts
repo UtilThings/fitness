@@ -25,7 +25,7 @@ export function availabilityRange(from: string, to: string, timezone: string) {
     if (end <= start || end > latest) throw new RangeError();
     return { from: start, to: end };
   } catch {
-    throw bookingError("to", "Indica un rango válido de hasta 62 días.");
+    throw bookingError("to", "Enter a valid range of up to 62 days.");
   }
 }
 
@@ -63,7 +63,7 @@ export function rangeAvailability(app: core.App, from: string, to: string, busin
     grouped.set(id, group);
   }
   const errors = app.expandRecords(sessions, ["service"], null);
-  if (Object.keys(errors).length) throw new InternalServerError("No se pudieron cargar los servicios.");
+  if (Object.keys(errors).length) throw new InternalServerError("Could not load the services.");
   return sessions.map((session) => summarize(
     session, grouped.get(session.id) ?? [], session.expandedOne("service").getInt("cancellation_hours"),
   ));

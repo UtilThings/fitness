@@ -6,7 +6,7 @@ import { pickPromotion, renumberWaitlist, shouldRestoreFreeClass, type BookingLi
 
 export function requireBookingStaff(e: core.RequestEvent): string {
   if (e.auth?.collection().name !== "admins" || !e.auth.getBool("active")) {
-    throw new ForbiddenError("Se requiere un miembro activo del equipo.");
+    throw new ForbiddenError("An active team member is required.");
   }
   return e.auth.id;
 }
@@ -32,7 +32,7 @@ export function sessionBookings(app: core.App, session: string) {
 
 export function bookingRelation(app: core.App, collection: TenantCollection, id: string, field: string, business?: string) {
   const record = business === undefined ? getRecord(app, collection, id) : tenantRecord(app, collection, id, business);
-  if (!record) throw bookingError(field, "Selecciona un registro válido.");
+  if (!record) throw bookingError(field, "Select a valid record.");
   return record;
 }
 

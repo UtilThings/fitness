@@ -10,21 +10,21 @@ import { getBusinessTimezone, tenantRecord } from "./tenant";
 import { sessionBookings } from "./booking-store";
 
 const messages: Record<string, string> = {
-  coach_conflict: "El coach ya tiene una sesión en ese horario.",
-  outside_availability: "La sesión debe quedar dentro de un tramo de disponibilidad del coach.",
-  invalid_capacity: "El cupo indicado no es válido para esta sesión.",
-  partner_required: "El cupo para dos personas requiere un plan partner activo por cliente.",
-  title_required: "Escribe un título para la clase especial.",
-  block_conflict: "La sesión coincide con un bloqueo del calendario.",
-  invalid_slot: "Indica un tramo válido con la hora final posterior a la inicial.",
-  overlapping_slots: "Los tramos del mismo día no pueden solaparse.",
+  coach_conflict: "The coach already has a session at that time.",
+  outside_availability: "The session must be within the coach's available hours.",
+  invalid_capacity: "The selected capacity is invalid for this session.",
+  partner_required: "A session for two requires an active partner plan for each client.",
+  title_required: "Enter a title for the special class.",
+  block_conflict: "The session overlaps a calendar block.",
+  invalid_slot: "Enter a valid time slot with an end time after its start.",
+  overlapping_slots: "Time slots on the same day cannot overlap.",
 };
 
 export function schedulingError(code: string, conflictId?: string) {
   const message = messages[code];
   return new BadRequestError(message, {
     code: new ValidationError(code, message),
-    ...(conflictId && { conflict_id: new ValidationError(conflictId, "Identificador del registro en conflicto.") }),
+    ...(conflictId && { conflict_id: new ValidationError(conflictId, "Identifier of the conflicting record.") }),
   });
 }
 
@@ -44,7 +44,7 @@ function coachSlots(app: core.App, coach: string, weekday: number, excludeId = "
 
 export function validateAvailabilityRecord(app: core.App, record: core.Record) {
   const coach = record.getString("coach");
-  if (!coach) throw fieldError("coach", "Elige un coach activo.");
+  if (!coach) throw fieldError("coach", "Choose an active coach.");
   validateCoach(app, coach, record.getString("business"));
   const current = slot(record);
   const error = validateAvailabilitySlots([current, ...coachSlots(app, coach, current.weekday, record.id)]);
@@ -55,11 +55,11 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
   const kind = record.getString("kind");
   const previousKind = record.original().getString("kind") || "regular";
   if (!record.isNew() && kind !== previousKind && [kind, previousKind].some((value) => value === "private" || value === "special")) {
-    throw fieldError("kind", "El tipo de una sesión existente no se puede cambiar.");
+    throw fieldError("kind", "The type of an existing session cannot be changed.");
   }
   if (kind !== "private" && kind !== "special") return;
   if (record.getString("status") === "cancelled") return;
-  if (record.getString("template")) throw fieldError("template", "Esta sesión se agenda sin plantilla.");
+  if (record.getString("template")) throw fieldError("template", "This session must be scheduled without a template.");
 
   const coach = record.getString("coach");
   const capacity = record.getFloat("capacity");
@@ -68,9 +68,9 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
   if (kind === "private") {
     const service = tenantRecord(app, "services", record.getString("service"), business);
     if (!service?.getBool("active") || service.getString("kind") !== "personal") {
-      throw fieldError("service", "Selecciona un servicio personal activo.");
+      throw fieldError("service", "Select an active personal training service.");
     }
-    if (!coach) throw fieldError("coach", "Elige un coach activo.");
+    if (!coach) throw fieldError("coach", "Choose an active coach.");
   } else {
     record.set("title", title);
   }
@@ -78,9 +78,9 @@ export function validateSessionRecord(app: core.App, record: core.Record) {
 
   const startMs = Date.parse(record.getString("starts_at").replace(" ", "T"));
   const durationMin = record.getFloat("duration_min");
-  if (!Number.isFinite(startMs)) throw fieldError("starts_at", "Indica una fecha y hora válidas.");
+  if (!Number.isFinite(startMs)) throw fieldError("starts_at", "Enter a valid date and time.");
   if (!Number.isInteger(durationMin) || durationMin < 15 || durationMin > 240) {
-    throw fieldError("duration_min", "Indica una duración de 15 a 240 minutos.");
+    throw fieldError("duration_min", "Enter a duration from 15 to 240 minutes.");
   }
   const minuteMs = 60_000;
   const endMs = startMs + durationMin * minuteMs;
@@ -154,7 +154,7 @@ export function validatePrivatePartners(app: core.App, record: core.Record) {
   const bookings = record.isNew() ? [] : sessionBookings(app, record.id)
     .filter((booking) => !["cancelled", "late_cancelled"].includes(booking.getString("status")));
   if (changed && bookings.length) {
-    throw fieldError("starts_at", "Cancela las reservas antes de cambiar la fecha o el servicio de la sesión.");
+    throw fieldError("starts_at", "Cancel bookings before changing the session date or service.");
   }
   if (record.getInt("capacity") === 2 &&
     (!bookings.length || bookings.some((booking) => !hasPartnerMembership(app, booking.getString("client"), record)))) {

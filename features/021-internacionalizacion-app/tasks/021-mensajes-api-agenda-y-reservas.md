@@ -1,7 +1,7 @@
 # 021 - [Hooks] Mensajes en inglés del API: agenda y reservas
 
 - **Prioridad:** 21
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 019
 - **Fase:** Fase 4: Mensajes del API
 
@@ -23,10 +23,10 @@ Archivos del alcance: `hooks/schedule.ts`, `schedule-routes.ts`, `scheduling.ts`
 
 ## Criterios de aceptación
 
-- [ ] `cd api && bun test` y `bun run build` pasan en verde; `api/pb_hooks/` regenerado.
-- [ ] Ningún texto de usuario en español queda en los archivos del alcance (`grep -P '[áéíóúñ¿¡]'` sin coincidencias en cadenas de mensajes).
-- [ ] Códigos HTTP y `code` de errores sin cambios.
-- [ ] Los `scripts/verify-*.ts` relacionados terminan en verde.
+- [x] `cd api && bun test` y `bun run build` pasan en verde; `api/pb_hooks/` regenerado.
+- [x] Ningún texto de usuario en español queda en los archivos del alcance (`grep -P '[áéíóúñ¿¡]'` sin coincidencias en cadenas de mensajes).
+- [x] Códigos HTTP y `code` de errores sin cambios.
+- [x] Los `scripts/verify-*.ts` relacionados terminan en verde.
 
 ## Referencias
 
@@ -39,3 +39,4 @@ Archivos del alcance: `hooks/schedule.ts`, `schedule-routes.ts`, `scheduling.ts`
 
 ## Notas de implementación
 
+Pasaron 123 pruebas del API, la compilación de hooks y verify-api.sh con PocketBase. La auditoría guarda acciones estáticas y conserva identificadores, fechas y conteos en diff y record_id. Se mantuvieron estados y códigos.

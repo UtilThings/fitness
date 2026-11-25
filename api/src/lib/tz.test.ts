@@ -80,7 +80,7 @@ test("Bogotá keeps a fixed offset throughout both transition seasons", () => {
   const tz = "America/Bogota";
   expect(localToUtc("2026-03-08", "02:30", tz)).toBe("2026-03-08T07:30:00.000Z");
   expect(localToUtc("2026-11-01", "01:30", tz)).toBe("2026-11-01T06:30:00.000Z");
-  expect(() => utcToLocal("2026-03-08T10:00:00Z", "Unknown/Zone")).toThrow("Unsupported timezone");
+  expect(() => utcToLocal("2026-03-08T10:00:00Z", "Unknown/Zone")).toThrow("The time zone is unsupported.");
 });
 
 test("Vancouver keeps daylight time after the last spring transition in 2026", () => {

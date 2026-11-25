@@ -12,16 +12,16 @@ import { validateMove } from "./session-rules";
 
 export function privateSessionDraft(app: core.App, body: Record<string, unknown>, business: string) {
   const { coach, service, starts_at, duration_min } = body;
-  if (typeof service !== "string" || !service) throw fieldError("service", "Selecciona un servicio personal.");
+  if (typeof service !== "string" || !service) throw fieldError("service", "Select a personal training service.");
   const offering = tenantRecord(app, "services", service, business);
   if (!offering?.getBool("active") || offering.getString("kind") !== "personal") {
-    throw fieldError("service", "Selecciona un servicio personal activo.");
+    throw fieldError("service", "Select an active personal training service.");
   }
   const dateError = validateMove({ startsAt: starts_at, now: Date.now() });
   if (dateError) throw fieldError("starts_at", dateError);
   if (duration_min !== undefined &&
       (typeof duration_min !== "number" || !Number.isInteger(duration_min) || duration_min < 15 || duration_min > 240)) {
-    throw fieldError("duration_min", "Indica una duración de 15 a 240 minutos.");
+    throw fieldError("duration_min", "Enter a duration from 15 to 240 minutes.");
   }
   return new Record(app.findCollectionByNameOrId("class_sessions"), {
     business, coach, service, starts_at, duration_min, status: "scheduled", kind: "private", capacity: 1,
@@ -32,28 +32,28 @@ export function createPrivateSession(e: core.RequestEvent) {
   const actor = requireMembershipRole(e, ["owner", "reception", "coach"]);
   const body = e.requestInfo().body;
   const { coach, notes, overrides, capacity } = body;
-  if (typeof coach !== "string" || !coach) throw fieldError("coach", "Elige un coach activo.");
+  if (typeof coach !== "string" || !coach) throw fieldError("coach", "Choose an active coach.");
   if (e.auth?.getString("role") === "coach" && coach !== actor) {
-    throw new ForbiddenError("Solo puedes agendar sesiones para ti.");
+    throw new ForbiddenError("You can only schedule sessions for yourself.");
   }
   const clientIds: unknown = body.client_ids;
   if (!Array.isArray(clientIds) || clientIds.length < 1 || clientIds.length > 2 ||
       clientIds.some((id) => typeof id !== "string" || !id) || new Set(clientIds).size !== clientIds.length) {
-    throw fieldError("client_ids", "Selecciona uno o dos clientes distintos.");
+    throw fieldError("client_ids", "Select one or two different clients.");
   }
   if (notes !== undefined && (typeof notes !== "string" || Array.from(notes).length > 500)) {
-    throw fieldError("notes", "Las notas admiten hasta 500 caracteres.");
+    throw fieldError("notes", "Notes can contain up to 500 characters.");
   }
   if (overrides !== undefined &&
     (!overrides || typeof overrides !== "object" || Array.isArray(overrides))) {
-    throw fieldError("overrides", "Indica la nota de excepción por cliente.");
+    throw fieldError("overrides", "Enter a separate override note for each client.");
   }
   const exceptions = new Map<string, string>();
   for (const [id, value] of Object.entries(overrides ?? {})) {
     const note = value && typeof value === "object" && "override_note" in value ? value.override_note : undefined;
     if (!clientIds.includes(id) || typeof note !== "string" || !note.trim() ||
         Array.from(note).length > 500 || note.trim() === "session_cancelled") {
-      throw fieldError("overrides", "Cada excepción requiere una nota válida para el cliente seleccionado.");
+      throw fieldError("overrides", "Each override requires a valid note for the selected client.");
     }
     exceptions.set(id, note.trim());
   }
@@ -62,15 +62,15 @@ export function createPrivateSession(e: core.RequestEvent) {
   return inScheduleTransaction(e.app, (tx) => {
     const business = e.auth!.getString("business");
     const session = privateSessionDraft(tx, body, business);
-    if (body.duration_min === undefined) throw fieldError("duration_min", "Indica la duración de la sesión.");
+    if (body.duration_min === undefined) throw fieldError("duration_min", "Enter the session duration.");
     const duplicate = tx.findRecordsByFilter("class_sessions",
       "coach = {:coach} && service = {:service} && starts_at = {:starts} && kind = 'private' && status = 'scheduled'",
       "", 1, 0, { coach, service: session.getString("service"), starts: pocketBaseDate(new Date(
         Date.parse(session.getString("starts_at").replace(" ", "T")),
       ).toISOString()) });
     if (duplicate.length) {
-      throw new ApiError(409, "Ya existe una sesión privada para ese coach, servicio y hora.", {
-        code: new ValidationError("duplicate_session", "Ya existe una sesión privada en ese horario."),
+      throw new ApiError(409, "A private session already exists for that coach, service, and time.", {
+        code: new ValidationError("duplicate_session", "A private session already exists at that time."),
       });
     }
     const clients = clientIds.map((id) => bookingRelation(tx, "clients", id, "client_ids", business));
@@ -109,8 +109,8 @@ export function createPrivateSession(e: core.RequestEvent) {
       tx.save(scheduled);
     }
     scheduleAudit(tx, "class_sessions", session.id, actor,
-      "Sesión privada · " + coach + " · " + session.getString("starts_at") + " · " + clientIds.join(", "),
-      { booked: bookings.length });
+      "Private session scheduled.",
+      { booked: bookings.length, coach, starts_at: session.getString("starts_at"), clients: clientIds });
     return { session: scheduled, bookings };
   });
 }
