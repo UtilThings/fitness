@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import { computed, ref, watch } from 'vue';
 import { useAdminAvatar } from '@/composables/useAdminAvatar';
 import type { Admin } from '@/types/pb';
@@ -52,9 +53,9 @@ function select(event: Event) {
   if (!file) return;
   error.value = '';
   if (!imageTypes.includes(file.type)) {
-    error.value = 'Selecciona una imagen JPEG, PNG, SVG, GIF o WebP';
+    error.value = t('Select a JPEG, PNG, SVG, GIF, or WebP image');
   } else if (file.size > 2 * 1024 * 1024) {
-    error.value = 'La imagen no puede superar 2 MB';
+    error.value = t('The image cannot exceed 2 MB');
   } else {
     emit('upload', file);
   }
@@ -90,7 +91,7 @@ function select(event: Event) {
           :disabled="busy"
           @change="select"
         />
-        Cambiar foto
+        {{ t('Change photo') }}
       </label>
       <p
         v-if="error"

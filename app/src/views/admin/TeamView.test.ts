@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 import DataToolbar from '@/components/DataToolbar.vue';
 import type { CollectionFilter } from '@/composables/useCollection';
+import { withLocale } from '@/test/i18n';
 import TeamView from './TeamView.vue';
 
 const mocks = vi.hoisted(() => ({
@@ -76,6 +77,12 @@ it('permite ver la ficha a todos y reserva la gestión al owner', async () => {
   await flushPromises();
   expect(owner.text()).toContain('Nuevo integrante');
   expect(owner.text()).toContain('Eliminar');
+  await withLocale('en', async () => {
+    await flushPromises();
+    expect(owner.text()).toContain('New team member');
+    expect(owner.text()).toContain('Delete');
+    expect(owner.text()).toContain(coach.name);
+  });
   expect(owner.getComponent(RouterLinkStub).props('to')).toEqual({
     name: 'team-member',
     params: { id: coach.id },

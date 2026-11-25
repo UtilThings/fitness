@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
@@ -45,15 +46,15 @@ function submit() {
     phone: model.value.phone.trim(),
   };
   const invalid: Record<string, string> = {};
-  if (!values.name) invalid.name = 'Ingresa un nombre';
-  if (!ROLES.includes(values.role)) invalid.role = 'Selecciona un rol';
+  if (!values.name) invalid.name = t('Enter a name');
+  if (!ROLES.includes(values.role)) invalid.role = t('Select a role');
   const phoneError = validatePhone(values.phone);
   const bioError = validateBio(values.bio);
   if (phoneError) invalid.phone = phoneError;
   if (bioError) invalid.bio = bioError;
   if (props.mode === 'create') {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
-      invalid.email = 'Ingresa un correo válido';
+      invalid.email = t('Enter a valid email address');
     const passwordError = validatePassword(values.password);
     if (passwordError) invalid.password = passwordError;
   }
@@ -65,7 +66,9 @@ function submit() {
 <template>
   <form class="grid gap-4" novalidate @submit.prevent="submit">
     <div class="grid gap-1.5">
-      <label :for="`${id}-name`" class="text-sm font-medium">Nombre</label>
+      <label :for="`${id}-name`" class="text-sm font-medium">{{
+        t('Name')
+      }}</label>
       <InputText
         :id="`${id}-name`"
         :model-value="model.name"
@@ -83,9 +86,9 @@ function submit() {
       >
     </div>
     <div class="grid gap-1.5">
-      <label :for="`${id}-email`" class="text-sm font-medium"
-        >Correo electrónico</label
-      >
+      <label :for="`${id}-email`" class="text-sm font-medium">{{
+        t('Email address')
+      }}</label>
       <InputText
         :id="`${id}-email`"
         :model-value="model.email"
@@ -106,7 +109,9 @@ function submit() {
       >
     </div>
     <div class="grid gap-1.5">
-      <label :for="`${id}-role`" class="text-sm font-medium">Rol</label>
+      <label :for="`${id}-role`" class="text-sm font-medium">{{
+        t('Role')
+      }}</label>
       <Select
         :input-id="`${id}-role`"
         :model-value="model.role"
@@ -126,7 +131,9 @@ function submit() {
       >
     </div>
     <div class="grid gap-1.5">
-      <label :for="`${id}-phone`" class="text-sm font-medium">Teléfono</label>
+      <label :for="`${id}-phone`" class="text-sm font-medium">{{
+        t('Phone')
+      }}</label>
       <InputText
         :id="`${id}-phone`"
         :model-value="model.phone"
@@ -146,7 +153,9 @@ function submit() {
       >
     </div>
     <div class="grid gap-1.5">
-      <label :for="`${id}-bio`" class="text-sm font-medium">Biografía</label>
+      <label :for="`${id}-bio`" class="text-sm font-medium">{{
+        t('Bio')
+      }}</label>
       <Textarea
         :id="`${id}-bio`"
         :model-value="model.bio"
@@ -165,9 +174,9 @@ function submit() {
       >
     </div>
     <div v-if="mode === 'create'" class="grid gap-1.5">
-      <label :for="`${id}-password`" class="text-sm font-medium"
-        >Contraseña inicial</label
-      >
+      <label :for="`${id}-password`" class="text-sm font-medium">{{
+        t('Initial password')
+      }}</label>
       <div class="flex flex-wrap gap-2 sm:flex-nowrap">
         <Password
           :input-id="`${id}-password`"
@@ -191,7 +200,7 @@ function submit() {
         />
         <Button
           type="button"
-          label="Generar"
+          :label="t('Generate')"
           severity="secondary"
           outlined
           @click="setField('password', generatePassword())"
@@ -200,7 +209,7 @@ function submit() {
       <small
         :id="`${id}-password-help`"
         class="text-surface-600 dark:text-surface-300"
-        >Comunica la contraseña inicial en persona.</small
+        >{{ t('Share the initial password in person.') }}</small
       >
       <small
         v-if="fieldError('password')"
@@ -213,7 +222,7 @@ function submit() {
     <div class="flex flex-wrap justify-end gap-2">
       <Button
         type="button"
-        label="Cancelar"
+        :label="t('Cancel')"
         severity="secondary"
         text
         :disabled="busy"
@@ -221,7 +230,7 @@ function submit() {
       />
       <Button
         type="submit"
-        :label="mode === 'create' ? 'Crear integrante' : 'Guardar cambios'"
+        :label="mode === 'create' ? t('Create team member') : t('Save changes')"
         :loading="busy"
       />
     </div>

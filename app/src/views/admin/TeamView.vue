@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable, { type DataTablePageEvent } from 'primevue/datatable';
@@ -35,10 +36,10 @@ const roleOptions = computed(() =>
     label: ROLE_STATUS.value[value].label,
   })),
 );
-const activeOptions = [
-  { value: true, label: 'Activos' },
-  { value: false, label: 'Inactivos' },
-];
+const activeOptions = computed(() => [
+  { value: true, label: t('Active members') },
+  { value: false, label: t('Inactive members') },
+]);
 const createVisible = ref(false);
 const newMember = ref<NewMember>(blankMember());
 const creationError = ref<PbError | null>(null);
@@ -107,7 +108,7 @@ async function createMember(data: NewMember) {
   try {
     await team.createMember(data);
     createVisible.value = false;
-    notify.success('Integrante creado');
+    notify.success(t('Team member created'));
   } catch (cause) {
     creationError.value = cause as PbError;
     notify.error(creationError.value.message);
@@ -123,7 +124,9 @@ async function setActive(member: Admin, value: boolean) {
   try {
     await team.setActive(member.id, value);
     await fixPage();
-    notify.success(value ? 'Integrante activado' : 'Integrante desactivado');
+    notify.success(
+      value ? t('Team member activated') : t('Team member deactivated'),
+    );
   } catch (cause) {
     notify.error((cause as PbError).message);
   } finally {
@@ -133,7 +136,9 @@ async function setActive(member: Admin, value: boolean) {
 
 function remove(member: Admin) {
   confirmDelete({
-    message: `¿Eliminar a ${member.name || member.email} del equipo?`,
+    message: t('Remove {name} from the team?', {
+      name: member.name || member.email,
+    }),
     onConfirm: async () => {
       if (working.value || !canManage.value) return;
       working.value = true;
@@ -143,12 +148,12 @@ function remove(member: Admin) {
           if (member.active) deactivate.value = member;
           else
             notify.info(
-              'Este integrante tiene registros asociados y ya está inactivo',
+              t('This team member has related records and is already inactive'),
             );
           return;
         }
         await fixPage();
-        notify.success('Integrante eliminado');
+        notify.success(t('Team member deleted'));
       } catch (cause) {
         notify.error((cause as PbError).message);
       } finally {
@@ -161,25 +166,25 @@ function remove(member: Admin) {
 
 <template>
   <div class="grid gap-5">
-    <PageHeader title="Equipo">
+    <PageHeader :title="t('Team')">
       <template v-if="canManage" #actions>
         <Button
-          label="Nuevo integrante"
+          :label="t('New team member')"
           icon="pi pi-plus"
           @click="openCreate"
         />
       </template>
     </PageHeader>
 
-    <DataToolbar placeholder="Buscar por nombre o correo" @search="search">
+    <DataToolbar :placeholder="t('Search by name or email')" @search="search">
       <template #filters>
         <Select
           v-model="role"
           :options="roleOptions"
           option-label="label"
           option-value="value"
-          aria-label="Filtrar por rol"
-          placeholder="Todos los roles"
+          :aria-label="t('Filter by role')"
+          :placeholder="t('All roles')"
           show-clear
           @change="applyFilters"
         />
@@ -188,8 +193,8 @@ function remove(member: Admin) {
           :options="activeOptions"
           option-label="label"
           option-value="value"
-          aria-label="Filtrar por estado"
-          placeholder="Todos los estados"
+          :aria-label="t('Filter by status')"
+          :placeholder="t('All statuses')"
           show-clear
           @change="applyFilters"
         />
@@ -199,7 +204,7 @@ function remove(member: Admin) {
     <div v-if="error" class="flex flex-wrap items-center gap-3" role="alert">
       <span>{{ error.message }}</span>
       <Button
-        label="Reintentar"
+        :label="t('Retry')"
         severity="secondary"
         outlined
         @click="team.load()"
@@ -208,7 +213,7 @@ function remove(member: Admin) {
     <EmptyState
       v-else-if="!loading && !items.length && !total"
       icon="pi pi-users"
-      title="No hay integrantes para mostrar"
+      :title="t('No team members to display')"
     />
     <DataTable
       v-else
@@ -222,7 +227,7 @@ function remove(member: Admin) {
       lazy
       @page="changePage"
     >
-      <Column header="Nombre">
+      <Column :header="t('Name')">
         <template #body="{ data }">
           <div class="flex min-w-36 items-center gap-3">
             <MemberAvatar :member="data" />
@@ -230,31 +235,31 @@ function remove(member: Admin) {
               :to="{ name: 'team-member', params: { id: data.id } }"
               class="font-medium text-primary hover:underline"
             >
-              {{ data.name || data.email || 'Sin nombre' }}
+              {{ data.name || data.email || t('Unnamed') }}
             </RouterLink>
           </div>
         </template>
       </Column>
-      <Column header="Correo">
+      <Column :header="t('Email')">
         <template #body="{ data }">{{ data.email || '—' }}</template>
       </Column>
-      <Column header="Rol">
+      <Column :header="t('Role')">
         <template #body="{ data }"
           ><StatusTag :value="data.role" :map="ROLE_STATUS"
         /></template>
       </Column>
-      <Column header="Estado">
+      <Column :header="t('Status')">
         <template #body="{ data }"
           ><StatusTag :value="String(data.active)" :map="ACTIVE_STATUS"
         /></template>
       </Column>
-      <Column v-if="canManage" header="Acciones">
+      <Column v-if="canManage" :header="t('Actions')">
         <template #body="{ data }">
           <div class="flex gap-1">
             <Button
               type="button"
               size="small"
-              :label="data.active ? 'Desactivar' : 'Activar'"
+              :label="data.active ? t('Deactivate') : t('Activate')"
               severity="secondary"
               text
               :disabled="working"
@@ -264,7 +269,7 @@ function remove(member: Admin) {
               v-if="data.id !== user?.id"
               type="button"
               size="small"
-              label="Eliminar"
+              :label="t('Delete')"
               severity="danger"
               text
               :disabled="working"
@@ -277,7 +282,7 @@ function remove(member: Admin) {
 
     <Dialog
       v-model:visible="createVisible"
-      header="Nuevo integrante"
+      :header="t('New team member')"
       modal
       :closable="!creating"
       :close-on-escape="!creating"
@@ -296,21 +301,27 @@ function remove(member: Admin) {
 
     <Dialog
       :visible="!!deactivate"
-      header="Desactivar integrante"
+      :header="t('Deactivate team member')"
       modal
       class="w-[min(28rem,calc(100%-2rem))]"
       @update:visible="deactivate = null"
     >
-      <p>Tiene registros asociados. ¿Quieres desactivarlo en su lugar?</p>
+      <p>
+        {{
+          t(
+            'There are related records. Would you like to deactivate this member?',
+          )
+        }}
+      </p>
       <template #footer>
         <Button
-          label="Cancelar"
+          :label="t('Cancel')"
           severity="secondary"
           text
           @click="deactivate = null"
         />
         <Button
-          label="Desactivar"
+          :label="t('Deactivate')"
           severity="warn"
           @click="deactivate && setActive(deactivate, false)"
         />

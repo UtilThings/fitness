@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import {
   PERMISSIONS,
   permissionLabel,
@@ -15,10 +16,13 @@ const highlightClass = 'bg-primary/10 font-semibold';
 
 <template>
   <div class="overflow-x-auto">
-    <table class="w-full text-left text-sm" aria-label="Permisos por rol">
+    <table
+      class="w-full text-left text-sm"
+      :aria-label="t('Permissions by role')"
+    >
       <thead class="border-b border-surface-200 dark:border-surface-700">
         <tr>
-          <th class="px-3 py-2" scope="col">Permiso</th>
+          <th class="px-3 py-2" scope="col">{{ t('Permission') }}</th>
           <th
             v-for="role in ROLES"
             :key="role"
@@ -52,7 +56,7 @@ const highlightClass = 'bg-primary/10 font-semibold';
               role === highlight && highlightClass,
             ]"
           >
-            {{ PERMISSIONS[permission].includes(role) ? 'Sí' : '—' }}
+            {{ PERMISSIONS[permission].includes(role) ? t('Yes') : '—' }}
           </td>
         </tr>
       </tbody>
