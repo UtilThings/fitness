@@ -1,5 +1,7 @@
 ---
 import logo from '@/assets/jq-logo.png';
+import { formatMessage, type Message } from '@/i18n';
+import { messageData } from '@/i18n/attrs';
 import Footer from '@/components/Footer.astro';
 import Header from '@/components/Header.vue';
 import { getCatalog } from '@/lib/catalog';
@@ -8,7 +10,7 @@ import { env } from '@/lib/env';
 import '@/styles/global.css';
 
 interface Props {
-  title: string;
+  title: string | Message;
   description: string;
   canonical?: URL;
   bare?: boolean;
@@ -22,6 +24,12 @@ const {
   business = bare ? undefined : (await getCatalog()).business,
   canonical = new URL(Astro.url.pathname, env.PUBLIC_SITE_URL),
 } = Astro.props;
+const titleText =
+  typeof title === 'string'
+    ? title
+    : formatMessage(title.key, title.params, 'en');
+const titleData =
+  typeof title === 'string' ? {} : messageData(title.key, title.params);
 const logoSrc = business?.logo_url || logo.src;
 ---
 
@@ -31,13 +39,13 @@ const logoSrc = business?.logo_url || logo.src;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
+    <meta property="og:title" content={titleText} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     {canonical && <link rel="canonical" href={canonical} />}
-    <title>{title}</title>
+    <title {...titleData}>{titleText}</title>
   </head>
   <body>
     {bare ? (

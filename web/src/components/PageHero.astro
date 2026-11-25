@@ -1,14 +1,18 @@
 ---
 import { Image } from 'astro:assets';
+import T from '@/components/T.astro';
+import type { Message } from '@/i18n';
+import { messageAttrs } from '@/i18n/attrs';
 
 interface Props {
-  eyebrow?: string;
-  title: string;
-  sub: string;
+  eyebrow?: string | Message;
+  title: string | Message;
+  sub: string | Message;
+  alt?: Message;
   img?: ImageMetadata;
 }
 
-const { eyebrow, title, sub, img } = Astro.props;
+const { eyebrow, title, sub, img, alt } = Astro.props;
 ---
 
 <section class="relative overflow-hidden">
@@ -16,6 +20,7 @@ const { eyebrow, title, sub, img } = Astro.props;
     <Image
       src={img}
       alt=""
+      {...messageAttrs({ alt })}
       class="absolute inset-0 h-full w-full object-cover opacity-50"
       loading="eager"
     />
@@ -23,9 +28,15 @@ const { eyebrow, title, sub, img } = Astro.props;
   <div class="absolute inset-0 hero-fade"></div>
   <div class="relative mx-auto max-w-7xl px-5 pt-28 pb-16 md:pt-40">
     <p class="eyebrow">
-      <slot name="eyebrow">{eyebrow}</slot>
+      <slot name="eyebrow">
+        {typeof eyebrow === 'object' ? <T message={eyebrow} /> : eyebrow}
+      </slot>
     </p>
-    <h1 class="mt-3 max-w-4xl text-5xl md:text-8xl">{title}</h1>
-    <p class="mt-5 max-w-2xl text-lg text-muted-foreground">{sub}</p>
+    <h1 class="mt-3 max-w-4xl text-5xl md:text-8xl">
+      {typeof title === 'object' ? <T message={title} /> : title}
+    </h1>
+    <p class="mt-5 max-w-2xl text-lg text-muted-foreground">
+      {typeof sub === 'object' ? <T message={sub} /> : sub}
+    </p>
   </div>
 </section>

@@ -51,6 +51,15 @@ it('translates, dispatches the event and restores the stored language', async ()
   await changed;
   await flushPromises();
   expect(wrapper.get('nav a[href="/schedule"]').text()).toBe('Horario');
+  expect(wrapper.get('[role="group"]').attributes('aria-label')).toBe('Idioma');
+  expect(wrapper.get('nav').attributes('aria-label')).toBe('Menú principal');
+  expect(wrapper.get('img').attributes('alt')).toBe('Logo de JQ Fitness');
+  expect(wrapper.get('button[lang="es"]').attributes('aria-pressed')).toBe(
+    'true',
+  );
+  expect(wrapper.get('button[lang="en"]').attributes('aria-pressed')).toBe(
+    'false',
+  );
   expect(localStorage.getItem(STORAGE_KEY)).toBe('es');
   expect(change.mock.calls[0][0].detail).toBe('es');
   wrapper.unmount();

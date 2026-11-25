@@ -1,14 +1,19 @@
 ---
+import T from '@/components/T.astro';
+import { tl, type Message } from '@/i18n';
+
 interface Props {
   items: string[];
-  title?: string;
+  title?: string | Message;
 }
 
-const { items, title = 'Policies' } = Astro.props;
+const { items, title = { key: tl('Policies') } } = Astro.props;
 ---
 
 <div class="card-surface p-7">
-  <p class="eyebrow mb-4">{title}</p>
+  <p class="eyebrow mb-4">
+    {typeof title === 'object' ? <T message={title} /> : title}
+  </p>
   <ul class="space-y-2 text-sm text-muted-foreground">
     {items.map((item) => (
       <li>• {item}</li>

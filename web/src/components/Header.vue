@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { supportedLocales } from '@/i18n';
 import { fallbackBusiness } from '@/lib/data';
 import { navigation } from '@/lib/navigation';
 import { useLang } from '@/lib/use-lang';
@@ -20,7 +21,6 @@ const brand = computed(() => {
 
 const { lang, setLang, t, translateKey } = useLang();
 const menuOpen = ref(false);
-const languages = ['en', 'es'] as const;
 
 function isCurrent(current: string, href: string) {
   return current.replace(/\/$/, '') === href;
@@ -36,16 +36,23 @@ function isCurrent(current: string, href: string) {
     >
       <a
         href="/"
-        :aria-label="`${businessName} — home`"
+        :aria-label="t('{name} — home', { name: businessName })"
         class="flex items-center gap-2.5"
       >
-        <img :src="logoSrc" :alt="`${businessName} logo`" class="h-10 w-auto" />
+        <img
+          :src="logoSrc"
+          :alt="t('{name} logo', { name: businessName })"
+          class="h-10 w-auto"
+        />
         <span class="font-display text-2xl uppercase tracking-wide"
           >{{ brand.prefix }}
           <span class="text-primary">{{ brand.accent }}</span></span
         >
       </a>
-      <nav aria-label="Main menu" class="hidden items-center gap-5 xl:flex">
+      <nav
+        :aria-label="t('Main menu')"
+        class="hidden items-center gap-5 xl:flex"
+      >
         <a
           v-for="{ key, href } in navigation"
           :key="key"
@@ -63,12 +70,15 @@ function isCurrent(current: string, href: string) {
       <div class="flex items-center gap-3">
         <div
           class="flex rounded-full border border-border p-0.5 text-xs font-bold"
+          role="group"
+          :aria-label="t('Language')"
         >
           <button
-            v-for="language in languages"
+            v-for="language in supportedLocales"
             :key="language"
             type="button"
             :aria-pressed="lang === language"
+            :lang="language"
             class="rounded-full px-2.5 py-1 uppercase"
             :class="
               lang === language
@@ -88,7 +98,7 @@ function isCurrent(current: string, href: string) {
         <button
           type="button"
           class="xl:hidden"
-          aria-label="Menu"
+          :aria-label="t('Menu')"
           :aria-expanded="menuOpen"
           aria-controls="mobile-menu"
           @click="menuOpen = !menuOpen"
@@ -112,7 +122,7 @@ function isCurrent(current: string, href: string) {
     <nav
       v-if="menuOpen"
       id="mobile-menu"
-      aria-label="Mobile menu"
+      :aria-label="t('Mobile menu')"
       class="flex flex-col gap-1 border-t border-border px-5 py-4 xl:hidden"
     >
       <a
