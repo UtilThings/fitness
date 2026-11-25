@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Window } from 'happy-dom';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -105,12 +105,14 @@ describe('static routes', () => {
 describe('shared page components in the build', () => {
   it('renders translated CTA text and its link', () => {
     const { document } = page('');
-    const title = document.querySelector('h2 [data-i18n=ctaTitle]');
+    const title = document.querySelector(
+      'h2 [data-i18n="Your first class is on us."]',
+    );
     expect(title?.textContent).toBe('Your first class is on us.');
     const band = title?.closest('section');
-    expect(band?.querySelector('[data-i18n=ctaSub]')?.textContent).toContain(
-      'Try Tropical Jump',
-    );
+    expect(
+      band?.querySelector('[data-i18n^="Try Tropical Jump"]')?.textContent,
+    ).toContain('Try Tropical Jump');
     expect(band?.querySelector('a')?.getAttribute('href')).toBe('/schedule');
   });
 
@@ -125,7 +127,7 @@ describe('shared page components in the build', () => {
 
     const jump = page('tropical-jump').document;
     const featured = jump.querySelector('main .card-surface.border-primary');
-    expect(featured?.textContent).toContain('FREE');
+    expect(featured?.textContent).toContain('Free');
     expect(featured?.textContent).toContain('Most popular');
     expect(featured?.textContent).toContain('One per client account.');
     expect(
@@ -179,5 +181,74 @@ describe('build without PUBLIC_API_URL', () => {
       /ScheduleBoard\..+\.js$/,
     );
     expect(island?.querySelector('.card-surface')).toBeNull();
+  });
+});
+
+describe('bilingual build', () => {
+  const spanish = JSON.parse(
+    readFileSync(resolve('src/i18n/locales/es.json'), 'utf8'),
+  ) as Record<string, string>;
+
+  it.each(routes)(
+    '/%s keeps English HTML with translation markers',
+    (route, title, heading) => {
+      const { document } = page(route);
+      expect(document.documentElement.lang).toBe('en');
+      expect(document.title).toBe(title);
+      expect(document.querySelector('title')?.hasAttribute('data-i18n')).toBe(
+        true,
+      );
+      const mainHeading = document.querySelector(
+        route === '404.html' ? 'h2' : 'h1',
+      );
+      expect(mainHeading?.querySelector('[data-i18n]')?.textContent).toBe(
+        route === '404.html' ? 'Page not found' : heading,
+      );
+
+      const marks = Array.from(document.querySelectorAll('*')).flatMap(
+        (element) =>
+          Array.from(element.attributes)
+            .filter(
+              ({ name }) =>
+                name === 'data-i18n' ||
+                /^data-i18n-(alt|aria-label|placeholder|title)$/.test(name),
+            )
+            .map(({ value }) => value),
+      );
+      expect(marks.length).toBeGreaterThan(2);
+      for (const key of marks)
+        expect(
+          key !== null && Object.hasOwn(spanish, key),
+          key ?? 'Empty marker',
+        ).toBe(true);
+    },
+  );
+
+  it('loads the Spanish catalog through a separate, dynamically imported chunk', () => {
+    const assets = join(dist, '_astro');
+    const files = readdirSync(assets).filter((file) => file.endsWith('.js'));
+    const catalogs = files.filter((file) => /^es\..+\.js$/.test(file));
+    expect(catalogs).toHaveLength(1);
+
+    const catalog = catalogs[0];
+    const bundled = readFileSync(join(assets, catalog), 'utf8');
+    expect(bundled).toContain('Reserva tu clase');
+    expect(bundled).toContain('Página no encontrada');
+    const entrypoints = files
+      .filter((file) => file !== catalog)
+      .map((file) => readFileSync(join(assets, file), 'utf8'));
+    expect(
+      entrypoints.some((entry) =>
+        ['"', "'", '`'].some((quote) =>
+          entry.includes(`import(${quote}./${catalog}${quote})`),
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      entrypoints.some((entry) => entry.includes('Reserva tu clase')),
+    ).toBe(false);
+    for (const [route] of routes) {
+      expect(page(route).html).not.toContain(catalog);
+    }
   });
 });

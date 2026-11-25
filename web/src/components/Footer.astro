@@ -1,5 +1,6 @@
 ---
 import type { PublicBusiness } from '@/lib/api';
+import { i18nAttrs } from '@/i18n/attrs';
 import T from '@/components/T.astro';
 import { navigation } from '@/lib/navigation';
 interface Props {
@@ -16,34 +17,56 @@ const prefix = words.slice(0, -1).join(' ');
     <div class="space-y-3">
       <a
         href="/"
-        aria-label={`${business.name} — home`}
+        {...i18nAttrs({
+          'aria-label': {
+            key: '{name} — home',
+            params: { name: business.name },
+          },
+        })}
         class="flex items-center gap-2.5"
       >
-        <img src={logoSrc} alt={`${business.name} logo`} class="h-10 w-auto" />
+        <img
+          src={logoSrc}
+          {...i18nAttrs({
+            alt: { key: '{name} logo', params: { name: business.name } },
+          })}
+          class="h-10 w-auto"
+        />
         <span class="font-display text-2xl uppercase tracking-wide">
           {prefix} <span class="text-primary">{words.at(-1)}</span>
         </span>
       </a>
       <p class="text-sm text-muted-foreground">
-        Boutique personal training &amp; small-group fitness in {business.city}.
+        <T
+          k="Boutique personal training & small-group fitness in {city}."
+          params={{ city: business.city }}
+        />
       </p>
     </div>
-    <nav aria-label="Footer menu" class="grid grid-cols-2 gap-2 text-sm">
+    <nav
+      {...i18nAttrs({ 'aria-label': 'Footer menu' })}
+      class="grid grid-cols-2 gap-2 text-sm"
+    >
       {navigation.map(({ key, href }) => (
         <a class="text-muted-foreground hover:text-primary" href={href}>
-          <T k={key} />
+          <T message={key} />
         </a>
       ))}
     </nav>
     <div class="text-sm text-muted-foreground">
-      <p class="eyebrow mb-2">Studio</p>
+      <p class="eyebrow mb-2">
+        <T k="Studio" />
+      </p>
       <p>{business.city}</p>
       <a class="mt-4 inline-block text-primary" href="/contact">
-        <T k="contact" /> →
+        <T k="Contact" /> →
       </a>
     </div>
   </div>
   <p class="pb-8 text-center text-xs text-muted-foreground">
-    © {new Date().getFullYear()} {business.name}. All rights reserved.
+    <T
+      k="© {year} {name}. All rights reserved."
+      params={{ year: new Date().getFullYear(), name: business.name }}
+    />
   </p>
 </footer>

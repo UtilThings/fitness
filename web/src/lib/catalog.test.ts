@@ -1,6 +1,8 @@
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
+import { formatMessage, resolveText, type Text } from '@/i18n';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { CATALOG_SEED } from '../../../api/src/lib/catalog';
-import { getCatalog } from './catalog';
+import { getCatalog, toPlans } from './catalog';
 import * as data from './data';
 import { env } from './env';
 
@@ -16,16 +18,12 @@ beforeEach(() => {
   env.PUBLIC_API_URL = 'https://api.example.test';
 });
 
+resetLocaleAfterEach();
+
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
-
-function time24(time: string) {
-  const [clock, period] = time.split(' ');
-  const [hour, minute] = clock.split(':');
-  return `${String((Number(hour) % 12) + (period === 'PM' ? 12 : 0)).padStart(2, '0')}:${minute}`;
-}
 
 const seededCatalog = {
   version: 2,
@@ -53,15 +51,10 @@ const seededCatalog = {
       note: plan.note,
     })),
     weekly_times: data.classTemplates
-      .filter(
-        (slot) =>
-          (slot.service === 'Group Strength'
-            ? 'group-strength'
-            : 'tropical-jump') === slug,
-      )
+      .filter((slot) => slot.serviceSlug === slug)
       .map(({ day, time, coach, capacity }) => ({
         weekday: day,
-        time: time24(time),
+        time,
         coach_name: coach,
         capacity,
       })),
@@ -81,11 +74,38 @@ const fallback = {
 it('maps the seeded plans and weekly times to the existing presentation', async () => {
   const request = vi.fn().mockResolvedValue(Response.json(seededCatalog));
   vi.stubGlobal('fetch', request);
-  await expect(getCatalog()).resolves.toEqual({
-    ...fallback,
-    source: 'api',
-    business: seededCatalog.business,
-  });
+  const catalog = await getCatalog();
+  expect(catalog.source).toBe('api');
+  expect(catalog.business).toEqual(seededCatalog.business);
+  for (const group of [
+    'personalOneOnOne',
+    'personalPartner',
+    'groupPlans',
+    'jumpPlans',
+  ] as const) {
+    const render = (text: Text = '') => resolveText(text, formatMessage);
+    const snapshot = (plans: data.Plan[]) =>
+      plans.map(({ name, price, unit, sessions, freq, note }) => [
+        render(name),
+        price,
+        render(unit),
+        render(sessions),
+        render(freq),
+        render(note),
+      ]);
+    expect(snapshot(catalog[group])).toEqual(snapshot(fallback[group]));
+  }
+  expect(
+    catalog.classTemplates.map(({ service, ...slot }) => ({
+      ...slot,
+      service: resolveText(service, formatMessage),
+    })),
+  ).toEqual(
+    fallback.classTemplates.map(({ service, ...slot }) => ({
+      ...slot,
+      service: resolveText(service, formatMessage),
+    })),
+  );
   expect(request).toHaveBeenCalledWith(
     'https://api.example.test/api/public/catalog',
     {
@@ -157,4 +177,26 @@ it('uses local data with no API URL and makes no request', async () => {
   vi.stubGlobal('fetch', request);
   await expect(getCatalog()).resolves.toEqual(fallback);
   expect(request).not.toHaveBeenCalled();
+});
+
+it('translates generated text without altering a business name or note that matches a catalog key', async () => {
+  await useLocale('es');
+  const service = seededCatalog.services.find(
+    ({ slug }) => slug === 'group-strength',
+  )!;
+  const makePlan = (sessions: number) => ({
+    ...service.plans[0],
+    sessions,
+    name: 'First Class',
+    note: 'New clients only',
+  });
+  const plans = toPlans({
+    ...service,
+    plans: [makePlan(1), makePlan(8)],
+  } as Parameters<typeof toPlans>[0]);
+  expect(
+    plans.map(({ sessions }) => resolveText(sessions, formatMessage)),
+  ).toEqual(['1 clase', '8 clases']);
+  expect(resolveText(plans[0].name, formatMessage)).toBe('First Class');
+  expect(resolveText(plans[0].note!, formatMessage)).toBe('New clients only');
 });

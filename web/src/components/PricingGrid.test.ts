@@ -1,5 +1,7 @@
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, expect, it, vi } from 'vitest';
+import { tl } from '@/i18n';
 import { jumpPlans } from '@/lib/data';
 import PricingGrid from './PricingGrid.vue';
 
@@ -11,7 +13,11 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
-afterEach(() => vi.unstubAllGlobals());
+resetLocaleAfterEach();
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 const catalog = {
   version: 2,
@@ -39,7 +45,7 @@ const catalog = {
           commitment_periods: 0,
           is_first_class: false,
           partner: false,
-          note: '',
+          note: 'New clients only',
         },
       ],
     },
@@ -50,7 +56,7 @@ const props = {
   group: 'jumpPlans' as const,
   plans: jumpPlans,
   to: '/schedule',
-  cta: 'Book now',
+  cta: tl('Book now'),
   featuredIndex: 1,
 };
 
@@ -70,10 +76,15 @@ it('renders the initial build plans while revalidating and uses updated cents', 
   expect(wrapper.get('.card-surface').text()).toContain('$15');
   const featured = wrapper.get('.card-surface.border-primary');
   expect(featured.text()).toContain('Most popular');
-  expect(featured.text()).toContain('FREE');
+  expect(featured.text()).toContain('Free');
   expect(featured.get('a').attributes('href')).toBe('/schedule');
   await wrapper.vm.$nextTick();
   expect(wrapper.get('[role="status"]').text()).toBe('Updating…');
+  await useLocale('es');
+  expect(wrapper.get('[role="status"]').text()).toBe('Actualizando…');
+  expect(featured.text()).toContain('Más popular');
+  expect(featured.text()).toContain('Gratis');
+  expect(featured.get('a').text()).toBe('Reserva ahora');
   resolve(Response.json(catalog));
   await flushPromises();
   expect(fetch).toHaveBeenCalledTimes(1);
@@ -84,6 +95,9 @@ it('renders the initial build plans while revalidating and uses updated cents', 
   });
   expect(wrapper.get('.card-surface').text()).toContain('COP');
   expect(wrapper.get('.card-surface').text()).toContain('22.50');
+  expect(wrapper.get('h3').text()).toBe('Single Class');
+  expect(wrapper.get('.card-surface').text()).toContain('1 clase');
+  expect(wrapper.get('.card-surface').text()).toContain('New clients only');
   expect(wrapper.text()).toContain('Weekly classes');
   expect(wrapper.get('[role="status"]').text()).toBe('');
   wrapper.unmount();

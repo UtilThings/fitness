@@ -1,11 +1,21 @@
 ---
-import { translate, type Key } from '@/lib/i18n';
+import {
+  formatMessage,
+  type Message,
+  type MessageKey,
+  type Params,
+} from '@/i18n';
+import { messageData } from '@/i18n/attrs';
 
-interface Props {
-  k: Key;
-}
+type Props =
+  | { k: string; params?: Params; message?: never }
+  | { message: MessageKey | Message; k?: never; params?: never };
 
-const { k } = Astro.props;
+const { message, k, params } = Astro.props;
+const text =
+  typeof message === 'object' ? message : { key: message ?? k, params };
 ---
 
-<span data-i18n={k}>{translate('en', k)}</span>
+<span {...messageData(text.key, text.params)}>
+  {formatMessage(text.key, text.params, 'en')}
+</span>

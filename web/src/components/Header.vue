@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { supportedLocales } from '@/i18n';
 import { fallbackBusiness } from '@/lib/data';
 import { navigation } from '@/lib/navigation';
 import { useLang } from '@/lib/use-lang';
@@ -18,9 +19,8 @@ const brand = computed(() => {
   return { prefix: words.slice(0, -1).join(' '), accent: words.at(-1) };
 });
 
-const { lang, setLang, t } = useLang();
+const { lang, setLang, t, translateKey } = useLang();
 const menuOpen = ref(false);
-const languages = ['en', 'es'] as const;
 
 function isCurrent(current: string, href: string) {
   return current.replace(/\/$/, '') === href;
@@ -36,18 +36,25 @@ function isCurrent(current: string, href: string) {
     >
       <a
         href="/"
-        :aria-label="`${businessName} — home`"
-        class="flex items-center gap-2.5"
+        :aria-label="t('{name} — home', { name: businessName })"
+        class="flex min-w-0 items-center gap-2.5"
       >
-        <img :src="logoSrc" :alt="`${businessName} logo`" class="h-10 w-auto" />
-        <span class="font-display text-2xl uppercase tracking-wide"
+        <img
+          :src="logoSrc"
+          :alt="t('{name} logo', { name: businessName })"
+          class="h-10 w-auto shrink-0"
+        />
+        <span class="truncate font-display text-2xl uppercase tracking-wide"
           >{{ brand.prefix }}
           <span class="text-primary">{{ brand.accent }}</span></span
         >
       </a>
-      <nav aria-label="Main menu" class="hidden items-center gap-5 xl:flex">
+      <nav
+        :aria-label="t('Main menu')"
+        class="hidden shrink-0 items-center gap-5 whitespace-nowrap xl:flex"
+      >
         <a
-          v-for="{ key, href } in navigation"
+          v-for="{ key, headerKey, href } in navigation"
           :key="key"
           :href="href"
           :aria-current="isCurrent(currentPath, href) ? 'page' : undefined"
@@ -57,18 +64,21 @@ function isCurrent(current: string, href: string) {
               ? 'text-primary'
               : 'text-muted-foreground hover:text-foreground'
           "
-          >{{ t(key) }}</a
+          >{{ translateKey(headerKey ?? key) }}</a
         >
       </nav>
-      <div class="flex items-center gap-3">
+      <div class="flex shrink-0 items-center gap-3">
         <div
           class="flex rounded-full border border-border p-0.5 text-xs font-bold"
+          role="group"
+          :aria-label="t('Language')"
         >
           <button
-            v-for="language in languages"
+            v-for="language in supportedLocales"
             :key="language"
             type="button"
             :aria-pressed="lang === language"
+            :lang="language"
             class="rounded-full px-2.5 py-1 uppercase"
             :class="
               lang === language
@@ -82,13 +92,13 @@ function isCurrent(current: string, href: string) {
         </div>
         <a
           href="/schedule"
-          class="btn btn-primary hidden !px-4 !py-2 sm:inline-flex"
-          >{{ t('book') }}</a
+          class="btn btn-primary hidden !px-4 !py-2 whitespace-nowrap sm:inline-flex"
+          >{{ t('Book your class') }}</a
         >
         <button
           type="button"
           class="xl:hidden"
-          aria-label="Menu"
+          :aria-label="t('Menu')"
           :aria-expanded="menuOpen"
           aria-controls="mobile-menu"
           @click="menuOpen = !menuOpen"
@@ -112,7 +122,7 @@ function isCurrent(current: string, href: string) {
     <nav
       v-if="menuOpen"
       id="mobile-menu"
-      aria-label="Mobile menu"
+      :aria-label="t('Mobile menu')"
       class="flex flex-col gap-1 border-t border-border px-5 py-4 xl:hidden"
     >
       <a
@@ -122,7 +132,7 @@ function isCurrent(current: string, href: string) {
         :aria-current="isCurrent(currentPath, href) ? 'page' : undefined"
         class="py-2 font-display text-xl uppercase"
         @click="menuOpen = false"
-        >{{ t(key) }}</a
+        >{{ translateKey(key) }}</a
       >
     </nav>
   </header>

@@ -1,7 +1,7 @@
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { PublicSession } from '@/lib/api';
-import { LANG_EVENT } from '@/lib/i18n';
 import ScheduleBoard from './ScheduleBoard.vue';
 
 vi.mock('@/lib/env', () => ({
@@ -13,6 +13,8 @@ vi.mock('@/lib/env', () => ({
 }));
 
 beforeEach(() => vi.setSystemTime(new Date('2026-11-22T02:00:00Z')));
+resetLocaleAfterEach();
+
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
@@ -108,12 +110,27 @@ it('requests the Miramar week and renders real availability, filters and transla
   expect(almost.get('.text-accent').text()).toBe('Almost full');
   expect(available.get('a').text()).toBe('Reserve');
 
-  window.dispatchEvent(new CustomEvent(LANG_EVENT, { detail: 'es' }));
+  const strength = wrapper.get('button:nth-child(2)');
+  await strength.trigger('click');
+  expect(wrapper.findAll('.card-surface')).toHaveLength(2);
+  await useLocale('es');
   await wrapper.vm.$nextTick();
-  expect(full.text()).toContain('Lista de espera');
-  expect(almost.text()).toContain('Casi lleno');
-  expect(available.text()).toContain('Disponible');
-  expect(available.text()).toContain('5 / 6 cupos');
+  expect(strength.text()).toBe('Fuerza en Grupo');
+  expect(strength.attributes('aria-pressed')).toBe('true');
+  expect(wrapper.get('[role="group"]').attributes('aria-label')).toBe(
+    'Filtrar por servicio',
+  );
+  expect(wrapper.find('[aria-label="Semana siguiente"]').exists()).toBe(true);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  await wrapper.get('[role="group"] button:first-child').trigger('click');
+  const [fullEs, almostEs, availableEs] = wrapper.findAll('.card-surface');
+  expect(fullEs.text()).toContain('Lista de espera');
+  expect(almostEs.text()).toContain('Casi lleno');
+  expect(almostEs.text()).toContain('09:00');
+  expect(almostEs.text()).toContain('Coach JQ');
+  expect(almostEs.text()).toContain('Group Strength');
+  expect(availableEs.text()).toContain('Disponible');
+  expect(availableEs.text()).toContain('5 / 6 cupos');
   await wrapper
     .findAll('button')
     .find((button) => button.text() === 'Tropical Jump')!
@@ -178,7 +195,7 @@ it('shows the bilingual fallback without seat counts and recovers through retry'
   expect(
     cards.every((card) => card.get('a').attributes('href') === '/contact'),
   ).toBe(true);
-  window.dispatchEvent(new CustomEvent(LANG_EVENT, { detail: 'es' }));
+  await useLocale('es');
   await wrapper.vm.$nextTick();
   expect(wrapper.text()).toContain('Consulta disponibilidad');
   expect(wrapper.text()).toContain('Mostramos el horario semanal habitual.');
@@ -203,5 +220,45 @@ it('uses the navigation limit configured on the API', async () => {
   expect(
     wrapper.get<HTMLButtonElement>('[aria-label="Next week"]').element.disabled,
   ).toBe(true);
+  wrapper.unmount();
+});
+
+it('translates loading and empty states without refetching', async () => {
+  let respond!: (response: Response) => void;
+  const fetch = vi.fn(
+    () =>
+      new Promise<Response>((resolve) => {
+        respond = resolve;
+      }),
+  );
+  vi.stubGlobal('fetch', fetch);
+  const wrapper = mount(ScheduleBoard);
+  await useLocale('es');
+  expect(wrapper.get('[role="status"]').text()).toBe('Cargando clases…');
+  respond(schedule('2026-11-15', []));
+  await flushPromises();
+  expect(wrapper.get('[role="status"]').text()).toBe(
+    'No hay clases para mostrar esta semana.',
+  );
+  expect(fetch).toHaveBeenCalledTimes(1);
+  wrapper.unmount();
+});
+
+it('uses the Spanish singular for one spot left', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      schedule('2026-11-15', [
+        {
+          ...sessions[1],
+          spots_left: 1,
+        },
+      ]),
+    ),
+  );
+  const wrapper = mount(ScheduleBoard);
+  await flushPromises();
+  await useLocale('es');
+  expect(wrapper.get('.card-surface').text()).toMatch(/1 \/ 6 cupo(?!s)/);
   wrapper.unmount();
 });

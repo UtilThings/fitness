@@ -1,13 +1,14 @@
-import { mount } from '@vue/test-utils';
-import { afterEach, expect, it, vi } from 'vitest';
+import { resetLocaleAfterEach } from '@/test/i18n';
+import { flushPromises, mount } from '@vue/test-utils';
+import { expect, it, vi } from 'vitest';
 import { createSSRApp } from 'vue';
 import { renderToString } from 'vue/server-renderer';
-import { LANG_EVENT, STORAGE_KEY } from '@/lib/i18n';
+import { LANG_EVENT, STORAGE_KEY } from '@/i18n';
 import Header from './Header.vue';
 
 const props = { currentPath: '/pricing', logoSrc: '/logo.png' };
 
-afterEach(() => localStorage.clear());
+resetLocaleAfterEach();
 
 it('highlights only the current route', () => {
   const wrapper = mount(Header, { props });
@@ -34,14 +35,45 @@ it('toggles the eight mobile links and closes on selection', async () => {
 it('translates, dispatches the event and restores the stored language', async () => {
   const wrapper = mount(Header, { props });
   const change = vi.fn();
-  window.addEventListener(LANG_EVENT, change, { once: true });
+  const changed = new Promise<void>((resolve) => {
+    window.addEventListener(
+      LANG_EVENT,
+      (event) => {
+        change(event);
+        resolve();
+      },
+      { once: true },
+    );
+  });
   await wrapper.get('button:nth-child(2)').trigger('click');
+  await changed;
+  await flushPromises();
+  expect(wrapper.findAll('nav a').map((link) => link.text())).toEqual([
+    'Entreno personal',
+    'Fuerza grupal',
+    'Tropical Jump',
+    'Planes en línea',
+    'Horario',
+    'Precios',
+    'Nosotros',
+    'Contacto',
+  ]);
   expect(wrapper.get('nav a[href="/schedule"]').text()).toBe('Horario');
+  expect(wrapper.get('[role="group"]').attributes('aria-label')).toBe('Idioma');
+  expect(wrapper.get('nav').attributes('aria-label')).toBe('Menú principal');
+  expect(wrapper.get('img').attributes('alt')).toBe('Logo de JQ Fitness');
+  expect(wrapper.get('button[lang="es"]').attributes('aria-pressed')).toBe(
+    'true',
+  );
+  expect(wrapper.get('button[lang="en"]').attributes('aria-pressed')).toBe(
+    'false',
+  );
   expect(localStorage.getItem(STORAGE_KEY)).toBe('es');
   expect(change.mock.calls[0][0].detail).toBe('es');
   wrapper.unmount();
 
   const restored = mount(Header, { props });
+  await restored.vm.$nextTick();
   expect(restored.get('nav a[href="/schedule"]').text()).toBe('Horario');
   restored.unmount();
 });
@@ -52,6 +84,17 @@ it('renders the logo, links and language choices during SSR', async () => {
   host.innerHTML = html;
   expect(host.querySelector('img')?.getAttribute('src')).toBe(props.logoSrc);
   expect(host.querySelectorAll('nav a')).toHaveLength(8);
+  expect(
+    Array.from(
+      host.querySelectorAll('nav a'),
+      (link) => link.textContent,
+    ).slice(0, 4),
+  ).toEqual([
+    'Personal Training',
+    'Group Strength',
+    'Tropical Jump',
+    'Online Coaching',
+  ]);
   expect(
     Array.from(
       host.querySelectorAll('button[aria-pressed]'),

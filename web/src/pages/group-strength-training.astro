@@ -1,4 +1,6 @@
 ---
+import { tl, type MessageKey } from '@/i18n';
+import T from '@/components/T.astro';
 import group from '@/assets/group.jpg';
 import CtaBand from '@/components/CtaBand.astro';
 import PageHero from '@/components/PageHero.astro';
@@ -6,51 +8,51 @@ import PolicyCard from '@/components/PolicyCard.astro';
 import PricingGrid from '@/components/PricingGrid.vue';
 import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getCatalog } from '@/lib/catalog';
+import LocalTime from '@/components/LocalTime.astro';
+import { weekdayKeys } from '@/lib/schedule';
+import { getCatalog, SERVICE_SLUGS } from '@/lib/catalog';
 
 const { classTemplates, groupPlans, business } = await getCatalog();
-const days = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-];
 const timesByDay = new Map<number, string[]>();
-for (const { day, time, service } of classTemplates) {
-  if (service === 'Group Strength') {
+for (const { day, time, serviceSlug } of classTemplates) {
+  if (serviceSlug === SERVICE_SLUGS.groupPlans) {
     const times = timesByDay.get(day) ?? [];
     times.push(time);
     timesByDay.set(day, times);
   }
 }
-const daysByTimes = new Map<string, { days: string[]; times: string[] }>();
+const daysByTimes = new Map<string, { days: MessageKey[]; times: string[] }>();
 for (const [day, times] of timesByDay) {
   const key = times.join(',');
   const entry = daysByTimes.get(key) ?? { days: [], times };
-  entry.days.push(days[day]);
+  entry.days.push(weekdayKeys[day]);
   daysByTimes.set(key, entry);
 }
 const policies = [
-  'Classes are 60 minutes, capped at 6 participants.',
-  '8-class packs expire after 4 weeks.',
-  '16-week commitment is billed every 4 weeks for 4 periods.',
-  'Cancel at least 12 hours before class to keep your credit.',
+  tl('Classes are 60 minutes, capped at 6 participants.'),
+  tl('8-class packs expire after 4 weeks.'),
+  tl('16-week commitment is billed every 4 weeks for 4 periods.'),
+  tl('Cancel at least 12 hours before class to keep your credit.'),
 ];
 ---
 
 <BaseLayout
   business={business}
-  title={`Group Strength Training | ${business.name}`}
+  title={{
+    key: tl("Group Strength Training {'|'} {name}"),
+    params: { name: business.name },
+  }}
   description={`Explore small-group strength training, class packages and the weekly schedule in ${business.city}.`}
 >
   <PageHero
-    eyebrow="Group Strength"
-    title="Small group. Big results."
+    eyebrow={{ key: tl('Group Strength') }}
+    title={{ key: tl('Small group. Big results.') }}
     img={group}
-    sub="Coached strength training with a maximum of 6 people per class — the attention of personal training with the energy of a team."
+    sub={{
+      key: tl(
+        'Coached strength training with a maximum of 6 people per class — the attention of personal training with the energy of a team.',
+      ),
+    }}
   />
   <Section>
     <PricingGrid
@@ -59,31 +61,47 @@ const policies = [
       plans={groupPlans}
       currency={business.currency}
       featuredIndex={0}
-      cta="Book a class"
+      cta={tl('Book a class')}
       to="/schedule"
     >
       <div class="card-surface flex flex-col p-7">
-        <h3 class="text-2xl">Drop-in &amp; Intro</h3>
+        <h3 class="text-2xl">
+          <T k="Drop-in & Intro" />
+        </h3>
         <p class="mt-4 text-muted-foreground">
-          Single drop-in classes available. New here? Ask about a free
-          introductory class.
+          <T k="Single drop-in classes available. New here? Ask about a free introductory class." />
         </p>
         <a href="/contact" class="btn btn-outline mt-auto">
-          Ask about intro
+          <T k="Ask about intro" />
         </a>
       </div>
     </PricingGrid>
     <div class="mt-12 grid gap-6 md:grid-cols-2">
       <div class="card-surface p-7">
-        <p class="eyebrow mb-4">Weekly schedule</p>
+        <p class="eyebrow mb-4">
+          <T k="Weekly schedule" />
+        </p>
         {[...daysByTimes.values()].map(({ days, times }, index) => (
           <div class:list={[{ 'mt-6': index > 0 }]}>
-            <p class="font-display text-3xl uppercase">{days.join(' & ')}</p>
+            <p class="font-display text-3xl uppercase">
+              {days.map((day, dayIndex) => (
+                <>
+                  {dayIndex > 0 && (
+                    <>
+                      {' '}
+                      <T k="&" />{' '}
+                    </>
+                  )}
+                  <T message={day} />
+                </>
+              ))}
+            </p>
             <div class="mt-4 flex flex-wrap gap-3">
               {times.map((time) => (
-                <span class="rounded-full border border-primary px-4 py-2 font-bold text-primary">
-                  {time}
-                </span>
+                <LocalTime
+                  time={time}
+                  class="rounded-full border border-primary px-4 py-2 font-bold text-primary"
+                />
               ))}
             </div>
           </div>

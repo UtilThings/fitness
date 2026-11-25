@@ -1,8 +1,11 @@
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
+import { formatMessage, resolveText, tl } from '@/i18n';
 import { expect, it } from 'vitest';
 import {
   availability,
   classTemplates,
   formatPrice,
+  formatTime,
   groupPlans,
   jumpPlans,
   personalOneOnOne,
@@ -20,7 +23,7 @@ it.each([
 });
 
 it.each([
-  [0, 'FREE'],
+  [0, 'Free'],
   [15, '$15'],
   [15.5, '$15.50'],
   [1080, '$1,080'],
@@ -39,4 +42,28 @@ it('provides the fallback plans and weekly class templates', () => {
     expect(day).toBeGreaterThanOrEqual(0);
     expect(day).toBeLessThanOrEqual(6);
   }
+});
+
+resetLocaleAfterEach();
+
+it('uses Spanish for free prices, plurals and clock time while keeping the business currency', async () => {
+  await useLocale('es');
+  expect(formatPrice(0, 'COP', 'es')).toBe('Gratis');
+  expect(formatPrice(2345, 'COP', 'es')).toBe(
+    new Intl.NumberFormat('es-US', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
+    }).format(2345),
+  );
+  expect(formatTime('09:00', 'en')).toBe('9:00 AM');
+  expect(formatTime('09:00', 'es')).toBe('09:00');
+  expect(formatTime('00:00', 'en')).toBe('12:00 AM');
+  expect(formatTime('12:00', 'en')).toBe('12:00 PM');
+  const key = tl('{count} class | {count} classes');
+  expect(
+    [0, 1, 8].map((count) =>
+      resolveText({ key, params: { count } }, formatMessage),
+    ),
+  ).toEqual(['0 clases', '1 clase', '8 clases']);
 });

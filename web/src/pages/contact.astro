@@ -1,4 +1,6 @@
 ---
+import T from '@/components/T.astro';
+import { tl } from '@/i18n';
 import LeadForm from '@/components/LeadForm.vue';
 import PageHero from '@/components/PageHero.astro';
 import Section from '@/components/Section.astro';
@@ -9,47 +11,58 @@ const { business } = await getCatalog();
 
 <BaseLayout
   business={business}
-  title={`Contact ${business.name} | ${business.city}`}
+  title={{
+    key: tl("Contact {name} {'|'} {city}"),
+    params: { name: business.name, city: business.city },
+  }}
   description={`Questions about training, classes or packages? Get in touch with ${business.name}.`}
 >
   <PageHero
-    eyebrow="Contact"
-    title="Let's get started."
-    sub="Tell us what you're interested in and we'll help you find the right program."
+    eyebrow={{ key: tl('Contact') }}
+    title={{ key: tl("Let's get started.") }}
+    sub={{
+      key: tl(
+        "Tell us what you're interested in and we'll help you find the right program.",
+      ),
+    }}
   />
   <Section class="grid gap-10 !pt-0 lg:grid-cols-2">
     <div class="space-y-6">
       <div class="card-surface p-7">
-        <p class="eyebrow mb-2">Location</p>
+        <p class="eyebrow mb-2">
+          <T k="Location" />
+        </p>
         <p class="text-xl">{business.city}</p>
       </div>
       <div class="card-surface p-7">
-        <p class="eyebrow mb-2">Programs</p>
+        <p class="eyebrow mb-2">
+          <T k="Programs" />
+        </p>
         <p class="text-muted-foreground">
-          Personal Training · Group Strength · Tropical Jump · Online Coaching
+          <T k="Personal Training · Group Strength · Tropical Jump · Online Coaching" />
         </p>
       </div>
     </div>
     <LeadForm
       client:load
       fields={[
-        { kind: 'text', placeholder: 'Full name', required: true },
-        { kind: 'email', placeholder: 'Email', required: true },
+        { kind: 'text', placeholder: tl('Full name'), required: true },
+        { kind: 'email', placeholder: tl('Email'), required: true },
         {
           kind: 'select',
-          placeholder: 'Program',
+          placeholder: tl('Program'),
           options: [
-            'Personal Training',
-            'Group Strength',
-            'Tropical Jump',
-            'Online Coaching',
-            'Other',
+            tl('Personal Training'),
+            tl('Group Strength'),
+            tl('Tropical Jump'),
+            tl('Online Coaching'),
+            tl('Other'),
           ],
         },
-        { kind: 'textarea', placeholder: 'Message', rows: 5 },
+        { kind: 'textarea', placeholder: tl('Message'), rows: 5 },
       ]}
-      submitLabel="Send message"
-      successMessage="Thanks! We'll get back to you shortly."
+      submitLabel={tl('Send message')}
+      successMessage={tl("Thanks! We'll get back to you shortly.")}
     />
   </Section>
 </BaseLayout>

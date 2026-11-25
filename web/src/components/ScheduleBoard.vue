@@ -5,7 +5,7 @@ import {
   type PublicSchedule,
   type PublicSession,
 } from '@/lib/api';
-import { formatLocalTime, SERVICE_SLUGS } from '@/lib/catalog';
+import { SERVICE_SLUGS } from '@/lib/catalog';
 import {
   classesForDay,
   formatRange,
@@ -14,14 +14,15 @@ import {
   weekStart,
   type ServiceFilter,
 } from '@/lib/schedule';
-import { fallbackBusiness } from '@/lib/data';
+import { fallbackBusiness, formatTime, regionalLocale } from '@/lib/data';
+import { resolveText, tl, type MessageKey, type Text } from '@/i18n';
 import { useLang } from '@/lib/use-lang';
 
 const filters = {
-  All: '',
-  'Group Strength': SERVICE_SLUGS.groupPlans,
-  'Tropical Jump': SERVICE_SLUGS.jumpPlans,
-} satisfies Record<ServiceFilter, string>;
+  all: tl('All'),
+  [SERVICE_SLUGS.groupPlans]: tl('Group Strength'),
+  [SERVICE_SLUGS.jumpPlans]: tl('Tropical Jump'),
+} satisfies Record<ServiceFilter, MessageKey>;
 const statusColor = {
   full: 'text-destructive',
   almost: 'text-accent',
@@ -29,17 +30,24 @@ const statusColor = {
   checkAvailability: 'text-muted-foreground',
 };
 
+const statusLabels = {
+  full: tl('Full'),
+  almost: tl('Almost full'),
+  available: tl('Available'),
+  checkAvailability: tl('Check availability'),
+};
+
 interface ClassCard {
   time: string;
-  service: string;
+  service: Text;
   coach: string;
   availability?: Pick<PublicSession, 'capacity' | 'spots_left' | 'status'>;
 }
 
 const props = defineProps<{ timezone?: string }>();
 const timezone = ref(props.timezone ?? fallbackBusiness.timezone);
-const { lang, t } = useLang();
-const locale = computed(() => (lang.value === 'es' ? 'es-US' : 'en-US'));
+const { lang, t, translateKey } = useLang();
+const locale = computed(() => regionalLocale(lang.value));
 const weekday = computed(
   () =>
     new Intl.DateTimeFormat(locale.value, {
@@ -58,7 +66,7 @@ const monthDay = computed(
 const today = new Date();
 const offset = ref(0);
 const maxWeeks = ref(MAX_SCHEDULE_WEEKS);
-const filter = ref<ServiceFilter>('All');
+const filter = ref<ServiceFilter>('all');
 const retry = ref(0);
 const state = ref<'loading' | 'ready' | 'error'>('loading');
 const response = ref<PublicSchedule>();
@@ -72,7 +80,7 @@ const days = computed(() =>
   ),
 );
 const range = computed(() =>
-  formatRange(days.value[0], days.value[6], locale.value),
+  formatRange(days.value[0], days.value[6], lang.value),
 );
 
 watch(
@@ -98,12 +106,12 @@ watch(
 
 const schedule = computed(() => {
   const sessionsByDay = new Map<string, ClassCard[]>();
-  const slug = filters[filter.value];
+  const slug = filter.value;
   for (const session of response.value?.sessions ?? []) {
-    if (slug && session.service.slug !== slug) continue;
+    if (slug !== 'all' && session.service.slug !== slug) continue;
     const classes = sessionsByDay.get(session.local_date) ?? [];
     classes.push({
-      time: formatLocalTime(session.local_time),
+      time: session.local_time,
       service: session.service.name,
       coach: session.coach_name,
       availability: session,
@@ -137,10 +145,10 @@ function moveWeek(increment: number) {
       <div
         class="flex flex-wrap gap-2"
         role="group"
-        aria-label="Filter by service"
+        :aria-label="t('Filter by service')"
       >
         <button
-          v-for="(_, service) in filters"
+          v-for="(label, service) in filters"
           :key="service"
           type="button"
           :aria-pressed="filter === service"
@@ -152,13 +160,13 @@ function moveWeek(increment: number) {
           "
           @click="filter = service"
         >
-          {{ service }}
+          {{ translateKey(label) }}
         </button>
       </div>
       <div class="flex items-center gap-3">
         <button
           type="button"
-          aria-label="Previous week"
+          :aria-label="t('Previous week')"
           class="rounded-full border border-border p-2"
           :disabled="offset === 0"
           @click="moveWeek(-1)"
@@ -180,7 +188,7 @@ function moveWeek(increment: number) {
         <span class="text-sm font-bold" aria-live="polite">{{ range }}</span>
         <button
           type="button"
-          aria-label="Next week"
+          :aria-label="t('Next week')"
           class="rounded-full border border-border p-2"
           :disabled="offset >= maxWeeks"
           @click="moveWeek(1)"
@@ -203,7 +211,7 @@ function moveWeek(increment: number) {
     </div>
     <div class="mt-8 space-y-4" :aria-busy="state === 'loading'">
       <div v-if="state === 'loading'" role="status">
-        <p class="text-sm text-muted-foreground">{{ t('loading') }}</p>
+        <p class="text-sm text-muted-foreground">{{ t('Loading classes…') }}</p>
         <div
           class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
           aria-hidden="true"
@@ -216,9 +224,16 @@ function moveWeek(increment: number) {
         </div>
       </div>
       <div v-if="state === 'error'" class="rounded-xl border border-border p-4">
-        <p role="status">{{ t('loadError') }} {{ t('fallbackNotice') }}</p>
+        <p role="status">
+          {{ t('The live schedule couldn’t be loaded.') }}
+          {{
+            t(
+              'Showing the regular weekly schedule. Contact us to check availability.',
+            )
+          }}
+        </p>
         <button class="btn btn-outline mt-3" type="button" @click="retry++">
-          {{ t('retry') }}
+          {{ t('Try again') }}
         </button>
       </div>
       <p
@@ -226,7 +241,7 @@ function moveWeek(increment: number) {
         class="text-muted-foreground"
         role="status"
       >
-        {{ t('noClasses') }}
+        {{ t('No classes to show this week.') }}
       </p>
       <div
         v-for="{ date, classes } in schedule"
@@ -249,8 +264,12 @@ function moveWeek(increment: number) {
           >
             <div class="flex items-start justify-between">
               <div>
-                <p class="font-display text-2xl">{{ time }}</p>
-                <p class="font-semibold">{{ service }}</p>
+                <p class="font-display text-2xl">
+                  {{ formatTime(time, lang) }}
+                </p>
+                <p class="font-semibold">
+                  {{ resolveText(service, translateKey) }}
+                </p>
                 <p v-if="coach" class="text-xs text-muted-foreground">
                   {{ coach }}
                 </p>
@@ -260,12 +279,23 @@ function moveWeek(increment: number) {
                 :class="
                   statusColor[availability?.status ?? 'checkAvailability']
                 "
-                >{{ t(availability?.status ?? 'checkAvailability') }}</span
+                >{{
+                  translateKey(
+                    statusLabels[availability?.status ?? 'checkAvailability'],
+                  )
+                }}</span
               >
             </div>
             <p v-if="availability" class="mt-3 text-sm text-muted-foreground">
-              {{ availability.spots_left }} / {{ availability.capacity }}
-              {{ t('spots') }}
+              {{
+                t(
+                  '{count} / {capacity} spot left | {count} / {capacity} spots left',
+                  {
+                    count: availability.spots_left,
+                    capacity: availability.capacity,
+                  },
+                )
+              }}
             </p>
             <a
               href="/contact"
@@ -274,13 +304,11 @@ function moveWeek(increment: number) {
                 availability?.status === 'full' ? 'btn-outline' : 'btn-primary'
               "
               >{{
-                t(
-                  availability?.status === 'full'
-                    ? 'waitlist'
-                    : availability
-                      ? 'reserve'
-                      : 'contact',
-                )
+                availability?.status === 'full'
+                  ? t('Join waitlist')
+                  : availability
+                    ? t('Reserve')
+                    : t('Contact')
               }}</a
             >
           </div>
