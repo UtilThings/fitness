@@ -1,5 +1,6 @@
 ---
 import { tl } from '@/i18n';
+import T from '@/components/T.astro';
 import jump from '@/assets/jump.jpg';
 import CtaBand from '@/components/CtaBand.astro';
 import PageHero from '@/components/PageHero.astro';
@@ -7,40 +8,39 @@ import PolicyCard from '@/components/PolicyCard.astro';
 import PricingGrid from '@/components/PricingGrid.vue';
 import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { formatTime } from '@/lib/data';
+import LocalTime from '@/components/LocalTime.astro';
+import { weekdayKeys } from '@/lib/schedule';
 import { getCatalog, SERVICE_SLUGS } from '@/lib/catalog';
 
 const { classTemplates, jumpPlans, business } = await getCatalog();
 
-const days = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-];
 const classes = classTemplates.filter(
   ({ serviceSlug }) => serviceSlug === SERVICE_SLUGS.jumpPlans,
 );
 const policies = [
-  'First class free — one per client account.',
-  "Full class? Join the waitlist and we'll notify you if a spot opens.",
-  'Cancel or reschedule at least 12 hours before class.',
+  tl('First class free — one per client account.'),
+  tl("Full class? Join the waitlist and we'll notify you if a spot opens."),
+  tl('Cancel or reschedule at least 12 hours before class.'),
 ];
 ---
 
 <BaseLayout
   business={business}
-  title={`Tropical Jump Trampoline Classes | ${business.name}`}
+  title={{
+    key: tl("Tropical Jump Trampoline Classes {'|'} {name}"),
+    params: { name: business.name },
+  }}
   description={`Explore high-energy trampoline fitness, class passes and the weekly schedule in ${business.city}.`}
 >
   <PageHero
-    eyebrow="Tropical Jump"
-    title="Jump. Sweat. Vibe."
+    eyebrow={{ key: tl('Tropical Jump') }}
+    title={{ key: tl('Jump. Sweat. Vibe.') }}
     img={jump}
-    sub="A high-energy, low-impact trampoline workout set to tropical beats. Burn calories, build endurance, and have a blast."
+    sub={{
+      key: tl(
+        'A high-energy, low-impact trampoline workout set to tropical beats. Burn calories, build endurance, and have a blast.',
+      ),
+    }}
   />
   <Section>
     <PricingGrid
@@ -53,11 +53,15 @@ const policies = [
       to="/schedule"
     >
       <div class="card-surface p-7">
-        <p class="eyebrow mb-4">Weekly classes</p>
+        <p class="eyebrow mb-4">
+          <T k="Weekly classes" />
+        </p>
         {classes.map(({ day, time }) => (
           <div class="flex justify-between border-b border-border py-3 last:border-0">
-            <span class="font-display text-xl uppercase">{days[day]}</span>
-            <span class="font-bold text-accent">{formatTime(time)}</span>
+            <span class="font-display text-xl uppercase">
+              <T message={weekdayKeys[day]} />
+            </span>
+            <LocalTime time={time} class="font-bold text-accent" />
           </div>
         ))}
       </div>

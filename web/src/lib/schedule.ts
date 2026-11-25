@@ -1,4 +1,4 @@
-import type { Locale } from '../i18n';
+import { tl, type Locale } from '../i18n';
 import {
   classTemplates,
   fallbackBusiness,
@@ -8,6 +8,16 @@ import {
 } from './data';
 
 export type ServiceFilter = 'all' | ClassServiceSlug;
+
+export const weekdayKeys = [
+  tl('Sunday'),
+  tl('Monday'),
+  tl('Tuesday'),
+  tl('Wednesday'),
+  tl('Thursday'),
+  tl('Friday'),
+  tl('Saturday'),
+] as const;
 
 export const MAX_SCHEDULE_WEEKS = 8;
 

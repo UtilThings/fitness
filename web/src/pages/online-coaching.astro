@@ -1,5 +1,6 @@
 ---
 import { tl } from '@/i18n';
+import T from '@/components/T.astro';
 import LeadForm from '@/components/LeadForm.vue';
 import PageHero from '@/components/PageHero.astro';
 import Section from '@/components/Section.astro';
@@ -7,15 +8,15 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 
 const benefits = [
   [
-    'Training plans',
-    'Custom programming you can follow at home or in any gym.',
+    tl('Training plans'),
+    tl('Custom programming you can follow at home or in any gym.'),
   ],
   [
-    'Nutrition guidance',
-    'Practical habits and targets that fit your lifestyle.',
+    tl('Nutrition guidance'),
+    tl('Practical habits and targets that fit your lifestyle.'),
   ],
-  ['8–16 week programs', 'Structured phases with a clear finish line.'],
-  ['Progress monitoring', 'Regular check-ins and adjustments.'],
+  [tl('8–16 week programs'), tl('Structured phases with a clear finish line.')],
+  [tl('Progress monitoring'), tl('Regular check-ins and adjustments.')],
 ];
 import { getCatalog } from '@/lib/catalog';
 const { business } = await getCatalog();
@@ -23,24 +24,36 @@ const { business } = await getCatalog();
 
 <BaseLayout
   business={business}
-  title={`Online Coaching Programs | ${business.name}`}
+  title={{
+    key: tl("Online Coaching Programs {'|'} {name}"),
+    params: { name: business.name },
+  }}
   description="Personalized 8–16 week online coaching with training plans, nutrition guidance and progress monitoring."
 >
   <PageHero
-    eyebrow="Online Coaching"
-    title="Coaching anywhere."
-    sub={`Get ${business.name} programming and accountability wherever you are. Start with a free consultation.`}
+    eyebrow={{ key: tl('Online Coaching') }}
+    title={{ key: tl('Coaching anywhere.') }}
+    sub={{
+      key: tl(
+        'Get {name} programming and accountability wherever you are. Start with a free consultation.',
+      ),
+      params: { name: business.name },
+    }}
   />
   <Section class="grid gap-10 lg:grid-cols-2">
     <div class="grid gap-4 sm:grid-cols-2">
       {benefits.map(([title, sub]) => (
         <div class="card-surface p-6">
-          <h3 class="text-2xl text-primary">{title}</h3>
-          <p class="mt-2 text-sm text-muted-foreground">{sub}</p>
+          <h3 class="text-2xl text-primary">
+            <T message={title} />
+          </h3>
+          <p class="mt-2 text-sm text-muted-foreground">
+            <T message={sub} />
+          </p>
         </div>
       ))}
       <p class="text-sm text-muted-foreground sm:col-span-2">
-        Program pricing is shared after your consultation.
+        <T k="Program pricing is shared after your consultation." />
       </p>
     </div>
     <LeadForm

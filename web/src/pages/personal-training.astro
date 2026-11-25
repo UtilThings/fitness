@@ -1,5 +1,6 @@
 ---
 import { tl } from '@/i18n';
+import T from '@/components/T.astro';
 import personal from '@/assets/personal.jpg';
 import CtaBand from '@/components/CtaBand.astro';
 import PageHero from '@/components/PageHero.astro';
@@ -12,33 +13,44 @@ import { getCatalog } from '@/lib/catalog';
 const { personalOneOnOne, personalPartner, business } = await getCatalog();
 
 const policies = [
-  'Each session is 60 minutes; packages run in 4-week blocks.',
-  'Sessions expire at the end of each 4-week block.',
-  'Purchase does not reserve a set time — request your preferred slots and we confirm based on trainer availability.',
-  'Reschedule or cancel at least 24 hours in advance to keep your session.',
+  tl('Each session is 60 minutes; packages run in 4-week blocks.'),
+  tl('Sessions expire at the end of each 4-week block.'),
+  tl(
+    'Purchase does not reserve a set time — request your preferred slots and we confirm based on trainer availability.',
+  ),
+  tl('Reschedule or cancel at least 24 hours in advance to keep your session.'),
 ];
 
 const included = [
-  'Initial assessment & goal setting',
-  'Personalized program',
-  'Form coaching every session',
-  'Progress tracking',
+  tl('Initial assessment & goal setting'),
+  tl('Personalized program'),
+  tl('Form coaching every session'),
+  tl('Progress tracking'),
 ];
 ---
 
 <BaseLayout
   business={business}
-  title={`Personal Training | ${business.name} ${business.city.split(',')[0]}`}
+  title={{
+    key: tl("Personal Training {'|'} {name} {city}"),
+    params: { name: business.name, city: business.city.split(',')[0] },
+  }}
   description="One-on-one and partner personal training packages in 4-week blocks."
 >
   <PageHero
-    eyebrow="Personal Training"
-    title="Coaching built for you."
+    eyebrow={{ key: tl('Personal Training') }}
+    title={{ key: tl('Coaching built for you.') }}
     img={personal}
-    sub="One-on-one and partner sessions with a plan designed around your body, schedule and goals. Billed in 4-week blocks."
+    sub={{
+      key: tl(
+        'One-on-one and partner sessions with a plan designed around your body, schedule and goals. Billed in 4-week blocks.',
+      ),
+    }}
   />
   <Section>
-    <h2 class="text-4xl md:text-5xl">One-on-one</h2>
+    <h2 class="text-4xl md:text-5xl">
+      <T k="One-on-one" />
+    </h2>
     <PricingGrid
       client:load
       class="mt-8"
@@ -48,7 +60,9 @@ const included = [
       featuredIndex={1}
       cta={tl('Request a schedule')}
     />
-    <h2 class="mt-16 text-4xl md:text-5xl">Partner training</h2>
+    <h2 class="mt-16 text-4xl md:text-5xl">
+      <T k="Partner training" />
+    </h2>
     <PricingGrid
       client:load
       class="mt-8"
@@ -59,7 +73,7 @@ const included = [
     />
     <div class="mt-12 grid gap-6 md:grid-cols-2">
       <PolicyCard items={policies} />
-      <PolicyCard title="What's included" items={included} />
+      <PolicyCard title={{ key: tl("What's included") }} items={included} />
     </div>
   </Section>
   <CtaBand />

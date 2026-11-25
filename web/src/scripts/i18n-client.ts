@@ -7,6 +7,7 @@ import {
   type Params,
 } from '@/i18n';
 import { translatableAttributes } from '@/i18n/attrs';
+import { formatTime } from '@/lib/data';
 
 const originals = new WeakMap<Element, Map<string, string>>();
 const targets = ['', ...translatableAttributes] as const;
@@ -62,7 +63,13 @@ export function applyLanguage(root: Document = document) {
       else element.textContent = value;
     }
   }
-  root.documentElement.lang = locale.value;
+  const language = locale.value === 'es' ? 'es' : 'en';
+  for (const element of root.querySelectorAll<HTMLTimeElement>(
+    'time[data-local-time][datetime]',
+  )) {
+    element.textContent = formatTime(element.dateTime, language);
+  }
+  root.documentElement.lang = language;
 }
 
 if (typeof window !== 'undefined') {

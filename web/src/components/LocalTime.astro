@@ -1,0 +1,14 @@
+---
+import { formatTime } from '@/lib/data';
+
+interface Props {
+  time: string;
+  class?: string;
+}
+
+const { time, class: className } = Astro.props;
+---
+
+<time class={className} datetime={time} data-local-time>
+  {formatTime(time)}
+</time>
