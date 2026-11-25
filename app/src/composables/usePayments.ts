@@ -1,3 +1,4 @@
+import { computed } from 'vue';
 import { t } from '@/i18n';
 import type { Plan } from '@/lib/catalog';
 import type { Client } from '@/lib/clients';
@@ -6,20 +7,20 @@ import { parsePbError } from '@/lib/pb-errors';
 import { pb } from '@/lib/pocketbase';
 import type { BaseRecord } from '@/types/pb';
 
-export const paymentMethods = {
-  cash: 'Efectivo',
-  zelle: 'Zelle',
-  card: 'Tarjeta',
-  other: 'Otro',
-};
-export const paymentStatuses = {
-  pending: 'Pendiente',
-  paid: 'Pagado',
-  void: 'Anulado',
-};
+export const paymentMethods = computed(() => ({
+  cash: t('Cash'),
+  zelle: t('Zelle'),
+  card: t('Card'),
+  other: t('Other'),
+}));
+export const paymentStatuses = computed(() => ({
+  pending: t('Pending'),
+  paid: t('Paid'),
+  void: t('Voided'),
+}));
 
-export type PaymentMethod = keyof typeof paymentMethods;
-export type PaymentStatus = keyof typeof paymentStatuses;
+export type PaymentMethod = keyof typeof paymentMethods.value;
+export type PaymentStatus = keyof typeof paymentStatuses.value;
 export interface Payment extends Omit<BaseRecord, 'created'> {
   currency?: string;
   client: string;

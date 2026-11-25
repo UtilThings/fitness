@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -55,8 +56,8 @@ async function load() {
 function saved(payment: Payment) {
   notify.success(
     payment.receipt_number
-      ? `Pago registrado · ${payment.receipt_number}`
-      : 'Cobro pendiente registrado',
+      ? t('Payment recorded · {receipt}', { receipt: payment.receipt_number })
+      : t('Pending charge recorded'),
   );
   void load();
 }
@@ -65,38 +66,42 @@ onMounted(() => void load());
 </script>
 
 <template>
-  <section class="grid gap-4" aria-label="Historial de pagos">
+  <section class="grid gap-4" :aria-label="t('Payment history')">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <RouterLink
         :to="{ name: 'payments', query: { client: client.id } }"
         class="text-sm font-medium text-primary hover:underline"
       >
-        Ver en Pagos
+        {{ t('View in Payments') }}
       </RouterLink>
-      <Button label="Registrar pago" icon="pi pi-plus" @click="open = true" />
+      <Button
+        :label="t('Record payment')"
+        icon="pi pi-plus"
+        @click="open = true"
+      />
     </div>
 
     <Message v-if="error" severity="error" :closable="false">
       {{ error }}
-      <Button label="Reintentar" size="small" text @click="load" />
+      <Button :label="t('Retry')" size="small" text @click="load" />
     </Message>
     <dl v-else-if="!loading" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <div
         class="rounded-lg border border-surface-200 p-3 dark:border-surface-700"
       >
-        <dt class="text-sm">Total pagado</dt>
+        <dt class="text-sm">{{ t('Total paid') }}</dt>
         <dd class="font-semibold">{{ formatCents(summary.paid) }}</dd>
       </div>
       <div
         class="rounded-lg border border-surface-200 p-3 dark:border-surface-700"
       >
-        <dt class="text-sm">Pendiente</dt>
+        <dt class="text-sm">{{ t('Pending') }}</dt>
         <dd class="font-semibold">{{ formatCents(summary.pending) }}</dd>
       </div>
       <div
         class="rounded-lg border border-surface-200 p-3 dark:border-surface-700"
       >
-        <dt class="text-sm">Vencido</dt>
+        <dt class="text-sm">{{ t('Overdue') }}</dt>
         <dd class="font-semibold">{{ formatCents(summary.overdue) }}</dd>
       </div>
     </dl>
@@ -112,24 +117,26 @@ onMounted(() => void load());
       table-style="min-width: 35rem"
     >
       <template #empty
-        ><span v-if="!loading">Este cliente aún no tiene pagos.</span></template
+        ><span v-if="!loading">{{
+          t('This client has no payments yet.')
+        }}</span></template
       >
-      <Column header="Concepto">
+      <Column :header="t('Description{\'\'}')">
         <template #body="{ data }">{{
-          data.expand?.plan?.name ?? 'Cobro manual'
+          data.expand?.plan?.name ?? t('Manual charge')
         }}</template>
       </Column>
-      <Column header="Monto">
+      <Column :header="t('Amount')">
         <template #body="{ data }">{{
           formatCents(data.amount_cents)
         }}</template>
       </Column>
-      <Column header="Estado">
+      <Column :header="t('Status')">
         <template #body="{ data }"
           ><PaymentStatusTag :payment="data"
         /></template>
       </Column>
-      <Column header="Fecha">
+      <Column :header="t('Date')">
         <template #body="{ data }">
           {{
             data.paid_at || data.due_on
@@ -138,7 +145,7 @@ onMounted(() => void load());
           }}
         </template>
       </Column>
-      <Column header="Recibo">
+      <Column :header="t('Receipt')">
         <template #body="{ data }">
           <RouterLink
             v-if="data.receipt_number && data.status !== 'pending'"

@@ -1,7 +1,7 @@
 # 015 - [Web] Pagos y recibos
 
 - **Prioridad:** 15
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 009
 - **Fase:** Fase 3: Migración del texto de la interfaz
 
@@ -22,10 +22,10 @@ Texto fijo en español en: `views/admin/PaymentsView.vue`, `ReceiptView.vue`, `c
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
-- [ ] Con `en` no queda texto en español en las vistas y componentes del alcance; con `es` el texto coincide con el actual.
-- [ ] Sin `v-html` para texto traducido.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
+- [x] Con `en` no queda texto en español en las vistas y componentes del alcance; con `es` el texto coincide con el actual.
+- [x] Sin `v-html` para texto traducido.
 
 ## Referencias
 
@@ -37,3 +37,4 @@ Texto fijo en español en: `views/admin/PaymentsView.vue`, `ReceiptView.vue`, `c
 
 ## Notas de implementación
 
+Lint, comprobación de tipos, catálogo y suite completa en verde. Se verifica que el documento de recibo cambia a inglés y conserva la numeración y datos del negocio. La impresión usa ese mismo documento.

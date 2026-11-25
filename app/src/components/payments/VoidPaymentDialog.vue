@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
@@ -26,7 +27,7 @@ watch(open, (visible) => {
 async function submit() {
   if (saving.value) return;
   if (!reason.value.trim()) {
-    error.value = 'Indica el motivo de la anulación.';
+    error.value = t('Enter a reason for voiding the payment.');
     return;
   }
   error.value = '';
@@ -46,7 +47,7 @@ async function submit() {
 <template>
   <Dialog
     v-model:visible="open"
-    header="Anular pago"
+    :header="t('Void payment')"
     modal
     class="w-full max-w-lg"
     :closable="!saving"
@@ -54,7 +55,7 @@ async function submit() {
   >
     <form class="grid gap-4" @submit.prevent="submit">
       <div class="grid gap-1.5">
-        <label :for="id">Motivo de la anulación</label>
+        <label :for="id">{{ t('Reason for voiding') }}</label>
         <Textarea
           :id="id"
           v-model="reason"
@@ -68,14 +69,14 @@ async function submit() {
       }}</Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
           @click="open = false"
         />
         <Button
-          label="Anular pago"
+          :label="t('Void payment')"
           severity="danger"
           type="submit"
           :loading="saving"
