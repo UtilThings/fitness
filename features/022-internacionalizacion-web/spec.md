@@ -1,6 +1,6 @@
 # Especificación: Internacionalización (i18n) del sitio público `web/`
 
-- **Estado:** Pendiente
+- **Estado:** Completado
 
 ## Resumen Ejecutivo
 
@@ -48,17 +48,17 @@ Contrato que deja a las siguientes features: todo texto visible nuevo en `web/` 
 - `es.json` es **plano**, ordenado alfabéticamente por clave; un solo archivo para todo `web/`.
 - Interpolación **nombrada**: `"Boutique personal training & small-group fitness in {city}."`. Plurales con `|`: `"{count} class | {count} classes"`.
 - Un mismo texto en inglés con sentidos distintos se desambigua con un sufijo literal vacío (`"Full{''}"`), documentado en `docs/i18n-web.md`.
-- Valores dinámicos de dominio (`status`, día de la semana, unidad de cobro) se traducen con mapas valor → clave que usan `tl('…')` (marcador identidad para el extractor) y llaman a `t()` al renderizar; nunca claves construidas por concatenación.
+- Valores dinámicos de dominio (`status`, día de la semana, unidad de cobro) se traducen con mapas valor → clave que usan `tl('…')` (marca la clave para el extractor) y se resuelven con `translateKey()` al renderizar; nunca claves construidas por concatenación.
 
 ### Cómo se usa en cada capa
 
 | Capa | Uso |
 |------|-----|
-| Componentes Vue (islas) | `const { t } = useLang()`; `t('…')` reactivo al idioma |
+| Componentes Vue (islas) | `const { t, translateKey } = useLang()`; `t('…')` para claves literales y `translateKey()` para claves de mapas marcadas con `tl()` |
 | `lib/*.ts` | `t` importado de `@/i18n`; las funciones que producen texto devuelven **descriptores** (`{ key, params }`) o reciben `t`, para que el texto se resuelva al renderizar y reaccione al cambio de idioma (ver «Datos del catálogo») |
 | Astro, texto | `<T k="Book your class" />`; con parámetros `<T k="… {city}" params={{ city }} />`. Renderiza `<span data-i18n="…" data-i18n-params='{"city":"…"}'>texto en inglés</span>` |
 | Astro, atributos | `{...i18nAttrs({ alt: 'Athlete training with a kettlebell' })}` genera `alt` en inglés + `data-i18n-alt` con la clave; el script cliente actualiza el atributo |
-| `<title>` | `<title data-i18n="…" data-i18n-params="…">` y el script cliente actualiza `document.title`. Las metaetiquetas (`description`, `og:*`) quedan en inglés: no ejecutan JS los rastreadores |
+| `<title>` | `BaseLayout` recibe `{ key, params }` y genera `data-i18n` y `data-i18n-params` en el título. Las metaetiquetas se generan en inglés |
 
 ### Idioma activo
 
@@ -73,7 +73,7 @@ Valores soportados: `en`, `es` (`supportedLocales`); cualquier otro se normaliza
 ### Datos del catálogo (negocio vs. interfaz)
 
 - **No se traduce** lo que escribe el negocio y llega del API: `plan.name`, `plan.note`, `service.name`, `coach_name`, `business.name`, `business.city`. Se muestran tal cual.
-- **Sí se traduce** lo que `web/` compone: unidades (`per 4 weeks`, `per class`, `first visit`), conteos (`8 classes`, `2 sessions per week`), textos de respaldo de `data.ts` y la nota generada de compromiso. `Plan.unit/sessions/freq/note` pasan de `string` a `Text = string | { key: string; params?: Record<string, string | number> }`; `PricingGrid` resuelve los descriptores con `t()` al renderizar. Un `string` plano se muestra sin traducir.
+- **Sí se traduce** lo que `web/` compone: unidades (`per 4 weeks`, `per class`, `first visit`), conteos (`8 classes`, `2 sessions per week`), textos de respaldo de `data.ts` y la nota generada de compromiso. `Plan.name/unit/sessions/freq/note` pasan de `string` a `Text = string | { key: string; params?: Record<string, string | number> }`; `PricingGrid` resuelve los descriptores con `t()` al renderizar. Un `string` plano se muestra sin traducir.
 - Los nombres de servicio del **respaldo estático** y los filtros del horario (`All`, `Group Strength`, `Tropical Jump`) son claves del catálogo; el valor de filtro sigue siendo el slug/identificador, nunca el texto traducido.
 
 ---
@@ -208,7 +208,7 @@ Valores soportados: `en`, `es` (`supportedLocales`); cualquier otro se normaliza
 
 ### Seguridad
 - Texto traducido se renderiza escapado (interpolación de Vue, `textContent`/`setAttribute` en el script cliente). Prohibido `v-html`/`set:html`/`innerHTML` con mensajes de `t()`.
-- `data-i18n-params` se serializa con `JSON.stringify` en el servidor y se lee con `JSON.parse` protegido; solo se aceptan claves presentes en el catálogo `en`/`es`.
+- `data-i18n-params` se serializa con `JSON.stringify` en el servidor y se lee con `JSON.parse` protegido; el puente solo reemplaza marcadores con claves del catálogo español y conserva el texto original para volver a inglés.
 - `localStorage` bloqueado no rompe el sitio (se conserva el `try/catch` actual).
 
 ### Referencias
@@ -229,15 +229,25 @@ Valores soportados: `en`, `es` (`supportedLocales`); cualquier otro se normaliza
 
 ## Criterios de Aceptación
 
-- [ ] Con `en` todo el sitio se ve en inglés idéntico al actual; con `es`, todo el texto visible está en español (salvo contenido del negocio).
-- [ ] El idioma inicial respeta `jq-lang` → `navigator.language` → `en`; el selector cambia el idioma sin recargar, persiste y sincroniza todas las islas.
-- [ ] `<html lang>`, `<title>`, `alt`, `aria-label` y `placeholder` siguen el idioma activo.
-- [ ] Precios, horas, días y rangos de fecha usan el idioma activo; moneda y zona horaria siguen siendo las del `business`.
-- [ ] Planes y horarios del API y del respaldo estático se muestran bilingües sin traducir nombres ni notas del negocio.
-- [ ] `bun run i18n:check` termina en verde (sin claves faltantes, huérfanas ni variables inconsistentes) y no quedan literales en inglés fuera de las excepciones documentadas.
-- [ ] No se cambia ninguna URL ni el contenido en inglés del build (`tests/dist/routes.test.ts` sigue en verde).
-- [ ] `docs/i18n-web.md` existe y `scripts/verify-web.sh` incluye `i18n:check` y termina en verde.
-- [ ] `bun run lint`, `format:check`, `check`, `test` y `build` en `web/` terminan en verde.
+- [x] Con `en` todo el sitio se ve en inglés idéntico al actual; con `es`, todo el texto visible está en español (salvo contenido del negocio).
+- [x] El idioma inicial respeta `jq-lang` → `navigator.language` → `en`; el selector cambia el idioma sin recargar, persiste y sincroniza todas las islas.
+- [x] `<html lang>`, `<title>`, `alt`, `aria-label` y `placeholder` siguen el idioma activo.
+- [x] Precios, horas, días y rangos de fecha usan el idioma activo; moneda y zona horaria siguen siendo las del `business`.
+- [x] Planes y horarios del API y del respaldo estático se muestran bilingües sin traducir nombres ni notas del negocio.
+- [x] `bun run i18n:check` termina en verde (sin claves faltantes, huérfanas ni variables inconsistentes) y no quedan literales en inglés fuera de las excepciones documentadas.
+- [x] No se cambia ninguna URL ni el contenido en inglés del build (`tests/dist/routes.test.ts` sigue en verde).
+- [x] `docs/i18n-web.md` existe y `scripts/verify-web.sh` incluye `i18n:check` y termina en verde.
+- [x] `bun run lint`, `format:check`, `check`, `test` y `build` en `web/` terminan en verde.
+
+---
+
+## Verificación de cierre
+
+- `bash scripts/verify-web.sh` pasó completo con instalación congelada, lint, formato, tipos, `i18n:check`, 79 pruebas unitarias y de componentes, 28 pruebas de dist y los builds con API válida, clave rechazada y API inalcanzable. La suite unitaria también pasó con orden aleatorio.
+- Se comparó el build inglés con el original en las diez páginas. Coincidieron texto visible, títulos y texto alternativo. Se conserva la presentación visual `FREE` en inglés y el formateador devuelve `Free`. El horario en vivo usa el singular inglés `spot left` para un cupo.
+- Chromium verificó la detección de `es-MX`, el selector sin recarga, el idioma al volver a abrir una página, el estado de accesibilidad, los formularios, el 404 y la traducción con el respaldo local. El catálogo se solicitó al cambiar a español.
+- Chromium verificó Precios, Horario y Fuerza en Grupo con una API local simulada. El selector mantuvo COP, la semana del negocio en `America/Bogota` y los nombres, notas y entrenadores de la API. Cambiar de idioma no disparó nuevas consultas.
+- La validación se hizo en builds locales. La guía de mantenimiento está en [Internacionalización del sitio público](../../docs/i18n-web.md).
 
 ---
 

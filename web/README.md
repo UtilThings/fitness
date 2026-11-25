@@ -53,7 +53,8 @@ Las peticiones al catálogo y al horario envían `X-Business-Key` y validan el c
 | `src/assets/`     | Imágenes y logo del sitio.                           |
 | `src/components/` | Islas Vue y bloques Astro para componer las páginas. |
 | `src/layouts/`    | Estructura compartida y metadatos.                   |
-| `src/lib/`        | Planes, horario, diccionario, entorno y pruebas.     |
+| `src/lib/`        | Planes, horario, entorno y pruebas.                  |
+| `src/i18n/`       | Idioma compartido, atributos y catálogo en español.  |
 | `src/pages/`      | Páginas que Astro convierte en rutas.                |
 | `src/scripts/`    | Traducción de los textos estáticos en el navegador.  |
 | `src/styles/`     | Tokens y estilos compartidos.                        |
@@ -61,9 +62,13 @@ Las peticiones al catálogo y al horario envían `X-Business-Key` y validan el c
 
 `src/styles/global.css` reúne los tokens de color y tipografía y las clases compartidas como `.btn`, `.eyebrow`, `.card-surface` y `.hero-fade`. Anton y Barlow se sirven con el sitio mediante Fontsource.
 
-El HTML se genera en inglés. `T.astro` marca los textos traducibles con `data-i18n`. El selector guarda el idioma bajo `jq-lang` en `localStorage` y emite `jq-lang-change`. El script de cliente actualiza los elementos marcados y las islas Vue se sincronizan mediante `useLang`. Para añadir una traducción, agrega la misma clave a `en` y `es` en `src/lib/i18n.ts` y úsala con `<T k="clave" />` en Astro o `t('clave')` en Vue.
-
 Los snapshots y las imágenes de referencia viven en `features/002-web-replica-lovable/reference/`. El sitio excluye el panel del editor y el badge de Lovable.
+
+## Internacionalización
+
+Astro genera el HTML en inglés. En el navegador se usa la preferencia `jq-lang` o el idioma del navegador. El selector cambia el idioma sin recargar y el catálogo español se carga bajo demanda.
+
+Usa la frase inglesa como clave de `<T>` en Astro o de `t()` en Vue. Agrega su traducción en `src/i18n/locales/es.json` y ejecuta `bun run i18n:check`. La [guía de internacionalización web](../docs/i18n-web.md) incluye ejemplos para cada capa.
 
 ## Variables de entorno
 
@@ -100,9 +105,11 @@ Ejecuta estos comandos desde `web/`.
 | `bun run check`              | Ejecuta `astro check`.                                                        |
 | `bun run test`               | Ejecuta las pruebas unitarias.                                                |
 | `bun run test:watch`         | Vuelve a ejecutar las pruebas al editar.                                      |
+| `bun run i18n:check`         | Comprueba el catálogo y las marcas de traducción.                             |
+| `bun run i18n:sort`          | Ordena el catálogo español por clave.                                         |
 | `bun run test:dist`          | Verifica las rutas compiladas. Ejecuta antes `PUBLIC_API_URL= bun run build`. |
 | `bun run test:build:offline` | Compila con clave válida, clave rechazada y API inalcanzable.                 |
 
-Desde la raíz del repositorio, ejecuta `scripts/verify-web.sh` después de configurar el entorno. El script instala dependencias con el lockfile congelado, ejecuta lint, formato, tipos y pruebas unitarias. También verifica el HTML compilado sin URL de API y ejecuta builds separados con clave válida, clave rechazada y API inalcanzable.
+Desde la raíz del repositorio, ejecuta `scripts/verify-web.sh` después de configurar el entorno. El script instala dependencias con el lockfile congelado, ejecuta lint, formato, tipos, verificación del catálogo y pruebas unitarias. También verifica el HTML compilado sin URL de API y ejecuta builds separados con clave válida, clave rechazada y API inalcanzable.
 
 Para revisar el respaldo en el navegador, genera y sirve un build con `PUBLIC_API_URL=http://127.0.0.1:9` y cualquier valor no vacío en `PUBLIC_BUSINESS_KEY`. Abre `/pricing` para ver los planes base y `/schedule` para ver el aviso y los horarios sin números de cupos. También puedes detener una instancia local de PocketBase después de compilar con ella para comprobar que la isla de precios conserva los planes iniciales.

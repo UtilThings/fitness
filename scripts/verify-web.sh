@@ -13,6 +13,7 @@ run_step bun install --frozen-lockfile
 run_step bun run lint
 run_step bun run format:check
 run_step bun run check
+run_step bun run i18n:check
 site_url="${PUBLIC_SITE_URL:-https://fitness.example.test}"
 run_step env PUBLIC_SITE_URL="$site_url" PUBLIC_API_URL= PUBLIC_BUSINESS_KEY= bun run test
 run_step env PUBLIC_SITE_URL="$site_url" PUBLIC_API_URL= PUBLIC_BUSINESS_KEY= bun run build
