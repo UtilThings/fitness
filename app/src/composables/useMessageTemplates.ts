@@ -1,9 +1,10 @@
 import { ClientResponseError } from 'pocketbase';
 import { getCurrentScope, onScopeDispose, ref, shallowRef } from 'vue';
-import type {
-  MessageDraft,
-  MessageTemplate,
-  PreviewDraft,
+import {
+  translateTemplateProblem,
+  type MessageDraft,
+  type MessageTemplate,
+  type PreviewDraft,
 } from '@/lib/messages';
 import { parsePbError } from '@/lib/pb-errors';
 import { pb } from '@/lib/pocketbase';
@@ -54,7 +55,15 @@ export function useMessagePreview() {
         const messages = Array.isArray(problems)
           ? problems.flatMap((problem) =>
               typeof problem?.message === 'string'
-                ? [problem.message as string]
+                ? [
+                    translateTemplateProblem({
+                      message: problem.message,
+                      variable:
+                        typeof problem.variable === 'string'
+                          ? problem.variable
+                          : undefined,
+                    }),
+                  ]
                 : [],
             )
           : [];

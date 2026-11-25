@@ -1,7 +1,7 @@
 # 023 - [Módulo] Traducción de mensajes del API en el app
 
 - **Prioridad:** 23
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 007, 020, 021, 022, 018
 - **Fase:** Fase 4: Mensajes del API
 
@@ -22,11 +22,11 @@ Los errores y la auditoría que vienen del API se muestran en el idioma de la in
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
-- [ ] Un `403` del API se muestra en español con `es` y en inglés con `en`.
-- [ ] La prueba de cobertura falla si se agrega un mensaje al API sin su traducción.
-- [ ] Una descripción de auditoría histórica en español se muestra sin cambios.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
+- [x] Un `403` del API se muestra en español con `es` y en inglés con `en`.
+- [x] La prueba de cobertura falla si se agrega un mensaje al API sin su traducción.
+- [x] Una descripción de auditoría histórica en español se muestra sin cambios.
 
 ## Referencias
 
@@ -38,3 +38,4 @@ Los errores y la auditoría que vienen del API se muestran en el idioma de la in
 
 ## Notas de implementación
 
+El verificador y las pruebas extraen mensajes de api/src. Pasaron lint, comprobación de tipos, suites del app y API y compilación de hooks. Los casos bilingües confirman un 403, una clave de auditoría y un registro histórico conservado.

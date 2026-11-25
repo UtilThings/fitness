@@ -35,7 +35,7 @@ export function validateService(input: ServiceInput): Record<string, string> {
     errors.name = "Enter a name of up to 80 characters.";
   }
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(input.slug)) {
-    errors.slug = "Use lowercase letters, numbers, and hyphens between words.";
+    errors.slug = "Use lowercase letters and numbers with hyphens between words.";
   }
   if (!SERVICE_KINDS.includes(input.kind)) errors.kind = "Select a service type.";
   if (!validInteger(input.capacity, input.kind === "online" ? 0 : 1)) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { t } from '@/i18n';
+import { t, translateMessage } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable, { type DataTablePageEvent } from 'primevue/datatable';
@@ -221,7 +221,9 @@ function changePage(event: DataTablePageEvent) {
       </Column>
       <Column field="attempts" :header="t('Attempts')" />
       <Column field="error" :header="t('Error')">
-        <template #body="{ data }">{{ data.error || '—' }}</template>
+        <template #body="{ data }">{{
+          data.error ? translateMessage(data.error) : '—'
+        }}</template>
       </Column>
     </DataTable>
   </section>

@@ -65,3 +65,17 @@ export function canReserveSession(session: ClassSession, now: number) {
     now < Date.parse(session.starts_at.replace(' ', 'T'))
   );
 }
+
+export function formatCancellationReason(reason: string) {
+  const blockPrefix = 'Schedule block: ';
+  const movedPrefix = 'Moved: ';
+  if (reason.startsWith(blockPrefix)) {
+    return t('Schedule block: {title}', {
+      title: reason.slice(blockPrefix.length),
+    });
+  }
+  if (reason.startsWith(movedPrefix)) {
+    return t('Moved: {reason}', { reason: reason.slice(movedPrefix.length) });
+  }
+  return reason;
+}

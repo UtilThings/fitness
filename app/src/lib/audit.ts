@@ -1,5 +1,5 @@
 import { computed } from 'vue';
-import { t } from '@/i18n';
+import { t, translateMessage } from '@/i18n';
 import { addLocalDays, localToUtcIso } from '@/lib/datetime';
 import { pb } from '@/lib/pocketbase';
 import type { AuditLog } from '@/types/pb';
@@ -83,4 +83,8 @@ export function formatDiff(diff: unknown) {
         ]
       : [],
   );
+}
+
+export function auditSummary(summary: string): string {
+  return translateMessage(summary);
 }

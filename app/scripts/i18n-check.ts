@@ -8,6 +8,7 @@ import {
 } from '@vue/compiler-dom';
 import { parse as parseSfc } from 'vue/compiler-sfc';
 import ts from 'typescript';
+import { readApiMessages } from './i18n-api';
 
 const calls = new Set(['t', '$t', 'te', 'tl']);
 
@@ -168,6 +169,8 @@ export function checkCatalog(
   sources: Record<string, string>,
   catalog: string,
   catalogFile: string,
+  api: ReadonlyMap<string, string> = new Map(),
+  checkApi = true,
 ): string[] {
   const { entries, errors } = readCatalog(catalog, catalogFile);
   const used: Keys = new Map();
@@ -180,8 +183,15 @@ export function checkCatalog(
         errors.push(`${path}: missing translation for "${key}"`);
     }
   }
+  if (checkApi) {
+    for (const [key, file] of api) {
+      if (!entries.has(key))
+        errors.push(`${file}: missing translation for "${key}"`);
+    }
+  }
   for (const key of entries.keys()) {
-    if (!used.has(key)) errors.push(`${catalogFile}: orphan key "${key}"`);
+    if (!used.has(key) && !api.has(key))
+      errors.push(`${catalogFile}: orphan key "${key}"`);
   }
   return errors;
 }
@@ -208,7 +218,13 @@ if (
       const sources = Object.fromEntries(
         sourceFiles('src').map((file) => [file, readFileSync(file, 'utf8')]),
       );
-      const errors = checkCatalog(sources, catalog, catalogFile);
+      const errors = checkCatalog(
+        sources,
+        catalog,
+        catalogFile,
+        readApiMessages(),
+        process.argv.includes('--api'),
+      );
       if (errors.length) {
         console.error(errors.join('\n'));
         process.exitCode = 1;

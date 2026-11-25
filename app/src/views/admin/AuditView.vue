@@ -10,7 +10,12 @@ import Select from 'primevue/select';
 import { computed, onMounted, reactive, shallowRef } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { AUDIT_PAGE_SIZE, useAuditLogs } from '@/composables/useAuditLogs';
-import { ACTION_LABELS, COLLECTION_LABELS, formatDiff } from '@/lib/audit';
+import {
+  ACTION_LABELS,
+  COLLECTION_LABELS,
+  auditSummary,
+  formatDiff,
+} from '@/lib/audit';
 import { formatDateTime } from '@/lib/datetime';
 import type { AuditLog } from '@/types/pb';
 
@@ -187,11 +192,9 @@ function displayValue(value: string | undefined) {
           COLLECTION_LABELS[data.collection] ?? data.collection
         }}</template>
       </Column>
-      <Column
-        field="summary"
-        :header="t('Summary')"
-        body-class="wrap-anywhere"
-      />
+      <Column field="summary" :header="t('Summary')" body-class="wrap-anywhere">
+        <template #body="{ data }">{{ auditSummary(data.summary) }}</template>
+      </Column>
       <Column :header="t('Changes')">
         <template #body="{ data }">
           <Button
@@ -216,7 +219,9 @@ function displayValue(value: string | undefined) {
       "
     >
       <template v-if="selected">
-        <p class="mb-1 wrap-anywhere font-medium">{{ selected.summary }}</p>
+        <p class="mb-1 wrap-anywhere font-medium">
+          {{ auditSummary(selected.summary) }}
+        </p>
         <p class="mb-4 wrap-anywhere text-sm">
           {{ t('Record') }} {{ selected.record_id }}
         </p>

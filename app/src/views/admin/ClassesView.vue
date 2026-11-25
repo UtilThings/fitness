@@ -25,6 +25,7 @@ import { useSchedule } from '@/composables/useSchedule';
 import { useSessionAvailability } from '@/composables/useSessionAvailability';
 import { useServices } from '@/composables/useServices';
 import {
+  formatCancellationReason,
   canReserveSession,
   type Booking,
   type SessionAvailability,
@@ -574,7 +575,9 @@ function generate() {
             v-if="session.status === 'cancelled'"
             class="text-sm text-red-700 dark:text-red-300"
             >{{
-              t('Canceled · {reason}', { reason: session.cancel_reason })
+              t('Canceled · {reason}', {
+                reason: formatCancellationReason(session.cancel_reason),
+              })
             }}</span
           >
           <span
@@ -650,7 +653,11 @@ function generate() {
           {{ serviceName(selected) }}
         </p>
         <p v-if="selected.status === 'cancelled'">
-          {{ t('Canceled · {reason}', { reason: selected.cancel_reason }) }}
+          {{
+            t('Canceled · {reason}', {
+              reason: formatCancellationReason(selected.cancel_reason),
+            })
+          }}
         </p>
         <p v-if="selected.status === 'completed'">{{ t('Completed') }}</p>
         <form

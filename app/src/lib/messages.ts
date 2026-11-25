@@ -38,35 +38,20 @@ export type MessageDraft = PreviewDraft & {
 };
 export type MessageTemplate = MessageDraft & { id: string };
 
+export function translateTemplateProblem(problem: {
+  message: string;
+  variable?: string;
+}) {
+  if (problem.variable) {
+    const variable = `{{${problem.variable}}}`;
+    return t('Variable not allowed: {variable}.', { variable });
+  }
+  return translateMessage(problem.message);
+}
+
 export function validateTemplate(template: Template) {
-  return templateProblems(template).map((problem) => {
-    let message = problem.message;
-    const limit = /^Máximo de (\d+) caracteres\.$/.exec(message)?.[1];
-    if (problem.variable) {
-      const variable = `{{${problem.variable}}}`;
-      message = t('Variable not allowed: {variable}.', { variable });
-    } else if (limit) {
-      message = t('Maximum of {max} characters.', { max: limit });
-    } else {
-      switch (message) {
-        case 'Clave de plantilla desconocida.':
-          message = t('Unknown template key.');
-          break;
-        case 'Este campo es obligatorio.':
-          message = t('This field is required.');
-          break;
-        case 'El asunto debe ocupar una sola línea.':
-          message = t('The subject must fit on one line.');
-          break;
-        case 'Usa variables con la sintaxis {{nombre}}.':
-          message = t('Use variables in the {syntax} format.', {
-            syntax: '{{nombre}}',
-          });
-          break;
-        default:
-          message = translateMessage(message);
-      }
-    }
-    return { ...problem, message };
-  });
+  return templateProblems(template).map((problem) => ({
+    ...problem,
+    message: translateTemplateProblem(problem),
+  }));
 }

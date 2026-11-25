@@ -69,7 +69,7 @@ onRecordValidate((e) => {
     try {
       startOfLocalDay(block[field], timezone);
     } catch {
-      throw fieldError(field, "Enter a valid date.");
+      throw fieldError(field, "Provide a valid date.");
     }
   }
   if (block.date_to < block.date_from) {

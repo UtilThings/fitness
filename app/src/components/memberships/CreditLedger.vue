@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { t } from '@/i18n';
+import { t, translateMessage } from '@/i18n';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import { computed } from 'vue';
@@ -60,7 +60,11 @@ const ordered = computed(() =>
           reasons[(data as CreditMovement).reason]
         }}</template>
       </Column>
-      <Column field="note" :header="t('Note')" />
+      <Column field="note" :header="t('Note')">
+        <template #body="{ data }">{{
+          data.reason === 'expire' ? translateMessage(data.note) : data.note
+        }}</template>
+      </Column>
       <Column :header="t('Booking')">
         <template #body="{ data }">
           <span v-if="data.booking" :title="data.booking">

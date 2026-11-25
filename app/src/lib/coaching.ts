@@ -1,11 +1,13 @@
 import { computed } from 'vue';
-import { t } from '@/i18n';
+import { t, translateMessage } from '@/i18n';
 import type { Client } from '@/lib/clients';
 import type { Membership } from '@/lib/memberships';
 import { roleCan } from '@/lib/permissions';
 import type { Admin } from '@/types/pb';
 import {
   programFlags,
+  validateCheckin as checkCheckin,
+  validateProgramInput as checkProgram,
   type ProgramAlert,
   type ProgramStatus,
 } from '../../../api/src/lib/coaching';
@@ -14,8 +16,6 @@ export {
   PROGRAM_DURATIONS,
   PROGRAM_STATUSES,
   programFlags,
-  validateCheckin,
-  validateProgramInput,
   type ProgramAlert,
   type ProgramStatus,
   type Trend,
@@ -127,3 +127,18 @@ export function safeProgramUrl(url: string): string | undefined {
     return undefined;
   }
 }
+
+function localizeValidation(errors: Record<string, string>) {
+  return Object.fromEntries(
+    Object.entries(errors).map(([field, message]) => [
+      field,
+      translateMessage(message),
+    ]),
+  );
+}
+
+export const validateCheckin: typeof checkCheckin = (...args) =>
+  localizeValidation(checkCheckin(...args));
+
+export const validateProgramInput: typeof checkProgram = (...args) =>
+  localizeValidation(checkProgram(...args));

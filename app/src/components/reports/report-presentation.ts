@@ -224,12 +224,18 @@ export function presentReport(
           {
             label: t('By plan'),
             columns: [plan, ...revenueMetrics],
-            rows: by_plan,
+            rows: by_plan.map((row) => ({
+              ...row,
+              name: row.plan ? row.name : t('No plan'),
+            })),
           },
           {
             label: t('By service'),
             columns: [service, ...revenueMetrics],
-            rows: by_service,
+            rows: by_service.map((row) => ({
+              ...row,
+              name: row.service ? row.name : t('No service'),
+            })),
           },
         ],
         chart: {
@@ -262,7 +268,10 @@ export function presentReport(
           {
             label: t('By plan'),
             columns: [plan, ...retentionMetrics],
-            rows: by_plan,
+            rows: by_plan.map((row) => ({
+              ...row,
+              name: row.plan ? row.name : t('No plan'),
+            })),
           },
         ],
         chart: {
