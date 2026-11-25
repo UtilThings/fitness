@@ -1,8 +1,9 @@
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
 import { mount } from '@vue/test-utils';
-import { afterEach, expect, it, vi } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { createSSRApp, nextTick } from 'vue';
 import { renderToString } from 'vue/server-renderer';
-import { setLocale, tl } from '@/i18n';
+import { tl } from '@/i18n';
 import LeadForm from './LeadForm.vue';
 
 const props = {
@@ -58,10 +59,7 @@ it('renders the form on the server', async () => {
   expect(html).toContain('<textarea');
 });
 
-afterEach(async () => {
-  await setLocale('en');
-  localStorage.clear();
-});
+resetLocaleAfterEach();
 
 it('translates form controls and confirmation without losing the selected option', async () => {
   const wrapper = mount(LeadForm, {
@@ -80,7 +78,7 @@ it('translates form controls and confirmation without losing the selected option
     },
   });
   await wrapper.get('select').setValue('Other');
-  await setLocale('es');
+  await useLocale('es');
   expect(wrapper.get('input').attributes('placeholder')).toBe(
     'Nombre completo',
   );

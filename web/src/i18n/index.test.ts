@@ -6,9 +6,10 @@ describe('web locale', () => {
     localStorage.clear();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    await (await import('./index')).setLocale('en');
     localStorage.clear();
     document.documentElement.lang = 'en';
   });

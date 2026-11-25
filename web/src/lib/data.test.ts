@@ -1,5 +1,6 @@
-import { formatMessage, resolveText, setLocale, tl } from '@/i18n';
-import { afterEach, expect, it } from 'vitest';
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
+import { formatMessage, resolveText, tl } from '@/i18n';
+import { expect, it } from 'vitest';
 import {
   availability,
   classTemplates,
@@ -43,13 +44,10 @@ it('provides the fallback plans and weekly class templates', () => {
   }
 });
 
-afterEach(async () => {
-  await setLocale('en');
-  localStorage.clear();
-});
+resetLocaleAfterEach();
 
 it('uses Spanish for free prices, plurals and clock time while keeping the business currency', async () => {
-  await setLocale('es');
+  await useLocale('es');
   expect(formatPrice(0, 'COP', 'es')).toBe('Gratis');
   expect(formatPrice(2345, 'COP', 'es')).toBe(
     new Intl.NumberFormat('es-US', {

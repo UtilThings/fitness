@@ -1,5 +1,13 @@
+import { formatMessage } from '@/i18n';
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
 import { expect, it } from 'vitest';
-import { classesForDay, formatRange, weekDays, weekStart } from './schedule';
+import {
+  classesForDay,
+  formatRange,
+  weekDays,
+  weekdayKeys,
+  weekStart,
+} from './schedule';
 
 it.each([
   ['2026-11-19T13:00:00Z', '2026-11-15'],
@@ -32,4 +40,26 @@ it('returns only fallback classes for the selected day and service', () => {
   expect(classesForDay(2, 'group-strength')).toHaveLength(3);
   expect(classesForDay(1, 'group-strength')).toEqual([]);
   expect(classesForDay(1, 'tropical-jump')).toHaveLength(1);
+});
+
+resetLocaleAfterEach();
+
+it('translates weekdays while calculating the week in the business timezone', async () => {
+  await useLocale('es');
+  const now = new Date('2026-08-23T04:30:00Z');
+  expect(weekStart(now, 0, 'America/Bogota').toISOString()).toBe(
+    '2026-08-16T00:00:00.000Z',
+  );
+  expect(weekStart(now, 0, 'America/New_York').toISOString()).toBe(
+    '2026-08-23T00:00:00.000Z',
+  );
+  expect(weekdayKeys.map((key) => formatMessage(key))).toEqual([
+    'domingo',
+    'lunes',
+    'martes',
+    'miércoles',
+    'jueves',
+    'viernes',
+    'sábado',
+  ]);
 });

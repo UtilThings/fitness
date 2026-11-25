@@ -1,7 +1,7 @@
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { PublicSession } from '@/lib/api';
-import { setLocale } from '@/i18n';
 import ScheduleBoard from './ScheduleBoard.vue';
 
 vi.mock('@/lib/env', () => ({
@@ -13,9 +13,9 @@ vi.mock('@/lib/env', () => ({
 }));
 
 beforeEach(() => vi.setSystemTime(new Date('2026-11-22T02:00:00Z')));
-afterEach(async () => {
-  await setLocale('en');
-  localStorage.clear();
+resetLocaleAfterEach();
+
+afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -113,7 +113,7 @@ it('requests the Miramar week and renders real availability, filters and transla
   const strength = wrapper.get('button:nth-child(2)');
   await strength.trigger('click');
   expect(wrapper.findAll('.card-surface')).toHaveLength(2);
-  await setLocale('es');
+  await useLocale('es');
   await wrapper.vm.$nextTick();
   expect(strength.text()).toBe('Fuerza en Grupo');
   expect(strength.attributes('aria-pressed')).toBe('true');
@@ -195,7 +195,7 @@ it('shows the bilingual fallback without seat counts and recovers through retry'
   expect(
     cards.every((card) => card.get('a').attributes('href') === '/contact'),
   ).toBe(true);
-  await setLocale('es');
+  await useLocale('es');
   await wrapper.vm.$nextTick();
   expect(wrapper.text()).toContain('Consulta disponibilidad');
   expect(wrapper.text()).toContain('Mostramos el horario semanal habitual.');
@@ -220,5 +220,45 @@ it('uses the navigation limit configured on the API', async () => {
   expect(
     wrapper.get<HTMLButtonElement>('[aria-label="Next week"]').element.disabled,
   ).toBe(true);
+  wrapper.unmount();
+});
+
+it('translates loading and empty states without refetching', async () => {
+  let respond!: (response: Response) => void;
+  const fetch = vi.fn(
+    () =>
+      new Promise<Response>((resolve) => {
+        respond = resolve;
+      }),
+  );
+  vi.stubGlobal('fetch', fetch);
+  const wrapper = mount(ScheduleBoard);
+  await useLocale('es');
+  expect(wrapper.get('[role="status"]').text()).toBe('Cargando clases…');
+  respond(schedule('2026-11-15', []));
+  await flushPromises();
+  expect(wrapper.get('[role="status"]').text()).toBe(
+    'No hay clases para mostrar esta semana.',
+  );
+  expect(fetch).toHaveBeenCalledTimes(1);
+  wrapper.unmount();
+});
+
+it('uses the Spanish singular for one spot left', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      schedule('2026-11-15', [
+        {
+          ...sessions[1],
+          spots_left: 1,
+        },
+      ]),
+    ),
+  );
+  const wrapper = mount(ScheduleBoard);
+  await flushPromises();
+  await useLocale('es');
+  expect(wrapper.get('.card-surface').text()).toMatch(/1 \/ 6 cupo(?!s)/);
   wrapper.unmount();
 });

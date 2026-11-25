@@ -1,4 +1,5 @@
-import { formatMessage, resolveText, setLocale, type Text } from '@/i18n';
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
+import { formatMessage, resolveText, type Text } from '@/i18n';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { CATALOG_SEED } from '../../../api/src/lib/catalog';
 import { getCatalog, toPlans } from './catalog';
@@ -17,9 +18,9 @@ beforeEach(() => {
   env.PUBLIC_API_URL = 'https://api.example.test';
 });
 
-afterEach(async () => {
-  await setLocale('en');
-  localStorage.clear();
+resetLocaleAfterEach();
+
+afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -179,7 +180,7 @@ it('uses local data with no API URL and makes no request', async () => {
 });
 
 it('translates generated text without altering a business name or note that matches a catalog key', async () => {
-  await setLocale('es');
+  await useLocale('es');
   const service = seededCatalog.services.find(
     ({ slug }) => slug === 'group-strength',
   )!;

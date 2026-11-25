@@ -1,6 +1,7 @@
+import { resetLocaleAfterEach, useLocale } from '@/test/i18n';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, expect, it, vi } from 'vitest';
-import { setLocale, tl } from '@/i18n';
+import { tl } from '@/i18n';
 import { jumpPlans } from '@/lib/data';
 import PricingGrid from './PricingGrid.vue';
 
@@ -12,9 +13,9 @@ vi.mock('@/lib/env', () => ({
   },
 }));
 
-afterEach(async () => {
-  await setLocale('en');
-  localStorage.clear();
+resetLocaleAfterEach();
+
+afterEach(() => {
   vi.unstubAllGlobals();
 });
 
@@ -79,7 +80,7 @@ it('renders the initial build plans while revalidating and uses updated cents', 
   expect(featured.get('a').attributes('href')).toBe('/schedule');
   await wrapper.vm.$nextTick();
   expect(wrapper.get('[role="status"]').text()).toBe('Updating…');
-  await setLocale('es');
+  await useLocale('es');
   expect(wrapper.get('[role="status"]').text()).toBe('Actualizando…');
   expect(featured.text()).toContain('Más popular');
   expect(featured.text()).toContain('Gratis');

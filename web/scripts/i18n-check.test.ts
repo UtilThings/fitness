@@ -87,3 +87,34 @@ describe('i18n catalog checker', () => {
     );
   });
 });
+
+it('reports raw template text and attributes, with exceptions for marks and brands', () => {
+  expect(
+    checkCatalog(
+      {
+        'src/page.astro':
+          '<h1>Raw heading</h1><img alt="Raw description" /><img alt="" /><span>JQ Fitness</span><title data-i18n={tl(`Title`)}>Title</title>',
+        'src/Widget.vue':
+          '<template><b>ES</b><button :aria-label="\'Raw label\'">Raw action</button></template>',
+      },
+      '{"Title":"Título"}',
+      file,
+    ),
+  ).toEqual([
+    'src/page.astro: unmarked template text "Raw heading"',
+    'src/page.astro: unmarked alt "Raw description"',
+    'src/Widget.vue: unmarked aria-label "Raw label"',
+    'src/Widget.vue: unmarked template text "Raw action"',
+  ]);
+});
+
+it('detects variables swapped between plural variants', () => {
+  const key = 'The {first} class | The {last} classes';
+  expect(
+    checkCatalog(
+      { 'src/a.ts': `t(${JSON.stringify(key)})` },
+      JSON.stringify({ [key]: 'La clase {last} | Las clases {first}' }),
+      file,
+    ),
+  ).toEqual([`es.json: inconsistent interpolation variables for "${key}"`]);
+});

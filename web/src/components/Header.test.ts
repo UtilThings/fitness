@@ -1,16 +1,14 @@
+import { resetLocaleAfterEach } from '@/test/i18n';
 import { flushPromises, mount } from '@vue/test-utils';
-import { afterEach, expect, it, vi } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { createSSRApp } from 'vue';
 import { renderToString } from 'vue/server-renderer';
-import { LANG_EVENT, setLocale, STORAGE_KEY } from '@/i18n';
+import { LANG_EVENT, STORAGE_KEY } from '@/i18n';
 import Header from './Header.vue';
 
 const props = { currentPath: '/pricing', logoSrc: '/logo.png' };
 
-afterEach(async () => {
-  await setLocale('en');
-  localStorage.clear();
-});
+resetLocaleAfterEach();
 
 it('highlights only the current route', () => {
   const wrapper = mount(Header, { props });
