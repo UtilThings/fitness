@@ -1,4 +1,5 @@
 ---
+import T from '@/components/T.astro';
 import { tl, type MessageKey } from '@/i18n';
 import CtaBand from '@/components/CtaBand.astro';
 import PageHero from '@/components/PageHero.astro';
@@ -10,31 +11,31 @@ import { getCatalog, type PlanGroup } from '@/lib/catalog';
 const catalog = await getCatalog();
 const { business } = catalog;
 const sections: {
-  title: string;
+  title: MessageKey;
   group: PlanGroup;
   cta: MessageKey;
   to: string;
 }[] = [
   {
-    title: 'Personal Training — 1-on-1',
+    title: tl('Personal Training — 1-on-1'),
     group: 'personalOneOnOne',
     cta: tl('Inquire now'),
     to: '/contact',
   },
   {
-    title: 'Personal Training — Partner',
+    title: tl('Personal Training — Partner'),
     group: 'personalPartner',
     cta: tl('Inquire now'),
     to: '/contact',
   },
   {
-    title: 'Group Strength',
+    title: tl('Group Strength'),
     group: 'groupPlans',
     cta: tl('Book now'),
     to: '/schedule',
   },
   {
-    title: 'Tropical Jump',
+    title: tl('Tropical Jump'),
     group: 'jumpPlans',
     cta: tl('Book now'),
     to: '/schedule',
@@ -44,17 +45,26 @@ const sections: {
 
 <BaseLayout
   business={business}
-  title={`Pricing & Packages | ${business.name}`}
+  title={{
+    key: tl("Pricing & Packages {'|'} {name}"),
+    params: { name: business.name },
+  }}
   description="Explore personal training packages, Group Strength memberships and Tropical Jump classes."
 >
   <PageHero
-    eyebrow="Pricing & Packages"
-    title="Invest in stronger."
-    sub="Transparent pricing. Packages billed in 4-week blocks unless noted. Online coaching pricing shared after consultation."
+    eyebrow={{ key: tl('Pricing & Packages') }}
+    title={{ key: tl('Invest in stronger.') }}
+    sub={{
+      key: tl(
+        'Transparent pricing. Packages billed in 4-week blocks unless noted. Online coaching pricing shared after consultation.',
+      ),
+    }}
   />
   {sections.map(({ title, group, cta, to }) => (
     <Section class="!py-10">
-      <h2 class="text-4xl">{title}</h2>
+      <h2 class="text-4xl">
+        <T message={title} />
+      </h2>
       <PricingGrid
         client:load
         class="mt-6"

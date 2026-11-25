@@ -2,7 +2,7 @@
 import PageHero from '@/components/PageHero.astro';
 import ScheduleBoard from '@/components/ScheduleBoard.vue';
 import Section from '@/components/Section.astro';
-import T from '@/components/T.astro';
+import { tl } from '@/i18n';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getCatalog } from '@/lib/catalog';
 const { business } = await getCatalog();
@@ -10,15 +10,21 @@ const { business } = await getCatalog();
 
 <BaseLayout
   business={business}
-  title={`Class Schedule | ${business.name}`}
+  title={{
+    key: tl("Class Schedule {'|'} {name}"),
+    params: { name: business.name },
+  }}
   description="See upcoming Group Strength and Tropical Jump classes and remaining spots this week."
 >
   <PageHero
-    title="Find your class."
-    sub="Pick a day, check the open spots, and reserve. Online booking with accounts is coming soon."
-  >
-    <T slot="eyebrow" k="Schedule" />
-  </PageHero>
+    title={{ key: tl('Find your class.') }}
+    sub={{
+      key: tl(
+        'Pick a day, check the open spots, and reserve. Online booking with accounts is coming soon.',
+      ),
+    }}
+    eyebrow={{ key: tl('Schedule') }}
+  />
   <Section class="min-h-[24rem] !pt-0">
     <ScheduleBoard client:only="vue" timezone={business.timezone} />
   </Section>
