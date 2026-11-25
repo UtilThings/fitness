@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
 import { computed, onMounted, ref } from 'vue';
@@ -26,24 +27,24 @@ onMounted(async () => {
 <template>
   <div class="grid gap-5">
     <PageHeader
-      title="Disponibilidad semanal"
-      description="Tramos en la hora local de Miramar"
+      :title="t('Weekly availability')"
+      :description="t('Time slots in Miramar local time')"
     >
       <template #actions>
         <RouterLink
           :to="{ name: 'coach-agenda' }"
           class="text-sm font-medium text-primary hover:underline"
-          >Volver a la agenda</RouterLink
+          >{{ t('Back to schedule') }}</RouterLink
         >
       </template>
     </PageHeader>
     <Select
       v-model="coach"
-      aria-label="Coach"
+      :aria-label="t('Coach')"
       :options="coachOptions"
       option-label="label"
       option-value="value"
-      placeholder="Selecciona un coach"
+      :placeholder="t('Select a coach')"
       class="w-full sm:w-64"
     />
     <Message v-if="coachesError" severity="error" :closable="false">{{
@@ -51,7 +52,7 @@ onMounted(async () => {
     }}</Message>
     <template v-if="coach">
       <p v-if="!editable" class="text-sm text-muted-color">
-        Disponibilidad de solo lectura.
+        {{ t('Read-only availability.') }}
       </p>
       <AvailabilityEditor :coach="coach" :readonly="!editable" />
     </template>

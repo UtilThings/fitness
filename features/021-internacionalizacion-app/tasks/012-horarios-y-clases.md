@@ -1,7 +1,7 @@
 # 012 - [Web] Horarios y clases
 
 - **Prioridad:** 12
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 009
 - **Fase:** Fase 3: Migración del texto de la interfaz
 
@@ -22,10 +22,10 @@ Texto fijo en español en: `views/admin/ClassTemplatesView.vue`, `ClassesView.vu
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
-- [ ] Con `en` no queda texto en español en las vistas y componentes del alcance; con `es` el texto coincide con el actual.
-- [ ] Sin `v-html` para texto traducido.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
+- [x] Con `en` no queda texto en español en las vistas y componentes del alcance; con `es` el texto coincide con el actual.
+- [x] Sin `v-html` para texto traducido.
 
 ## Referencias
 
@@ -37,3 +37,4 @@ Texto fijo en español en: `views/admin/ClassTemplatesView.vue`, `ClassesView.vu
 
 ## Notas de implementación
 
+Lint, comprobación de tipos, catálogo y suite completa en verde. Verificadas las clases, plantillas, bloqueos, franjas de disponibilidad y etiquetas de cupos. Los mensajes dinámicos usan variables nombradas y los conteos usan plurales.
