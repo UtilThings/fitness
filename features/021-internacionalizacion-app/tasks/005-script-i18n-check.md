@@ -1,7 +1,7 @@
 # 005 - [Pruebas] Script `i18n:check` de claves faltantes y huérfanas
 
 - **Prioridad:** 5
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002
 - **Fase:** Fase 1: Fundamentos
 
@@ -23,9 +23,9 @@ Con texto como clave, una clave sin traducción no da error (se ve en inglés). 
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] `bun run i18n:check` en verde con el catálogo actual y rojo ante cada fixture de fallo, con mensaje que indica archivo y clave.
-- [ ] `bun run i18n:sort` ordena `es.json` de forma estable.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] `bun run i18n:check` en verde con el catálogo actual y rojo ante cada fixture de fallo, con mensaje que indica archivo y clave.
+- [x] `bun run i18n:sort` ordena `es.json` de forma estable.
 
 ## Referencias
 
@@ -37,3 +37,4 @@ Con texto como clave, una clave sin traducción no da error (se ve en inglés). 
 
 ## Notas de implementación
 
+El catálogo coincide con el código y el ordenamiento es idempotente. Ocho pruebas cubren extracción en TypeScript y Vue, claves faltantes y huérfanas, duplicados, orden, variables inconsistentes y claves dinámicas. Lint, comprobación de tipos y suite completa en verde.

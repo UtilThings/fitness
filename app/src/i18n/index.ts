@@ -5,7 +5,10 @@ export type Locale = (typeof supportedLocales)[number];
 
 const localeKey = 'locale';
 
-export function resolveLocale(preference?: string | null, browserLanguage?: string): Locale {
+export function resolveLocale(
+  preference?: string | null,
+  browserLanguage?: string,
+): Locale {
   if (preference != null) return preference === 'es' ? 'es' : 'en';
   return browserLanguage?.toLowerCase().split('-')[0] === 'es' ? 'es' : 'en';
 }
@@ -20,6 +23,13 @@ export const i18n = createI18n({
 });
 
 export const { locale, t, te } = i18n.global;
+
+export function tl<Key extends string>(key: Key): Key {
+  return key;
+}
+
+// These keys seed the navigation migration.
+export const initialNavKeys = [tl('Dashboard'), tl('Settings'), tl('Sign out')];
 
 let spanishMessages: Promise<Record<string, string>> | undefined;
 let latestRequest = 0;
