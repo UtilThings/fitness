@@ -1,27 +1,73 @@
 import {
-  dictionary,
-  isLang,
+  formatMessage,
+  i18n,
+  initializeLocale,
   LANG_EVENT,
-  readStoredLang,
-  translate,
-  type Key,
-  type Lang,
-} from '@/lib/i18n';
+  locale,
+  type Params,
+} from '@/i18n';
+import { translatableAttributes } from '@/i18n/attrs';
 
-function applyLanguage(lang: Lang) {
-  for (const element of document.querySelectorAll<HTMLElement>('[data-i18n]')) {
-    const key = element.dataset.i18n;
-    if (key && Object.hasOwn(dictionary.en, key)) {
-      element.textContent = translate(lang, key as Key);
+const originals = new WeakMap<Element, Map<string, string>>();
+const targets = ['', ...translatableAttributes] as const;
+
+function readParams(raw: string | null): Params | undefined {
+  if (!raw) return;
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      Object.values(value).every(
+        (entry) => typeof entry === 'string' || typeof entry === 'number',
+      )
+    ) {
+      return value as Params;
     }
+  } catch {
+    // An invalid parameter payload should not break the page.
   }
 }
 
-applyLanguage(
-  readStoredLang({ getItem: (key) => window.localStorage.getItem(key) }),
-);
+export function applyLanguage(root: Document = document) {
+  const catalog = i18n.global.getLocaleMessage('es');
+  for (const target of targets) {
+    const suffix = target ? `-${target}` : '';
+    const marker = `data-i18n${suffix}`;
+    for (const element of root.querySelectorAll(`[${marker}]`)) {
+      const key = element.getAttribute(marker);
+      if (!key || !Object.hasOwn(catalog, key)) continue;
 
-window.addEventListener(LANG_EVENT, (event) => {
-  const lang: unknown = (event as CustomEvent<unknown>).detail;
-  if (isLang(lang)) applyLanguage(lang);
-});
+      const original = target
+        ? element.getAttribute(target)
+        : element.textContent;
+      if (original === null) continue;
+      let values = originals.get(element);
+      if (!values) {
+        values = new Map();
+        originals.set(element, values);
+      }
+      if (!values.has(target)) values.set(target, original);
+
+      const value =
+        locale.value === 'es'
+          ? formatMessage(
+              key,
+              readParams(element.getAttribute(`data-i18n-params${suffix}`)),
+              'es',
+            )
+          : (values.get(target) ?? original);
+      if (target) element.setAttribute(target, value);
+      else element.textContent = value;
+    }
+  }
+  root.documentElement.lang = locale.value;
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener(LANG_EVENT, () => applyLanguage());
+  void initializeLocale()
+    .then(() => applyLanguage())
+    .catch(console.error);
+}

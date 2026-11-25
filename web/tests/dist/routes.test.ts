@@ -105,12 +105,14 @@ describe('static routes', () => {
 describe('shared page components in the build', () => {
   it('renders translated CTA text and its link', () => {
     const { document } = page('');
-    const title = document.querySelector('h2 [data-i18n=ctaTitle]');
+    const title = document.querySelector(
+      'h2 [data-i18n="Your first class is on us."]',
+    );
     expect(title?.textContent).toBe('Your first class is on us.');
     const band = title?.closest('section');
-    expect(band?.querySelector('[data-i18n=ctaSub]')?.textContent).toContain(
-      'Try Tropical Jump',
-    );
+    expect(
+      band?.querySelector('[data-i18n^="Try Tropical Jump"]')?.textContent,
+    ).toContain('Try Tropical Jump');
     expect(band?.querySelector('a')?.getAttribute('href')).toBe('/schedule');
   });
 

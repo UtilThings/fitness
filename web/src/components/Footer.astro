@@ -31,7 +31,7 @@ const prefix = words.slice(0, -1).join(' ');
     <nav aria-label="Footer menu" class="grid grid-cols-2 gap-2 text-sm">
       {navigation.map(({ key, href }) => (
         <a class="text-muted-foreground hover:text-primary" href={href}>
-          <T k={key} />
+          <T message={key} />
         </a>
       ))}
     </nav>
@@ -39,7 +39,7 @@ const prefix = words.slice(0, -1).join(' ');
       <p class="eyebrow mb-2">Studio</p>
       <p>{business.city}</p>
       <a class="mt-4 inline-block text-primary" href="/contact">
-        <T k="contact" /> →
+        <T k="Contact" /> →
       </a>
     </div>
   </div>

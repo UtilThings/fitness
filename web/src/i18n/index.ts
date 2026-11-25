@@ -16,8 +16,26 @@ export const i18n = createI18n({
 
 export const { locale, t } = i18n.global;
 
-export function tl<Key extends string>(key: Key): Key {
-  return key;
+declare const markedKey: unique symbol;
+export type MessageKey = string & { readonly [markedKey]: true };
+export type Params = Record<string, string | number>;
+export interface Message {
+  key: MessageKey;
+  params?: Params;
+}
+
+export function tl<Key extends string>(key: Key): Key & MessageKey {
+  return key as Key & MessageKey;
+}
+
+const compose = i18n.global.t;
+
+export function formatMessage(
+  key: string,
+  params: Params = {},
+  language: Locale = resolveLocale(locale.value),
+): string {
+  return compose(key, params, { locale: language });
 }
 
 export function resolveLocale(value?: string | null): Locale {

@@ -18,7 +18,7 @@ const brand = computed(() => {
   return { prefix: words.slice(0, -1).join(' '), accent: words.at(-1) };
 });
 
-const { lang, setLang, t } = useLang();
+const { lang, setLang, t, translateKey } = useLang();
 const menuOpen = ref(false);
 const languages = ['en', 'es'] as const;
 
@@ -57,7 +57,7 @@ function isCurrent(current: string, href: string) {
               ? 'text-primary'
               : 'text-muted-foreground hover:text-foreground'
           "
-          >{{ t(key) }}</a
+          >{{ translateKey(key) }}</a
         >
       </nav>
       <div class="flex items-center gap-3">
@@ -83,7 +83,7 @@ function isCurrent(current: string, href: string) {
         <a
           href="/schedule"
           class="btn btn-primary hidden !px-4 !py-2 sm:inline-flex"
-          >{{ t('book') }}</a
+          >{{ t('Book your class') }}</a
         >
         <button
           type="button"
@@ -122,7 +122,7 @@ function isCurrent(current: string, href: string) {
         :aria-current="isCurrent(currentPath, href) ? 'page' : undefined"
         class="py-2 font-display text-xl uppercase"
         @click="menuOpen = false"
-        >{{ t(key) }}</a
+        >{{ translateKey(key) }}</a
       >
     </nav>
   </header>

@@ -12,17 +12,6 @@ import ts from 'typescript';
 import { readCatalog, sortCatalog } from './i18n-catalog';
 
 const calls = new Set(['t', '$t', 'te', 'tl']);
-const heritageFiles = new Set([
-  'src/lib/i18n.ts',
-  'src/components/T.astro',
-  'src/components/Header.vue',
-  'src/components/Footer.astro',
-  'src/components/CtaBand.astro',
-  'src/components/ScheduleBoard.vue',
-  'src/pages/index.astro',
-  'src/pages/schedule.astro',
-]);
-
 interface AstroNode {
   type: string;
   start?: number;
@@ -263,17 +252,6 @@ if (
       const sources = Object.fromEntries(
         files.map((file) => [file, readFileSync(file, 'utf8')]),
       );
-      // Until task 004 replaces the old consumers, their English dictionary defines the keys.
-      const legacy = sources['src/lib/i18n.ts'];
-      if (legacy) {
-        for (const path of heritageFiles) delete sources[path];
-        const english = legacy.match(/const en = \{([\s\S]*?)\n\};/)?.[1] ?? '';
-        sources['src/lib/i18n.ts'] = [
-          ...english.matchAll(/:\s*('(?:[^'\\]|\\.)*')/g),
-        ]
-          .map(([, key]) => `tl(${key});`)
-          .join('\n');
-      }
       const errors = checkCatalog(sources, content, catalogFile);
       if (errors.length) {
         console.error(errors.join('\n'));

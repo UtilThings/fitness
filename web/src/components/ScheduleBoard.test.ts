@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { PublicSession } from '@/lib/api';
-import { LANG_EVENT } from '@/lib/i18n';
+import { setLocale } from '@/i18n';
 import ScheduleBoard from './ScheduleBoard.vue';
 
 vi.mock('@/lib/env', () => ({
@@ -13,7 +13,9 @@ vi.mock('@/lib/env', () => ({
 }));
 
 beforeEach(() => vi.setSystemTime(new Date('2026-11-22T02:00:00Z')));
-afterEach(() => {
+afterEach(async () => {
+  await setLocale('en');
+  localStorage.clear();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -108,7 +110,7 @@ it('requests the Miramar week and renders real availability, filters and transla
   expect(almost.get('.text-accent').text()).toBe('Almost full');
   expect(available.get('a').text()).toBe('Reserve');
 
-  window.dispatchEvent(new CustomEvent(LANG_EVENT, { detail: 'es' }));
+  await setLocale('es');
   await wrapper.vm.$nextTick();
   expect(full.text()).toContain('Lista de espera');
   expect(almost.text()).toContain('Casi lleno');
@@ -178,7 +180,7 @@ it('shows the bilingual fallback without seat counts and recovers through retry'
   expect(
     cards.every((card) => card.get('a').attributes('href') === '/contact'),
   ).toBe(true);
-  window.dispatchEvent(new CustomEvent(LANG_EVENT, { detail: 'es' }));
+  await setLocale('es');
   await wrapper.vm.$nextTick();
   expect(wrapper.text()).toContain('Consulta disponibilidad');
   expect(wrapper.text()).toContain('Mostramos el horario semanal habitual.');

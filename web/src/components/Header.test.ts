@@ -1,13 +1,16 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, expect, it, vi } from 'vitest';
 import { createSSRApp } from 'vue';
 import { renderToString } from 'vue/server-renderer';
-import { LANG_EVENT, STORAGE_KEY } from '@/lib/i18n';
+import { LANG_EVENT, setLocale, STORAGE_KEY } from '@/i18n';
 import Header from './Header.vue';
 
 const props = { currentPath: '/pricing', logoSrc: '/logo.png' };
 
-afterEach(() => localStorage.clear());
+afterEach(async () => {
+  await setLocale('en');
+  localStorage.clear();
+});
 
 it('highlights only the current route', () => {
   const wrapper = mount(Header, { props });
@@ -34,14 +37,26 @@ it('toggles the eight mobile links and closes on selection', async () => {
 it('translates, dispatches the event and restores the stored language', async () => {
   const wrapper = mount(Header, { props });
   const change = vi.fn();
-  window.addEventListener(LANG_EVENT, change, { once: true });
+  const changed = new Promise<void>((resolve) => {
+    window.addEventListener(
+      LANG_EVENT,
+      (event) => {
+        change(event);
+        resolve();
+      },
+      { once: true },
+    );
+  });
   await wrapper.get('button:nth-child(2)').trigger('click');
+  await changed;
+  await flushPromises();
   expect(wrapper.get('nav a[href="/schedule"]').text()).toBe('Horario');
   expect(localStorage.getItem(STORAGE_KEY)).toBe('es');
   expect(change.mock.calls[0][0].detail).toBe('es');
   wrapper.unmount();
 
   const restored = mount(Header, { props });
+  await restored.vm.$nextTick();
   expect(restored.get('nav a[href="/schedule"]').text()).toBe('Horario');
   restored.unmount();
 });

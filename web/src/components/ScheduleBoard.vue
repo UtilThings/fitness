@@ -15,6 +15,7 @@ import {
   type ServiceFilter,
 } from '@/lib/schedule';
 import { fallbackBusiness } from '@/lib/data';
+import { tl } from '@/i18n';
 import { useLang } from '@/lib/use-lang';
 
 const filters = {
@@ -29,6 +30,13 @@ const statusColor = {
   checkAvailability: 'text-muted-foreground',
 };
 
+const statusLabels = {
+  full: tl('Full'),
+  almost: tl('Almost full'),
+  available: tl('Available'),
+  checkAvailability: tl('Check availability'),
+};
+
 interface ClassCard {
   time: string;
   service: string;
@@ -38,7 +46,7 @@ interface ClassCard {
 
 const props = defineProps<{ timezone?: string }>();
 const timezone = ref(props.timezone ?? fallbackBusiness.timezone);
-const { lang, t } = useLang();
+const { lang, t, translateKey } = useLang();
 const locale = computed(() => (lang.value === 'es' ? 'es-US' : 'en-US'));
 const weekday = computed(
   () =>
@@ -203,7 +211,7 @@ function moveWeek(increment: number) {
     </div>
     <div class="mt-8 space-y-4" :aria-busy="state === 'loading'">
       <div v-if="state === 'loading'" role="status">
-        <p class="text-sm text-muted-foreground">{{ t('loading') }}</p>
+        <p class="text-sm text-muted-foreground">{{ t('Loading classes…') }}</p>
         <div
           class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
           aria-hidden="true"
@@ -216,9 +224,16 @@ function moveWeek(increment: number) {
         </div>
       </div>
       <div v-if="state === 'error'" class="rounded-xl border border-border p-4">
-        <p role="status">{{ t('loadError') }} {{ t('fallbackNotice') }}</p>
+        <p role="status">
+          {{ t('The live schedule couldn’t be loaded.') }}
+          {{
+            t(
+              'Showing the regular weekly schedule. Contact us to check availability.',
+            )
+          }}
+        </p>
         <button class="btn btn-outline mt-3" type="button" @click="retry++">
-          {{ t('retry') }}
+          {{ t('Try again') }}
         </button>
       </div>
       <p
@@ -226,7 +241,7 @@ function moveWeek(increment: number) {
         class="text-muted-foreground"
         role="status"
       >
-        {{ t('noClasses') }}
+        {{ t('No classes to show this week.') }}
       </p>
       <div
         v-for="{ date, classes } in schedule"
@@ -260,12 +275,16 @@ function moveWeek(increment: number) {
                 :class="
                   statusColor[availability?.status ?? 'checkAvailability']
                 "
-                >{{ t(availability?.status ?? 'checkAvailability') }}</span
+                >{{
+                  translateKey(
+                    statusLabels[availability?.status ?? 'checkAvailability'],
+                  )
+                }}</span
               >
             </div>
             <p v-if="availability" class="mt-3 text-sm text-muted-foreground">
               {{ availability.spots_left }} / {{ availability.capacity }}
-              {{ t('spots') }}
+              {{ t('spots left') }}
             </p>
             <a
               href="/contact"
@@ -274,13 +293,11 @@ function moveWeek(increment: number) {
                 availability?.status === 'full' ? 'btn-outline' : 'btn-primary'
               "
               >{{
-                t(
-                  availability?.status === 'full'
-                    ? 'waitlist'
-                    : availability
-                      ? 'reserve'
-                      : 'contact',
-                )
+                availability?.status === 'full'
+                  ? t('Join waitlist')
+                  : availability
+                    ? t('Reserve')
+                    : t('Contact')
               }}</a
             >
           </div>

@@ -17,7 +17,7 @@ const { business } = await getCatalog();
     title="Find your class."
     sub="Pick a day, check the open spots, and reserve. Online booking with accounts is coming soon."
   >
-    <T slot="eyebrow" k="schedule" />
+    <T slot="eyebrow" k="Schedule" />
   </PageHero>
   <Section class="min-h-[24rem] !pt-0">
     <ScheduleBoard client:only="vue" timezone={business.timezone} />
