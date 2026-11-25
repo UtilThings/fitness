@@ -7,5 +7,6 @@
 !app/vitest.config.ts
 !app/nginx.conf
 !app/public/**
+!app/scripts/i18n-api.ts
 !app/src/**
 !api/src/lib/*.ts
