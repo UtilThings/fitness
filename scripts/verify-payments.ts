@@ -133,7 +133,7 @@ await action(first, "pay", { method: "card" }, 409);
 await call(`${payments}/${first.id}`, owner, "DELETE", undefined, 403);
 const query = new URLSearchParams({ filter: `record_id = '${first.id}' && action = 'custom'` });
 const { items: logs } = await call<{ items: { summary: string; actor: string }[] }>(records("audit_logs") + "?" + query, owner);
-assert.deepEqual(logs.map(log => [log.summary, log.actor]).sort(), [["Pago anulado", cashier.id], ["Pago registrado", cashier.id]]);
+assert.deepEqual(logs.map(log => [log.summary, log.actor]).sort(), [["Payment recorded.", cashier.id], ["Payment voided.", cashier.id]]);
 const lastYear = Number(today.slice(0, 4)) - 1;
 const prior = await create({ ...paidBody, paid_at: `${lastYear}-12-31` });
 assert.equal(prior.receipt_number, `JQ-${lastYear}-000001`);

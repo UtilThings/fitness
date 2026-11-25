@@ -18,7 +18,7 @@ function records(app: core.App, collection: string, filter: string, params: dbx.
 
 function expand(app: core.App, entries: core.Record[], fields: string[]) {
   if (Object.keys(app.expandRecords(entries, fields, null)).length) {
-    throw new InternalServerError("No se pudieron cargar las relaciones del reporte.");
+    throw new InternalServerError("Could not load the related report records.");
   }
 }
 
@@ -29,7 +29,7 @@ function isoField(record: core.Record, field: string) {
 function loadReport(e: core.RequestEvent, kind: Kind) {
   requireBookingStaff(e);
   if (kind === "revenue" && e.auth?.getString("role") !== "owner") {
-    throw new ForbiddenError("No tienes permiso para ver este reporte.");
+    throw new ForbiddenError("You do not have permission to view this report.");
   }
 
   const query = e.request.url.query();
@@ -40,10 +40,10 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
   const range = parseRange(query.get("from"), query.get("to"), timezone);
   const groupBy = query.has("group_by") ? query.get("group_by") : "month";
   if (groupBy !== "day" && groupBy !== "week" && groupBy !== "month") {
-    throw new ReportRangeError("La agrupación debe ser day, week o month.");
+    throw new ReportRangeError("Group by day, week, or month.");
   }
   if ((kind === "revenue" || kind === "retention") && groupBy === "day" && rangeDays(range) > 92) {
-    throw new ReportRangeError("La agrupación diaria admite hasta 92 días.");
+    throw new ReportRangeError("Daily grouping supports up to 92 days.");
   }
 
   const app = e.app;
@@ -51,7 +51,7 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
   const selected = service === undefined
     ? undefined
     : app.findRecordsByFilter("services", "business = {:business} && slug = {:slug}", "", 1, 0, { business, slug: service })[0];
-  if (service !== undefined && !selected) throw new ReportRangeError("El servicio indicado no existe.");
+  if (service !== undefined && !selected) throw new ReportRangeError("The selected service does not exist.");
 
   const start = pocketBaseDate(range.start_utc);
   const end = pocketBaseDate(range.end_utc);
@@ -70,7 +70,7 @@ function loadReport(e: core.RequestEvent, kind: Kind) {
       const relatedService = record.expandedOne("service");
       return {
         id: record.id, starts_at: isoField(record, "starts_at"), status: record.getString("status"),
-        service: relatedService?.getString("slug") ?? "", name: relatedService?.getString("name") ?? "Sin servicio",
+        service: relatedService?.getString("slug") ?? "", name: relatedService?.getString("name") ?? "No service",
         coach_name: record.expandedOne("coach")?.getString("name") ?? "", capacity: record.getInt("capacity"),
       };
     });

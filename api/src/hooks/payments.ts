@@ -22,11 +22,11 @@ routerAdd("POST", "/api/admin/payments/{id}/void", e => {
 });
 
 onRecordDelete(() => {
-  throw new ForbiddenError("Los pagos se conservan en el historial.");
+  throw new ForbiddenError("Payments are retained in the history.");
 }, "payments");
 
 function blockPaymentRecordWrite() {
-  throw new ForbiddenError("Gestiona los pagos mediante las rutas de cobros.");
+  throw new ForbiddenError("Manage payments through the charge endpoints.");
 }
 
 // PocketBase superusers bypass collection rules, so also protect direct HTTP writes.

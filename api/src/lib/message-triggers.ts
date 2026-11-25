@@ -13,7 +13,7 @@ function dispatch(app: MessageApp, clientId: string, key: ServiceKey, dedupeKey:
     const context = serviceContext(app, key, session, dedupeKey, business);
     if (context) sendServiceMessage(app, { key, dedupeKey, client, context, session: session?.id });
   } catch {
-    app.logger().error("No se pudo preparar el mensaje del servicio.", "key", key);
+    app.logger().error("Could not prepare the service message.", "key", key);
   }
 }
 

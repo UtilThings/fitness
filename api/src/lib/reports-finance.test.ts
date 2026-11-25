@@ -22,7 +22,7 @@ test("groups paid cents by local month, plan and service while reporting unpaid 
   const result = aggregateRevenue(payments, plans, services, options);
   expect(result.totals).toEqual({ paid_cents: 26_800, void_cents: 200, pending_cents: 100, payments: 5 });
   expect(result.by_plan.map(({ name, paid_cents }) => [name, paid_cents])).toEqual([
-    ["Fuerza mensual", 8_000], ["Sin plan", 18_800],
+    ["Fuerza mensual", 8_000], ["No plan", 18_800],
   ]);
   expect(result.by_period.map(({ period, paid_cents }) => [period, paid_cents])).toEqual([
     ["2026-10", 8_000], ["2026-11", 18_800], ["2026-12", 0], ["2027-01", 0],
@@ -59,5 +59,5 @@ test("keeps recorded civil dates and rejects mixed currencies", () => {
   const row = { ...paid(500, "2026-11-01T00:00:00.000Z"), paid_on: "2026-11-01" };
   expect(aggregateRevenue([row], plans, services, options).by_period[1].paid_cents).toBe(500);
   expect(() => aggregateRevenue([row, { ...row, currency: "COP" }], plans, services, options))
-    .toThrow("El rango incluye pagos en otra moneda.");
+    .toThrow("The range includes payments in another currency.");
 });

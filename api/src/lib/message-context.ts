@@ -5,7 +5,7 @@ type MessageLookup = Pick<core.App, "findRecordsByFilter">;
 
 export function getBusinessContext(app: MessageLookup, business: string) {
   const record = getBusiness(app, business);
-  if (!record) throw new NotFoundError("No se encontró el negocio.");
+  if (!record) throw new NotFoundError("Business not found.");
   return {
     name: record.getString("name"), phone: record.getString("phone"),
     email: record.getString("email"), city: record.getString("city"),
@@ -46,7 +46,10 @@ export function serviceContext(app: MessageLookup, key: ServiceKey, session: cor
       const vars = classVariables(app, session, locale);
       if (key === "class_cancelled") {
         const cancelled = session.getString("status") === "cancelled";
-        const reason = session.getString("cancel_reason");
+        const storedReason = session.getString("cancel_reason");
+        const reason = locale === "es"
+          ? storedReason.replace(/^Schedule block: /, "Bloqueo: ").replace(/^Moved: /, "Movida: ")
+          : storedReason;
         vars.cancel_reason = cancelled
           ? (locale === "es" ? "La clase se canceló." : "The class was cancelled.") + (reason ? " " + reason : "")
           : (locale === "es" ? "La clase cambió de horario o de coach." : "The class time or coach has changed.");

@@ -25,10 +25,10 @@ export function parseRange(from: string, to: string, timezone: string): ReportRa
     start = localDateToUtc(from, timezone);
     end = localDateToUtc(addLocalDays(to, 1), timezone);
   } catch {
-    throw new ReportRangeError("Indica fechas válidas en formato AAAA-MM-DD.");
+    throw new ReportRangeError("Enter valid dates in YYYY-MM-DD format.");
   }
-  if (to < from) throw new ReportRangeError("La fecha final debe ser igual o posterior a la inicial.");
-  if (rangeDays({ from, to }) > 366) throw new ReportRangeError("El rango admite hasta 366 días.");
+  if (to < from) throw new ReportRangeError("The end date must be on or after the start date.");
+  if (rangeDays({ from, to }) > 366) throw new ReportRangeError("The range can contain up to 366 days.");
   return { from, to, timezone, start_utc: start, end_utc: end };
 }
 

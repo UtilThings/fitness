@@ -94,17 +94,17 @@ function validDate(date: string) {
 
 export function validateProgramInput(input: Program): ValidationErrors {
   const errors: ValidationErrors = {};
-  if (!PROGRAM_STATUSES.some((status) => status === input.status)) errors.status = "Selecciona un estado válido.";
-  if (!PROGRAM_DURATIONS.some((weeks) => weeks === input.duration_weeks)) errors.duration_weeks = "Selecciona 8, 12 o 16 semanas.";
-  if (!validDate(input.starts_on)) errors.starts_on = "Indica una fecha de inicio válida.";
-  if (input.renews_on && !validDate(input.renews_on)) errors.renews_on = "Indica una fecha de renovación válida.";
+  if (!PROGRAM_STATUSES.some((status) => status === input.status)) errors.status = "Select a valid status.";
+  if (!PROGRAM_DURATIONS.some((weeks) => weeks === input.duration_weeks)) errors.duration_weeks = "Select 8, 12, or 16 weeks.";
+  if (!validDate(input.starts_on)) errors.starts_on = "Enter a valid start date.";
+  if (input.renews_on && !validDate(input.renews_on)) errors.renews_on = "Enter a valid renewal date.";
   return errors;
 }
 
 export function validateCheckin(input: Checkin, program: { status: string }, today: string): ValidationErrors {
   const errors: ValidationErrors = {};
-  if (program.status === "ended") errors.program = "El programa está finalizado.";
-  if (!validDate(input.checked_at) || input.checked_at > today) errors.checked_at = "Indica una fecha válida hasta hoy.";
-  if (!Number.isInteger(input.adherence) || input.adherence < 1 || input.adherence > 5) errors.adherence = "La adherencia debe ser un entero entre 1 y 5.";
+  if (program.status === "ended") errors.program = "The program has ended.";
+  if (!validDate(input.checked_at) || input.checked_at > today) errors.checked_at = "Enter a valid date on or before today.";
+  if (!Number.isInteger(input.adherence) || input.adherence < 1 || input.adherence > 5) errors.adherence = "Adherence must be a whole number from one to five.";
   return errors;
 }

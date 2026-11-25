@@ -1,7 +1,7 @@
 # 022 - [Hooks] Mensajes en inglés del API: clientes, membresías, pagos, coaching, mensajes y reportes
 
 - **Prioridad:** 22
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 019
 - **Fase:** Fase 4: Mensajes del API
 
@@ -23,10 +23,10 @@ Archivos del alcance: `hooks/clients.ts`, `memberships.ts`, `memberships-cron.ts
 
 ## Criterios de aceptación
 
-- [ ] `cd api && bun test` y `bun run build` pasan en verde; `api/pb_hooks/` regenerado.
-- [ ] Ningún texto de usuario en español queda en los archivos del alcance (`grep -P '[áéíóúñ¿¡]'` sin coincidencias en cadenas de mensajes).
-- [ ] Códigos HTTP y `code` de errores sin cambios.
-- [ ] Los `scripts/verify-*.ts` relacionados terminan en verde.
+- [x] `cd api && bun test` y `bun run build` pasan en verde; `api/pb_hooks/` regenerado.
+- [x] Ningún texto de usuario en español queda en los archivos del alcance (`grep -P '[áéíóúñ¿¡]'` sin coincidencias en cadenas de mensajes).
+- [x] Códigos HTTP y `code` de errores sin cambios.
+- [x] Los `scripts/verify-*.ts` relacionados terminan en verde.
 
 ## Referencias
 
@@ -39,3 +39,4 @@ Archivos del alcance: `hooks/clients.ts`, `memberships.ts`, `memberships-cron.ts
 
 ## Notas de implementación
 
+Pasaron 123 pruebas del API, la compilación de hooks y verify-api.sh. Los mensajes dinámicos se estabilizaron. Las verificaciones de SMTP de captura confirmaron los dos idiomas de correo. Los códigos y estados HTTP conservaron su contrato.

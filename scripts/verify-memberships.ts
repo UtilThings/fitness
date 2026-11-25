@@ -125,7 +125,7 @@ const cancelled = await action("cancel", { note: "Solicitud del cliente" });
 assert.equal(cancelled.membership.status, "cancelled");
 assert.equal(cancelled.membership.ended_on.slice(0, 10), today);
 assert.equal(cancelled.membership.credits_balance, 0);
-assert.match(cancelled.membership.notes, /anticipada/);
+assert.match(cancelled.membership.notes, /canceled early/i);
 await action("renew", {}, 409);
 
 const expired = await call<Membership>(memberships, root, "POST", {
@@ -139,8 +139,8 @@ const { items: audit } = await call<{ items: { summary: string }[] }>(
   records("audit_logs") + filter(`collection = 'memberships' && record_id = '${id}' && action = 'custom'`), owner,
 );
 assert.deepEqual(audit.map(({ summary }) => summary).sort(), [
-  "Cancelación anticipada de membresía", "Créditos ajustados", "Membresía pausada",
-  "Membresía reanudada", "Membresía renovada", "Plan asignado",
+  "Membership canceled early.", "Credits adjusted.", "Membership paused.",
+  "Membership resumed.", "Membership renewed.", "Plan assigned.",
 ].sort());
 console.log("Gestión de membresías, auditoría y rollback verificados.");
 
@@ -267,7 +267,7 @@ for (const membership of [withinGrace, afterGrace]) {
   const { items: audit } = await call<{ items: { summary: string }[] }>(
     records("audit_logs") + filter(`record_id = '${membership.id}' && action = 'custom'`), owner,
   );
-  assert(audit.some(({ summary }) => /venci|vencid/.test(summary)));
+  assert(audit.some(({ summary }) => /expired/i.test(summary)));
 }
 assert.deepEqual(await runDaily(), { expiredCredits: 0, expiredMemberships: 0 });
 assert.equal((await ledger(daySeven)).filter(({ reason }) => reason === "expire").length, 1);

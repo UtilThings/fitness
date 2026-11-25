@@ -17,14 +17,14 @@ export { membershipToday } from "./membership-cycles";
 export function membershipError(status: number, code: string, message: string, clientId?: string) {
   return new ApiError(status, message, {
     code: new ValidationError(code, message),
-    ...(clientId && { client: new ValidationError(clientId, "Identificador del cliente afectado.") }),
+    ...(clientId && { client: new ValidationError(clientId, "Identifier of the affected client.") }),
   });
 }
 
 export function requireMembershipRole(event: core.RequestEvent, roles: readonly string[]) {
   const actor = event.auth;
   if (actor?.collection().name !== "admins" || !actor.getBool("active") || !roles.includes(actor.getString("role"))) {
-    throw membershipError(403, "forbidden", "Tu rol no permite esta operación.");
+    throw membershipError(403, "forbidden", "Your role does not allow this operation.");
   }
   return actor.id;
 }
@@ -46,7 +46,7 @@ function requiredText(value: unknown, field: string, message: string) {
 }
 
 function optionalNotes(value: unknown) {
-  return value === undefined || value === "" ? "" : requiredText(value, "notes", "Indica observaciones válidas.");
+  return value === undefined || value === "" ? "" : requiredText(value, "notes", "Enter valid notes.");
 }
 
 function appendNotes(record: core.Record, note: string) {
@@ -62,7 +62,7 @@ export function recordMovement(app: core.App, membership: core.Record, delta: nu
   actor = "", booking = "", note = "",
 }: MovementOptions = {}) {
   if (!Number.isInteger(delta) || delta === 0 || (reason === "adjust" && !note.trim())) {
-    throw membershipError(400, "invalid_movement", "Indica un ajuste entero distinto de cero y su motivo.");
+    throw membershipError(400, "invalid_movement", "Enter a nonzero whole-number adjustment and its reason.");
   }
   return inScheduleTransaction(app, (tx) => {
     const movement = new Record(tx.findCollectionByNameOrId("credit_movements"), {
@@ -85,7 +85,7 @@ function liveDuplicate(app: core.App, client: string, plan: string, id = "") {
 export function expirePeriodCredits(app: core.App, membership: core.Record, actor = "") {
   const balance = membership.getInt("credits_balance");
   if (balance <= 0) return null;
-  const note = "Cierre del periodo " + membership.getInt("periods_paid");
+  const note = "Period closed.";
   const expired = app.findRecordsByFilter("credit_movements",
     "membership = {:membership} && reason = 'expire' && note = {:note}", "", 1, 0,
     { membership: membership.id, note });
@@ -98,28 +98,28 @@ function grant(app: core.App, membership: core.Record, plan: core.Record, actor:
 }
 
 export function assign(app: core.App, body: Body, { business, actor, today }: Context) {
-  const clientId = requiredText(body.client, "client", "Selecciona un cliente.");
-  const planId = requiredText(body.plan, "plan", "Selecciona un plan.");
+  const clientId = requiredText(body.client, "client", "Select a client.");
+  const planId = requiredText(body.plan, "plan", "Select a plan.");
   const notes = optionalNotes(body.notes);
-  const start = body.starts_on === undefined ? today : requiredText(body.starts_on, "starts_on", "Indica una fecha de inicio.");
+  const start = body.starts_on === undefined ? today : requiredText(body.starts_on, "starts_on", "Enter a start date.");
   let bounds;
   try {
     bounds = periodBounds(start, 1);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(bounds.end)) throw new RangeError();
   } catch {
-    throw membershipError(400, "starts_on", "Indica una fecha válida en formato YYYY-MM-DD.");
+    throw membershipError(400, "starts_on", "Enter a valid date in YYYY-MM-DD format.");
   }
   return inScheduleTransaction(app, (tx) => {
     const client = tenantRecord(tx, "clients", clientId, business);
     const plan = tenantRecord(tx, "plans", planId, business);
-    if (!client || !plan) throw membershipError(404, "not_found", "Cliente o plan no encontrado.");
-    if (!plan.getBool("active")) throw membershipError(409, "inactive_plan", "El plan está inactivo.");
-    if (liveDuplicate(tx, clientId, planId)) throw membershipError(409, "duplicate_plan", "El cliente ya tiene este plan activo o pausado.");
+    if (!client || !plan) throw membershipError(404, "not_found", "Client or plan not found.");
+    if (!plan.getBool("active")) throw membershipError(409, "inactive_plan", "The plan is inactive.");
+    if (liveDuplicate(tx, clientId, planId)) throw membershipError(409, "duplicate_plan", "The client already has this plan active or paused.");
     if (isFirstVisit(planData(plan))) {
       const priorPlans = tx.findRecordsByFilter("memberships", "client = {:client}", "", 0, 0, { client: clientId })
         .flatMap((record) => record ? [planData(tx.findRecordById("plans", record.getString("plan")))] : []);
       if (!canUseFirstClass({ free_class_used: client.getBool("free_class_used") }, priorPlans)) {
-        throw membershipError(409, "first_class_used", "El cliente ya tiene o utilizó un plan de primera clase.");
+        throw membershipError(409, "first_class_used", "The client already has or used a first-class plan.");
       }
     }
     const membership = new Record(tx.findCollectionByNameOrId("memberships"), {
@@ -129,23 +129,23 @@ export function assign(app: core.App, body: Body, { business, actor, today }: Co
     });
     saveMembership(tx, membership, actor);
     const movement = grant(tx, membership, plan, actor);
-    scheduleAudit(tx, "memberships", membership.id, actor, "Plan asignado", {});
+    scheduleAudit(tx, "memberships", membership.id, actor, "Plan assigned.", {});
     return { membership, movement };
   });
 }
 
 function requireStatus(membership: core.Record, ...allowed: string[]) {
   if (!allowed.includes(membership.getString("status"))) {
-    throw membershipError(409, "invalid_status", "El estado de la membresía no permite esta acción.");
+    throw membershipError(409, "invalid_status", "The membership status does not allow this action.");
   }
 }
 
 function renew(app: core.App, membership: core.Record, body: Body, { actor, today }: Context) {
   requireStatus(membership, "active", "expired");
   const plan = app.findRecordById("plans", membership.getString("plan"));
-  if (isFirstVisit(planData(plan))) throw membershipError(409, "first_visit", "La primera clase no se puede renovar.");
+  if (isFirstVisit(planData(plan))) throw membershipError(409, "first_visit", "A first-class plan cannot be renewed.");
   if (liveDuplicate(app, membership.getString("client"), plan.id, membership.id)) {
-    throw membershipError(409, "duplicate_plan", "El cliente ya tiene este plan activo o pausado.");
+    throw membershipError(409, "duplicate_plan", "The client already has this plan active or paused.");
   }
   const status = membership.getString("status");
   const end = membershipDate(membership, "current_period_end");
@@ -155,37 +155,37 @@ function renew(app: core.App, membership: core.Record, body: Body, { actor, toda
   expirePeriodCredits(app, membership, actor);
   // An adjustment or correction may have restored credits after the daily expiry.
   const remaining = membership.getInt("credits_balance");
-  if (remaining > 0) recordMovement(app, membership, -remaining, "expire", { actor, note: "Cierre por renovación" });
+  if (remaining > 0) recordMovement(app, membership, -remaining, "expire", { actor, note: "Closed on renewal." });
   membership.load({
     status: "active", current_period_start: bounds.start, current_period_end: bounds.end,
     periods_paid: membership.getInt("periods_paid") + 1, ended_on: "", paused_at: "",
   });
   saveMembership(app, membership, actor);
-  return { movement: grant(app, membership, plan, actor), summary: "Membresía renovada" };
+  return { movement: grant(app, membership, plan, actor), summary: "Membership renewed." };
 }
 
 function pause(app: core.App, membership: core.Record, body: Body, { today }: Context) {
   requireStatus(membership, "active");
-  appendNotes(membership, requiredText(body.note, "note", "Indica el motivo de la pausa."));
+  appendNotes(membership, requiredText(body.note, "note", "Enter a reason for pausing."));
   membership.load({ status: "paused", paused_at: today });
-  return { summary: "Membresía pausada" };
+  return { summary: "Membership paused." };
 }
 
 function resume(app: core.App, membership: core.Record, _body: Body, { today }: Context) {
   requireStatus(membership, "paused");
   const end = extendByPause(membershipDate(membership, "current_period_end"), membershipDate(membership, "paused_at"), today);
   membership.load({ status: "active", current_period_end: end, paused_at: "" });
-  return { summary: "Membresía reanudada" };
+  return { summary: "Membership resumed." };
 }
 
 function cancel(app: core.App, membership: core.Record, body: Body, { actor, today }: Context) {
   requireStatus(membership, "active", "paused", "expired");
-  const note = requiredText(body.note, "note", "Indica el motivo de la cancelación.");
+  const note = requiredText(body.note, "note", "Enter a reason for cancellation.");
   const early = isEarlyCancellation({
     starts_on: membershipDate(membership, "starts_on"),
     commitment_periods_total: membership.getInt("commitment_periods_total"),
   }, today);
-  const summary = early ? "Cancelación anticipada de membresía" : "Membresía cancelada";
+  const summary = early ? "Membership canceled early." : "Membership canceled.";
   appendNotes(membership, early ? summary + ": " + note : note);
   membership.load({ status: "cancelled", ended_on: today, paused_at: "" });
   const balance = membership.getInt("credits_balance");
@@ -194,11 +194,11 @@ function cancel(app: core.App, membership: core.Record, body: Body, { actor, tod
 }
 
 function adjust(app: core.App, membership: core.Record, body: Body, { actor }: Context) {
-  const note = requiredText(body.note, "note", "Indica el motivo del ajuste.");
+  const note = requiredText(body.note, "note", "Enter a reason for the adjustment.");
   if (typeof body.delta !== "number" || !Number.isSafeInteger(body.delta) || body.delta === 0) {
-    throw membershipError(400, "delta", "Indica un número entero distinto de cero.");
+    throw membershipError(400, "delta", "Enter a nonzero whole number.");
   }
-  return { movement: recordMovement(app, membership, body.delta, "adjust", { actor, note }), summary: "Créditos ajustados" };
+  return { movement: recordMovement(app, membership, body.delta, "adjust", { actor, note }), summary: "Credits adjusted." };
 }
 
 const actions = { renew, pause, resume, cancel, adjust };
@@ -206,7 +206,7 @@ const actions = { renew, pause, resume, cancel, adjust };
 export function manageMembership(app: core.App, id: string, action: MembershipAction, body: Body, context: Context) {
   return inScheduleTransaction(app, (tx) => {
     const membership = tenantRecord(tx, "memberships", id, context.business);
-    if (!membership) throw membershipError(404, "not_found", "Membresía no encontrada.");
+    if (!membership) throw membershipError(404, "not_found", "Membership not found.");
     const result = actions[action](tx, membership, body, context);
     const movement = "movement" in result ? result.movement : null;
     if (action === "pause" || action === "resume" || (action === "cancel" && !movement)) {
@@ -333,7 +333,7 @@ export function runDaily(app: Pick<core.App, "runInTransaction">, business: stri
       expiredCredits += credits;
       if (expire || credits) {
         scheduleAudit(tx, "memberships", membership.id, actor,
-          expire ? "Membresía vencida al terminar la gracia" : "Créditos vencidos al cierre del periodo",
+          expire ? "Membership expired at the end of the grace period." : "Credits expired at the end of the period.",
           { expiredCredits: credits, expiredMemberships: Number(expire) });
       }
     }

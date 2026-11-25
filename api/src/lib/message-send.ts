@@ -86,7 +86,7 @@ function firstClaim(app: MessageApp, options: BaseOptions & { key: MessageKey },
       template_key: options.key,
       channel: "email",
       status: "failed",
-      error: "El intento no quedó confirmado.",
+      error: "The attempt was not confirmed.",
       attempts: 1,
       next_retry_at: options.key === "manual" ? "" : sqlDate(new Date(now.getTime() + LEASE_MS)),
       dedupe_key: dedupeKey,
@@ -105,7 +105,7 @@ function deliver(app: MessageApp, log: core.Record, client: core.Record, templat
   try {
     rendered = renderTemplate(template, vars());
   } catch {
-    error = "No se pudo renderizar la plantilla.";
+    error = "Could not render the template.";
     retryable = false;
   }
   if (rendered) {
@@ -113,7 +113,7 @@ function deliver(app: MessageApp, log: core.Record, client: core.Record, templat
       channels(app, client.getString("business")).email!.send({ to: client.getString("email"), ...rendered });
       result = "sent";
     } catch {
-      error = "No se pudo enviar por SMTP.";
+      error = "Could not send through SMTP.";
     }
   }
   const retry = result === "failed" && retryable ? nextRetry(log.getInt("attempts"), new Date()) : null;
@@ -136,7 +136,7 @@ export function sendServiceMessage(app: MessageApp, options: ServiceOptions): Re
       ...(typeof options.context === "function" ? options.context(template.locale) : options.context),
     }));
   } catch {
-    app.logger().error("No se pudo procesar el mensaje del servicio.", "key", options.key);
+    app.logger().error("Could not process the service message.", "key", options.key);
     return "failed";
   }
 }
@@ -152,7 +152,7 @@ export function sendManualMessage(app: MessageApp, options: BaseOptions & { temp
       ...(typeof options.context === "function" ? options.context(options.locale ?? resolveLocale(details)) : options.context),
     }));
   } catch {
-    app.logger().error("No se pudo procesar el mensaje manual.");
+    app.logger().error("Could not process the manual message.");
     return "failed";
   }
 }
@@ -167,7 +167,7 @@ function claimRetry(app: MessageApp, id: string, now: Date, retryable: boolean) 
     log.set("next_retry_at", "");
     if (retryable) {
       log.set("attempts", attempts + 1);
-      log.set("error", "El intento no quedó confirmado.");
+      log.set("error", "The attempt was not confirmed.");
       if (attempts + 1 < MAX_ATTEMPTS) log.set("next_retry_at", sqlDate(new Date(now.getTime() + LEASE_MS)));
     }
     tx.save(log);
@@ -204,7 +204,7 @@ export function retryFailedMessages(app: MessageApp, business: string, now = new
         deliver(app, log, client, template, () => ({ ...clientVariables(app, client), ...context(template.locale) }));
       }
     } catch {
-      app.logger().error("No se pudo reintentar el mensaje.", "message_log", candidate.id);
+      app.logger().error("Could not retry the message.", "message_log", candidate.id);
     }
   }
 }

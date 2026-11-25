@@ -7,7 +7,7 @@ import { utcToLocal } from "./tz";
 
 function expand(app: core.App, records: core.Record[]) {
   const errors = app.expandRecords(records, ["client", "plan"], null);
-  if (Object.keys(errors).length) throw new InternalServerError("No se pudieron cargar clientes y planes de los cobros.");
+  if (Object.keys(errors).length) throw new InternalServerError("Could not load the clients and plans for charges.");
 }
 
 function related(record: core.Record) {
@@ -34,7 +34,7 @@ export function dueReport(app: core.App, days: number, business: string) {
     "business = {:business} && status = 'active' && current_period_end < {:end}", "", 0, 0, { business, end })
     .filter((record): record is core.Record => !!record);
   if (payments.some((payment) => payment.getString("currency") !== currency)) {
-    throw new BadRequestError("El rango incluye pagos en otra moneda.");
+    throw new BadRequestError("The range includes payments in another currency.");
   }
   expand(app, payments);
   expand(app, memberships);

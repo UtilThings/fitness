@@ -28,7 +28,7 @@ routerUse((e) => {
   if ([clients.name, clients.id].includes(nameOrId.toLowerCase())) {
     const actor = e.auth;
     if (actor?.collection().name !== "admins" || !actor.getBool("active") || actor.getString("role") !== "owner") {
-      throw new ForbiddenError("Solo el owner puede eliminar clientes.");
+      throw new ForbiddenError("Only the owner can delete clients.");
     }
   }
   return e.next();
@@ -49,7 +49,7 @@ onRecordUpdateRequest((e) => {
       // Reject a stale write when it could overwrite the class mark or bypass a state transition.
       const loaded = e.record!.original();
       if (["free_class_used", "status"].some((field) => loaded.getString(field) !== current.getString(field))) {
-        throw new ApiError(409, "El cliente cambió. Vuelve a abrir el perfil antes de guardar.", {});
+        throw new ApiError(409, "The client changed. Reopen the profile before saving.", {});
       }
       return validateClientRequest(e, current);
     });
@@ -74,7 +74,7 @@ onRecordDeleteRequest((e) => {
         const relation = collection.fields.getByName("client");
         if (relation?.type() !== "relation" || relation.collectionId !== client.collection().id) continue;
         const [related] = tx.findRecordsByFilter(collection, "client ?= {:id}", "", 1, 0, { id: client.id });
-        if (related) throw new ApiError(409, "El cliente tiene historial; inactívalo en su lugar", {});
+        if (related) throw new ApiError(409, "This client has history. Deactivate them instead.", {});
       }
 
       return e.next();

@@ -7,7 +7,7 @@ import { requireBookingStaff } from "./booking-store";
 function readLocale(value: unknown): Locale | undefined {
   if (value === undefined || value === "") return;
   if (value === "es" || value === "en") return value;
-  throw new BadRequestError("Elige español o inglés.");
+  throw new BadRequestError("Choose Spanish or English.");
 }
 
 function inputTemplate(body: Record<string, unknown>, override?: "manual"): Template {
@@ -37,7 +37,7 @@ function sampleVariables(locale: Locale, contact: ReturnType<typeof getBusinessC
 
 function problemsResponse(e: core.RequestEvent, problems: ReturnType<typeof validateTemplate>) {
   const unknown_variables = [...new Set(problems.flatMap(({ variable }) => variable ? [variable] : []))];
-  return e.json(400, { status: 400, message: "La plantilla es inválida.", problems, unknown_variables });
+  return e.json(400, { status: 400, message: "The template is invalid.", problems, unknown_variables });
 }
 
 export function previewMessage(e: core.RequestEvent) {
@@ -60,13 +60,13 @@ export function messageClass(e: core.RequestEvent) {
 
   const business = e.auth!.getString("business");
   const session = tenantRecord(e.app, "class_sessions", e.request?.pathValue("sessionId") ?? "", business);
-  if (!session) throw new NotFoundError("No se encontró la clase.");
+  if (!session) throw new NotFoundError("Class not found.");
   if (session.getString("status") !== "scheduled" || Date.parse(session.getString("starts_at").replace(" ", "T")) <= Date.now()) {
-    throw new BadRequestError("Selecciona una clase próxima y programada.");
+    throw new BadRequestError("Select an upcoming scheduled class.");
   }
   const bookings = e.app.findRecordsByFilter("bookings",
     "business = {:business} && session = {:id} && (status = 'booked' || status = 'waitlisted')", "id", 201, 0, { business, id: session.id });
-  if (bookings.length > 200) throw new BadRequestError("El envío admite hasta 200 destinatarios.");
+  if (bookings.length > 200) throw new BadRequestError("The message supports up to 200 recipients.");
 
   const results = { sent: 0, failed: 0, skipped: 0 };
   const contexts = new Map<Locale, Variables>();
@@ -92,30 +92,30 @@ export function messageClass(e: core.RequestEvent) {
 
 export function testMessage(e: core.RequestEvent) {
   requireBookingStaff(e);
-  if (e.auth!.getString("role") !== "owner") throw new ForbiddenError("Solo el owner puede enviar correos de prueba.");
+  if (e.auth!.getString("role") !== "owner") throw new ForbiddenError("Only the owner can send test emails.");
   const body = e.requestInfo().body;
   const locale = readLocale(body.locale) ?? "es";
   let template = inputTemplate(body);
   if (!isMessageKey(template.key) || template.key === "manual") {
-    throw new BadRequestError("Selecciona una plantilla operativa.");
+    throw new BadRequestError("Select a service message template.");
   }
   if (body.subject === undefined && body.body === undefined) {
     const [saved] = e.app.findRecordsByFilter("message_templates", "business = {:business} && key = {:key} && locale = {:locale}", "", 1, 0, {
       business: e.auth!.getString("business"), key: template.key, locale,
     });
-    if (!saved) throw new NotFoundError("No se encontró la plantilla.");
+    if (!saved) throw new NotFoundError("The message template was not found.");
     template = { key: template.key, subject: saved.getString("subject"), body: saved.getString("body") };
   }
   const problems = validateTemplate(template);
   if (problems.length) return problemsResponse(e, problems);
 
   const { smtp, meta } = e.app.settings();
-  if (!smtp.enabled || !smtp.host || !meta.senderAddress) throw new BadRequestError("El correo no está configurado");
+  if (!smtp.enabled || !smtp.host || !meta.senderAddress) throw new BadRequestError("Email is not configured.");
   try {
     const business = e.auth!.getString("business");
     sendTestMessage(e.app, e.auth!.email(), template, sampleVariables(locale, getBusinessContext(e.app, business)), business);
   } catch {
-    throw new BadRequestError("No se pudo enviar el correo de prueba.");
+    throw new BadRequestError("Could not send the test email.");
   }
   return e.json(200, { sent: true });
 }
