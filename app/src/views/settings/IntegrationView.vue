@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -63,7 +64,7 @@ async function saveOrigins() {
       .collection<Business>('businesses')
       .update(record.id, { allowed_origins: origins }, { requestKey: null });
     updateBusiness(updated);
-    notify.success('Orígenes guardados');
+    notify.success(t('Origins saved'));
   } catch (cause) {
     const error = parsePbError(cause);
     originsError.value = error.fields.allowed_origins || error.message;
@@ -95,12 +96,16 @@ async function requestRotation() {
 function confirmRotation() {
   const existingKey = !!business.value?.public_key_prefix;
   confirm.require({
-    header: existingKey ? 'Rotar clave pública' : 'Generar clave pública',
+    header: existingKey ? t('Rotate public key') : t('Generate public key'),
     message: existingKey
-      ? 'La clave anterior dejará de funcionar de inmediato. Actualiza el sitio con la nueva clave.'
-      : 'Genera la clave que usará tu sitio para consultar el catálogo y el horario.',
-    acceptLabel: existingKey ? 'Rotar clave' : 'Generar clave',
-    rejectLabel: 'Cancelar',
+      ? t(
+          'The previous key will stop working immediately. Update the site with the new key.',
+        )
+      : t(
+          'Generate the key your site will use to read the catalog and schedule.',
+        ),
+    acceptLabel: existingKey ? t('Rotate key') : t('Generate key'),
+    rejectLabel: t('Cancel'),
     accept: requestRotation,
   });
 }
@@ -110,28 +115,28 @@ async function copyKey() {
   if (!key) return;
   try {
     await navigator.clipboard.writeText(key);
-    notify.success('Clave copiada');
+    notify.success(t('Key copied'));
   } catch {
-    notify.error('No se pudo copiar. Selecciona y copia la clave manualmente.');
+    notify.error(t('Could not copy the key. Select and copy it manually.'));
   }
 }
 </script>
 
 <template>
   <div class="grid max-w-3xl gap-5">
-    <PageHeader title="Integración" />
+    <PageHeader :title="t('Integration')" />
     <template v-if="business">
       <section
         class="grid gap-4 rounded-xl border border-surface-200 p-5 dark:border-surface-800"
       >
-        <h2 class="font-semibold">Clave pública</h2>
+        <h2 class="font-semibold">{{ t('Public key') }}</h2>
         <dl class="grid gap-3 text-sm sm:grid-cols-2">
           <div>
-            <dt class="font-medium">Prefijo</dt>
-            <dd>{{ business.public_key_prefix || 'Sin clave' }}</dd>
+            <dt class="font-medium">{{ t('Prefix') }}</dt>
+            <dd>{{ business.public_key_prefix || t('No key') }}</dd>
           </div>
           <div>
-            <dt class="font-medium">Última rotación</dt>
+            <dt class="font-medium">{{ t('Last rotation') }}</dt>
             <dd>
               {{
                 business.public_key_rotated_at
@@ -145,7 +150,7 @@ async function copyKey() {
           <Button
             type="button"
             :label="
-              business.public_key_prefix ? 'Rotar clave' : 'Generar clave'
+              business.public_key_prefix ? t('Rotate key') : t('Generate key')
             "
             :loading="rotating"
             :disabled="saving"
@@ -161,7 +166,7 @@ async function copyKey() {
         <CatalogField
           id="integration-origins"
           v-slot="{ describedBy }"
-          label="Orígenes permitidos"
+          :label="t('Allowed origins')"
           help="Escribe un origen por línea, por ejemplo https://tusitio.com."
           :error="originsError"
         >
@@ -176,7 +181,7 @@ async function copyKey() {
         <div>
           <Button
             type="submit"
-            label="Guardar orígenes"
+            :label="t('Save origins')"
             :loading="saving"
             :disabled="rotating"
           />
@@ -187,7 +192,7 @@ async function copyKey() {
     <Dialog
       :visible="!!revealedKey"
       modal
-      header="Nueva clave pública"
+      :header="t('New public key')"
       :style="{ width: 'min(36rem, 95vw)' }"
       @update:visible="
         (visible) => {
@@ -197,10 +202,13 @@ async function copyKey() {
     >
       <div v-if="revealedKey" class="grid gap-3">
         <p>
-          Guarda la clave para configurar tu sitio. Al cerrar este diálogo ya no
-          podrás recuperarla.
+          {{
+            t(
+              'Save the key to configure your site. Once you close this dialog, you cannot retrieve it.',
+            )
+          }}
         </p>
-        <CatalogField id="integration-key" label="Clave pública">
+        <CatalogField id="integration-key" :label="t('Public key')">
           <InputText
             id="integration-key"
             :model-value="revealedKey"
@@ -212,14 +220,14 @@ async function copyKey() {
       <template #footer>
         <Button
           type="button"
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           variant="text"
           @click="closeKey"
         />
         <Button
           type="button"
-          label="Copiar"
+          :label="t('Copy')"
           icon="pi pi-copy"
           @click="copyKey"
         />

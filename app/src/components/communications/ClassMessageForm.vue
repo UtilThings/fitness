@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -84,7 +85,7 @@ onMounted(async () => {
     classes.value = data.map((item) => ({
       id: item.id,
       label:
-        (item.title || item.expand?.service?.name || 'Clase') +
+        (item.title || item.expand?.service?.name || t('Class')) +
         ' · ' +
         formatDateTime(item.starts_at),
     }));
@@ -176,7 +177,7 @@ function problem(field: 'subject' | 'body') {
     >
       <CatalogField
         :id="id + '-session'"
-        label="Clase próxima"
+        :label="t('Upcoming class')"
         :error="classError"
       >
         <Select
@@ -185,7 +186,7 @@ function problem(field: 'subject' | 'body') {
           :options="classes"
           option-label="label"
           option-value="id"
-          placeholder="Elige una clase"
+          :placeholder="t('Choose a class')"
           :loading="loadingClasses"
           :disabled="sending || confirming"
           filter
@@ -196,15 +197,21 @@ function problem(field: 'subject' | 'body') {
         recipientError
       }}</Message>
       <p v-else-if="loadingRecipients" class="text-sm text-muted-color">
-        Consultando inscritos…
+        {{ t('Checking booked clients…') }}
       </p>
-      <Message v-else-if="total > LIMIT" severity="warn" :closable="false"
-        >Esta clase supera el límite de 200 destinatarios.</Message
-      >
+      <Message v-else-if="total > LIMIT" severity="warn" :closable="false">{{
+        t('This class exceeds the limit of {limit} recipients.', {
+          limit: LIMIT,
+        })
+      }}</Message>
       <details v-else-if="session" class="rounded-lg border border-surface p-3">
         <summary class="cursor-pointer text-sm font-medium">
-          {{ eligible }} recibirán el mensaje · {{ total - eligible }} se
-          omitirán
+          {{
+            t(
+              '{eligible} will receive the message · {skipped} will be skipped',
+              { eligible, skipped: total - eligible },
+            )
+          }}
         </summary>
         <ul
           v-if="recipients.length"
@@ -214,25 +221,25 @@ function problem(field: 'subject' | 'body') {
             {{
               booking.expand?.client
                 ? fullName(booking.expand.client)
-                : 'Cliente no disponible'
+                : t('Client unavailable')
             }}
             <span
               v-if="
                 !booking.expand?.client || !isEligible(booking.expand.client)
               "
               class="text-muted-color"
-              >· Se omitirá</span
+              >{{ t('· Will be skipped') }}</span
             >
           </li>
         </ul>
         <p v-else class="mb-0 text-sm text-muted-color">
-          La clase no tiene inscritos.
+          {{ t('This class has no booked clients.') }}
         </p>
       </details>
       <CatalogField
         :id="id + '-subject'"
         v-slot="{ describedBy }"
-        label="Asunto"
+        :label="t('Subject')"
         :error="problem('subject')"
       >
         <InputText
@@ -247,7 +254,7 @@ function problem(field: 'subject' | 'body') {
       <CatalogField
         :id="id + '-body'"
         v-slot="{ describedBy }"
-        label="Mensaje"
+        :label="t('Message')"
         :error="problem('body')"
       >
         <Textarea
@@ -261,10 +268,14 @@ function problem(field: 'subject' | 'body') {
         />
       </CatalogField>
       <p class="m-0 text-sm text-muted-color">
-        Variables permitidas: {{ variables }}.
+        {{ t('Allowed variables: {variables}.', { variables }) }}
       </p>
       <div class="flex justify-end">
-        <Button label="Revisar envío" type="submit" :disabled="!canSend" />
+        <Button
+          :label="t('Review message')"
+          type="submit"
+          :disabled="!canSend"
+        />
       </div>
       <Message v-if="sendError" severity="error" :closable="false">{{
         sendError
@@ -274,8 +285,13 @@ function problem(field: 'subject' | 'body') {
         :severity="result.failed ? 'warn' : 'success'"
         :closable="false"
       >
-        Enviados: {{ result.sent }} · Fallidos: {{ result.failed }} · Omitidos:
-        {{ result.skipped }}
+        {{
+          t('Sent: {sent} · Failed: {failed} · Skipped: {skipped}', {
+            sent: result.sent,
+            failed: result.failed,
+            skipped: result.skipped,
+          })
+        }}
       </Message>
     </form>
     <MessagePreview
@@ -286,25 +302,29 @@ function problem(field: 'subject' | 'body') {
 
     <Dialog
       v-model:visible="confirming"
-      header="Confirmar envío"
+      :header="t('Confirm sending')"
       modal
       :closable="!sending"
       :close-on-escape="!sending"
     >
       <p>
-        El mensaje se enviará a {{ eligible }} inscritos de la clase. Se
-        omitirán {{ total - eligible }}.
+        {{
+          t(
+            'The message will be sent to {eligible} booked clients. {skipped} will be skipped.',
+            { eligible, skipped: total - eligible },
+          )
+        }}
       </p>
       <template #footer>
         <Button
-          label="Volver"
+          :label="t('Back')"
           severity="secondary"
           text
           :disabled="sending"
           @click="confirming = false"
         />
         <Button
-          label="Enviar mensaje"
+          :label="t('Send message')"
           icon="pi pi-send"
           :loading="sending"
           @click="send"

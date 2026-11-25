@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable, { type DataTablePageEvent } from 'primevue/datatable';
@@ -14,16 +15,19 @@ import { MESSAGE_LABELS } from '@/lib/messages';
 import { parsePbError } from '@/lib/pb-errors';
 import { pb } from '@/lib/pocketbase';
 
-const states = {
-  sent: { label: 'Enviado', severity: 'success' },
-  failed: { label: 'Fallido', severity: 'danger' },
-} as const;
+const states = computed(
+  () =>
+    ({
+      sent: { label: t('Sent'), severity: 'success' },
+      failed: { label: t('Failed'), severity: 'danger' },
+    }) as const,
+);
 type MessageLog = {
   id: string;
   client: string;
   created: string;
   template_key: keyof typeof MESSAGE_LABELS.value;
-  status: keyof typeof states;
+  status: keyof typeof states.value;
   attempts: number;
   error: string;
   expand?: { client?: Client };
@@ -41,10 +45,12 @@ const page = ref(1);
 const pageSize = 20;
 let revision = 0;
 
-const statusOptions = Object.entries(states).map(([value, { label }]) => ({
-  value,
-  label,
-}));
+const statusOptions = computed(() =>
+  Object.entries(states.value).map(([value, { label }]) => ({
+    value,
+    label,
+  })),
+);
 const keyOptions = computed(() =>
   Object.entries(MESSAGE_LABELS.value).map(([value, label]) => ({
     value,
@@ -58,7 +64,7 @@ async function load() {
   error.value = '';
   try {
     if (from.value && to.value && from.value > to.value) {
-      error.value = 'La fecha final debe ser igual o posterior a la inicial.';
+      error.value = t('The end date must be on or after the start date.');
       rows.value = [];
       total.value = 0;
       return;
@@ -103,7 +109,7 @@ async function load() {
     if (request === revision)
       error.value =
         cause instanceof RangeError
-          ? 'Revisa el rango de fechas.'
+          ? t('Check the date range.')
           : parsePbError(cause).message;
   } finally {
     if (request === revision) loading.value = false;
@@ -126,42 +132,42 @@ function changePage(event: DataTablePageEvent) {
 </script>
 
 <template>
-  <section aria-label="Historial de envíos" class="grid gap-4">
+  <section :aria-label="t('Message history')" class="grid gap-4">
     <div
       class="grid gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto] xl:items-end"
     >
-      <CatalogField :id="id + '-status'" label="Estado">
+      <CatalogField :id="id + '-status'" :label="t('Status')">
         <Select
           v-model="status"
           :input-id="id + '-status'"
           :options="statusOptions"
           option-label="label"
           option-value="value"
-          placeholder="Todos"
+          :placeholder="t('All')"
           show-clear
           fluid
         />
       </CatalogField>
-      <CatalogField :id="id + '-type'" label="Tipo de mensaje">
+      <CatalogField :id="id + '-type'" :label="t('Message type')">
         <Select
           v-model="key"
           :input-id="id + '-type'"
           :options="keyOptions"
           option-label="label"
           option-value="value"
-          placeholder="Todos"
+          :placeholder="t('All')"
           show-clear
           fluid
         />
       </CatalogField>
-      <CatalogField :id="id + '-from'" label="Desde">
+      <CatalogField :id="id + '-from'" :label="t('From')">
         <InputText :id="id + '-from'" v-model="from" type="date" fluid />
       </CatalogField>
-      <CatalogField :id="id + '-to'" label="Hasta">
+      <CatalogField :id="id + '-to'" :label="t('To')">
         <InputText :id="id + '-to'" v-model="to" type="date" fluid />
       </CatalogField>
       <Button
-        label="Actualizar"
+        :label="t('Refresh')"
         icon="pi pi-refresh"
         severity="secondary"
         outlined
@@ -170,7 +176,7 @@ function changePage(event: DataTablePageEvent) {
       />
     </div>
     <p class="m-0 text-sm text-muted-color">
-      Fechas en hora de Miramar, Florida.
+      {{ t('Dates use Miramar, Florida time.') }}
     </p>
     <Message v-if="error" severity="error" :closable="false">{{
       error
@@ -187,23 +193,25 @@ function changePage(event: DataTablePageEvent) {
       scrollable
       @page="changePage"
     >
-      <template #empty>No hay envíos para estos filtros.</template>
-      <Column field="created" header="Fecha">
+      <template #empty>{{
+        t('No sent messages match these filters.')
+      }}</template>
+      <Column field="created" :header="t('Date')">
         <template #body="{ data }">{{ formatDateTime(data.created) }}</template>
       </Column>
-      <Column field="client" header="Cliente">
+      <Column field="client" :header="t('Client')">
         <template #body="{ data }">{{
           data.expand?.client
             ? fullName(data.expand.client)
-            : 'Cliente no disponible'
+            : t('Client unavailable')
         }}</template>
       </Column>
-      <Column field="template_key" header="Tipo de mensaje">
+      <Column field="template_key" :header="t('Message type')">
         <template #body="{ data }">{{
           MESSAGE_LABELS[data.template_key as MessageLog['template_key']]
         }}</template>
       </Column>
-      <Column field="status" header="Estado">
+      <Column field="status" :header="t('Status')">
         <template #body="{ data }">
           <Tag
             :value="states[data.status as MessageLog['status']].label"
@@ -211,8 +219,8 @@ function changePage(event: DataTablePageEvent) {
           />
         </template>
       </Column>
-      <Column field="attempts" header="Intentos" />
-      <Column field="error" header="Error">
+      <Column field="attempts" :header="t('Attempts')" />
+      <Column field="error" :header="t('Error')">
         <template #body="{ data }">{{ data.error || '—' }}</template>
       </Column>
     </DataTable>

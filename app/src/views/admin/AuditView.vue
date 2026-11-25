@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable, { type DataTablePageEvent } from 'primevue/datatable';
@@ -54,7 +55,7 @@ function actorLabel(log: AuditLog) {
     log.expand?.actor?.name ||
     log.expand?.actor?.email ||
     log.actor ||
-    'Sistema'
+    t('System')
   );
 }
 
@@ -72,21 +73,21 @@ function changePage(event: DataTablePageEvent) {
 }
 
 function displayValue(value: string | undefined) {
-  return value === undefined ? '—' : value === '' ? '(vacío)' : value;
+  return value === undefined ? '—' : value === '' ? t('(empty)') : value;
 }
 </script>
 
 <template>
   <div class="grid min-w-0 gap-4">
-    <PageHeader title="Auditoría" />
+    <PageHeader :title="t('Audit log')" />
     <form
       class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
       @submit.prevent="applyFilters"
     >
       <div class="grid min-w-0 gap-1">
-        <label id="audit-collection-label" for="audit-collection"
-          >Colección</label
-        >
+        <label id="audit-collection-label" for="audit-collection">{{
+          t('Collection')
+        }}</label>
         <Select
           v-model="draft.collection"
           input-id="audit-collection"
@@ -94,13 +95,13 @@ function displayValue(value: string | undefined) {
           :options="collectionOptions"
           option-label="label"
           option-value="value"
-          placeholder="Todas las colecciones"
+          :placeholder="t('All collections')"
           show-clear
           fluid
         />
       </div>
       <div class="grid min-w-0 gap-1">
-        <label id="audit-actor-label" for="audit-actor">Actor</label>
+        <label id="audit-actor-label" for="audit-actor">{{ t('Actor') }}</label>
         <Select
           v-model="draft.actor"
           input-id="audit-actor"
@@ -108,17 +109,17 @@ function displayValue(value: string | undefined) {
           :options="actorOptions"
           option-label="label"
           option-value="value"
-          placeholder="Todos los actores"
+          :placeholder="t('All actors')"
           show-clear
           fluid
         />
       </div>
       <div class="grid min-w-0 gap-1">
-        <label for="audit-from">Desde</label>
+        <label for="audit-from">{{ t('From') }}</label>
         <InputText id="audit-from" v-model="draft.from" type="date" fluid />
       </div>
       <div class="grid min-w-0 gap-1">
-        <label for="audit-to">Hasta</label>
+        <label for="audit-to">{{ t('To') }}</label>
         <InputText
           id="audit-to"
           v-model="draft.to"
@@ -132,12 +133,12 @@ function displayValue(value: string | undefined) {
         severity="warn"
         class="sm:col-span-2 xl:col-span-4"
       >
-        La fecha final debe ser igual o posterior a la inicial.
+        {{ t('The end date must be on or after the start date.') }}
       </Message>
       <div class="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-4">
-        <Button type="submit" label="Filtrar" :disabled="invalidRange" />
+        <Button type="submit" :label="t('Filter')" :disabled="invalidRange" />
         <Button
-          label="Limpiar filtros"
+          :label="t('Clear filters')"
           severity="secondary"
           outlined
           @click="clearFilters"
@@ -146,12 +147,12 @@ function displayValue(value: string | undefined) {
     </form>
 
     <Message v-if="actorsError" severity="warn">
-      No se pudieron cargar los actores.
-      <Button label="Reintentar actores" text @click="loadActors" />
+      {{ t('Could not load the actors.') }}
+      <Button :label="t('Retry loading actors')" text @click="loadActors" />
     </Message>
     <Message v-if="error" severity="error">
       {{ error.message }}
-      <Button label="Reintentar" text @click="load()" />
+      <Button :label="t('Retry')" text @click="load()" />
     </Message>
 
     <DataTable
@@ -164,33 +165,37 @@ function displayValue(value: string | undefined) {
       :paginator="totalItems > AUDIT_PAGE_SIZE"
       lazy
       data-key="id"
-      :table-props="{ 'aria-label': 'Registros de auditoría' }"
+      :table-props="{ 'aria-label': t('Audit records') }"
       @page="changePage"
     >
       <template #empty>
-        <p v-if="!loading">No se encontraron registros.</p>
+        <p v-if="!loading">{{ t('No records found.') }}</p>
       </template>
-      <Column header="Fecha">
+      <Column :header="t('Date')">
         <template #body="{ data }">{{ formatDateTime(data.created) }}</template>
       </Column>
-      <Column header="Actor">
+      <Column :header="t('Actor')">
         <template #body="{ data }">{{ actorLabel(data) }}</template>
       </Column>
-      <Column header="Acción">
+      <Column :header="t('Action')">
         <template #body="{ data }">{{
           ACTION_LABELS[data.action as AuditLog['action']]
         }}</template>
       </Column>
-      <Column header="Colección">
+      <Column :header="t('Collection')">
         <template #body="{ data }">{{
           COLLECTION_LABELS[data.collection] ?? data.collection
         }}</template>
       </Column>
-      <Column field="summary" header="Resumen" body-class="wrap-anywhere" />
-      <Column header="Cambios">
+      <Column
+        field="summary"
+        :header="t('Summary')"
+        body-class="wrap-anywhere"
+      />
+      <Column :header="t('Changes')">
         <template #body="{ data }">
           <Button
-            label="Ver cambios"
+            :label="t('View changes')"
             text
             size="small"
             @click="selected = data"
@@ -202,7 +207,7 @@ function displayValue(value: string | undefined) {
     <Dialog
       :visible="!!selected"
       modal
-      header="Cambios del registro"
+      :header="t('Record changes')"
       class="w-[min(46rem,calc(100vw-2rem))]"
       @update:visible="
         (visible) => {
@@ -213,9 +218,9 @@ function displayValue(value: string | undefined) {
       <template v-if="selected">
         <p class="mb-1 wrap-anywhere font-medium">{{ selected.summary }}</p>
         <p class="mb-4 wrap-anywhere text-sm">
-          Registro {{ selected.record_id }}
+          {{ t('Record') }} {{ selected.record_id }}
         </p>
-        <p v-if="!diff.length">Sin cambios de campos.</p>
+        <p v-if="!diff.length">{{ t('No field changes.') }}</p>
         <dl v-else class="grid gap-4">
           <div
             v-for="row in diff"
@@ -225,13 +230,13 @@ function displayValue(value: string | undefined) {
             <dt class="wrap-anywhere font-semibold">{{ row.field }}</dt>
             <dd class="grid min-w-0 gap-2 sm:grid-cols-2">
               <div class="min-w-0">
-                <p class="text-sm font-medium">Antes</p>
+                <p class="text-sm font-medium">{{ t('Before') }}</p>
                 <pre class="wrap-anywhere text-sm whitespace-pre-wrap">{{
                   displayValue(row.before)
                 }}</pre>
               </div>
               <div class="min-w-0">
-                <p class="text-sm font-medium">Después</p>
+                <p class="text-sm font-medium">{{ t('After') }}</p>
                 <pre class="wrap-anywhere text-sm whitespace-pre-wrap">{{
                   displayValue(row.after)
                 }}</pre>

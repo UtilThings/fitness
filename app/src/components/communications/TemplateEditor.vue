@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
@@ -101,7 +102,7 @@ async function submit() {
       <div class="grid gap-3 sm:grid-cols-2">
         <CatalogField
           :id="id + '-key'"
-          label="Plantilla"
+          :label="t('Template')"
           :error="saveFields.key"
         >
           <Select
@@ -117,7 +118,7 @@ async function submit() {
         </CatalogField>
         <CatalogField
           :id="id + '-locale'"
-          label="Idioma"
+          :label="t('Language')"
           :error="saveFields.locale"
         >
           <Select
@@ -138,12 +139,14 @@ async function submit() {
           :input-id="id + '-active'"
           :disabled="readOnly || saving"
         />
-        <label :for="id + '-active'" class="text-sm">Activa</label>
+        <label :for="id + '-active'" class="text-sm">{{
+          t("Active{''}")
+        }}</label>
       </div>
       <CatalogField
         :id="id + '-subject'"
         v-slot="{ describedBy }"
-        label="Asunto"
+        :label="t('Subject')"
         :error="fieldError('subject')"
       >
         <InputText
@@ -160,7 +163,7 @@ async function submit() {
       <CatalogField
         :id="id + '-body'"
         v-slot="{ describedBy }"
-        label="Mensaje"
+        :label="t('Message')"
         :error="fieldError('body')"
       >
         <Textarea
@@ -177,7 +180,7 @@ async function submit() {
         />
       </CatalogField>
       <div class="grid gap-2">
-        <span class="text-sm font-medium">Variables permitidas</span>
+        <span class="text-sm font-medium">{{ t('Allowed variables') }}</span>
         <ul class="m-0 flex list-none flex-wrap gap-2 p-0">
           <li v-for="variable in ALLOWED_VARIABLES[draft.key]" :key="variable">
             <span
@@ -207,7 +210,7 @@ async function submit() {
       </p>
       <div v-if="!readOnly" class="flex justify-end">
         <Button
-          label="Guardar plantilla"
+          :label="t('Save template')"
           type="submit"
           :loading="saving"
           :disabled="!!problems.length"
