@@ -1,4 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
+import { setLocale } from '@/i18n';
+import { withLocale } from '@/test/i18n';
+import { computed } from 'vue';
 import {
   formatDate,
   formatDateTime,
@@ -59,5 +62,21 @@ it('keeps the Monday evening time across DST and derives exact local day boundar
   expect(weekRangeUtc('2026-11-01')).toEqual({
     from: '2026-11-01T04:00:00.000Z',
     to: '2026-11-08T05:00:00.000Z',
+  });
+});
+
+it('updates display formats live without changing New York day boundaries', async () => {
+  vi.useFakeTimers();
+  const iso = '2026-03-09T01:30:00Z';
+  vi.setSystemTime(new Date(iso));
+  const displayed = computed(() => [formatDate(iso), formatTime(iso)]);
+  await withLocale('en', async () => {
+    expect(displayed.value).toEqual(['Mar 8, 2026', '9:30 PM']);
+    const localInstant = localToUtcIso('2026-03-08', '21:30');
+    await setLocale('es');
+    expect(displayed.value[0]).toMatch(/8.*mar.*2026/i);
+    expect(displayed.value[1]).toMatch(/9:30\s*p\.\s*m\./);
+    expect(localToUtcIso('2026-03-08', '21:30')).toBe(localInstant);
+    expect(todayLocal()).toBe('2026-03-08');
   });
 });

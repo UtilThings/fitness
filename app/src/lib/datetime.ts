@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { intlLocale } from '@/i18n/formats';
 import { businessTimezone } from './business-session';
 
 const HOUR_MS = 3_600_000;
@@ -7,7 +8,7 @@ const displayTime = { timeStyle: 'short', hour12: true } as const;
 
 function businessFormatter(
   options: Intl.DateTimeFormatOptions,
-  locale = 'es-US',
+  locale: string = intlLocale(),
 ) {
   return new Intl.DateTimeFormat(locale, {
     timeZone: businessTimezone.value,
@@ -17,9 +18,10 @@ function businessFormatter(
 
 const dateFormatter = computed(() => businessFormatter(displayDate));
 const timeFormatter = computed(() => businessFormatter(displayTime));
-const englishTimeFormatter = computed(() =>
-  businessFormatter(displayTime, 'en-US'),
-);
+const fixedTimeFormatters = {
+  'en-US': computed(() => businessFormatter(displayTime, 'en-US')),
+  'es-US': computed(() => businessFormatter(displayTime, 'es-US')),
+};
 const dateTimeFormatter = computed(() =>
   businessFormatter({ ...displayDate, ...displayTime }),
 );
@@ -46,13 +48,10 @@ export function formatDate(iso: string): string {
   return dateFormatter.value.format(utcDate(iso));
 }
 
-export function formatTime(
-  iso: string,
-  locale: 'es-US' | 'en-US' = 'es-US',
-): string {
-  return (
-    locale === 'en-US' ? englishTimeFormatter : timeFormatter
-  ).value.format(utcDate(iso));
+export function formatTime(iso: string, locale?: 'es-US' | 'en-US'): string {
+  return (locale ? fixedTimeFormatters[locale] : timeFormatter).value.format(
+    utcDate(iso),
+  );
 }
 
 export function formatDateTime(iso: string): string {
@@ -91,7 +90,7 @@ export function localToUtcIso(date: string, time: string): string {
     !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
     !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)
   ) {
-    throw new RangeError('Se espera una fecha YYYY-MM-DD y una hora HH:mm');
+    throw new RangeError('Expected a YYYY-MM-DD date and an HH:mm time');
   }
 
   const wallTime = Date.parse(`${date}T${time}:00Z`);
@@ -99,7 +98,7 @@ export function localToUtcIso(date: string, time: string): string {
     !Number.isFinite(wallTime) ||
     new Date(wallTime).toISOString().slice(0, 10) !== date
   ) {
-    throw new RangeError(`Fecha local inválida: ${date}`);
+    throw new RangeError(`Invalid local date: ${date}`);
   }
 
   const before = wallTime - offsetAt(wallTime - 24 * HOUR_MS);

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { collator } from '@/i18n/formats';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -149,7 +150,7 @@ const coachOptions = computed(() => {
   }
   return [...options]
     .map(([id, name]) => ({ id, name }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    .sort((a, b) => collator().compare(a.name, b.name));
 });
 
 onMounted(() => {

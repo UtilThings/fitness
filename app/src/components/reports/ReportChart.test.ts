@@ -2,7 +2,13 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { expect, it, vi } from 'vitest';
 import ReportChart from './ReportChart.vue';
-import { buildChartData, buildChartOptions } from './chart-data';
+import { withLocale } from '@/test/i18n';
+import {
+  buildChartData,
+  buildChartOptions,
+  formatChartValue,
+} from './chart-data';
+import { displayReportCell } from './report-presentation';
 
 vi.mock('primevue/chart', () => ({
   __esModule: true,
@@ -81,3 +87,20 @@ it('shows loading and empty states, then mounts a labelled chart with an accessi
   expect(wrapper.get('table').text()).toContain('$268.00');
   wrapper.unmount();
 });
+
+it.each(['en', 'es'] as const)(
+  'formats chart data and report cells for %s',
+  async (locale) => {
+    await withLocale(locale, () => {
+      const formatter = new Intl.NumberFormat(`${locale}-US`, {
+        style: 'percent',
+        maximumFractionDigits: 1,
+      });
+      const expected = formatter.format(0.456);
+      expect(formatChartValue(45.6, 'percent')).toBe(expected);
+      expect(
+        displayReportCell(0.456, { key: 'rate', label: 'Rate', percent: true }),
+      ).toBe(expected);
+    });
+  },
+);

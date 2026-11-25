@@ -1,7 +1,7 @@
 # 006 - [Módulo] Formato de fechas, números, moneda y ordenamiento por idioma
 
 - **Prioridad:** 6
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003
 - **Fase:** Fase 2: Utilidades transversales
 
@@ -24,11 +24,11 @@ Fechas, horas, números y comparaciones de texto usan el idioma activo mientras 
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] Con `en`, `formatDate` y `formatMoney` producen el formato de `en-US`; con `es`, el actual.
-- [ ] Cambiar el idioma en caliente actualiza fechas y montos mostrados (los formateadores son reactivos).
-- [ ] La zona horaria y la moneda siguen saliendo del `business` en ambos idiomas.
-- [ ] Los cálculos (`localToUtcIso`, `todayLocal`) no cambian con el idioma.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] Con `en`, `formatDate` y `formatMoney` producen el formato de `en-US`; con `es`, el actual.
+- [x] Cambiar el idioma en caliente actualiza fechas y montos mostrados (los formateadores son reactivos).
+- [x] La zona horaria y la moneda siguen saliendo del `business` en ambos idiomas.
+- [x] Los cálculos (`localToUtcIso`, `todayLocal`) no cambian con el idioma.
 
 ## Referencias
 
@@ -41,3 +41,4 @@ Fechas, horas, números y comparaciones de texto usan el idioma activo mientras 
 
 ## Notas de implementación
 
+Lint, comprobación de tipos y suite completa en verde. Los casos nuevos cubren reactividad de fecha, hora y monto en ambos idiomas, los formatos de reportes y los cálculos de horario de Nueva York. La vista Clases muestra las horas en el idioma activo.

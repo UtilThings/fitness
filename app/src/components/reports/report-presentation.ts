@@ -1,3 +1,5 @@
+import { computed } from 'vue';
+import { intlLocale } from '@/i18n/formats';
 import type { CsvColumn } from '@/lib/csv';
 import { formatMoney } from '@/lib/money';
 import type { ReportKind, ReportResponse } from '@/types/reports';
@@ -86,11 +88,14 @@ const retentionMetrics = [
   percent('retention_rate', 'Retención'),
 ];
 
-const numberFormat = new Intl.NumberFormat('es-US');
-const percentFormat = new Intl.NumberFormat('es-US', {
-  style: 'percent',
-  maximumFractionDigits: 1,
-});
+const numberFormat = computed(() => new Intl.NumberFormat(intlLocale()));
+const percentFormat = computed(
+  () =>
+    new Intl.NumberFormat(intlLocale(), {
+      style: 'percent',
+      maximumFractionDigits: 1,
+    }),
+);
 
 export function displayReportCell(
   value: Row[string] | undefined,
@@ -98,9 +103,9 @@ export function displayReportCell(
 ) {
   if (value === undefined || value === '') return '—';
   if (typeof value === 'string') return value;
-  if (column.percent) return percentFormat.format(value);
+  if (column.percent) return percentFormat.value.format(value);
   if (column.type === 'money') return formatMoney(value);
-  return numberFormat.format(value);
+  return numberFormat.value.format(value);
 }
 
 export function exportReportRows(detail: Detail): Row[] {

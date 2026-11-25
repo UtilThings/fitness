@@ -537,7 +537,7 @@ function generate() {
             :class="{ 'line-through': session.status === 'cancelled' }"
             class="grid font-medium"
           >
-            {{ formatTime(session.starts_at, 'en-US') }}
+            {{ formatTime(session.starts_at) }}
             <span>{{ session.title || serviceName(session) }}</span>
           </span>
           <span
@@ -575,7 +575,7 @@ function generate() {
         </button>
         <div v-if="slotOptions.has(day)" class="grid gap-1">
           <Button
-            :label="formatTime(slotOptions.get(day)!, 'en-US')"
+            :label="formatTime(slotOptions.get(day)!)"
             icon="pi pi-plus"
             size="small"
             severity="secondary"
@@ -584,7 +584,7 @@ function generate() {
               'Agregar sesión ' +
               formatDayLabel(day) +
               ' a las ' +
-              formatTime(slotOptions.get(day)!, 'en-US')
+              formatTime(slotOptions.get(day)!)
             "
             :aria-expanded="
               canEdit ? selectedSlot === slotOptions.get(day) : undefined
@@ -628,8 +628,8 @@ function generate() {
         </h2>
         <p>
           {{ formatDate(selected.starts_at) }} ·
-          {{ formatTime(selected.starts_at, 'en-US') }} ·
-          {{ selected.duration_min }} min · Cupo {{ selected.capacity }}
+          {{ formatTime(selected.starts_at) }} · {{ selected.duration_min }} min
+          · Cupo {{ selected.capacity }}
         </p>
         <p v-if="selected.title" class="text-sm text-muted-color">
           {{ serviceName(selected) }}

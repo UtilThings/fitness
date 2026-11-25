@@ -173,10 +173,10 @@ it('renders nine seeded local slots and supports service filters and week naviga
   expect(wrapper.findAll('[data-session]')).toHaveLength(9);
   expect(
     wrapper.get('[data-day="2026-11-02"] [data-session="0"]').text(),
-  ).toContain('7:30 PM');
+  ).toMatch(/7:30\s*p\.\s*m\./);
   expect(
     wrapper.get('[data-day="2026-11-07"] [data-session="2"]').text(),
-  ).toContain('9:00 AM');
+  ).toMatch(/9:00\s*a\.\s*m\./);
   await wrapper.get('select[aria-label="Servicio"]').setValue('strength');
   expect(wrapper.findAll('[data-session]')).toHaveLength(6);
   await wrapper.get('[aria-label="Semana anterior"]').trigger('click');
@@ -254,7 +254,7 @@ it('submits a move using the local date and renders the replacement on that day'
   });
   expect(
     wrapper.get('[data-day="2026-11-06"] [data-session="replacement"]').text(),
-  ).toContain('7:30 PM');
+  ).toMatch(/7:30\s*p\.\s*m\./);
 });
 
 it('hides session mutations from coaches', async () => {

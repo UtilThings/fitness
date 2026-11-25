@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { collator } from '@/i18n/formats';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -50,7 +51,7 @@ const clientOptions = computed(() => {
   if (current) clients.set(current.id, fullName(current));
   return [...clients]
     .map(([value, label]) => ({ value, label }))
-    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+    .sort((a, b) => collator().compare(a.label, b.label));
 });
 const membershipOptions = computed(() =>
   memberships.value
