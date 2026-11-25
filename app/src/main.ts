@@ -4,10 +4,13 @@ import ToastService from 'primevue/toastservice';
 import PrimeVue from 'primevue/config';
 import { createApp } from 'vue';
 import App from '@/App.vue';
+import { i18n, initializeLocale } from '@/i18n';
 import { env } from '@/lib/env';
 import { AppPreset } from '@/lib/theme';
 import router from '@/router';
 import '@/styles/main.css';
+
+await initializeLocale();
 
 createApp(App)
   .use(PrimeVue, {
@@ -22,5 +25,6 @@ createApp(App)
   })
   .use(ToastService)
   .use(ConfirmationService)
+  .use(i18n)
   .use(router)
   .mount('#app');

@@ -1,7 +1,7 @@
 # 002 - [Módulo] Módulo `i18n` e instalación de vue-i18n
 
 - **Prioridad:** 2
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 001
 - **Fase:** Fase 1: Fundamentos
 
@@ -24,10 +24,10 @@ El app arranca con `vue-i18n` instalado, idioma inicial resuelto y `t` disponibl
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` `bun run test` y `bun run build` pasan en verde.
-- [ ] Con `localStorage.locale = "es"` `t('Sign out')` devuelve `Cerrar sesión`; con `en` o sin valor devuelve `Sign out`.
-- [ ] Un valor inválido en `localStorage` o `navigator.language = "fr"` resuelve a `en`.
-- [ ] El chunk de `es` se genera aparte en `vite build`.
+- [x] `cd app && bun run lint`, `bun run typecheck` `bun run test` y `bun run build` pasan en verde.
+- [x] Con `localStorage.locale = "es"` `t('Sign out')` devuelve `Cerrar sesión`; con `en` o sin valor devuelve `Sign out`.
+- [x] Un valor inválido en `localStorage` o `navigator.language = "fr"` resuelve a `en`.
+- [x] El chunk de `es` se genera aparte en `vite build`.
 
 ## Referencias
 
@@ -40,3 +40,4 @@ El app arranca con `vue-i18n` instalado, idioma inicial resuelto y `t` disponibl
 
 ## Notas de implementación
 
+Lint, comprobación de tipos, build y 334 pruebas en verde. Vite generó el chunk independiente es-Bmxdhq2e.js. La suite completa se ejecutó fuera del sandbox para permitir la tubería de la prueba de CSV.
