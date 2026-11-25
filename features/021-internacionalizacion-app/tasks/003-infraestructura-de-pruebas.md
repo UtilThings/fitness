@@ -1,7 +1,7 @@
 # 003 - [Pruebas] Infraestructura de pruebas con i18n
 
 - **Prioridad:** 3
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002
 - **Fase:** Fase 1: Fundamentos
 
@@ -22,9 +22,9 @@ Las pruebas existentes siguen verdes sin reescribirlas y existe un helper para m
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] Una prueba nueva `app/src/test/i18n.test.ts` demuestra `withLocale('en')` y `withLocale('es')` sobre `t`.
-- [ ] Ninguna prueba existente cambió sus aserciones.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] Una prueba nueva `app/src/test/i18n.test.ts` demuestra `withLocale('en')` y `withLocale('es')` sobre `t`.
+- [x] Ninguna prueba existente cambió sus aserciones.
 
 ## Referencias
 
@@ -37,3 +37,4 @@ Las pruebas existentes siguen verdes sin reescribirlas y existe un helper para m
 
 ## Notas de implementación
 
+Lint, comprobación de tipos y 335 pruebas en verde. La prueba del helper comprobó la traducción en ambos idiomas y la restauración de la preferencia. Se conservaron las aserciones existentes.
