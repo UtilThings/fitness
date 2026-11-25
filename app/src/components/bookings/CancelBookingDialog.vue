@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Dialog from 'primevue/dialog';
@@ -71,7 +72,7 @@ async function submit() {
   const overrideNote =
     late.value && override.value ? note.value.trim() : undefined;
   noteError.value =
-    overrideNote === '' ? 'Indica el motivo de la excepción.' : '';
+    overrideNote === '' ? t('Enter a reason for the override.') : '';
   if (noteError.value) return;
   saving.value = true;
   saveError.value = undefined;
@@ -90,7 +91,7 @@ async function submit() {
 <template>
   <Dialog
     v-model:visible="open"
-    header="Cancelar reserva"
+    :header="t('Cancel booking')"
     modal
     class="w-full max-w-lg"
     :closable="!saving"
@@ -101,17 +102,17 @@ async function submit() {
         loadError.message
       }}</Message>
       <p v-else-if="availability">
-        Límite para cancelar sin penalización (Miramar):
+        {{ t('Cancellation deadline without penalty (Miramar):') }}
         {{ formatDeadline(availability.cancellation_deadline) }}
       </p>
-      <p v-else role="status">Consultando la ventana de cancelación…</p>
-      <Message v-if="!cancellable" severity="warn" :closable="false"
-        >La reserva ya no se puede cancelar.</Message
-      >
+      <p v-else role="status">{{ t('Checking the cancellation window…') }}</p>
+      <Message v-if="!cancellable" severity="warn" :closable="false">{{
+        t('This booking can no longer be canceled.')
+      }}</Message>
       <template v-else-if="late">
-        <Message severity="warn" :closable="false"
-          >La cancelación se registrará como tardía.</Message
-        >
+        <Message severity="warn" :closable="false">{{
+          t('This will be recorded as a late cancellation.')
+        }}</Message>
         <div class="flex items-center gap-2">
           <Checkbox
             v-model="override"
@@ -120,12 +121,14 @@ async function submit() {
             :disabled="saving"
             @update:model-value="noteError = ''"
           />
-          <label :for="id + '-override'">Cancelar con excepción</label>
+          <label :for="id + '-override'">{{
+            t('Cancel with an override')
+          }}</label>
         </div>
         <CatalogField
           v-if="override"
           :id="id + '-note'"
-          label="Motivo de la excepción"
+          :label="t('Reason for override')"
           :error="noteError || saveError?.fields.override_note"
         >
           <Textarea
@@ -144,7 +147,7 @@ async function submit() {
       </Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
@@ -152,7 +155,7 @@ async function submit() {
         />
         <Button
           type="submit"
-          label="Confirmar cancelación"
+          :label="t('Confirm cancellation')"
           severity="danger"
           :loading="saving"
           :disabled="!availability || !cancellable"

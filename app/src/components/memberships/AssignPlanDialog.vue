@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -74,7 +75,7 @@ async function submit() {
 <template>
   <Dialog
     v-model:visible="open"
-    header="Asignar plan"
+    :header="t('Assign plan')"
     modal
     class="w-full max-w-lg"
     :closable="!saving"
@@ -82,16 +83,16 @@ async function submit() {
   >
     <form class="grid gap-4" @submit.prevent="submit">
       <div class="grid gap-1">
-        <label :for="id + '-plan'">Plan activo</label>
+        <label :for="id + '-plan'">{{ t('Active plan') }}</label>
         <Select
           v-model="selected"
           :input-id="id + '-plan'"
-          aria-label="Plan activo"
+          :aria-label="t('Active plan')"
           :options="plans"
           option-value="id"
           option-label="label"
           filter
-          placeholder="Selecciona un plan"
+          :placeholder="t('Select a plan')"
           :loading="loading"
           :disabled="saving"
         />
@@ -104,18 +105,21 @@ async function submit() {
         severity="info"
         :closable="false"
       >
-        Primera clase disponible una sola vez por cliente.
+        {{ t('The first class is available once per client.') }}
       </Message>
       <Message
         v-if="plan?.commitment_periods"
         severity="warn"
         :closable="false"
       >
-        Este plan tiene un compromiso de
-        {{ plan.commitment_periods * 4 }} semanas.
+        {{
+          t('This plan has a {count}-week commitment.', {
+            count: plan.commitment_periods * 4,
+          })
+        }}
       </Message>
       <div class="grid gap-1">
-        <label :for="id + '-start'">Fecha de inicio</label>
+        <label :for="id + '-start'">{{ t('Start date') }}</label>
         <InputText
           :id="id + '-start'"
           v-model="date"
@@ -125,7 +129,7 @@ async function submit() {
         />
       </div>
       <div class="grid gap-1">
-        <label :for="id + '-notes'">Observaciones</label>
+        <label :for="id + '-notes'">{{ t('Notes') }}</label>
         <Textarea
           :id="id + '-notes'"
           v-model="notes"
@@ -138,14 +142,14 @@ async function submit() {
       }}</Message>
       <div class="flex justify-end gap-2">
         <Button
-          label="Cerrar"
+          :label="t('Close')"
           severity="secondary"
           outlined
           :disabled="saving"
           @click="open = false"
         />
         <Button
-          label="Asignar"
+          :label="t('Assign')"
           type="submit"
           :loading="saving"
           :disabled="!plan || !date"

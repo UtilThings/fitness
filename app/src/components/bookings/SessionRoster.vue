@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
@@ -44,11 +45,17 @@ const waiting = computed(() =>
   rows.value.filter(({ status }) => status === 'waitlisted'),
 );
 const groups = computed(() => [
-  { label: 'Inscritos', rows: enrolled.value, empty: 'Sin inscritos' },
   {
-    label: 'Lista de espera',
+    key: 'booked',
+    label: t('Booked clients'),
+    rows: enrolled.value,
+    empty: t('No booked clients'),
+  },
+  {
+    key: 'waitlist',
+    label: t('Waitlist'),
     rows: waiting.value,
-    empty: 'Sin clientes en espera',
+    empty: t('No clients on the waitlist'),
   },
 ]);
 const attendanceEnabled = computed(
@@ -130,8 +137,8 @@ async function mark(
     <Message v-if="error && !correction" severity="error" :closable="false">
       {{ Object.values(error.fields).join(' ') || error.message }}
     </Message>
-    <p v-if="loading" role="status">Cargando reservas…</p>
-    <section v-for="group in groups" :key="group.label" class="grid gap-2">
+    <p v-if="loading" role="status">{{ t('Loading bookings…') }}</p>
+    <section v-for="group in groups" :key="group.key" class="grid gap-2">
       <h3 class="font-semibold">{{ group.label }} ({{ group.rows.length }})</h3>
       <p v-if="!group.rows.length && !loading" class="text-sm text-muted-color">
         {{ group.empty }}
@@ -143,9 +150,9 @@ async function mark(
       >
         <thead class="sr-only">
           <tr>
-            <th scope="col">Cliente</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Acciones</th>
+            <th scope="col">{{ t('Client') }}</th>
+            <th scope="col">{{ t('Status') }}</th>
+            <th scope="col">{{ t('Actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -166,7 +173,7 @@ async function mark(
               <span
                 v-if="booking.free_class"
                 class="block text-xs text-muted-color"
-                >Clase gratis</span
+                >{{ t('Free class') }}</span
               >
             </td>
             <td class="py-2">
@@ -182,7 +189,7 @@ async function mark(
                     session.status === 'scheduled' &&
                     canCancelBooking(booking, session.starts_at, now)
                   "
-                  label="Cancelar"
+                  :label="t('Cancel')"
                   text
                   size="small"
                   severity="danger"
@@ -197,7 +204,7 @@ async function mark(
                 >
                   <Button
                     v-if="booking.status !== 'attended'"
-                    label="Asistió"
+                    :label="t('Attended')"
                     text
                     size="small"
                     :disabled="!attendanceEnabled || busy || loading"
@@ -205,7 +212,7 @@ async function mark(
                   />
                   <Button
                     v-if="booking.status !== 'no_show'"
-                    label="No se presentó"
+                    :label="t('No-show')"
                     text
                     size="small"
                     :disabled="!attendanceEnabled || busy || loading"
@@ -228,7 +235,7 @@ async function mark(
     />
     <Dialog
       :visible="!!correction"
-      header="Corregir asistencia"
+      :header="t('Correct attendance')"
       modal
       class="w-full max-w-lg"
       :closable="!busy"
@@ -249,7 +256,7 @@ async function mark(
       >
         <CatalogField
           :id="id"
-          label="Motivo de la corrección"
+          :label="t('Reason for correction')"
           :error="error?.fields.override_note"
         >
           <Textarea
@@ -266,7 +273,7 @@ async function mark(
         }}</Message>
         <Button
           type="submit"
-          label="Guardar corrección"
+          :label="t('Save correction')"
           :loading="busy"
           :disabled="!note.trim()"
         />

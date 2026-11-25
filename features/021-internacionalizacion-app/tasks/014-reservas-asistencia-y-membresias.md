@@ -1,7 +1,7 @@
 # 014 - [Web] Reservas, asistencia y membresías
 
 - **Prioridad:** 14
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 009
 - **Fase:** Fase 3: Migración del texto de la interfaz
 
@@ -22,10 +22,10 @@ Texto fijo en español en: `components/bookings/*`, `components/memberships/*`, 
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
-- [ ] Con `en` no queda texto en español en las vistas y componentes del alcance; con `es` el texto coincide con el actual.
-- [ ] Sin `v-html` para texto traducido.
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
+- [x] Con `en` no queda texto en español en las vistas y componentes del alcance; con `es` el texto coincide con el actual.
+- [x] Sin `v-html` para texto traducido.
 
 ## Referencias
 
@@ -37,3 +37,4 @@ Texto fijo en español en: `components/bookings/*`, `components/memberships/*`, 
 
 ## Notas de implementación
 
+Lint, comprobación de tipos, catálogo y suite completa en verde. Se revisaron las reservas, la lista de espera, la asistencia, las membresías y los ajustes de crédito. Los mensajes que contienen nombres o fechas usan variables nombradas.
