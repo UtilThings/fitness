@@ -103,7 +103,7 @@ for (const path of ["catalog", "schedule"]) {
   for (const key of [null, old.key, "pk_invalid1_00000000000000000000000000000000"]) {
     const response = await publicFetch(path, allowed, "GET", key);
     assert.equal(response.status, 401);
-    assert.deepEqual(await response.json(), { message: "Clave de API inválida" });
+    assert.deepEqual(await response.json(), { message: "The API key is invalid." });
   }
 }
 for (const input of ["2026-02-30", "2099-01-01", ""]) {
@@ -178,7 +178,7 @@ await api(`collections/businesses/records/${other.id}`, "PATCH", { active: false
 for (const path of ["catalog", "schedule"]) {
   const response = await publicFetch(path, otherOrigin, "GET", otherKey);
   assert.equal(response.status, 401);
-  assert.deepEqual(await response.json(), { message: "Clave de API inválida" });
+  assert.deepEqual(await response.json(), { message: "The API key is invalid." });
 }
 
 // This database belongs exclusively to verify-api.sh. Simulate a database failure and restore it.
@@ -187,7 +187,7 @@ try {
   const failure = await publicFetch(`schedule?week=${addLocalDays(week, 7)}`);
   assert.equal(failure.status, 500);
   assert.equal(failure.headers.get("cache-control"), null);
-  assert.deepEqual(await failure.json(), { message: "No se pudieron cargar los datos públicos." });
+  assert.deepEqual(await failure.json(), { message: "Could not load the public data." });
 } finally {
   db.run("ALTER TABLE verify_hidden_sessions RENAME TO class_sessions");
   db.close();

@@ -29,7 +29,7 @@ routerUse((request) => {
   if (String(admins.createRule) && [admins.name, admins.id].includes(collection.toLowerCase())
     && !(actor?.collection().name === "admins" && actor.getBool("active")
       && actor.getString("role") === "owner")) {
-    throw new ForbiddenError("Solo los owners pueden crear integrantes");
+    throw new ForbiddenError("Only owners can create team members.");
   }
   return request.next();
 });
@@ -52,11 +52,11 @@ onRecordUpdateRequest((e) => {
       if (actorId) {
         const actor = txApp.findRecordById("admins", actorId);
         if (!actor.getBool("active") || actor.getString("business") !== business || (actorId !== record.id && actor.getString("role") !== "owner")) {
-          throw new ForbiddenError("No tienes permiso para editar este integrante");
+          throw new ForbiddenError("You do not have permission to edit this team member.");
         }
       }
       if (before.role !== original.getString("role") || before.active !== original.getBool("active")) {
-        throw new BadRequestError("El rol o el estado cambió. Vuelve a cargar la ficha");
+        throw new BadRequestError("The role or status changed. Reload the team member details.");
       }
       if (after.role === before.role && after.active === before.active) return e.next();
 
@@ -64,7 +64,7 @@ onRecordUpdateRequest((e) => {
       const error = checkAdminChange({ before, after, actorId, activeOwners });
       if (error) throw new BadRequestError(error.message);
       if (actorId === record.id && before.role !== after.role) {
-        throw new ForbiddenError("No puedes cambiar tu propio rol");
+        throw new ForbiddenError("You cannot change your own role.");
       }
       return e.next();
     });
@@ -87,7 +87,7 @@ onRecordDeleteRequest((e) => {
       if (actorId) {
         const actor = txApp.findRecordById("admins", actorId);
         if (!actor.getBool("active") || actor.getString("business") !== business || actor.getString("role") !== "owner") {
-          throw new ForbiddenError("No tienes permiso para eliminar integrantes");
+          throw new ForbiddenError("You do not have permission to delete team members.");
         }
       }
       const isSelf = actorId === record.id;

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { isAudited } from "./audit-config";
-import { buildEntry, buildSummary, computeDiff, redact } from "./audit";
+import { buildEntry, computeDiff, redact } from "./audit";
 
 const target = { collection: "admins", recordId: "admin-1" };
 
@@ -38,7 +38,7 @@ test("redacts credentials recursively and keeps them out of entries and summarie
     action: "update",
     collection: "admins",
     record_id: "admin-1",
-    summary: "update admins: admin-1",
+    summary: "Record updated.",
     diff: { profile: { to: publicProfile } },
   });
   expect(buildEntry({ ...target, action: "update", before, after: { password: "new" } })).toBeNull();
@@ -62,14 +62,7 @@ test("uses only to for create and only from for delete", () => {
   expect(create?.diff).toEqual({ name: { to: "Ana" } });
   expect(create?.actor).toBe("owner-1");
   expect(remove?.diff).toEqual({ name: { from: "Ana" } });
-  expect(remove?.summary).toBe("delete admins: Ana");
-});
-
-test("chooses a name, title, email, or id for summaries", () => {
-  expect(buildSummary("create", "admins", { name: "Ana", title: "Coach" })).toBe("create admins: Ana");
-  expect(buildSummary("update", "admins", { name: " ", title: "Coach" })).toBe("update admins: Coach");
-  expect(buildSummary("delete", "admins", { email: "ana@example.test" })).toBe("delete admins: ana@example.test");
-  expect(buildSummary("delete", "admins", { id: "admin-1" })).toBe("delete admins: admin-1");
+  expect(remove?.summary).toBe("Record deleted.");
 });
 
 test("uses the audited business even when the actor belongs to another business", async () => {

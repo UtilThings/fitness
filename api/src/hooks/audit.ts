@@ -87,7 +87,7 @@ routerUse((e) => {
   // The collection rules filter results. Return a 403 for the records API before that filtering.
   const audit = e.app.findCachedCollectionByNameOrId("audit_logs");
   if ([audit.name, audit.id].includes(collection.toLowerCase())) {
-    throw new ForbiddenError("Solo el owner puede consultar la auditoría.");
+    throw new ForbiddenError("Only the owner can view the audit log.");
   }
   return e.next();
 });

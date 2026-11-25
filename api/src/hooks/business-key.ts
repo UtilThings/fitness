@@ -2,19 +2,19 @@
 
 routerAdd("POST", "/api/admin/business/public-key", (e) => {
   const actor = e.auth;
-  if (!actor) throw new UnauthorizedError("Se requiere iniciar sesión.");
+  if (!actor) throw new UnauthorizedError("Sign in is required.");
   if (actor.collection().name !== "admins" || !actor.getBool("active") || actor.getString("role") !== "owner") {
-    throw new ForbiddenError("Solo el owner puede rotar la clave pública.");
+    throw new ForbiddenError("Only the owner can rotate the public key.");
   }
   const { generateKey, hashKey } = require(`${__hooks}/lib/business-key`) as typeof import("../lib/business-key");
   let result: { key: string; prefix: string; rotated_at: string } | undefined;
   e.app.runInTransaction((tx) => {
     const current = tx.findRecordById("admins", actor.id);
     if (!current.getBool("active") || current.getString("role") !== "owner") {
-      throw new ForbiddenError("Solo el owner puede rotar la clave pública.");
+      throw new ForbiddenError("Only the owner can rotate the public key.");
     }
     const business = tx.findRecordById("businesses", current.getString("business"));
-    if (!business.getBool("active")) throw new ForbiddenError("El negocio está inactivo.");
+    if (!business.getBool("active")) throw new ForbiddenError("The business is inactive.");
     for (let attempt = 0; attempt < 8; attempt++) {
       const { key, prefix } = generateKey();
       if (tx.countRecords("businesses", $dbx.hashExp({ public_key_prefix: prefix }))) continue;
@@ -28,12 +28,12 @@ routerAdd("POST", "/api/admin/business/public-key", (e) => {
         action: "custom",
         collection: "businesses",
         record_id: business.id,
-        summary: "public_key_rotated",
+        summary: "Public key rotated.",
       }));
       result = { key, prefix, rotated_at };
       return;
     }
-    throw new InternalServerError("No se pudo generar la clave pública.");
+    throw new InternalServerError("Could not generate the public key.");
   });
   e.response.header().set("Cache-Control", "no-store");
   return e.json(200, result);

@@ -210,7 +210,7 @@ if (phase === "seed") {
   };
   assert.match(
     await expectField(plans, "POST", owner, firstClass, "is_first_class"),
-    /Ya existe/,
+    /first-class plan already exists/,
   );
   await call(plans + "/" + trial.id, {
     method: "PATCH",
@@ -251,7 +251,7 @@ if (phase === "seed") {
     token: owner,
     expected: 400,
   });
-  assert.match(denied.message, /Desactívalo en su lugar/);
+  assert.equal(denied.message, "This record has related records. Deactivate it instead.");
 
   const move = {
     updates: [
@@ -300,7 +300,7 @@ if (phase === "seed") {
       { active: true },
       "active",
     ),
-    /servicio está inactivo/i,
+    /service is inactive/i,
   );
   assert.match(
     await expectField(
@@ -310,7 +310,7 @@ if (phase === "seed") {
       { ...paid, price_cents: 100 },
       "active",
     ),
-    /servicio está inactivo/i,
+    /service is inactive/i,
   );
   const audit = await list(
     url(
@@ -322,7 +322,8 @@ if (phase === "seed") {
   );
   assert.equal(audit.length, 1);
   assert.equal(audit[0].actor, staff.owner.id);
-  assert.match(String(audit[0].summary), /Tropical Jump: 2/);
+  assert.equal(audit[0].summary, "Plans deactivated with their service.");
+  assert.equal((audit[0].diff as { planes_desactivados?: { to: number } }).planes_desactivados?.to, 2);
 
   const member = await call<RecordData>("collections/clients/records", {
     method: "POST",
@@ -346,7 +347,7 @@ if (phase === "seed") {
     token: owner,
     expected: 400,
   });
-  assert.match(blocked.message, /Desactívalo en su lugar/);
+  assert.equal(blocked.message, "This record has related records. Deactivate it instead.");
   await call(plans + "/" + trial.id, {
     method: "DELETE",
     token: owner,
@@ -408,7 +409,8 @@ if (phase === "seed") {
     owner,
   );
   assert.equal(withoutPlans.length, 1);
-  assert.match(String(withoutPlans[0].summary), /: 0$/);
+  assert.equal(withoutPlans[0].summary, "Plans deactivated with their service.");
+  assert.equal((withoutPlans[0].diff as { planes_desactivados?: { to: number } }).planes_desactivados?.to, 0);
   await call(services + "/" + created.id, {
     method: "DELETE",
     token: owner,

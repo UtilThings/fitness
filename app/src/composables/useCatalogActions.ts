@@ -62,7 +62,9 @@ export function useCatalogActions<T extends CatalogRow>(catalog: {
             if (
               error.status === 400 &&
               row.active &&
-              error.message.includes('Desactívalo en su lugar')
+              (error.message ===
+                'This record has related records. Deactivate it instead.' ||
+                error.message.includes('Desactívalo en su lugar'))
             ) {
               confirm.require({
                 header: t('Keep record'),

@@ -70,15 +70,12 @@ export function computeDiff(before?: AuditRecord, after?: AuditRecord): Record<s
   return Object.fromEntries(changes);
 }
 
-export function buildSummary(action: Action, collection: string, record: AuditRecord): string {
-  for (const field of ["name", "title", "email", "id"]) {
-    const value = record[field];
-    if (typeof value === "string" && value.trim()) {
-      return `${action} ${collection}: ${value.trim()}`;
-    }
-  }
-  return `${action} ${collection}`;
-}
+const actionSummaries: Record<Action, string> = {
+  create: "Record created.",
+  update: "Record updated.",
+  delete: "Record deleted.",
+  custom: "Record action.",
+};
 
 export function buildEntry({
   action, collection, recordId, actorId, credentialsChanged, before, after,
@@ -97,7 +94,7 @@ export function buildEntry({
     action,
     collection,
     record_id: recordId,
-    summary: bookingEvent ? bookingEvent + ": " + recordId : buildSummary(action, collection, { id: recordId, ...(action === "delete" ? before : after ?? before) }),
+    summary: bookingEvent ? bookingEvent + ": " + recordId : actionSummaries[action],
     diff,
   };
 }

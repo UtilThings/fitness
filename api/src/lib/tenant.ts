@@ -54,7 +54,7 @@ export function validateTenantReferences(app: core.App, record: core.Record) {
   for (const [field, collection] of Object.entries(references)) {
     const id = record.getString(field);
     if (id && !tenantRecord(app, collection, id, business)) {
-      throw new BadRequestError("Selecciona registros válidos del mismo negocio.");
+      throw new BadRequestError("Select valid records from the same business.");
     }
   }
 }
@@ -62,14 +62,14 @@ export function validateTenantReferences(app: core.App, record: core.Record) {
 export function prepareTenantCreate(e: core.RecordRequestEvent) {
   const record = e.record!;
   if (!e.hasSuperuserAuth()) record.set("business", resolveBusiness(e.auth));
-  if (!record.getString("business")) throw new BadRequestError("Indica un negocio.");
+  if (!record.getString("business")) throw new BadRequestError("Specify a business.");
   validateTenantReferences(e.app, record);
 }
 
 export function prepareTenantUpdate(e: core.RecordRequestEvent) {
   const record = e.record!;
   if (!assertSameBusiness(record, record.original())) {
-    throw new BadRequestError("No se puede cambiar el negocio de un registro.");
+    throw new BadRequestError("A record cannot be moved to another business.");
   }
   validateTenantReferences(e.app, record);
 }
@@ -79,7 +79,7 @@ export function getBusinessTimezone(app: Pick<core.App, "findRecordsByFilter">, 
   const cached = event?.get(key);
   if (typeof cached === "string") return cached;
   const timezone = getBusiness(app, businessId)?.getString("timezone");
-  if (!timezone) throw new BadRequestError("Indica un negocio con zona horaria.");
+  if (!timezone) throw new BadRequestError("Specify a business with a time zone.");
   event?.set(key, timezone);
   return timezone;
 }
@@ -93,7 +93,7 @@ export function forEachActiveBusiness(
     try {
       run(business);
     } catch (error) {
-      app.logger().error("Falló la operación del negocio.", "job", job, "business", business.id, "error", String(error));
+      app.logger().error("The business operation failed.", "job", job, "business", business.id, "error", String(error));
     }
   }
 }

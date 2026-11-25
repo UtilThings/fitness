@@ -1,7 +1,7 @@
 # 020 - [Hooks] Mensajes en inglés del API: identidad, negocio y catálogo
 
 - **Prioridad:** 20
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 019
 - **Fase:** Fase 4: Mensajes del API
 
@@ -23,10 +23,10 @@ Archivos del alcance: `hooks/admins.ts`, `businesses.ts`, `business-key.ts`, `te
 
 ## Criterios de aceptación
 
-- [ ] `cd api && bun test` y `bun run build` pasan en verde; `api/pb_hooks/` regenerado.
-- [ ] Ningún texto de usuario en español queda en los archivos del alcance (`grep -P '[áéíóúñ¿¡]'` sin coincidencias en cadenas de mensajes).
-- [ ] Códigos HTTP y `code` de errores sin cambios.
-- [ ] Los `scripts/verify-*.ts` relacionados terminan en verde.
+- [x] `cd api && bun test` y `bun run build` pasan en verde; `api/pb_hooks/` regenerado.
+- [x] Ningún texto de usuario en español queda en los archivos del alcance (`grep -P '[áéíóúñ¿¡]'` sin coincidencias en cadenas de mensajes).
+- [x] Códigos HTTP y `code` de errores sin cambios.
+- [x] Los `scripts/verify-*.ts` relacionados terminan en verde.
 
 ## Referencias
 
@@ -39,3 +39,4 @@ Archivos del alcance: `hooks/admins.ts`, `businesses.ts`, `business-key.ts`, `te
 
 ## Notas de implementación
 
+Pasaron 123 pruebas del API, la compilación de hooks mediante bun run build:ts y verify-api.sh con una instancia desechable de PocketBase. Las aserciones verifican el resumen estático y el conteo en diff. Se conservan los estados HTTP y códigos de validación.

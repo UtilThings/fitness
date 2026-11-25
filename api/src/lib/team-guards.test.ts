@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { ADMIN_REFERENCES, canDeleteAdmin, checkAdminChange } from "./team-guards";
 
 const owner = { id: "owner", role: "owner", active: true };
-const lastOwner = { status: 400, message: "Debe quedar al menos un owner activo" };
+const lastOwner = { status: 400, message: "At least one active owner must remain." };
 
 describe("checkAdminChange", () => {
   test.each([
@@ -21,7 +21,7 @@ describe("checkAdminChange", () => {
       after: { ...owner, active: false },
       actorId: owner.id,
       activeOwners: 2,
-    })).toEqual({ status: 400, message: "No puedes desactivarte a ti mismo" });
+    })).toEqual({ status: 400, message: "You cannot deactivate your own account." });
   });
 
   test("impide la degradación propia del último owner y permite cambios de perfil", () => {
@@ -44,7 +44,7 @@ describe("canDeleteAdmin", () => {
     expect(ADMIN_REFERENCES).toContainEqual({ collection: "audit_logs", field: "actor" });
     expect(ADMIN_REFERENCES).toContainEqual({ collection: "bookings", field: "marked_by" });
     expect(canDeleteAdmin({ referencesCount: 2, isLastOwner: false, isSelf: false })).toEqual({
-      status: 409, message: "Tiene registros asociados; desactívalo en su lugar",
+      status: 409, message: "This team member has related records. Deactivate them instead.",
     });
     expect(canDeleteAdmin({ referencesCount: 0, isLastOwner: false, isSelf: false })).toBeNull();
   });

@@ -16,10 +16,10 @@ function checkCatalogPrice(e: core.RecordRequestEvent) {
       !Number.isSafeInteger(Number(price)) ||
       Number(price) < 0
     ) {
-      throw new BadRequestError("Revisa los datos del plan.", {
+      throw new BadRequestError("Check the plan details.", {
         price_cents: new ValidationError(
           "validation_catalog",
-          "Indica un precio en centavos enteros no negativos.",
+          "Enter a nonnegative price in whole cents.",
         ),
       });
     }
@@ -111,12 +111,12 @@ onRecordValidate(
         0,
         { id: serviceId },
       );
-      if (!service) errors.service = "Selecciona un servicio válido.";
+      if (!service) errors.service = "Select a valid service.";
       else if (
         record.getBool("active") &&
         !canActivatePlan(service.getBool("active"))
       ) {
-        errors.active = "El servicio está inactivo.";
+        errors.active = "The service is inactive.";
       }
 
       if (record.getBool("is_first_class")) {
@@ -137,7 +137,7 @@ onRecordValidate(
             record.id,
           )
         ) {
-          errors.is_first_class = "Ya existe un plan de primera clase.";
+          errors.is_first_class = "A first-class plan already exists.";
         }
       }
     }
@@ -149,7 +149,7 @@ onRecordValidate(
           new ValidationError("validation_catalog", message),
         ]),
       );
-      throw new BadRequestError("Revisa los datos del catálogo.", fields);
+      throw new BadRequestError("Check the catalog details.", fields);
     }
     return e.next();
   },
@@ -178,7 +178,7 @@ onRecordAfterUpdateSuccess((e) => {
           new Record(e.app.findCollectionByNameOrId("audit_logs"), {
             ...data,
             business: record.getString("business"),
-            summary: `Planes desactivados al desactivar ${record.getString("name")}: ${count}`,
+            summary: "Plans deactivated with their service.",
           }),
         );
       } catch (error) {
