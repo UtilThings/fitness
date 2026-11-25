@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import Skeleton from 'primevue/skeleton';
@@ -12,7 +13,7 @@ defineEmits<{ retry: [] }>();
     <div class="flex flex-wrap items-center gap-3">
       <span>{{ error }}</span>
       <Button
-        label="Reintentar"
+        :label="t('Retry')"
         size="small"
         severity="secondary"
         @click="$emit('retry')"
@@ -22,7 +23,7 @@ defineEmits<{ retry: [] }>();
   <div
     v-else-if="loading"
     class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
-    aria-label="Cargando el dashboard"
+    :aria-label="t('Loading dashboard')"
     aria-busy="true"
   >
     <Skeleton v-for="index in 4" :key="index" height="5rem" />

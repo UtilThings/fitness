@@ -173,7 +173,7 @@ describe('Reportes', () => {
     expect(button).toBeDefined();
     await button!.trigger('click');
     expect(download).toHaveBeenCalledWith(
-      'jq-reportes-ocupacion-2026-11-01_2026-11-30.csv',
+      'jq-reports-ocupacion-2026-11-01_2026-11-30.csv',
       '\uFEFFFecha,Hora,Servicio,Coach,Cupos,Reservas,Lista de espera,Ocupación\r\n2026-11-04,16:00,Fuerza,"\'=Coach, Muñoz",6,5,1,83.3%',
     );
   });

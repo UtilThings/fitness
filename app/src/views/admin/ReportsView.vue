@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -27,17 +28,20 @@ import type { Service } from '@/lib/catalog';
 import { csvFilename, downloadCsv, toCsv } from '@/lib/csv';
 import type { ReportPreset } from '@/types/reports';
 
-const presets = [
-  { value: '7d', label: 'Últimos 7 días' },
-  { value: '30d', label: 'Últimos 30 días' },
-  { value: 'this-month', label: 'Mes actual' },
-  { value: 'last-month', label: 'Mes anterior' },
-] as const satisfies readonly { value: ReportPreset; label: string }[];
-const groups = [
-  { value: 'day', label: 'Día' },
-  { value: 'week', label: 'Semana' },
-  { value: 'month', label: 'Mes' },
-];
+const presets = computed(
+  () =>
+    [
+      { value: '7d', label: t('Last 7 days') },
+      { value: '30d', label: t('Last 30 days') },
+      { value: 'this-month', label: t('This month') },
+      { value: 'last-month', label: t('Last month') },
+    ] as const satisfies readonly { value: ReportPreset; label: string }[],
+);
+const groups = computed(() => [
+  { value: 'day', label: t('Day') },
+  { value: 'week', label: t('Week') },
+  { value: 'month', label: t('Month') },
+]);
 
 const id = useId();
 const route = useRoute();
@@ -48,11 +52,12 @@ const owner = computed(
 );
 const tab = computed(
   () =>
-    reportTabs.find(({ value }) => value === route.query.tab) ?? reportTabs[0],
+    reportTabs.value.find(({ value }) => value === route.query.tab) ??
+    reportTabs.value[0],
 );
 const kind = computed(() => tab.value.value);
 const visibleTabs = computed(() =>
-  reportTabs.filter(({ value }) => value !== 'revenue' || owner.value),
+  reportTabs.value.filter(({ value }) => value !== 'revenue' || owner.value),
 );
 const denied = computed(() => kind.value === 'revenue' && !owner.value);
 const grouped = computed(
@@ -82,7 +87,7 @@ const {
   fields: 'slug,name',
 });
 const serviceOptions = computed(() => [
-  { slug: '', name: 'Todos los servicios' },
+  { slug: '', name: t('All services') },
   ...services.value,
 ]);
 
@@ -190,10 +195,10 @@ onMounted(() => {
 
 <template>
   <div class="space-y-5 p-4 md:p-6">
-    <PageHeader title="Reportes">
+    <PageHeader :title="t('Reports')">
       <template #actions>
         <Button
-          label="Exportar CSV"
+          :label="t('Export CSV')"
           icon="pi pi-download"
           severity="secondary"
           :disabled="
@@ -214,7 +219,7 @@ onMounted(() => {
         >
       </TabList>
       <Message v-if="denied" severity="warn" class="mt-4" :closable="false">
-        No tienes permiso para ver este reporte
+        {{ t('You do not have permission to view this report') }}
       </Message>
       <TabPanels v-else :pt="{ root: { class: 'p-0! mt-4' } }">
         <TabPanel :value="kind" class="space-y-5">
@@ -223,9 +228,9 @@ onMounted(() => {
           >
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div class="flex min-w-0 flex-col gap-1">
-                <label :for="`${id}-range`" class="text-sm font-medium"
-                  >Rango de fechas</label
-                >
+                <label :for="`${id}-range`" class="text-sm font-medium">{{
+                  t('Date range')
+                }}</label>
                 <DatePicker
                   :input-id="`${id}-range`"
                   :model-value="pickerRange"
@@ -241,9 +246,9 @@ onMounted(() => {
                 v-if="kind !== 'retention'"
                 class="flex min-w-0 flex-col gap-1"
               >
-                <label :for="`${id}-service`" class="text-sm font-medium"
-                  >Servicio</label
-                >
+                <label :for="`${id}-service`" class="text-sm font-medium">{{
+                  t('Service')
+                }}</label>
                 <Select
                   v-model="service"
                   :input-id="`${id}-service`"
@@ -258,13 +263,13 @@ onMounted(() => {
                   role="alert"
                   class="text-red-700 dark:text-red-300"
                 >
-                  No se pudieron cargar los servicios.
+                  {{ t('Could not load the services.') }}
                 </small>
               </div>
               <div v-if="grouped" class="flex min-w-0 flex-col gap-1">
-                <label :for="`${id}-group`" class="text-sm font-medium"
-                  >Agrupar por</label
-                >
+                <label :for="`${id}-group`" class="text-sm font-medium">{{
+                  t('Group by')
+                }}</label>
                 <Select
                   v-model="groupBy"
                   :input-id="`${id}-group`"
@@ -297,7 +302,7 @@ onMounted(() => {
             role="status"
             class="p-6 text-center text-muted-color"
           >
-            Cargando reporte…
+            {{ t('Loading report…') }}
           </p>
 
           <template v-if="presentation">
@@ -330,10 +335,10 @@ onMounted(() => {
               <div
                 class="flex flex-wrap items-center justify-between gap-3 p-4"
               >
-                <h2 class="font-semibold">Detalle</h2>
+                <h2 class="font-semibold">{{ t('Breakdown') }}</h2>
                 <Select
                   v-model="detailIndex"
-                  aria-label="Detalle por"
+                  :aria-label="t('Breakdown by')"
                   :options="detailOptions"
                   option-label="label"
                   option-value="value"
@@ -356,7 +361,7 @@ onMounted(() => {
                     displayReportCell(row[column.key], column)
                   }}</template>
                 </Column>
-                <template #empty>Sin datos en el rango</template>
+                <template #empty>{{ t('No data in the date range') }}</template>
               </DataTable>
             </section>
           </template>

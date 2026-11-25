@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { computed } from 'vue';
 import { intlLocale } from '@/i18n/formats';
 import type { CsvColumn } from '@/lib/csv';
@@ -5,12 +6,15 @@ import { formatMoney } from '@/lib/money';
 import type { ReportKind, ReportResponse } from '@/types/reports';
 import type { ChartSeries, ReportChartType, ValueFormat } from './chart-data';
 
-export const reportTabs = [
-  { value: 'occupancy', label: 'Ocupación', file: 'ocupacion' },
-  { value: 'attendance', label: 'Asistencia', file: 'asistencia' },
-  { value: 'revenue', label: 'Ingresos', file: 'ingresos' },
-  { value: 'retention', label: 'Retención', file: 'retencion' },
-] as const;
+export const reportTabs = computed(
+  () =>
+    [
+      { value: 'occupancy', label: t('Occupancy'), file: 'ocupacion' },
+      { value: 'attendance', label: t('Attendance'), file: 'asistencia' },
+      { value: 'revenue', label: t('Revenue'), file: 'ingresos' },
+      { value: 'retention', label: t('Retention'), file: 'retencion' },
+    ] as const,
+);
 
 type DetailColumn = CsvColumn & { percent?: true };
 type Row = Record<string, string | number>;
@@ -44,50 +48,6 @@ const money = (key: string, label: string): DetailColumn => ({
   label,
   type: 'money',
 });
-const service = text('name', 'Servicio');
-const plan = text('name', 'Plan');
-const period = text('period', 'Periodo');
-const booked = count('booked', 'Reservas');
-const capacity = count('capacity', 'Cupos');
-const occupancy = percent('occupancy_rate', 'Ocupación');
-const attended = count('attended', 'Asistencias');
-const noShow = count('no_show', 'Inasistencias');
-const paid = money('paid_cents', 'Cobrado');
-const payments = count('payments', 'Pagos');
-const added = count('new', 'Altas');
-const churned = count('churned', 'Bajas');
-const activeEnd = count('active_end', 'Activas al cierre');
-
-const occupancyMetrics = [
-  count('sessions', 'Clases'),
-  capacity,
-  booked,
-  occupancy,
-];
-const attendanceMetrics = [
-  booked,
-  attended,
-  noShow,
-  count('late_cancelled', 'Cancelaciones tardías'),
-  count('cancelled', 'Cancelaciones'),
-  percent('attendance_rate', 'Tasa de asistencia'),
-  percent('no_show_rate', 'Tasa de inasistencia'),
-];
-const revenueMetrics = [
-  paid,
-  money('pending_cents', 'Pendiente'),
-  money('void_cents', 'Anulado'),
-  payments,
-];
-const retentionMetrics = [
-  count('active_start', 'Activas al inicio'),
-  added,
-  churned,
-  activeEnd,
-  percent('churn_rate', 'Tasa de bajas'),
-  percent('retention_rate', 'Retención'),
-];
-
 const numberFormat = computed(() => new Intl.NumberFormat(intlLocale()));
 const percentFormat = computed(
   () =>
@@ -125,6 +85,50 @@ export function presentReport(
   kind: ReportKind,
   data: ReportResponse<ReportKind>,
 ): ReportPresentation {
+  const service = text('name', t('Service'));
+  const plan = text('name', t('Plan'));
+  const period = text('period', t('Period'));
+  const booked = count('booked', t('Bookings'));
+  const capacity = count('capacity', t('Spots'));
+  const occupancy = percent('occupancy_rate', t('Occupancy'));
+  const attended = count('attended', t('Attendances'));
+  const noShow = count('no_show', t('No-shows'));
+  const paid = money('paid_cents', t('Collected'));
+  const payments = count('payments', t('Payments'));
+  const added = count('new', t('New memberships'));
+  const churned = count('churned', t('Ended memberships'));
+  const activeEnd = count('active_end', t('Active at end'));
+
+  const occupancyMetrics = [
+    count('sessions', t('Classes')),
+    capacity,
+    booked,
+    occupancy,
+  ];
+  const attendanceMetrics = [
+    booked,
+    attended,
+    noShow,
+    count('late_cancelled', t('Late cancellations')),
+    count('cancelled', t('Cancellations')),
+    percent('attendance_rate', t('Attendance rate')),
+    percent('no_show_rate', t('No-show rate')),
+  ];
+  const revenueMetrics = [
+    paid,
+    money('pending_cents', t('Pending')),
+    money('void_cents', t('Voided')),
+    payments,
+  ];
+  const retentionMetrics = [
+    count('active_start', t('Active at start')),
+    added,
+    churned,
+    activeEnd,
+    percent('churn_rate', t('Churn rate')),
+    percent('retention_rate', t('Retention')),
+  ];
+
   switch (kind) {
     case 'occupancy': {
       const { totals, by_class, by_service } =
@@ -139,21 +143,21 @@ export function presentReport(
         metrics: occupancyMetrics,
         details: [
           {
-            label: 'Por clase',
+            label: t('Per class'),
             rows: classes,
             columns: [
-              text('local_date', 'Fecha'),
-              text('local_time', 'Hora'),
+              text('local_date', t('Date')),
+              text('local_time', t('Time')),
               service,
-              text('coach_name', 'Coach'),
+              text('coach_name', t('Coach')),
               capacity,
               booked,
-              count('waitlisted', 'Lista de espera'),
+              count('waitlisted', t('Waitlist')),
               occupancy,
             ],
           },
           {
-            label: 'Por servicio',
+            label: t('By service'),
             columns: [service, ...occupancyMetrics],
             rows: by_service,
           },
@@ -161,7 +165,7 @@ export function presentReport(
         chart: {
           type: 'bar',
           valueFormat: 'percent',
-          ariaLabel: 'Ocupación por servicio',
+          ariaLabel: t('Occupancy by service'),
           labels: by_service.map(({ name }) => name),
           datasets: [
             {
@@ -180,12 +184,12 @@ export function presentReport(
         metrics: attendanceMetrics,
         details: [
           {
-            label: 'Por día',
-            columns: [text('day', 'Fecha'), ...attendanceMetrics],
+            label: t('By day'),
+            columns: [text('day', t('Date')), ...attendanceMetrics],
             rows: by_day,
           },
           {
-            label: 'Por servicio',
+            label: t('By service'),
             columns: [service, ...attendanceMetrics],
             rows: by_service,
           },
@@ -193,7 +197,7 @@ export function presentReport(
         chart: {
           type: 'line',
           valueFormat: 'number',
-          ariaLabel: 'Asistencias e inasistencias por día',
+          ariaLabel: t('Attendances and no-shows by day'),
           labels: by_day.map(({ day }) => day),
           datasets: [
             {
@@ -213,17 +217,17 @@ export function presentReport(
         metrics: revenueMetrics,
         details: [
           {
-            label: 'Por periodo',
-            columns: [period, paid, count('payments', 'Pagos cobrados')],
+            label: t('By period'),
+            columns: [period, paid, count('payments', t('Payments collected'))],
             rows: totals.payments ? by_period : [],
           },
           {
-            label: 'Por plan',
+            label: t('By plan'),
             columns: [plan, ...revenueMetrics],
             rows: by_plan,
           },
           {
-            label: 'Por servicio',
+            label: t('By service'),
             columns: [service, ...revenueMetrics],
             rows: by_service,
           },
@@ -231,7 +235,7 @@ export function presentReport(
         chart: {
           type: 'line',
           valueFormat: 'money',
-          ariaLabel: 'Ingresos cobrados por periodo',
+          ariaLabel: t('Collected revenue by period'),
           labels: totals.payments ? by_period.map((row) => row.period) : [],
           datasets: [
             {
@@ -251,12 +255,12 @@ export function presentReport(
         metrics: retentionMetrics,
         details: [
           {
-            label: 'Por periodo',
+            label: t('By period'),
             columns: [period, added, churned, activeEnd],
             rows: hasData ? by_period : [],
           },
           {
-            label: 'Por plan',
+            label: t('By plan'),
             columns: [plan, ...retentionMetrics],
             rows: by_plan,
           },
@@ -264,7 +268,7 @@ export function presentReport(
         chart: {
           type: 'bar',
           valueFormat: 'number',
-          ariaLabel: 'Altas y bajas por periodo',
+          ariaLabel: t('Membership starts and ends by period'),
           labels: hasData ? by_period.map((row) => row.period) : [],
           datasets: [
             { label: added.label, values: by_period.map((row) => row.new) },

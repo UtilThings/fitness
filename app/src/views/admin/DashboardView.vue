@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import { computed, watch } from 'vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -27,17 +28,17 @@ watch(
 
 <template>
   <div class="grid min-w-0 gap-4">
-    <PageHeader title="Panel de administración">
+    <PageHeader :title="t('Admin dashboard')">
       <template #actions>
         <p
           v-if="data"
           class="text-sm text-surface-600 dark:text-surface-300"
           aria-live="polite"
         >
-          Actualizado {{ formatTime(data.generated_at) }}
+          {{ t('Updated at {time}', { time: formatTime(data.generated_at) }) }}
         </p>
         <Button
-          label="Actualizar"
+          :label="t('Refresh')"
           icon="pi pi-refresh"
           :loading="loading"
           outlined
@@ -54,24 +55,24 @@ watch(
     <template v-if="data">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          title="Clientes activos"
+          :title="t('Active clients')"
           icon="pi pi-users"
           :value="data.counts.active_clients"
           :to="{ path: '/clients', query: { status: 'active' } }"
         />
         <StatCard
-          title="Clases hoy"
+          :title="t('Classes today')"
           icon="pi pi-calendar"
           :value="data.counts.sessions_today"
           to="/classes"
         />
         <StatCard
-          title="Reservas hoy"
+          :title="t('Bookings today')"
           icon="pi pi-bookmark"
           :value="data.counts.bookings_today"
         />
         <StatCard
-          title="En espera"
+          :title="t('Waitlisted')"
           icon="pi pi-clock"
           :value="data.counts.waitlisted_today"
         />

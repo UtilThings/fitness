@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Message from 'primevue/message';
@@ -16,18 +17,18 @@ defineEmits<{ retry: [] }>();
 
 <template>
   <Card class="min-w-0">
-    <template #title>Cobros por vencer</template>
+    <template #title>{{ t('Upcoming charges') }}</template>
     <template #content>
       <Message v-if="error" severity="warn" :closable="false" class="mb-3">
         {{ error }}
         <Button
-          label="Reintentar cobros"
+          :label="t('Retry charges')"
           size="small"
           text
           @click="$emit('retry')"
         />
       </Message>
-      <p v-if="loading && !totals" role="status">Cargando cobros…</p>
+      <p v-if="loading && !totals" role="status">{{ t('Loading charges…') }}</p>
       <template v-if="totals">
         <dl
           v-if="totals.overdue_count || totals.upcoming_count"
@@ -35,24 +36,31 @@ defineEmits<{ retry: [] }>();
         >
           <div class="flex flex-wrap justify-between gap-x-3">
             <dt>
-              {{ totals.overdue_count }}
-              {{ totals.overdue_count === 1 ? 'vencido' : 'vencidos' }}
+              {{
+                t(
+                  '{count} overdue charge | {count} overdue charges',
+                  { count: totals.overdue_count },
+                  totals.overdue_count,
+                )
+              }}
             </dt>
             <dd class="font-medium">{{ formatCents(totals.overdue_cents) }}</dd>
           </div>
           <div class="flex flex-wrap justify-between gap-x-3">
-            <dt>{{ totals.upcoming_count }} por vencer en 7 días</dt>
+            <dt>
+              {{ t('{count} due in 7 days', { count: totals.upcoming_count }) }}
+            </dt>
             <dd class="font-medium">
               {{ formatCents(totals.upcoming_cents) }}
             </dd>
           </div>
         </dl>
-        <p v-else>No hay cobros vencidos ni por vencer.</p>
+        <p v-else>{{ t('There are no overdue or upcoming charges.') }}</p>
         <RouterLink
           :to="{ path: '/payments', query: { overdue: '1' } }"
           class="mt-3 inline-block text-sm font-medium text-primary hover:underline"
         >
-          Ver vencidos
+          {{ t('View overdue charges') }}
         </RouterLink>
       </template>
     </template>

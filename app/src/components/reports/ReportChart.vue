@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import {
   computed,
   defineAsyncComponent,
@@ -99,10 +100,10 @@ onBeforeUnmount(() => observer?.disconnect());
 <template>
   <div ref="container">
     <p v-if="loading" role="status" class="p-6 text-center text-muted-color">
-      Cargando gráfico…
+      {{ t('Loading chart…') }}
     </p>
     <p v-else-if="!hasData" class="p-6 text-center text-muted-color">
-      Sin datos en el rango
+      {{ t('No data in the date range') }}
     </p>
     <template v-else>
       <div role="img" :aria-label="ariaLabel">
@@ -122,7 +123,7 @@ onBeforeUnmount(() => observer?.disconnect());
         </caption>
         <thead>
           <tr>
-            <th scope="col">Categoría</th>
+            <th scope="col">{{ t('Category') }}</th>
             <th v-for="(series, index) in datasets" :key="index" scope="col">
               {{ series.label }}
             </th>
