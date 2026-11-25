@@ -5,7 +5,7 @@ import ClientHistoryTab from '@/components/clients/ClientHistoryTab.vue';
 import { historySections } from './history-sections';
 
 it('reserva claves únicas para reservas y pagos', () => {
-  const keys = historySections.map(({ key }) => key);
+  const keys = historySections.value.map(({ key }) => key);
   expect(keys).toEqual(['bookings', 'payments']);
   expect(new Set(keys).size).toBe(keys.length);
 });

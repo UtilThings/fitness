@@ -1,3 +1,5 @@
+import { computed } from 'vue';
+import { t } from '@/i18n';
 import type { Locale } from '@/lib/messages';
 import { pb } from '@/lib/pocketbase';
 import type { BaseRecord } from '@/types/pb';
@@ -5,11 +7,14 @@ import type { BaseRecord } from '@/types/pb';
 export const CLIENT_STATUSES = ['active', 'paused', 'inactive'] as const;
 export type ClientStatus = (typeof CLIENT_STATUSES)[number];
 
-export const CLIENT_STATUS = {
-  active: { label: 'Activo', severity: 'success' },
-  paused: { label: 'Pausado', severity: 'warn' },
-  inactive: { label: 'Inactivo', severity: 'secondary' },
-} as const;
+export const CLIENT_STATUS = computed(
+  () =>
+    ({
+      active: { label: t('Active'), severity: 'success' },
+      paused: { label: t('Paused'), severity: 'warn' },
+      inactive: { label: t('Inactive'), severity: 'secondary' },
+    }) as const,
+);
 
 export interface Client extends Pick<
   BaseRecord,

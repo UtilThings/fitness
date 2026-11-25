@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import type { Client } from '@/lib/clients';
 import { historySections } from '@/views/admin/clients/history-sections';
 
@@ -22,7 +23,9 @@ const emit = defineEmits<{ changed: [] }>();
         @changed="emit('changed')"
       />
       <p v-else class="text-sm text-muted-color">
-        Disponible con la feature {{ section.feature }}
+        {{
+          t('Available with feature {feature}', { feature: section.feature })
+        }}
       </p>
     </section>
   </div>

@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
-import { reactive, useId, watch } from 'vue';
+import { computed, reactive, useId, watch } from 'vue';
 import CatalogField from '@/components/catalog/CatalogField.vue';
 import { todayLocal } from '@/lib/datetime';
 
@@ -24,92 +25,98 @@ type Field = { name: string; label: string } & (
   | { type: 'select'; choices: { label: string; value: Answer }[] }
 );
 
-const sections: readonly {
-  key: SectionKey;
-  label: string;
-  fields: readonly Field[];
-}[] = [
+const sections = computed<
+  readonly {
+    key: SectionKey;
+    label: string;
+    fields: readonly Field[];
+  }[]
+>(() => [
   {
     key: 'medical',
-    label: 'Información médica',
+    label: t('Medical information'),
     fields: [
-      { name: 'conditions', label: 'Condiciones médicas', type: 'textarea' },
-      { name: 'injuries', label: 'Lesiones', type: 'textarea' },
-      { name: 'medications', label: 'Medicamentos', type: 'textarea' },
+      { name: 'conditions', label: t('Medical conditions'), type: 'textarea' },
+      { name: 'injuries', label: t('Injuries'), type: 'textarea' },
+      { name: 'medications', label: t('Medications'), type: 'textarea' },
       {
         name: 'parq_cleared',
-        label: 'Apto según PAR-Q',
+        label: t('Cleared by PAR-Q'),
         type: 'select',
         choices: [
-          { label: 'Sí', value: true },
-          { label: 'No', value: false },
+          { label: t('Yes'), value: true },
+          { label: t('No'), value: false },
         ],
       },
     ],
   },
   {
     key: 'lifestyle',
-    label: 'Estilo de vida',
+    label: t('Lifestyle'),
     fields: [
       {
         name: 'activity_level',
-        label: 'Nivel de actividad',
+        label: t('Activity level'),
         type: 'select',
         choices: [
-          { label: 'Sedentario', value: 'sedentary' },
-          { label: 'Ligero', value: 'light' },
-          { label: 'Moderado', value: 'moderate' },
-          { label: 'Alto', value: 'high' },
+          { label: t('Sedentary'), value: 'sedentary' },
+          { label: t('Light'), value: 'light' },
+          { label: t('Moderate'), value: 'moderate' },
+          { label: t('High'), value: 'high' },
         ],
       },
-      { name: 'sleep_hours', label: 'Horas de sueño', type: 'number' },
-      { name: 'stress_level', label: 'Nivel de estrés (1–5)', type: 'number' },
+      { name: 'sleep_hours', label: t('Sleep hours'), type: 'number' },
+      { name: 'stress_level', label: t('Stress level (1–5)'), type: 'number' },
       {
         name: 'nutrition_notes',
-        label: 'Notas de nutrición',
+        label: t('Nutrition notes'),
         type: 'textarea',
       },
     ],
   },
   {
     key: 'training',
-    label: 'Entrenamiento',
+    label: t('Training'),
     fields: [
       {
         name: 'experience',
-        label: 'Experiencia',
+        label: t('Experience'),
         type: 'select',
         choices: [
-          { label: 'Sin experiencia', value: 'none' },
-          { label: 'Principiante', value: 'beginner' },
-          { label: 'Intermedia', value: 'intermediate' },
-          { label: 'Avanzada', value: 'advanced' },
+          { label: t('No experience'), value: 'none' },
+          { label: t('Beginner'), value: 'beginner' },
+          { label: t('Intermediate'), value: 'intermediate' },
+          { label: t('Advanced'), value: 'advanced' },
         ],
       },
-      { name: 'days_per_week', label: 'Días por semana', type: 'number' },
-      { name: 'preferred_times', label: 'Horarios preferidos', type: 'text' },
-      { name: 'equipment_access', label: 'Equipo disponible', type: 'text' },
+      { name: 'days_per_week', label: t('Days per week'), type: 'number' },
+      { name: 'preferred_times', label: t('Preferred times'), type: 'text' },
+      {
+        name: 'equipment_access',
+        label: t('Available equipment'),
+        type: 'text',
+      },
     ],
   },
   {
     key: 'measurements',
-    label: 'Medidas',
+    label: t('Measurements'),
     fields: [
-      { name: 'weight_lb', label: 'Peso (lb)', type: 'number' },
-      { name: 'height_in', label: 'Estatura (in)', type: 'number' },
-      { name: 'waist_in', label: 'Cintura (in)', type: 'number' },
-      { name: 'body_fat_pct', label: 'Grasa corporal (%)', type: 'number' },
+      { name: 'weight_lb', label: t('Weight (lb)'), type: 'number' },
+      { name: 'height_in', label: t('Height (in)'), type: 'number' },
+      { name: 'waist_in', label: t('Waist (in)'), type: 'number' },
+      { name: 'body_fat_pct', label: t('Body fat (%)'), type: 'number' },
     ],
   },
   {
     key: 'summary',
-    label: 'Objetivos y notas de la evaluación',
+    label: t('Assessment goals and notes'),
     fields: [
-      { name: 'goals_detail', label: 'Detalle de objetivos', type: 'textarea' },
-      { name: 'notes', label: 'Notas de evaluación', type: 'textarea' },
+      { name: 'goals_detail', label: t('Goal details'), type: 'textarea' },
+      { name: 'notes', label: t('Assessment notes'), type: 'textarea' },
     ],
   },
-];
+]);
 
 const completed = reactive({ date: todayLocal(), by: '' });
 const answers = reactive<Record<SectionKey, Record<string, Answer>>>({
@@ -136,7 +143,7 @@ watch(
         : todayLocal();
     completed.by =
       typeof source.assessed_by === 'string' ? source.assessed_by : '';
-    for (const section of sections) {
+    for (const section of sections.value) {
       const block =
         section.key === 'summary' ? source : object(source[section.key]);
       answers[section.key] = {};
@@ -162,7 +169,7 @@ function submit() {
     completed_on: completed.date,
     assessed_by: completed.by || props.assessorId,
   };
-  for (const { key, fields } of sections) {
+  for (const { key, fields } of sections.value) {
     const block: Record<string, Answer> = {};
     for (const field of fields) {
       const answer = answers[key][field.name];
@@ -183,7 +190,7 @@ function submit() {
     }}</Message>
     <CatalogField
       :id="id + '-completed'"
-      label="Fecha de evaluación"
+      :label="t('Assessment date')"
       class="max-w-56"
     >
       <InputText
@@ -216,7 +223,7 @@ function submit() {
           :aria-label="field.label"
           option-label="label"
           option-value="value"
-          placeholder="Sin registrar"
+          :placeholder="t('Not recorded')"
           show-clear
           fluid
         />
@@ -242,7 +249,7 @@ function submit() {
     <div class="flex justify-end">
       <Button
         type="submit"
-        label="Guardar evaluación"
+        :label="t('Save assessment')"
         :loading="busy"
         :disabled="!assessorId"
       />

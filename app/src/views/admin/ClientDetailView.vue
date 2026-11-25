@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/i18n';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import ProgressSpinner from 'primevue/progressspinner';
@@ -111,7 +112,7 @@ let latestLoad = 0;
 const statusOptions = computed(() =>
   CLIENT_STATUSES.map((value) => ({
     value,
-    label: CLIENT_STATUS[value].label,
+    label: CLIENT_STATUS.value[value].label,
     disabled: client.value?.status === 'inactive' && value === 'paused',
   })),
 );
@@ -184,8 +185,8 @@ async function persist(
       errors.value[section] =
         cause instanceof RangeError
           ? {
-              fields: { joined_on: 'Ingresa una fecha válida.' },
-              message: 'Revisa los datos del cliente.',
+              fields: { joined_on: t('Enter a valid date.') },
+              message: t('Check the client details.'),
               status: 400,
             }
           : (cause as PbError);
@@ -208,7 +209,7 @@ async function saveDetails(values: ClientDetails) {
         : '';
       return clients.update(clientId, { ...values, joined_on });
     },
-    'Datos guardados',
+    t('Details saved'),
   );
   if (record) details.value = editableDetails(record);
 }
@@ -219,7 +220,7 @@ async function saveNotes() {
   const record = await persist(
     'notes',
     () => clients.update(clientId, { goals: goals.value, notes: notes.value }),
-    'Objetivos y notas guardados',
+    t('Goals and notes saved'),
   );
   if (record) {
     goals.value = record.goals;
@@ -233,7 +234,7 @@ async function saveAssessment(value: Record<string, unknown>) {
   const record = await persist(
     'assessment',
     () => clients.update(clientId, { assessment: value }),
-    'Evaluación guardada',
+    t('Assessment saved'),
   );
   if (record) assessment.value = record.assessment;
 }
@@ -247,7 +248,7 @@ function changeStatus(value: ClientStatus) {
     await persist(
       'actions',
       () => clients.setStatus(current.id, value),
-      'Estado actualizado',
+      t('Status updated'),
     );
   };
 
@@ -257,10 +258,16 @@ function changeStatus(value: ClientStatus) {
         status.value = client.value.status;
     };
     confirm.require({
-      header: 'Inactivar cliente',
-      message: `¿Inactivar a ${fullName(current)}? Su historial seguirá disponible.`,
-      acceptProps: { label: 'Inactivar', severity: 'warn' },
-      rejectProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
+      header: t('Deactivate client'),
+      message: t('Deactivate {name}? Their history will remain available.', {
+        name: fullName(current),
+      }),
+      acceptProps: { label: t("Deactivate{''}"), severity: 'warn' },
+      rejectProps: {
+        label: t('Cancel'),
+        severity: 'secondary',
+        outlined: true,
+      },
       defaultFocus: 'reject',
       onHide: restore,
       reject: restore,
@@ -292,7 +299,7 @@ function changeClassUsed(value: boolean) {
   void persist(
     'actions',
     () => clients.update(clientId, { free_class_used: value }),
-    'Primera clase gratis actualizada',
+    t('Free first class updated'),
   );
 }
 
@@ -301,7 +308,7 @@ function requestDelete() {
   if (!current || !isOwner.value || saving.value) return;
 
   confirmDelete({
-    message: `¿Eliminar a ${fullName(current)}?`,
+    message: t('Delete {name}?', { name: fullName(current) }),
     onConfirm: async () => {
       if (current.id !== client.value?.id || !isOwner.value || saving.value)
         return;
@@ -311,7 +318,7 @@ function requestDelete() {
       try {
         await clients.remove(current.id);
         if (version !== latestLoad) return;
-        notify.success('Cliente eliminado');
+        notify.success(t('Client deleted'));
         await router.push({ name: 'clients' });
       } catch (cause) {
         if (version !== latestLoad) return;
@@ -332,13 +339,14 @@ function requestDelete() {
       :to="{ name: 'clients' }"
       class="w-fit text-sm font-medium text-primary hover:underline"
     >
-      <i class="pi pi-arrow-left mr-1" aria-hidden="true" /> Volver a Clientes
+      <i class="pi pi-arrow-left mr-1" aria-hidden="true" />
+      {{ t('Back to clients') }}
     </RouterLink>
 
     <div
       v-if="loading"
       role="status"
-      aria-label="Cargando cliente"
+      :aria-label="t('Loading client')"
       class="grid place-items-center py-10"
     >
       <ProgressSpinner style="width: 2rem; height: 2rem" />
@@ -351,7 +359,7 @@ function requestDelete() {
         <template #actions>
           <Button
             v-if="client.status !== 'inactive'"
-            label="Inactivar"
+            :label="t('Deactivate{\'\'}')"
             severity="secondary"
             outlined
             :disabled="saving"
@@ -359,7 +367,7 @@ function requestDelete() {
           />
           <Button
             v-if="isOwner"
-            label="Eliminar"
+            :label="t('Delete')"
             severity="danger"
             outlined
             :disabled="saving"
@@ -371,11 +379,11 @@ function requestDelete() {
       <div
         class="flex flex-wrap items-end gap-x-6 gap-y-3 rounded-lg border border-surface-200 p-4 dark:border-surface-700"
       >
-        <CatalogField :id="id + '-status'" label="Estado">
+        <CatalogField :id="id + '-status'" :label="t('Status')">
           <Select
             v-model="status"
             :input-id="id + '-status'"
-            aria-label="Estado"
+            :aria-label="t('Status')"
             :options="statusOptions"
             option-label="label"
             option-value="value"
@@ -390,7 +398,7 @@ function requestDelete() {
         </div>
         <div class="flex flex-wrap items-center gap-2 self-end pb-2">
           <label :for="id + '-free-class'" class="text-sm font-medium">
-            Primera clase gratis
+            {{ t('Free first class') }}
             {{ client.free_class_used ? 'usada' : 'disponible' }}
           </label>
           <ToggleSwitch
@@ -409,10 +417,10 @@ function requestDelete() {
         }}
       </Message>
       <Message v-if="historyConflict" severity="warn" :closable="false">
-        Tiene historial y debe conservarse.
+        {{ t('This client has history and must be kept.') }}
         <Button
           v-if="client.status !== 'inactive'"
-          label="Inactivar cliente"
+          :label="t('Deactivate client')"
           severity="warn"
           size="small"
           text
@@ -422,9 +430,9 @@ function requestDelete() {
       </Message>
 
       <Message v-if="coachingError" severity="error" :closable="false">
-        No se pudo consultar Coaching. {{ coachingError }}
+        {{ t('Could not load coaching.') }} {{ coachingError }}
         <Button
-          label="Reintentar"
+          :label="t('Retry')"
           size="small"
           text
           @click="coachingRevision++"
@@ -432,13 +440,15 @@ function requestDelete() {
       </Message>
       <Tabs v-model:value="tab" scrollable>
         <TabList>
-          <Tab value="details">Datos</Tab>
-          <Tab value="notes">Objetivos y notas</Tab>
-          <Tab value="assessment">Evaluación inicial</Tab>
-          <Tab value="memberships">Membresías</Tab>
-          <Tab v-if="showCoaching" value="coaching">Coaching</Tab>
-          <Tab v-if="canManagePayments" value="payments">Pagos</Tab>
-          <Tab value="history">Historial</Tab>
+          <Tab value="details">{{ t('Details') }}</Tab>
+          <Tab value="notes">{{ t('Goals and notes') }}</Tab>
+          <Tab value="assessment">{{ t('Initial assessment') }}</Tab>
+          <Tab value="memberships">{{ t("Memberships{''}") }}</Tab>
+          <Tab v-if="showCoaching" value="coaching">{{ t('Coaching') }}</Tab>
+          <Tab v-if="canManagePayments" value="payments">{{
+            t('Payments')
+          }}</Tab>
+          <Tab value="history">{{ t('History') }}</Tab>
         </TabList>
         <TabPanels>
           <TabPanel value="details" class="grid gap-4">
@@ -469,7 +479,7 @@ function requestDelete() {
               >
               <CatalogField
                 :id="id + '-goals'"
-                label="Objetivos"
+                :label="t('Goals')"
                 :error="errors.notes?.fields.goals"
               >
                 <template #default="{ describedBy }">
@@ -487,7 +497,7 @@ function requestDelete() {
               </CatalogField>
               <CatalogField
                 :id="id + '-notes'"
-                label="Notas internas"
+                :label="t('Internal notes')"
                 :error="errors.notes?.fields.notes"
               >
                 <template #default="{ describedBy }">
@@ -506,7 +516,7 @@ function requestDelete() {
               <div class="flex justify-end">
                 <Button
                   type="submit"
-                  label="Guardar objetivos y notas"
+                  :label="t('Save goals and notes')"
                   :loading="saving"
                 />
               </div>
