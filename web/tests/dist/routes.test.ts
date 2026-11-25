@@ -127,7 +127,7 @@ describe('shared page components in the build', () => {
 
     const jump = page('tropical-jump').document;
     const featured = jump.querySelector('main .card-surface.border-primary');
-    expect(featured?.textContent).toContain('FREE');
+    expect(featured?.textContent).toContain('Free');
     expect(featured?.textContent).toContain('Most popular');
     expect(featured?.textContent).toContain('One per client account.');
     expect(

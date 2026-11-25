@@ -70,7 +70,7 @@ it('renders the initial build plans while revalidating and uses updated cents', 
   expect(wrapper.get('.card-surface').text()).toContain('$15');
   const featured = wrapper.get('.card-surface.border-primary');
   expect(featured.text()).toContain('Most popular');
-  expect(featured.text()).toContain('FREE');
+  expect(featured.text()).toContain('Free');
   expect(featured.get('a').attributes('href')).toBe('/schedule');
   await wrapper.vm.$nextTick();
   expect(wrapper.get('[role="status"]').text()).toBe('Updating…');

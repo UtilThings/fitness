@@ -24,11 +24,12 @@ it('lists seven civil days and formats across years', () => {
   expect(days).toHaveLength(7);
   expect(days[6]).toEqual(new Date('2027-01-02T00:00:00Z'));
   expect(formatRange(days[0], days[6])).toBe('Dec 27 – Jan 2');
+  expect(formatRange(days[0], days[6], 'es')).toBe('27 dic – 2 ene');
 });
 
 it('returns only fallback classes for the selected day and service', () => {
-  expect(classesForDay(2, 'All')).toHaveLength(3);
-  expect(classesForDay(2, 'Group Strength')).toHaveLength(3);
-  expect(classesForDay(1, 'Group Strength')).toEqual([]);
-  expect(classesForDay(1, 'Tropical Jump')).toHaveLength(1);
+  expect(classesForDay(2, 'all')).toHaveLength(3);
+  expect(classesForDay(2, 'group-strength')).toHaveLength(3);
+  expect(classesForDay(1, 'group-strength')).toEqual([]);
+  expect(classesForDay(1, 'tropical-jump')).toHaveLength(1);
 });

@@ -5,7 +5,7 @@ import {
   type PublicSchedule,
   type PublicSession,
 } from '@/lib/api';
-import { formatLocalTime, SERVICE_SLUGS } from '@/lib/catalog';
+import { SERVICE_SLUGS } from '@/lib/catalog';
 import {
   classesForDay,
   formatRange,
@@ -14,14 +14,14 @@ import {
   weekStart,
   type ServiceFilter,
 } from '@/lib/schedule';
-import { fallbackBusiness } from '@/lib/data';
-import { tl } from '@/i18n';
+import { fallbackBusiness, formatTime } from '@/lib/data';
+import { formatMessage, resolveText, tl, type Text } from '@/i18n';
 import { useLang } from '@/lib/use-lang';
 
 const filters = {
-  All: '',
-  'Group Strength': SERVICE_SLUGS.groupPlans,
-  'Tropical Jump': SERVICE_SLUGS.jumpPlans,
+  all: 'All',
+  [SERVICE_SLUGS.groupPlans]: 'Group Strength',
+  [SERVICE_SLUGS.jumpPlans]: 'Tropical Jump',
 } satisfies Record<ServiceFilter, string>;
 const statusColor = {
   full: 'text-destructive',
@@ -39,7 +39,7 @@ const statusLabels = {
 
 interface ClassCard {
   time: string;
-  service: string;
+  service: Text;
   coach: string;
   availability?: Pick<PublicSession, 'capacity' | 'spots_left' | 'status'>;
 }
@@ -66,7 +66,7 @@ const monthDay = computed(
 const today = new Date();
 const offset = ref(0);
 const maxWeeks = ref(MAX_SCHEDULE_WEEKS);
-const filter = ref<ServiceFilter>('All');
+const filter = ref<ServiceFilter>('all');
 const retry = ref(0);
 const state = ref<'loading' | 'ready' | 'error'>('loading');
 const response = ref<PublicSchedule>();
@@ -80,7 +80,7 @@ const days = computed(() =>
   ),
 );
 const range = computed(() =>
-  formatRange(days.value[0], days.value[6], locale.value),
+  formatRange(days.value[0], days.value[6], lang.value),
 );
 
 watch(
@@ -106,12 +106,12 @@ watch(
 
 const schedule = computed(() => {
   const sessionsByDay = new Map<string, ClassCard[]>();
-  const slug = filters[filter.value];
+  const slug = filter.value;
   for (const session of response.value?.sessions ?? []) {
-    if (slug && session.service.slug !== slug) continue;
+    if (slug !== 'all' && session.service.slug !== slug) continue;
     const classes = sessionsByDay.get(session.local_date) ?? [];
     classes.push({
-      time: formatLocalTime(session.local_time),
+      time: session.local_time,
       service: session.service.name,
       coach: session.coach_name,
       availability: session,
@@ -148,7 +148,7 @@ function moveWeek(increment: number) {
         aria-label="Filter by service"
       >
         <button
-          v-for="(_, service) in filters"
+          v-for="(label, service) in filters"
           :key="service"
           type="button"
           :aria-pressed="filter === service"
@@ -160,7 +160,7 @@ function moveWeek(increment: number) {
           "
           @click="filter = service"
         >
-          {{ service }}
+          {{ label }}
         </button>
       </div>
       <div class="flex items-center gap-3">
@@ -264,8 +264,14 @@ function moveWeek(increment: number) {
           >
             <div class="flex items-start justify-between">
               <div>
-                <p class="font-display text-2xl">{{ time }}</p>
-                <p class="font-semibold">{{ service }}</p>
+                <p class="font-display text-2xl">{{ formatTime(time) }}</p>
+                <p class="font-semibold">
+                  {{
+                    resolveText(service, (key, params) =>
+                      formatMessage(key, params, 'en'),
+                    )
+                  }}
+                </p>
                 <p v-if="coach" class="text-xs text-muted-foreground">
                   {{ coach }}
                 </p>

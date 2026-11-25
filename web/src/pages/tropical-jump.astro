@@ -6,7 +6,8 @@ import PolicyCard from '@/components/PolicyCard.astro';
 import PricingGrid from '@/components/PricingGrid.vue';
 import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getCatalog } from '@/lib/catalog';
+import { formatTime } from '@/lib/data';
+import { getCatalog, SERVICE_SLUGS } from '@/lib/catalog';
 
 const { classTemplates, jumpPlans, business } = await getCatalog();
 
@@ -20,7 +21,7 @@ const days = [
   'Saturday',
 ];
 const classes = classTemplates.filter(
-  ({ service }) => service === 'Tropical Jump',
+  ({ serviceSlug }) => serviceSlug === SERVICE_SLUGS.jumpPlans,
 );
 const policies = [
   'First class free — one per client account.',
@@ -55,7 +56,7 @@ const policies = [
         {classes.map(({ day, time }) => (
           <div class="flex justify-between border-b border-border py-3 last:border-0">
             <span class="font-display text-xl uppercase">{days[day]}</span>
-            <span class="font-bold text-accent">{time}</span>
+            <span class="font-bold text-accent">{formatTime(time)}</span>
           </div>
         ))}
       </div>

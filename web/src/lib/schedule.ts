@@ -1,6 +1,13 @@
-import { classTemplates, fallbackBusiness, type ClassTemplate } from './data';
+import type { Locale } from '../i18n';
+import {
+  classTemplates,
+  fallbackBusiness,
+  regionalLocale,
+  type ClassServiceSlug,
+  type ClassTemplate,
+} from './data';
 
-export type ServiceFilter = 'All' | ClassTemplate['service'];
+export type ServiceFilter = 'all' | ClassServiceSlug;
 
 export const MAX_SCHEDULE_WEEKS = 8;
 
@@ -41,13 +48,17 @@ export function classesForDay(
   filter: ServiceFilter,
 ): ClassTemplate[] {
   return classTemplates.filter(
-    ({ day, service }) =>
-      day === dayIndex && (filter === 'All' || filter === service),
+    ({ day, serviceSlug }) =>
+      day === dayIndex && (filter === 'all' || filter === serviceSlug),
   );
 }
 
-export function formatRange(start: Date, end: Date, locale = 'en-US'): string {
-  const formatter = new Intl.DateTimeFormat(locale, {
+export function formatRange(
+  start: Date,
+  end: Date,
+  language: Locale = 'en',
+): string {
+  const formatter = new Intl.DateTimeFormat(regionalLocale(language), {
     timeZone: 'UTC',
     month: 'short',
     day: 'numeric',

@@ -24,6 +24,15 @@ export interface Message {
   params?: Params;
 }
 
+export type Text = string | Message;
+
+export function resolveText(
+  text: Text,
+  translate: (key: MessageKey, params?: Params) => string,
+): string {
+  return typeof text === 'string' ? text : translate(text.key, text.params);
+}
+
 export function tl<Key extends string>(key: Key): Key & MessageKey {
   return key as Key & MessageKey;
 }

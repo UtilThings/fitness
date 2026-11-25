@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { formatMessage, resolveText, type Text } from '@/i18n';
 import { getCatalog, type PlanGroup } from '@/lib/catalog';
 import { fallbackBusiness, formatPrice, type Plan } from '@/lib/data';
 import { env } from '@/lib/env';
@@ -27,6 +28,12 @@ const currency = ref(props.currency);
 const updating = ref(false);
 const { lang } = useLang();
 
+function textInEnglish(text?: Text) {
+  return resolveText(text ?? '', (key, params) =>
+    formatMessage(key, params, 'en'),
+  );
+}
+
 onMounted(async () => {
   if (!env.PUBLIC_API_URL) return;
   updating.value = true;
@@ -52,11 +59,16 @@ onMounted(async () => {
         class="mb-3 self-start rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase text-accent-foreground"
         >Most popular</span
       >
-      <h3 class="text-2xl">{{ plan.name }}</h3>
-      <p class="mt-4 font-display text-5xl text-primary">
+      <h3 class="text-2xl">{{ textInEnglish(plan.name) }}</h3>
+      <p
+        class="mt-4 font-display text-5xl text-primary"
+        :class="{ uppercase: plan.price === 0 }"
+      >
         {{ formatPrice(plan.price, currency) }}
       </p>
-      <p class="text-sm text-muted-foreground">{{ plan.unit }}</p>
+      <p class="text-sm text-muted-foreground">
+        {{ textInEnglish(plan.unit) }}
+      </p>
       <ul class="my-6 space-y-2 text-sm">
         <li
           v-for="(item, itemIndex) in [
@@ -79,7 +91,7 @@ onMounted(async () => {
           >
             <path d="m20 6-11 11-5-5" />
           </svg>
-          {{ item }}
+          {{ textInEnglish(item) }}
         </li>
       </ul>
       <a

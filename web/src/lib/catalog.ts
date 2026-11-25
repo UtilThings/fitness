@@ -1,3 +1,4 @@
+import { tl, type Message, type MessageKey } from '../i18n';
 import { fetchCatalog, type PublicBusiness, type PublicService } from './api';
 import * as staticData from './data';
 import type { ClassTemplate, Plan } from './data';
@@ -27,51 +28,69 @@ const fallback: Catalog = {
   classTemplates: staticData.classTemplates,
 };
 
-function plural(count: number, singular: string, multiple: string) {
-  return `${count} ${count === 1 ? singular : multiple}`;
+const quantities = {
+  personal: {
+    count: tl('{count} session | {count} sessions'),
+    period: tl('{count} session / period | {count} sessions / period'),
+    week: tl('{count} session per week | {count} sessions per week'),
+  },
+  group: {
+    count: tl('{count} class | {count} classes'),
+    period: tl('{count} class / period | {count} classes / period'),
+    week: tl('{count} class per week | {count} classes per week'),
+  },
+};
+
+function quantity(key: MessageKey, count: number): Message {
+  return { key, params: { count } };
 }
 
 export function toPlans(service: PublicService | undefined): Plan[] {
-  const [singular, multiple] =
-    service?.kind === 'personal'
-      ? ['session', 'sessions']
-      : ['class', 'classes'];
+  const labels =
+    service?.kind === 'personal' ? quantities.personal : quantities.group;
   return (service?.plans ?? []).map((plan) => {
     const { commitment_periods: commitment, price_cents: cents } = plan;
     const firstVisit =
       plan.is_first_class || plan.billing_unit === 'first_visit';
     const perClass = plan.billing_unit === 'per_class';
     const unit = firstVisit
-      ? 'first visit'
+      ? tl('first visit')
       : perClass
-        ? 'per class'
+        ? tl('per class')
         : commitment
-          ? 'per 4-week period'
-          : 'per 4 weeks';
+          ? tl('per 4-week period')
+          : tl('per 4 weeks');
     const sessions = plan.sessions
-      ? plural(plan.sessions, singular, multiple) +
-        (commitment ? ' / period' : '')
+      ? quantity(commitment ? labels.period : labels.count, plan.sessions)
       : '';
     const freq = firstVisit
-      ? 'New clients only'
+      ? { key: tl('New clients only') }
       : perClass
-        ? 'Drop in anytime'
+        ? { key: tl('Drop in anytime') }
         : commitment
-          ? plural(commitment, 'billing period', 'billing periods')
+          ? quantity(
+              tl('{count} billing period | {count} billing periods'),
+              commitment,
+            )
           : plan.per_week
-            ? `${plural(plan.per_week, singular, multiple)} per week`
+            ? quantity(labels.week, plan.per_week)
             : '';
     const note =
       plan.note ||
       (commitment
-        ? `Requires a ${commitment * 4}-week commitment (${plural(commitment, 'billing period', 'billing periods')}).`
+        ? {
+            key: tl(
+              'Requires a {weeks}-week commitment ({count} billing period). | Requires a {weeks}-week commitment ({count} billing periods).',
+            ),
+            params: { weeks: commitment * 4, count: commitment },
+          }
         : firstVisit
-          ? 'One per client account.'
+          ? { key: tl('One per client account.') }
           : '');
     return {
       name: plan.name,
       price: cents / 100,
-      unit,
+      unit: { key: unit },
       sessions,
       freq,
       ...(note ? { note } : {}),
@@ -79,33 +98,24 @@ export function toPlans(service: PublicService | undefined): Plan[] {
   });
 }
 
-export function formatLocalTime(time: string): string {
-  const [hours, minutes] = time.split(':');
-  const hour = Number(hours);
-  return `${hour % 12 || 12}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
-}
-
-const templateNames = new Map<string, ClassTemplate['service']>([
-  [SERVICE_SLUGS.groupPlans, 'Group Strength'],
-  [SERVICE_SLUGS.jumpPlans, 'Tropical Jump'],
-]);
-
 export function toTemplates(service: PublicService): ClassTemplate[] {
-  const name = templateNames.get(service.slug);
-  if (!name) return [];
+  const serviceSlug = staticData.classServiceSlugs.find(
+    (slug) => slug === service.slug,
+  );
+  if (!serviceSlug) return [];
   return service.weekly_times.map((slot) => ({
     day: slot.weekday,
-    time: formatLocalTime(slot.time),
-    service: name,
+    time: slot.time,
+    service: service.name,
+    serviceSlug,
     coach: slot.coach_name,
     capacity: slot.capacity,
   }));
 }
 
 function timeOrder(time: string) {
-  const [clock, period] = time.split(' ');
-  const [hour, minute] = clock.split(':').map(Number);
-  return ((hour % 12) + (period === 'PM' ? 12 : 0)) * 60 + minute;
+  const [hour, minute] = time.split(':').map(Number);
+  return hour * 60 + minute;
 }
 
 let pendingCatalog: Promise<Catalog> | undefined;

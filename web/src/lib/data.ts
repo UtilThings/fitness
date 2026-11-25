@@ -1,27 +1,44 @@
+import { formatMessage, tl, type Locale, type Text } from '../i18n';
+
+export const classServiceSlugs = ['group-strength', 'tropical-jump'] as const;
+export type ClassServiceSlug = (typeof classServiceSlugs)[number];
+
 export interface Plan {
-  name: string;
+  name: Text;
   price: number;
-  unit: string;
-  sessions: string;
-  freq: string;
-  note?: string;
+  unit: Text;
+  sessions: Text;
+  freq: Text;
+  note?: Text;
 }
 
 export interface ClassTemplate {
   day: number;
   time: string;
-  service: 'Group Strength' | 'Tropical Jump';
+  service: Text;
+  serviceSlug: ClassServiceSlug;
   coach: string;
   capacity: number;
 }
 
-function personalPlan(frequency: number, price: number, prefix = ''): Plan {
+function personalPlan(frequency: number, price: number, partner = false): Plan {
   return {
-    name: `${prefix}${frequency}x / week`,
+    name: {
+      key: partner
+        ? tl('Partner {frequency}x / week')
+        : tl('{frequency}x / week'),
+      params: { frequency },
+    },
     price,
-    unit: 'per 4 weeks',
-    sessions: `${frequency * 4} sessions`,
-    freq: `${frequency} sessions per week`,
+    unit: { key: tl('per 4 weeks') },
+    sessions: {
+      key: tl('{count} session | {count} sessions'),
+      params: { count: frequency * 4 },
+    },
+    freq: {
+      key: tl('{count} session per week | {count} sessions per week'),
+      params: { count: frequency },
+    },
   };
 }
 
@@ -31,44 +48,67 @@ export const personalOneOnOne = [
   personalPlan(4, 1280),
 ];
 export const personalPartner = [
-  personalPlan(2, 1127, 'Partner '),
-  personalPlan(3, 1447, 'Partner '),
-  personalPlan(4, 1597, 'Partner '),
+  personalPlan(2, 1127, true),
+  personalPlan(3, 1447, true),
+  personalPlan(4, 1597, true),
 ];
 
 export const groupPlans: Plan[] = [
   {
-    name: '8-Class Pack',
+    name: { key: tl('8-Class Pack') },
     price: 260,
-    unit: 'per 4 weeks',
-    sessions: '8 classes',
-    freq: '2 classes per week',
+    unit: { key: tl('per 4 weeks') },
+    sessions: {
+      key: tl('{count} class | {count} classes'),
+      params: { count: 8 },
+    },
+    freq: {
+      key: tl('{count} class per week | {count} classes per week'),
+      params: { count: 2 },
+    },
   },
   {
-    name: '16-Week Commitment',
+    name: { key: tl('16-Week Commitment') },
     price: 200,
-    unit: 'per 4-week period',
-    sessions: '8 classes / period',
-    freq: '4 billing periods',
-    note: 'Requires a 16-week commitment (4 billing periods).',
+    unit: { key: tl('per 4-week period') },
+    sessions: {
+      key: tl('{count} class / period | {count} classes / period'),
+      params: { count: 8 },
+    },
+    freq: {
+      key: tl('{count} billing period | {count} billing periods'),
+      params: { count: 4 },
+    },
+    note: {
+      key: tl(
+        'Requires a {weeks}-week commitment ({count} billing period). | Requires a {weeks}-week commitment ({count} billing periods).',
+      ),
+      params: { weeks: 16, count: 4 },
+    },
   },
 ];
 
 export const jumpPlans: Plan[] = [
   {
-    name: 'Single Class',
+    name: { key: tl('Single Class') },
     price: 15,
-    unit: 'per class',
-    sessions: '1 class',
-    freq: 'Drop in anytime',
+    unit: { key: tl('per class') },
+    sessions: {
+      key: tl('{count} class | {count} classes'),
+      params: { count: 1 },
+    },
+    freq: { key: tl('Drop in anytime') },
   },
   {
-    name: 'First Class',
+    name: { key: tl('First Class') },
     price: 0,
-    unit: 'first visit',
-    sessions: '1 class',
-    freq: 'New clients only',
-    note: 'One per client account.',
+    unit: { key: tl('first visit') },
+    sessions: {
+      key: tl('{count} class | {count} classes'),
+      params: { count: 1 },
+    },
+    freq: { key: tl('New clients only') },
+    note: { key: tl('One per client account.') },
   },
 ];
 
@@ -76,28 +116,30 @@ function jumpClass(day: number, time: string): ClassTemplate {
   return {
     day,
     time,
-    service: 'Tropical Jump',
+    service: { key: tl('Tropical Jump') },
+    serviceSlug: 'tropical-jump',
     coach: 'Coach JQ',
     capacity: 12,
   };
 }
 
 function strengthClasses(day: number): ClassTemplate[] {
-  return ['9:00 AM', '5:30 PM', '7:00 PM'].map((time) => ({
+  return ['09:00', '17:30', '19:00'].map((time) => ({
     day,
     time,
-    service: 'Group Strength',
+    service: { key: tl('Group Strength') },
+    serviceSlug: 'group-strength',
     coach: 'Coach JQ',
     capacity: 6,
   }));
 }
 
 export const classTemplates = [
-  jumpClass(1, '7:30 PM'),
+  jumpClass(1, '19:30'),
   ...strengthClasses(2),
-  jumpClass(3, '7:30 PM'),
+  jumpClass(3, '19:30'),
   ...strengthClasses(4),
-  jumpClass(6, '9:00 AM'),
+  jumpClass(6, '09:00'),
 ];
 
 export function availability(
@@ -119,12 +161,24 @@ export const fallbackBusiness = {
 export function formatPrice(
   price: number,
   currency = fallbackBusiness.currency,
+  language: Locale = 'en',
 ): string {
-  if (price === 0) return 'FREE';
-  return price.toLocaleString('en-US', {
+  if (price === 0) return formatMessage(tl('Free'), {}, language);
+  return price.toLocaleString(regionalLocale(language), {
     style: 'currency',
     currency,
     minimumFractionDigits: Number.isInteger(price) ? 0 : 2,
     maximumFractionDigits: 2,
   });
+}
+
+export function regionalLocale(language: Locale): string {
+  return language === 'es' ? 'es-US' : 'en-US';
+}
+
+export function formatTime(time: string, language: Locale = 'en'): string {
+  const [hours, minutes] = time.split(':');
+  if (language === 'es') return `${hours}:${minutes}`;
+  const hour = Number(hours);
+  return `${hour % 12 || 12}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
 }

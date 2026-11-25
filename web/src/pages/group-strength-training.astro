@@ -6,7 +6,8 @@ import PolicyCard from '@/components/PolicyCard.astro';
 import PricingGrid from '@/components/PricingGrid.vue';
 import Section from '@/components/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getCatalog } from '@/lib/catalog';
+import { formatTime } from '@/lib/data';
+import { getCatalog, SERVICE_SLUGS } from '@/lib/catalog';
 
 const { classTemplates, groupPlans, business } = await getCatalog();
 const days = [
@@ -19,8 +20,8 @@ const days = [
   'Saturday',
 ];
 const timesByDay = new Map<number, string[]>();
-for (const { day, time, service } of classTemplates) {
-  if (service === 'Group Strength') {
+for (const { day, time, serviceSlug } of classTemplates) {
+  if (serviceSlug === SERVICE_SLUGS.groupPlans) {
     const times = timesByDay.get(day) ?? [];
     times.push(time);
     timesByDay.set(day, times);
@@ -82,7 +83,7 @@ const policies = [
             <div class="mt-4 flex flex-wrap gap-3">
               {times.map((time) => (
                 <span class="rounded-full border border-primary px-4 py-2 font-bold text-primary">
-                  {time}
+                  {formatTime(time)}
                 </span>
               ))}
             </div>
