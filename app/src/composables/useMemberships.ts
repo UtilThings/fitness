@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { todayLocal } from '@/lib/datetime';
 import type {
   CreditMovement,
@@ -53,9 +54,9 @@ async function request<T>(operation: Promise<T>): Promise<T> {
     return await operation;
   } catch (cause) {
     const error = parsePbError(cause);
-    if (error.status === 401) error.message = 'Inicia sesión para continuar.';
+    if (error.status === 401) error.message = t('Sign in to continue.');
     if (error.status >= 500)
-      error.message = 'No se pudo completar la operación.';
+      error.message = t('Could not complete the operation.');
     throw error;
   }
 }

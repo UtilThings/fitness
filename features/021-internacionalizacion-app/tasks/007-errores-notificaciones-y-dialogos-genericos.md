@@ -1,7 +1,7 @@
 # 007 - [Módulo] Errores, notificaciones y diálogos genéricos
 
 - **Prioridad:** 7
-- **Estado:** Pendiente
+- **Estado:** Completado
 - **Depende de:** 002, 003, 005
 - **Fase:** Fase 2: Utilidades transversales
 
@@ -22,10 +22,10 @@ Los mensajes genéricos de error, éxito y confirmación del app salen de `t()` 
 
 ## Criterios de aceptación
 
-- [ ] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
-- [ ] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
-- [ ] Un mensaje catalogado del servidor se muestra traducido en `es`; uno no catalogado se muestra tal cual.
-- [ ] Cambiar el idioma no requiere recrear los composables (los mensajes se evalúan al usarse, no al importarse).
+- [x] `cd app && bun run lint`, `bun run typecheck` y `bun run test` pasan en verde.
+- [x] `bun run i18n:check` pasa en verde (sin claves faltantes ni huérfanas).
+- [x] Un mensaje catalogado del servidor se muestra traducido en `es`; uno no catalogado se muestra tal cual.
+- [x] Cambiar el idioma no requiere recrear los composables (los mensajes se evalúan al usarse, no al importarse).
 
 ## Referencias
 
@@ -37,3 +37,4 @@ Los mensajes genéricos de error, éxito y confirmación del app salen de `t()` 
 
 ## Notas de implementación
 
+Lint, comprobación de tipos, suite completa y revisión del catálogo en verde. Las pruebas cubren la traducción de mensajes y campos del API, mensajes desconocidos y el cambio de idioma con manejadores de notificación y confirmación ya creados.

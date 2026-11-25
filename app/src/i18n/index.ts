@@ -24,6 +24,10 @@ export const i18n = createI18n({
 
 export const { locale, t, te } = i18n.global;
 
+export function translateMessage(message: string): string {
+  return te(message) ? t(message) : message;
+}
+
 export function tl<Key extends string>(key: Key): Key {
   return key;
 }

@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { Plan } from '@/lib/catalog';
 import type { Client } from '@/lib/clients';
 import { addLocalDays, todayLocal } from '@/lib/datetime';
@@ -84,14 +85,14 @@ export async function paymentRequest<T>(operation: Promise<T>): Promise<T> {
     return await operation;
   } catch (cause) {
     const error = parsePbError(cause);
-    if (error.status === 401) error.message = 'Inicia sesión para continuar.';
+    if (error.status === 401) error.message = t('Sign in to continue.');
     if (
       error.status >= 500 ||
       /^(Something went wrong|Failed to |Invalid request|An error occurred)/i.test(
         error.message,
       )
     ) {
-      error.message = 'No se pudo completar la operación de pagos.';
+      error.message = t('Could not complete the payment operation.');
     }
     throw error;
   }

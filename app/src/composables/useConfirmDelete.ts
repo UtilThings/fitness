@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { useConfirm } from 'primevue/useconfirm';
 
 interface DeleteConfirmation {
@@ -11,15 +12,19 @@ export function useConfirmDelete() {
 
   function confirmDelete({
     message,
-    header = 'Confirmar eliminación',
+    header = t('Confirm deletion'),
     onConfirm,
   }: DeleteConfirmation) {
     confirm.require({
       header,
       message,
       icon: 'pi pi-exclamation-triangle',
-      acceptProps: { label: 'Eliminar', severity: 'danger' },
-      rejectProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
+      acceptProps: { label: t('Delete'), severity: 'danger' },
+      rejectProps: {
+        label: t('Cancel'),
+        severity: 'secondary',
+        outlined: true,
+      },
       defaultFocus: 'reject',
       accept: onConfirm,
     });

@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { ref, shallowRef } from 'vue';
 import { buildAuditFilter, type AuditFilters } from '@/lib/audit';
 import { parsePbError, type PbError } from '@/lib/pb-errors';
@@ -43,7 +44,7 @@ export function useAuditLogs() {
       totalItems.value = 0;
       error.value =
         cause instanceof RangeError
-          ? { message: 'Introduce fechas válidas.', fields: {}, status: 400 }
+          ? { message: t('Enter valid dates.'), fields: {}, status: 400 }
           : parsePbError(cause);
     } finally {
       if (request === latest) loading.value = false;

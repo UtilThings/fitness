@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { ClientResponseError } from 'pocketbase';
 import {
   buildSearchFilter,
@@ -36,7 +37,9 @@ export function useClients() {
         cause instanceof ClientResponseError &&
         cause.response.data?.email?.code === 'validation_not_unique'
       ) {
-        error.fields.email = 'Ya existe un cliente con ese correo electrónico.';
+        error.fields.email = t(
+          'A client with this email address already exists.',
+        );
       }
       throw error;
     }

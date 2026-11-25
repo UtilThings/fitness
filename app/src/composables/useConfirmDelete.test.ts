@@ -1,5 +1,6 @@
 import type { ConfirmationOptions } from 'primevue/confirmationoptions';
 import { expect, it, vi } from 'vitest';
+import { withLocale } from '@/test/i18n';
 import { useConfirmDelete } from './useConfirmDelete';
 
 const { requireConfirmation } = vi.hoisted(() => ({
@@ -29,4 +30,17 @@ it('opens a Spanish danger dialog and runs the deletion only on acceptance', () 
   expect(onConfirm).not.toHaveBeenCalled();
   options.accept?.();
   expect(onConfirm).toHaveBeenCalledOnce();
+});
+
+it('uses the active locale when opening an existing confirmation handler', async () => {
+  const { confirmDelete } = useConfirmDelete();
+  await withLocale('en', () =>
+    confirmDelete({ message: 'Delete item?', onConfirm: vi.fn() }),
+  );
+  expect(requireConfirmation).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      header: 'Confirm deletion',
+      acceptProps: { label: 'Delete', severity: 'danger' },
+    }),
+  );
 });

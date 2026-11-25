@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { ref, shallowRef } from 'vue';
 import { parsePbError, type PbError } from '@/lib/pb-errors';
 import { pb } from '@/lib/pocketbase';
@@ -100,9 +101,7 @@ export function useCollection<T = BaseRecord>(
 
   function search(text: string, fields: readonly string[]) {
     if (fields.some((field) => !fieldName.test(field))) {
-      throw new TypeError(
-        'Los campos de búsqueda deben ser nombres de campos de PocketBase',
-      );
+      throw new TypeError(t('Search fields must be PocketBase field names'));
     }
     const term = text.trim();
     searchFilter.value =
