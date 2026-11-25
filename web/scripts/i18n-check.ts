@@ -12,6 +12,28 @@ import ts from 'typescript';
 import { readCatalog, sortCatalog } from './i18n-catalog';
 
 const calls = new Set(['t', '$t', 'te', 'tl']);
+const visibleAttributes = new Set([
+  'alt',
+  'aria-label',
+  'aria-description',
+  'aria-placeholder',
+  'aria-valuetext',
+  'placeholder',
+  'title',
+]);
+const componentLabels: Record<string, ReadonlySet<string>> = {
+  PageHero: new Set(['eyebrow', 'sub']),
+  PricingGrid: new Set(['cta']),
+  LeadForm: new Set(['submitLabel', 'successMessage']),
+};
+const untranslatedLiterals = new Set([
+  'EN',
+  'ES',
+  'JQ Fitness',
+  'Tropical Jump',
+]);
+const invisibleElements = new Set(['script', 'style']);
+
 interface AstroNode {
   type: string;
   start?: number;
@@ -20,19 +42,47 @@ interface AstroNode {
   value?: unknown;
   callee?: AstroNode;
   openingElement?: AstroNode;
-  context?: AstroNode;
+  attributes?: AstroNode[];
   expression?: AstroNode;
   arguments?: AstroNode[];
+  expressions?: AstroNode[];
+  quasis?: { value: { cooked: string | null } }[];
 }
 
-function walkAstro(value: unknown, visit: (node: AstroNode) => void) {
+function walkAstro(
+  value: unknown,
+  visit: (node: AstroNode, parent?: AstroNode) => void,
+  parent?: AstroNode,
+) {
   if (Array.isArray(value)) {
-    value.forEach((child) => walkAstro(child, visit));
+    value.forEach((child) => walkAstro(child, visit, parent));
   } else if (value && typeof value === 'object') {
-    if ('type' in value && typeof value.type === 'string')
-      visit(value as AstroNode);
-    Object.values(value).forEach((child) => walkAstro(child, visit));
+    const node =
+      'type' in value && typeof value.type === 'string'
+        ? (value as AstroNode)
+        : undefined;
+    if (node) visit(node, parent);
+    Object.values(value).forEach((child) =>
+      walkAstro(child, visit, node ?? parent),
+    );
   }
+}
+
+function astroLiteral(node?: AstroNode): string | undefined {
+  if (typeof node?.value === 'string') return node.value;
+  if (node?.type === 'TemplateLiteral' && node.expressions?.length === 0) {
+    return node.quasis?.[0]?.value.cooked ?? undefined;
+  }
+}
+
+function astroName(node?: AstroNode): string {
+  return typeof node?.name === 'object' && typeof node.name.name === 'string'
+    ? node.name.name
+    : '';
+}
+
+function isVisibleAttribute(tag: string, name: string) {
+  return visibleAttributes.has(name) || componentLabels[tag]?.has(name);
 }
 
 function isKeyAttribute(name: string) {
@@ -57,6 +107,20 @@ function readSource(code: string, file: string) {
     if (key === undefined)
       errors.push(`${file}: ${usage} requires a literal key`);
     else keys.add(key);
+  }
+
+  function checkLiteral(value: string | undefined, usage: string) {
+    const text = value?.replace(/\s+/g, ' ').trim();
+    if (!text || !/\p{L}/u.test(text) || untranslatedLiterals.has(text)) return;
+    errors.push(`${file}: unmarked ${usage} ${JSON.stringify(text)}`);
+  }
+
+  function readExpression(content: string) {
+    const statement = ts.createSourceFile(file, content, ts.ScriptTarget.Latest)
+      .statements[0];
+    return statement && ts.isExpressionStatement(statement)
+      ? statement.expression
+      : undefined;
   }
 
   function readCode(content: string, attrsOnly = false) {
@@ -111,94 +175,138 @@ function readSource(code: string, file: string) {
     visit(source);
   }
 
-  function readVue(node: TemplateChildNode) {
+  function readVue(node: TemplateChildNode, translated = false) {
+    if (node.type === NodeTypes.TEXT && !translated) {
+      checkLiteral(node.content, 'template text');
+    }
     if (
       node.type === NodeTypes.INTERPOLATION &&
       node.content.type === NodeTypes.SIMPLE_EXPRESSION
     ) {
-      readCode(node.content.content);
+      const content = node.content.content;
+      if (!translated)
+        checkLiteral(literal(readExpression(content)), 'template text');
+      readCode(content);
     }
-    if (node.type !== NodeTypes.ELEMENT) return;
+    if (node.type !== NodeTypes.ELEMENT || invisibleElements.has(node.tag))
+      return;
+    const marked = new Set(
+      node.props.flatMap((prop) =>
+        prop.type === NodeTypes.ATTRIBUTE ? [prop.name] : [],
+      ),
+    );
     for (const prop of node.props) {
-      if (
-        prop.type === NodeTypes.ATTRIBUTE &&
-        (isKeyAttribute(prop.name) || (node.tag === 'T' && prop.name === 'k'))
-      ) {
-        record(prop.value?.content, `<${node.tag} ${prop.name}>`);
-      } else if (
-        prop.type === NodeTypes.DIRECTIVE &&
-        prop.exp?.type === NodeTypes.SIMPLE_EXPRESSION
-      ) {
+      if (prop.type === NodeTypes.ATTRIBUTE) {
         if (
-          prop.arg?.type === NodeTypes.SIMPLE_EXPRESSION &&
-          prop.arg.isStatic &&
-          (isKeyAttribute(prop.arg.content) ||
-            (node.tag === 'T' && prop.arg.content === 'k'))
+          isKeyAttribute(prop.name) ||
+          (node.tag === 'T' && prop.name === 'k')
         ) {
-          const value = ts.createSourceFile(
-            file,
-            prop.exp.content,
-            ts.ScriptTarget.Latest,
-          ).statements[0];
-          record(
-            value && ts.isExpressionStatement(value)
-              ? literal(value.expression)
-              : undefined,
-            `<${node.tag} :${prop.arg.content}="${prop.exp.content}">`,
-          );
+          record(prop.value?.content, `<${node.tag} ${prop.name}>`);
+        } else if (
+          isVisibleAttribute(node.tag, prop.name) &&
+          !marked.has(`data-i18n-${prop.name}`)
+        ) {
+          checkLiteral(prop.value?.content, prop.name);
         }
-        readCode(prop.exp.content);
+      } else if (prop.exp?.type === NodeTypes.SIMPLE_EXPRESSION) {
+        const content = prop.exp.content;
+        if (
+          prop.name === 'bind' &&
+          prop.arg?.type === NodeTypes.SIMPLE_EXPRESSION &&
+          prop.arg.isStatic
+        ) {
+          const name = prop.arg.content;
+          const expression = readExpression(content);
+          if (isKeyAttribute(name) || (node.tag === 'T' && name === 'k')) {
+            const key =
+              expression &&
+              ts.isCallExpression(expression) &&
+              ts.isIdentifier(expression.expression) &&
+              expression.expression.text === 'tl'
+                ? literal(expression.arguments[0])
+                : literal(expression);
+            record(key, `<${node.tag} :${name}="${content}">`);
+          } else if (
+            isVisibleAttribute(node.tag, name) &&
+            !marked.has(`data-i18n-${name}`)
+          ) {
+            checkLiteral(literal(expression), name);
+          }
+        }
+        readCode(content);
       }
     }
-    node.children.forEach(readVue);
+    node.children.forEach((child) =>
+      readVue(child, translated || marked.has('data-i18n')),
+    );
+  }
+
+  function readAstro(node: AstroNode, parent?: AstroNode) {
+    if (
+      node.type === 'CallExpression' &&
+      typeof node.callee?.name === 'string'
+    ) {
+      const name = node.callee.name;
+      if (calls.has(name)) {
+        record(
+          astroLiteral(node.arguments?.[0]),
+          code.slice(node.start, node.end),
+        );
+      } else if (name === 'i18nAttrs') {
+        readCode(code.slice(node.start, node.end), true);
+      }
+    }
+
+    if (
+      parent?.type === 'JSXElement' ||
+      parent?.type === 'JSXFragment' ||
+      parent?.type === 'AstroRoot'
+    ) {
+      const opening = parent.openingElement;
+      const marked = opening?.attributes?.some(
+        (attr) => astroName(attr) === 'data-i18n',
+      );
+      if (!invisibleElements.has(astroName(opening)) && !marked) {
+        if (node.type === 'JSXText')
+          checkLiteral(astroLiteral(node), 'template text');
+        if (node.type === 'JSXExpressionContainer')
+          checkLiteral(astroLiteral(node.expression), 'template text');
+      }
+    }
+
+    if (node.type !== 'JSXOpeningElement') return;
+    const tag = astroName(node);
+    const attrs = node.attributes ?? [];
+    const marked = new Set(attrs.map(astroName));
+    for (const attr of attrs) {
+      const name = astroName(attr);
+      const value = attr.value as AstroNode | undefined;
+      const term = value?.expression ?? value;
+      if (isKeyAttribute(name) || (tag === 'T' && name === 'k')) {
+        const key =
+          term?.type === 'CallExpression' && term.callee?.name === 'tl'
+            ? astroLiteral(term.arguments?.[0])
+            : astroLiteral(term);
+        record(key, code.slice(attr.start, attr.end));
+      } else if (
+        isVisibleAttribute(tag, name) &&
+        !marked.has(`data-i18n-${name}`)
+      ) {
+        checkLiteral(astroLiteral(term), name);
+      }
+    }
   }
 
   if (file.endsWith('.astro')) {
-    const { ast } = parseAstro(code);
-    walkAstro(ast, (node) => {
-      if (
-        node.type === 'CallExpression' &&
-        typeof node.callee?.name === 'string'
-      ) {
-        const name = node.callee.name;
-        const argument = node.arguments?.[0];
-        if (calls.has(name)) {
-          record(
-            typeof argument?.value === 'string' ? argument.value : undefined,
-            code.slice(node.start, node.end),
-          );
-        } else if (name === 'i18nAttrs') {
-          readCode(code.slice(node.start, node.end), true);
-        }
-      }
-      if (node.type !== 'JSXOpeningElement' || typeof node.name !== 'object')
-        return;
-      const tag = node.name.name;
-      for (const attr of ('attributes' in node
-        ? node.attributes
-        : []) as AstroNode[]) {
-        if (
-          attr.type !== 'JSXAttribute' ||
-          typeof attr.name !== 'object' ||
-          typeof attr.name.name !== 'string'
-        )
-          continue;
-        const name = attr.name.name;
-        if (!isKeyAttribute(name) && !(tag === 'T' && name === 'k')) continue;
-        const value = attr.value as AstroNode | undefined;
-        const term = value?.expression ?? value;
-        record(
-          typeof term?.value === 'string' ? term.value : undefined,
-          code.slice(attr.start, attr.end),
-        );
-      }
-    });
+    walkAstro(parseAstro(code).ast, readAstro);
   } else if (file.endsWith('.vue')) {
     const { descriptor } = parseSfc(code, { filename: file });
     if (descriptor.script) readCode(descriptor.script.content);
     if (descriptor.scriptSetup) readCode(descriptor.scriptSetup.content);
     if (descriptor.template)
-      parseTemplate(descriptor.template.content).children.forEach(readVue);
+      parseTemplate(descriptor.template.content).children.forEach((node) =>
+        readVue(node),
+      );
   } else {
     readCode(code);
   }

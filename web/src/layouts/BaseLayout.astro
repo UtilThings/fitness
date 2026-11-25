@@ -10,7 +10,7 @@ import { env } from '@/lib/env';
 import '@/styles/global.css';
 
 interface Props {
-  title: string | Message;
+  title: Message;
   description: string;
   canonical?: URL;
   bare?: boolean;
@@ -24,12 +24,8 @@ const {
   business = bare ? undefined : (await getCatalog()).business,
   canonical = new URL(Astro.url.pathname, env.PUBLIC_SITE_URL),
 } = Astro.props;
-const titleText =
-  typeof title === 'string'
-    ? title
-    : formatMessage(title.key, title.params, 'en');
-const titleData =
-  typeof title === 'string' ? {} : messageData(title.key, title.params);
+const titleText = formatMessage(title.key, title.params, 'en');
+const titleData = messageData(title.key, title.params);
 const logoSrc = business?.logo_url || logo.src;
 ---
 

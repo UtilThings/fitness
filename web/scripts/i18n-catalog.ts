@@ -54,15 +54,22 @@ export function readCatalog(content: string, file: string) {
       continue;
     }
     entries.set(key, prop.initializer.text);
+    const english = messageVariants(key);
+    const spanish = messageVariants(prop.initializer.text);
+    const sameLength = english.length === spanish.length;
     if (
-      translationVariables(key) !== translationVariables(prop.initializer.text)
+      translationVariables(key) !==
+        translationVariables(prop.initializer.text) ||
+      (sameLength &&
+        english.some(
+          (variant, index) =>
+            translationVariables(variant) !==
+            translationVariables(spanish[index]),
+        ))
     ) {
       errors.push(`${file}: inconsistent interpolation variables for "${key}"`);
     }
-    if (
-      messageVariants(key).length !==
-      messageVariants(prop.initializer.text).length
-    ) {
+    if (!sameLength) {
       errors.push(`${file}: inconsistent plural variants for "${key}"`);
     }
   }
