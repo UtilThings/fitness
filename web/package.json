@@ -18,7 +18,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:dist": "vitest run --config vitest.dist.config.ts",
-    "test:build:offline": "bun tests/dist/build-offline.ts"
+    "test:build:offline": "bun tests/dist/build-offline.ts",
+    "i18n:check": "bun scripts/i18n-check.ts",
+    "i18n:sort": "bun scripts/i18n-check.ts --sort"
   },
   "dependencies": {
     "@astrojs/vue": "^7.1.6",
@@ -34,8 +36,10 @@
   "packageManager": "bun@1.4.3",
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
+    "@astrojs/compiler-rs": "0.5.3",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24",
+    "@vue/compiler-dom": "3.5.45",
     "@vue/test-utils": "^2.6.0",
     "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
